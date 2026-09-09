@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/network/api_exception.dart';
 import '../../../core/storage/token_storage.dart';
 import '../services/auth_service.dart';
 import 'login_screen.dart';
 import '../../home/screens/main_shell.dart';
 
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({super.key});
+  const SplashScreen({
+    super.key,
+  });
 
   @override
   State<SplashScreen> createState() =>
@@ -20,12 +23,17 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
+
     _restoreSession();
   }
 
   Future<void> _restoreSession() async {
     final hasToken =
     await TokenStorage.hasAccessToken();
+
+    if (!mounted) {
+      return;
+    }
 
     if (!hasToken) {
       _goToLogin();
@@ -49,14 +57,34 @@ class _SplashScreenState extends State<SplashScreen> {
           ),
         ),
       );
-    } catch (_) {
-      await TokenStorage.clearAll();
+    } on ApiException catch (exception) {
+      if (exception.statusCode == 401 ||
+          exception.statusCode == 403) {
+        await TokenStorage.deleteAccessToken();
+
+        if (!mounted) {
+          return;
+        }
+
+        _goToLogin();
+        return;
+      }
 
       if (!mounted) {
         return;
       }
 
-      _goToLogin();
+      _showSessionRestoreError(
+        exception.message,
+      );
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+
+      _showSessionRestoreError(
+        'Oturum bilgileri kontrol edilemedi.',
+      );
     }
   }
 
@@ -69,6 +97,58 @@ class _SplashScreenState extends State<SplashScreen> {
       MaterialPageRoute<void>(
         builder: (_) => const LoginScreen(),
       ),
+    );
+  }
+
+  void _showSessionRestoreError(
+      String message,
+      ) {
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text(
+            'Bağlantı Hatası',
+          ),
+          content: Text(
+            message,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(
+                  dialogContext,
+                ).pop();
+
+                _restoreSession();
+              },
+              child: const Text(
+                'Tekrar Dene',
+              ),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.of(
+                  dialogContext,
+                ).pop();
+
+                await TokenStorage
+                    .deleteAccessToken();
+
+                if (!mounted) {
+                  return;
+                }
+
+                _goToLogin();
+              },
+              child: const Text(
+                'Giriş Yap',
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -97,55 +177,73 @@ class _SplashScreenState extends State<SplashScreen> {
               ),
               decoration: BoxDecoration(
                 color: colorScheme.surface,
-                borderRadius: BorderRadius.circular(28),
+                borderRadius:
+                BorderRadius.circular(28),
                 border: Border.all(
-                  color: colorScheme.outlineVariant,
+                  color:
+                  colorScheme.outlineVariant,
                 ),
               ),
               child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 96,
-                  height: 96,
-                  decoration: BoxDecoration(
-                    color: colorScheme.primary,
-                    borderRadius:
-                    BorderRadius.circular(26),
+                mainAxisSize:
+                MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 96,
+                    height: 96,
+                    decoration: BoxDecoration(
+                      color:
+                      colorScheme.primary,
+                      borderRadius:
+                      BorderRadius.circular(
+                        26,
+                      ),
+                    ),
+                    child: Icon(
+                      Icons.car_crash_outlined,
+                      color:
+                      colorScheme.onPrimary,
+                      size: 44,
+                    ),
                   ),
-                  child: Icon(
-                    Icons.car_crash_outlined,
-                    color: colorScheme.onPrimary,
-                    size: 44,
+                  const SizedBox(
+                    height: 28,
                   ),
-                ),
-                const SizedBox(height: 28),
-                Text(
-                  'Vehicle Inspector',
-                  textAlign: TextAlign.center,
-                  style:
-                  textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.6,
+                  Text(
+                    'Vehicle Inspector',
+                    textAlign:
+                    TextAlign.center,
+                    style: textTheme
+                        .headlineMedium
+                        ?.copyWith(
+                      fontWeight:
+                      FontWeight.w800,
+                      letterSpacing: -0.6,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  'Yapay zekâ destekli araç hasar analizi',
-                  textAlign: TextAlign.center,
-                  style:
-                  textTheme.bodyLarge?.copyWith(
-                    color: colorScheme
-                        .onSurfaceVariant,
+                  const SizedBox(
+                    height: 10,
                   ),
-                ),
-                const SizedBox(height: 28),
-                const CircularProgressIndicator(),
-              ],
+                  Text(
+                    'Yapay zekâ destekli araç hasar analizi',
+                    textAlign:
+                    TextAlign.center,
+                    style:
+                    textTheme.bodyLarge
+                        ?.copyWith(
+                      color: colorScheme
+                          .onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(
+                    height: 28,
+                  ),
+                  const CircularProgressIndicator(),
+                ],
+              ),
             ),
           ),
         ),
-      ),
       ),
     );
   }
