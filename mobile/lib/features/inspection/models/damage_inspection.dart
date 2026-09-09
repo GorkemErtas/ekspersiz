@@ -58,11 +58,19 @@ class DamageInspection {
 
   final String locationCity;
 
-  bool get isCompleted => status == 'COMPLETED';
+  bool get isPending => status == 'PENDING';
 
   bool get isProcessing => status == 'PROCESSING';
 
+  bool get isCompleted => status == 'COMPLETED';
+
   bool get isFailed => status == 'FAILED';
+
+  bool get isReportPending =>
+      reportStatus == 'PENDING';
+
+  bool get isReportProcessing =>
+      reportStatus == 'PROCESSING';
 
   bool get isReportCompleted =>
       reportStatus == 'COMPLETED';
@@ -76,99 +84,215 @@ class DamageInspection {
     final reportJson = json['report'];
 
     return DamageInspection(
-      id: (json['id'] as num?)?.toInt() ?? 0,
-
-      vehicleId:
-      (json['vehicleId'] as num?)?.toInt() ?? 0,
-
-      vehiclePlate:
-      json['vehiclePlate'] as String? ?? '',
-
-      userId:
-      (json['userId'] as num?)?.toInt() ?? 0,
-
-      imagePath:
-      json['imagePath'] as String?,
-
-      status:
-      json['status'] as String? ?? 'PENDING',
-
-      reportStatus:
-      json['reportStatus'] as String?,
-
-      reportMessage:
-      json['reportMessage'] as String?,
-
+      id: _parseInt(
+        json['id'],
+      ),
+      vehicleId: _parseInt(
+        json['vehicleId'],
+      ),
+      vehiclePlate: _parseString(
+        json['vehiclePlate'],
+      ),
+      userId: _parseInt(
+        json['userId'],
+      ),
+      imagePath: _parseNullableString(
+        json['imagePath'],
+      ),
+      status: _parseEnumString(
+        json['status'],
+        fallback: 'PENDING',
+      ),
+      reportStatus: _parseNullableEnumString(
+        json['reportStatus'],
+      ),
+      reportMessage: _parseNullableString(
+        json['reportMessage'],
+      ),
       damageSeverity:
-      json['damageSeverity'] as String?,
-
-      damageTypes:
-      (json['damageTypes'] as List?)
-          ?.whereType<String>()
-          .toList() ??
-          const [],
-
-      affectedParts:
-      (json['affectedParts'] as List?)
-          ?.whereType<String>()
-          .toList() ??
-          const [],
-
+      _parseNullableEnumString(
+        json['damageSeverity'],
+      ),
+      damageTypes: _parseStringList(
+        json['damageTypes'],
+      ),
+      affectedParts: _parseStringList(
+        json['affectedParts'],
+      ),
       repairRecommendations:
-      (json['repairRecommendations'] as List?)
-          ?.whereType<Map>()
-          .map(
-            (item) =>
-            DamageRepairRecommendation
-                .fromJson(
-              Map<String, dynamic>.from(
-                item,
-              ),
-            ),
-      )
-          .toList() ??
-          const [],
-
+      _parseRepairRecommendations(
+        json['repairRecommendations'],
+      ),
       confidenceScore:
-      (json['confidenceScore'] as num?)
-          ?.toDouble(),
-
+      _parseNullableDouble(
+        json['confidenceScore'],
+      ),
       analysisMessage:
-      json['analysisMessage'] as String?,
-
-      createdAt: DateTime.tryParse(
-        json['createdAt'] as String? ?? '',
+      _parseNullableString(
+        json['analysisMessage'],
       ),
-
-      completedAt: DateTime.tryParse(
-        json['completedAt'] as String? ?? '',
+      createdAt: _parseDateTime(
+        json['createdAt'],
       ),
-
-      detections:
-      (json['detections'] as List?)
-          ?.whereType<Map>()
-          .map(
-            (item) =>
-            DamageDetection.fromJson(
-              Map<String, dynamic>.from(
-                item,
-              ),
-            ),
-      )
-          .toList() ??
-          const [],
-
-      report:
-      reportJson is Map
+      completedAt: _parseDateTime(
+        json['completedAt'],
+      ),
+      detections: _parseDetections(
+        json['detections'],
+      ),
+      report: reportJson is Map
           ? InspectionReport.fromJson(
         Map<String, dynamic>.from(
           reportJson,
         ),
       )
           : null,
-
-      locationCity:
-      json['locationCity'] as String? ?? '',
+      locationCity: _parseString(
+        json['locationCity'],
+      ),
     );
+  }
+
+  static int _parseInt(
+      dynamic value,
+      ) {
+    return value is num
+        ? value.toInt()
+        : 0;
+  }
+
+  static double? _parseNullableDouble(
+      dynamic value,
+      ) {
+    return value is num
+        ? value.toDouble()
+        : null;
+  }
+
+  static String _parseString(
+      dynamic value,
+      ) {
+    if (value is! String) {
+      return '';
+    }
+
+    return value.trim();
+  }
+
+  static String? _parseNullableString(
+      dynamic value,
+      ) {
+    if (value is! String) {
+      return null;
+    }
+
+    final normalized = value.trim();
+
+    return normalized.isEmpty
+        ? null
+        : normalized;
+  }
+
+  static String _parseEnumString(
+      dynamic value, {
+        required String fallback,
+      }) {
+    if (value is! String) {
+      return fallback;
+    }
+
+    final normalized =
+    value.trim().toUpperCase();
+
+    return normalized.isEmpty
+        ? fallback
+        : normalized;
+  }
+
+  static String? _parseNullableEnumString(
+      dynamic value,
+      ) {
+    if (value is! String) {
+      return null;
+    }
+
+    final normalized =
+    value.trim().toUpperCase();
+
+    return normalized.isEmpty
+        ? null
+        : normalized;
+  }
+
+  static DateTime? _parseDateTime(
+      dynamic value,
+      ) {
+    if (value is! String ||
+        value.trim().isEmpty) {
+      return null;
+    }
+
+    return DateTime.tryParse(
+      value,
+    );
+  }
+
+  static List<String> _parseStringList(
+      dynamic value,
+      ) {
+    if (value is! List) {
+      return const [];
+    }
+
+    return value
+        .whereType<String>()
+        .map(
+          (item) => item.trim().toUpperCase(),
+    )
+        .where(
+          (item) => item.isNotEmpty,
+    )
+        .toList();
+  }
+
+  static List<DamageRepairRecommendation>
+  _parseRepairRecommendations(
+      dynamic value,
+      ) {
+    if (value is! List) {
+      return const [];
+    }
+
+    return value
+        .whereType<Map>()
+        .map(
+          (item) =>
+          DamageRepairRecommendation.fromJson(
+            Map<String, dynamic>.from(
+              item,
+            ),
+          ),
+    )
+        .toList();
+  }
+
+  static List<DamageDetection> _parseDetections(
+      dynamic value,
+      ) {
+    if (value is! List) {
+      return const [];
+    }
+
+    return value
+        .whereType<Map>()
+        .map(
+          (item) =>
+          DamageDetection.fromJson(
+            Map<String, dynamic>.from(
+              item,
+            ),
+          ),
+    )
+        .toList();
   }
 }

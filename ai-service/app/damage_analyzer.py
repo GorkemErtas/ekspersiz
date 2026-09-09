@@ -15,10 +15,18 @@ from app.schemas import (
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
-DEFAULT_VEHICLE_MODEL_PATH = PROJECT_ROOT / "yolo11n.pt"
-DEFAULT_DAMAGE_MODEL_PATH = PROJECT_ROOT / "models" / "best.pt"
+DEFAULT_VEHICLE_MODEL_PATH = (
+        PROJECT_ROOT / "yolo11n.pt"
+)
+
+DEFAULT_DAMAGE_MODEL_PATH = (
+        PROJECT_ROOT / "models" / "best.pt"
+)
+
 DEFAULT_VEHICLE_PART_MODEL_PATH = (
-    PROJECT_ROOT / "models" / "vehicle_part_best.pt"
+        PROJECT_ROOT
+        / "models"
+        / "vehicle_part_best.pt"
 )
 
 
@@ -64,22 +72,32 @@ class DamageAnalyzer:
     }
 
     def __init__(
-        self,
-        vehicle_model_path: str | Path = DEFAULT_VEHICLE_MODEL_PATH,
-        damage_model_path: str | Path = DEFAULT_DAMAGE_MODEL_PATH,
-        vehicle_part_model_path: str | Path = (
-            DEFAULT_VEHICLE_PART_MODEL_PATH
-        ),
-        vehicle_confidence_threshold: float = 0.40,
-        damage_confidence_threshold: float = 0.25,
-        damage_iou_threshold: float = 0.45,
-        vehicle_part_confidence_threshold: float = 0.25,
-        minimum_part_overlap_ratio: float = 0.25,
-        affected_part_damage_confidence_threshold: float = 0.50,
-        damage_recommendation_confidence_threshold: float = 0.30,
+            self,
+            vehicle_model_path: str | Path = (
+                    DEFAULT_VEHICLE_MODEL_PATH
+            ),
+            damage_model_path: str | Path = (
+                    DEFAULT_DAMAGE_MODEL_PATH
+            ),
+            vehicle_part_model_path: str | Path = (
+                    DEFAULT_VEHICLE_PART_MODEL_PATH
+            ),
+            vehicle_confidence_threshold: float = 0.40,
+            damage_confidence_threshold: float = 0.25,
+            damage_iou_threshold: float = 0.45,
+            vehicle_part_confidence_threshold: float = 0.25,
+            minimum_part_overlap_ratio: float = 0.25,
+            affected_part_damage_confidence_threshold: float = 0.50,
+            damage_recommendation_confidence_threshold: float = 0.30,
     ) -> None:
-        self.vehicle_model_path = Path(vehicle_model_path)
-        self.damage_model_path = Path(damage_model_path)
+        self.vehicle_model_path = Path(
+            vehicle_model_path
+        )
+
+        self.damage_model_path = Path(
+            damage_model_path
+        )
+
         self.vehicle_part_model_path = Path(
             vehicle_part_model_path
         )
@@ -87,13 +105,19 @@ class DamageAnalyzer:
         self.vehicle_confidence_threshold = (
             vehicle_confidence_threshold
         )
+
         self.damage_confidence_threshold = (
             damage_confidence_threshold
         )
-        self.damage_iou_threshold = damage_iou_threshold
+
+        self.damage_iou_threshold = (
+            damage_iou_threshold
+        )
+
         self.vehicle_part_confidence_threshold = (
             vehicle_part_confidence_threshold
         )
+
         self.minimum_part_overlap_ratio = (
             minimum_part_overlap_ratio
         )
@@ -121,17 +145,18 @@ class DamageAnalyzer:
         )
 
     def analyze(
-        self,
-        file_content: bytes,
-        filename: str,
+            self,
+            file_content: bytes,
+            filename: str,
     ) -> DamageAnalysisResponse:
         safe_filename = Path(
             filename or "vehicle.jpg"
         ).name.lower()
 
-        image = self._load_image(file_content)
+        image = self._load_image(
+            file_content
+        )
 
-        # Önce genel modelle araç tespiti yapılır.
         vehicle_results = self.vehicle_model.predict(
             source=image,
             conf=self.vehicle_confidence_threshold,
@@ -145,16 +170,24 @@ class DamageAnalyzer:
         vehicle_detections = [
             detection
             for detection in vehicle_detections
-            if detection.label.lower() in self.VEHICLE_LABELS
+            if detection.label.lower()
+               in self.VEHICLE_LABELS
         ]
 
-        # En büyük araç kutusunu seçip görüntüyü kırpar.
-        analysis_image = self._crop_primary_vehicle(
+        if not vehicle_detections:
+            return self._build_no_vehicle_response(
+                filename=safe_filename
+            )
+
+        (
+            analysis_image,
+            crop_offset_x,
+            crop_offset_y,
+        ) = self._crop_primary_vehicle(
             image=image,
             vehicle_detections=vehicle_detections,
         )
 
-        # Hasar ve parça modelleri aynı kırpılmış görüntüde çalışır.
         damage_results = self.damage_model.predict(
             source=analysis_image,
             conf=self.damage_confidence_threshold,
@@ -164,137 +197,176 @@ class DamageAnalyzer:
             verbose=False,
         )
 
-        vehicle_part_results = self.vehicle_part_model.predict(
-            source=analysis_image,
-            conf=self.vehicle_part_confidence_threshold,
-            iou=0.50,
-            max_det=50,
-            verbose=False,
-        )
-
-        damage_detections = self._extract_detections(
-            damage_results
-        )
-
-        vehicle_part_detections = self._extract_detections(
-            vehicle_part_results
-        )
-
-        print("\n--- DAMAGE DETECTIONS ---")
-
-        for detection in damage_detections:
-            print(
-                detection.label,
-                detection.confidence,
-                detection.boundingBox,
+        vehicle_part_results = (
+            self.vehicle_part_model.predict(
+                source=analysis_image,
+                conf=(
+                    self.vehicle_part_confidence_threshold
+                ),
+                iou=0.50,
+                max_det=50,
+                verbose=False,
             )
+        )
 
-        print("\n--- VEHICLE PART DETECTIONS ---")
-
-        for detection in vehicle_part_detections:
-            print(
-                detection.label,
-                detection.confidence,
-                detection.boundingBox,
+        damage_detections = (
+            self._extract_detections(
+                damage_results
             )
+        )
+
+        vehicle_part_detections = (
+            self._extract_detections(
+                vehicle_part_results
+            )
+        )
+
+        damage_detections = (
+            self._translate_detections(
+                detections=damage_detections,
+                offset_x=crop_offset_x,
+                offset_y=crop_offset_y,
+            )
+        )
+
+        vehicle_part_detections = (
+            self._translate_detections(
+                detections=vehicle_part_detections,
+                offset_x=crop_offset_x,
+                offset_y=crop_offset_y,
+            )
+        )
 
         if not damage_detections:
             return self._build_no_damage_response(
-                filename=safe_filename,
-                vehicle_detections=vehicle_detections,
+                filename=safe_filename
             )
-
-        primary_damage = max(
-            damage_detections,
-            key=lambda detection: detection.confidence,
-        )
 
         matched_damage_detections = (
             self._assign_parts_to_damage_detections(
                 damage_detections=damage_detections,
-                vehicle_part_detections=vehicle_part_detections,
+                vehicle_part_detections=(
+                    vehicle_part_detections
+                ),
             )
         )
 
-        affected_parts = self._extract_affected_parts(
-            matched_damage_detections
+        primary_damage = max(
+            matched_damage_detections,
+            key=lambda detection: (
+                detection.confidence
+            ),
+        )
+
+        affected_parts = (
+            self._extract_affected_parts(
+                matched_damage_detections
+            )
         )
 
         return self._build_damage_response(
             filename=safe_filename,
             primary_damage=primary_damage,
-            damage_detections=matched_damage_detections,
+            damage_detections=(
+                matched_damage_detections
+            ),
             affected_parts=affected_parts,
         )
 
     def _extract_affected_parts(
-        self,
-        damage_detections: list[DetectedObject],
+            self,
+            damage_detections: list[DetectedObject],
     ) -> list[str]:
         affected_parts: list[str] = []
 
         for detection in damage_detections:
             if (
-                detection.confidence
-                < self.affected_part_damage_confidence_threshold
+                    detection.confidence
+                    < self
+                    .affected_part_damage_confidence_threshold
             ):
                 continue
 
-            affected_part = detection.affectedPart
+            affected_part = (
+                detection.affectedPart
+            )
 
             if affected_part == "UNKNOWN":
                 continue
 
             if affected_part not in affected_parts:
-                affected_parts.append(affected_part)
+                affected_parts.append(
+                    affected_part
+                )
 
         return affected_parts
 
     def _build_repair_recommendations(
-        self,
-        damage_detections: list[DetectedObject],
-        trusted_affected_parts: list[str],
+            self,
+            damage_detections: list[DetectedObject],
+            trusted_affected_parts: list[str],
     ) -> list[DamageRecommendation]:
-        grouped_parts: dict[str, list[str]] = {}
+        grouped_parts: dict[
+            str,
+            list[str],
+        ] = {}
 
         for detection in damage_detections:
             if (
-                detection.confidence
-                < self.damage_recommendation_confidence_threshold
+                    detection.confidence
+                    < self
+                    .damage_recommendation_confidence_threshold
             ):
                 continue
 
-            damage_type = self._normalize_enum_value(
-                detection.label
+            damage_type = (
+                self._normalize_enum_value(
+                    detection.label
+                )
             )
 
             if damage_type not in grouped_parts:
-                grouped_parts[damage_type] = []
+                grouped_parts[
+                    damage_type
+                ] = []
 
-            affected_part = detection.affectedPart
+            affected_part = (
+                detection.affectedPart
+            )
 
             if (
-                affected_part != "UNKNOWN"
-                and affected_part in trusted_affected_parts
-                and affected_part not in grouped_parts[damage_type]
+                    affected_part != "UNKNOWN"
+                    and affected_part
+                    in trusted_affected_parts
+                    and affected_part
+                    not in grouped_parts[damage_type]
             ):
-                grouped_parts[damage_type].append(
+                grouped_parts[
+                    damage_type
+                ].append(
                     affected_part
                 )
 
-        recommendations: list[DamageRecommendation] = []
+        recommendations: list[
+            DamageRecommendation
+        ] = []
 
-        for damage_type, affected_parts in grouped_parts.items():
+        for (
+                damage_type,
+                affected_parts,
+        ) in grouped_parts.items():
             recommendations.append(
                 DamageRecommendation(
                     damageType=damage_type,
                     recommendedAction=(
-                        self._determine_recommended_action(
+                        self
+                        ._determine_recommended_action(
                             damage_type
                         )
                     ),
                     partReplacementRequired=(
-                        self._determine_replacement_requirement(
+                        self
+                        ._determine_replacement_requirement(
                             damage_type
                         )
                     ),
@@ -305,19 +377,10 @@ class DamageAnalyzer:
         return recommendations
 
     @staticmethod
-    def _count_reliable_damage_detections(
-        damage_detections: list[DetectedObject],
-    ) -> int:
-        return sum(
-            detection.confidence >= 0.35
-            for detection in damage_detections
-        )
-
-    @staticmethod
     def _determine_damage_severity(
-        damage_type: str,
-        affected_part_count: int,
-        highest_confidence: float,
+            damage_type: str,
+            affected_part_count: int,
+            highest_confidence: float,
     ) -> str:
         if damage_type == "NO_VISIBLE_DAMAGE":
             return "NONE"
@@ -325,6 +388,7 @@ class DamageAnalyzer:
         if damage_type == "BROKEN_PART":
             if affected_part_count >= 2:
                 return "SEVERE"
+
             return "MODERATE"
 
         if affected_part_count >= 3:
@@ -338,31 +402,42 @@ class DamageAnalyzer:
 
         return "MINOR"
 
-    def _validate_model_paths(self) -> None:
+    def _validate_model_paths(
+            self,
+    ) -> None:
         model_paths = {
-            "Vehicle detection": self.vehicle_model_path,
-            "Damage detection": self.damage_model_path,
+            "Vehicle detection": (
+                self.vehicle_model_path
+            ),
+            "Damage detection": (
+                self.damage_model_path
+            ),
             "Vehicle part detection": (
                 self.vehicle_part_model_path
             ),
         }
 
-        for model_name, model_path in model_paths.items():
-            if not model_path.exists():
+        for (
+                model_name,
+                model_path,
+        ) in model_paths.items():
+            if not model_path.is_file():
                 raise FileNotFoundError(
                     f"{model_name} model was not found: "
                     f"{model_path}"
                 )
 
     def _build_damage_response(
-        self,
-        filename: str,
-        primary_damage: DetectedObject,
-        damage_detections: list[DetectedObject],
-        affected_parts: list[str],
+            self,
+            filename: str,
+            primary_damage: DetectedObject,
+            damage_detections: list[DetectedObject],
+            affected_parts: list[str],
     ) -> DamageAnalysisResponse:
-        damage_type = self._normalize_enum_value(
-            primary_damage.label
+        damage_type = (
+            self._normalize_enum_value(
+                primary_damage.label
+            )
         )
 
         repair_recommendations = (
@@ -374,83 +449,117 @@ class DamageAnalyzer:
 
         damage_types = [
             recommendation.damageType
-            for recommendation in repair_recommendations
+            for recommendation
+            in repair_recommendations
         ]
 
         damage_severity = (
             self._determine_damage_severity(
                 damage_type=damage_type,
-                affected_part_count=len(affected_parts),
-                highest_confidence=primary_damage.confidence,
+                affected_part_count=(
+                    len(affected_parts)
+                ),
+                highest_confidence=(
+                    primary_damage.confidence
+                ),
             )
+        )
+
+        damage_type_text = (
+            ", ".join(damage_types)
+            if damage_types
+            else damage_type
+        )
+
+        affected_part_text = (
+            ", ".join(affected_parts)
+            if affected_parts
+            else "UNKNOWN"
         )
 
         return DamageAnalysisResponse(
             damageTypes=damage_types,
             damageSeverity=damage_severity,
             affectedParts=affected_parts,
-            repairRecommendations=repair_recommendations,
-            confidenceScore=primary_damage.confidence,
+            repairRecommendations=(
+                repair_recommendations
+            ),
+            confidenceScore=(
+                primary_damage.confidence
+            ),
             analysisMessage=(
                 f"{filename} adlı görselde "
-                f"{len(damage_detections)} hasarlı bölge "
-                f"tespit edildi. "
-                f"Hasar türleri: {', '.join(damage_types)}. "
-                f"Hasar seviyesi: {damage_severity}. "
+                f"{len(damage_detections)} hasarlı "
+                f"bölge tespit edildi. "
+                f"Hasar türleri: "
+                f"{damage_type_text}. "
+                f"Hasar seviyesi: "
+                f"{damage_severity}. "
                 f"En yüksek güven skoru: "
                 f"{primary_damage.confidence:.2f}. "
                 f"Etkilenen parçalar: "
-                f"{', '.join(affected_parts) if affected_parts else 'UNKNOWN'}."
+                f"{affected_part_text}."
             ),
             detections=damage_detections,
         )
 
-    def _build_no_damage_response(
-        self,
-        filename: str,
-        vehicle_detections: list[DetectedObject],
+    def _build_no_vehicle_response(
+            self,
+            filename: str,
     ) -> DamageAnalysisResponse:
-        if vehicle_detections:
-            message = (
-                f"{filename} adlı görselde araç tespit "
-                "edildi ancak güvenilir bir hasarlı alan "
-                "bulunamadı."
-            )
-        else:
-            message = (
-                f"{filename} adlı görselde güvenilir bir "
-                "araç veya hasarlı alan tespit edilemedi."
-            )
+        return DamageAnalysisResponse(
+            damageTypes=[],
+            damageSeverity="UNKNOWN",
+            affectedParts=[],
+            repairRecommendations=[],
+            confidenceScore=0.0,
+            analysisMessage=(
+                f"{filename} adlı görselde güvenilir "
+                f"bir araç tespit edilemedi. "
+                f"Hasar analizi gerçekleştirilemedi."
+            ),
+            detections=[],
+        )
 
+    def _build_no_damage_response(
+            self,
+            filename: str,
+    ) -> DamageAnalysisResponse:
         return DamageAnalysisResponse(
             damageTypes=[],
             damageSeverity="NONE",
             affectedParts=[],
             repairRecommendations=[],
             confidenceScore=0.0,
-            analysisMessage=message,
+            analysisMessage=(
+                f"{filename} adlı görselde araç "
+                f"tespit edildi ancak güvenilir "
+                f"bir hasarlı alan bulunamadı."
+            ),
             detections=[],
         )
 
     def _assign_parts_to_damage_detections(
-        self,
-        damage_detections: list[DetectedObject],
-        vehicle_part_detections: list[DetectedObject],
+            self,
+            damage_detections: list[DetectedObject],
+            vehicle_part_detections: list[DetectedObject],
     ) -> list[DetectedObject]:
         for damage_detection in damage_detections:
             damage_detection.affectedPart = (
                 self._match_damage_to_vehicle_part(
                     damage=damage_detection,
-                    vehicle_parts=vehicle_part_detections,
+                    vehicle_parts=(
+                        vehicle_part_detections
+                    ),
                 )
             )
 
         return damage_detections
 
     def _match_damage_to_vehicle_part(
-        self,
-        damage: DetectedObject,
-        vehicle_parts: list[DetectedObject],
+            self,
+            damage: DetectedObject,
+            vehicle_parts: list[DetectedObject],
     ) -> str:
         best_vehicle_part = "UNKNOWN"
         best_score = 0.0
@@ -471,29 +580,36 @@ class DamageAnalyzer:
             if mapped_vehicle_part is None:
                 continue
 
-            overlap_ratio = self._calculate_damage_overlap_ratio(
-                damage.boundingBox,
-                vehicle_part.boundingBox,
+            overlap_ratio = (
+                self._calculate_damage_overlap_ratio(
+                    damage.boundingBox,
+                    vehicle_part.boundingBox,
+                )
             )
 
-            if overlap_ratio < self.minimum_part_overlap_ratio:
+            if (
+                    overlap_ratio
+                    < self.minimum_part_overlap_ratio
+            ):
                 continue
 
             score = (
-                overlap_ratio * 0.80
-                + vehicle_part.confidence * 0.20
+                    overlap_ratio * 0.80
+                    + vehicle_part.confidence * 0.20
             )
 
             if score > best_score:
                 best_score = score
-                best_vehicle_part = mapped_vehicle_part
+                best_vehicle_part = (
+                    mapped_vehicle_part
+                )
 
         return best_vehicle_part
 
     @staticmethod
     def _calculate_damage_overlap_ratio(
-        damage_box: BoundingBox,
-        part_box: BoundingBox,
+            damage_box: BoundingBox,
+            part_box: BoundingBox,
     ) -> float:
         intersection_x1 = max(
             damage_box.x1,
@@ -517,38 +633,49 @@ class DamageAnalyzer:
 
         intersection_width = max(
             0.0,
-            intersection_x2 - intersection_x1,
-        )
+            intersection_x2
+            - intersection_x1,
+            )
 
         intersection_height = max(
             0.0,
-            intersection_y2 - intersection_y1,
-        )
+            intersection_y2
+            - intersection_y1,
+            )
 
         intersection_area = (
-            intersection_width * intersection_height
+                intersection_width
+                * intersection_height
         )
 
         damage_width = max(
             0.0,
-            damage_box.x2 - damage_box.x1,
-        )
+            damage_box.x2
+            - damage_box.x1,
+            )
 
         damage_height = max(
             0.0,
-            damage_box.y2 - damage_box.y1,
-        )
+            damage_box.y2
+            - damage_box.y1,
+            )
 
-        damage_area = damage_width * damage_height
+        damage_area = (
+                damage_width
+                * damage_height
+        )
 
         if damage_area <= 0:
             return 0.0
 
-        return intersection_area / damage_area
+        return (
+                intersection_area
+                / damage_area
+        )
 
     @staticmethod
     def _normalize_enum_value(
-        value: str,
+            value: str,
     ) -> str:
         return (
             value.strip()
@@ -559,7 +686,7 @@ class DamageAnalyzer:
 
     @staticmethod
     def _determine_recommended_action(
-        damage_type: str,
+            damage_type: str,
     ) -> str:
         recommendations = {
             "SCRATCH": "PAINT_TOUCH_UP",
@@ -576,31 +703,40 @@ class DamageAnalyzer:
 
     @staticmethod
     def _determine_replacement_requirement(
-        damage_type: str,
+            damage_type: str,
     ) -> bool:
-        return damage_type == "BROKEN_PART"
+        return (
+                damage_type == "BROKEN_PART"
+        )
 
     @staticmethod
     def _load_image(
-        file_content: bytes,
+            file_content: bytes,
     ) -> Image.Image:
+        if not file_content:
+            raise ValueError(
+                "Uploaded image is empty."
+            )
+
         try:
-            image = Image.open(
-                BytesIO(file_content)
-            )
+            with Image.open(
+                    BytesIO(file_content)
+            ) as image:
+                image.verify()
 
-            image.verify()
-
-            verified_image = Image.open(
-                BytesIO(file_content)
-            )
-
-            return verified_image.convert("RGB")
+            with Image.open(
+                    BytesIO(file_content)
+            ) as verified_image:
+                return (
+                    verified_image
+                    .convert("RGB")
+                    .copy()
+                )
 
         except (
-            UnidentifiedImageError,
-            OSError,
-            ValueError,
+                UnidentifiedImageError,
+                OSError,
+                ValueError,
         ) as exc:
             raise ValueError(
                 "Uploaded file is not a valid image."
@@ -608,9 +744,11 @@ class DamageAnalyzer:
 
     @staticmethod
     def _extract_detections(
-        results: list[Any],
+            results: list[Any],
     ) -> list[DetectedObject]:
-        detections: list[DetectedObject] = []
+        detections: list[
+            DetectedObject
+        ] = []
 
         for result in results:
             if result.boxes is None:
@@ -624,7 +762,9 @@ class DamageAnalyzer:
                 )
 
                 confidence = round(
-                    float(box.conf[0].item()),
+                    float(
+                        box.conf[0].item()
+                    ),
                     4,
                 )
 
@@ -637,26 +777,31 @@ class DamageAnalyzer:
                 detections.append(
                     DetectedObject(
                         label=str(
-                            class_names[class_id]
+                            class_names[
+                                class_id
+                            ]
                         ),
                         confidence=confidence,
-                        boundingBox=BoundingBox(
-                            x1=round(
-                                coordinates[0],
-                                2,
-                            ),
-                            y1=round(
-                                coordinates[1],
-                                2,
-                            ),
-                            x2=round(
-                                coordinates[2],
-                                2,
-                            ),
-                            y2=round(
-                                coordinates[3],
-                                2,
-                            ),
+                        affectedPart="UNKNOWN",
+                        boundingBox=(
+                            BoundingBox(
+                                x1=round(
+                                    coordinates[0],
+                                    2,
+                                ),
+                                y1=round(
+                                    coordinates[1],
+                                    2,
+                                ),
+                                x2=round(
+                                    coordinates[2],
+                                    2,
+                                ),
+                                y2=round(
+                                    coordinates[3],
+                                    2,
+                                ),
+                            )
                         ),
                     )
                 )
@@ -664,67 +809,161 @@ class DamageAnalyzer:
         return detections
 
     @staticmethod
+    def _translate_detections(
+            detections: list[DetectedObject],
+            offset_x: int,
+            offset_y: int,
+    ) -> list[DetectedObject]:
+        if (
+                offset_x == 0
+                and offset_y == 0
+        ):
+            return detections
+
+        translated_detections: list[
+            DetectedObject
+        ] = []
+
+        for detection in detections:
+            box = detection.boundingBox
+
+            translated_detections.append(
+                DetectedObject(
+                    label=detection.label,
+                    confidence=(
+                        detection.confidence
+                    ),
+                    affectedPart=(
+                        detection.affectedPart
+                    ),
+                    boundingBox=BoundingBox(
+                        x1=round(
+                            box.x1 + offset_x,
+                            2,
+                            ),
+                        y1=round(
+                            box.y1 + offset_y,
+                            2,
+                            ),
+                        x2=round(
+                            box.x2 + offset_x,
+                            2,
+                            ),
+                        y2=round(
+                            box.y2 + offset_y,
+                            2,
+                            ),
+                    ),
+                )
+            )
+
+        return translated_detections
+
+    @staticmethod
     def _crop_primary_vehicle(
-        image: Image.Image,
-        vehicle_detections: list[DetectedObject],
-    ) -> Image.Image:
+            image: Image.Image,
+            vehicle_detections: list[DetectedObject],
+    ) -> tuple[
+        Image.Image,
+        int,
+        int,
+    ]:
         if not vehicle_detections:
-            return image
+            return image, 0, 0
 
         primary_vehicle = max(
             vehicle_detections,
             key=lambda detection: (
+                    max(
+                        0.0,
+                        (
+                                detection
+                                .boundingBox.x2
+                                - detection
+                                .boundingBox.x1
+                        ),
+                    )
+                    * max(
+                0.0,
                 (
-                    detection.boundingBox.x2
-                    - detection.boundingBox.x1
-                )
-                * (
-                    detection.boundingBox.y2
-                    - detection.boundingBox.y1
-                )
+                        detection
+                        .boundingBox.y2
+                        - detection
+                        .boundingBox.y1
+                ),
+            )
             ),
         )
 
-        box = primary_vehicle.boundingBox
+        box = (
+            primary_vehicle.boundingBox
+        )
 
-        image_width, image_height = image.size
+        image_width, image_height = (
+            image.size
+        )
+
+        box_width = max(
+            0.0,
+            box.x2 - box.x1,
+            )
+
+        box_height = max(
+            0.0,
+            box.y2 - box.y1,
+            )
+
+        if (
+                box_width <= 0
+                or box_height <= 0
+        ):
+            return image, 0, 0
 
         padding_x = int(
-            (box.x2 - box.x1) * 0.05
+            box_width * 0.05
         )
 
         padding_y = int(
-            (box.y2 - box.y1) * 0.05
+            box_height * 0.05
         )
 
         left = max(
             0,
             int(box.x1) - padding_x,
-        )
+            )
 
         top = max(
             0,
             int(box.y1) - padding_y,
-        )
+            )
 
         right = min(
             image_width,
             int(box.x2) + padding_x,
-        )
+            )
 
         bottom = min(
             image_height,
             int(box.y2) + padding_y,
-        )
+            )
 
-        if right <= left or bottom <= top:
-            return image
+        if (
+                right <= left
+                or bottom <= top
+        ):
+            return image, 0, 0
 
-        return image.crop(
+        cropped_image = image.crop(
             (
                 left,
                 top,
                 right,
                 bottom,
             )
+        )
+
+        return (
+            cropped_image,
+            left,
+            top,
         )
