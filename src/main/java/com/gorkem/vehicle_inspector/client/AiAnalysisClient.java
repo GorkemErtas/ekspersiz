@@ -8,6 +8,8 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.HttpStatusCodeException;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
@@ -26,12 +28,16 @@ public class AiAnalysisClient {
             String aiServiceBaseUrl
     ) {
         this.restTemplate = restTemplate;
-        this.aiServiceBaseUrl = aiServiceBaseUrl;
+        this.aiServiceBaseUrl =
+                normalizeBaseUrl(aiServiceBaseUrl);
     }
 
-    public AiAnalysisResponse analyze(Path imagePath) {
-
-        if (!Files.exists(imagePath)) {
+    public AiAnalysisResponse analyze(
+            Path imagePath
+    ) {
+        if (imagePath == null
+                || !Files.exists(imagePath)
+                || !Files.isRegularFile(imagePath)) {
             throw new AiServiceException(
                     "Analiz edilecek fotoğraf bulunamadı."
             );
@@ -40,13 +46,18 @@ public class AiAnalysisClient {
         FileSystemResource imageResource =
                 new FileSystemResource(imagePath);
 
-        HttpHeaders imageHeaders = new HttpHeaders();
+        HttpHeaders imageHeaders =
+                new HttpHeaders();
 
         imageHeaders.setContentDisposition(
                 ContentDisposition
                         .formData()
                         .name("image")
-                        .filename(imagePath.getFileName().toString())
+                        .filename(
+                                imagePath
+                                        .getFileName()
+                                        .toString()
+                        )
                         .build()
         );
 
@@ -59,12 +70,22 @@ public class AiAnalysisClient {
         MultiValueMap<String, Object> multipartBody =
                 new LinkedMultiValueMap<>();
 
-        multipartBody.add("image", imagePart);
+        multipartBody.add(
+                "image",
+                imagePart
+        );
 
-        HttpHeaders requestHeaders = new HttpHeaders();
+        HttpHeaders requestHeaders =
+                new HttpHeaders();
 
         requestHeaders.setContentType(
                 MediaType.MULTIPART_FORM_DATA
+        );
+
+        requestHeaders.setAccept(
+                java.util.List.of(
+                        MediaType.APPLICATION_JSON
+                )
         );
 
         HttpEntity<MultiValueMap<String, Object>> request =
@@ -76,7 +97,8 @@ public class AiAnalysisClient {
         try {
             ResponseEntity<AiAnalysisResponse> response =
                     restTemplate.postForEntity(
-                            aiServiceBaseUrl + "/api/v1/analyze",
+                            aiServiceBaseUrl
+                                    + "/api/v1/analyze",
                             request,
                             AiAnalysisResponse.class
                     );
@@ -92,11 +114,52 @@ public class AiAnalysisClient {
 
             return responseBody;
 
+        } catch (ResourceAccessException exception) {
+            throw new AiServiceException(
+                    "AI analiz servisi zaman aşımına uğradı "
+                            + "veya servise bağlanılamadı.",
+                    exception
+            );
+
+        } catch (HttpStatusCodeException exception) {
+            throw new AiServiceException(
+                    "AI analiz servisi hata döndürdü. HTTP "
+                            + exception
+                            .getStatusCode()
+                            .value(),
+                    exception
+            );
+
         } catch (RestClientException exception) {
             throw new AiServiceException(
-                    "AI analiz servisine ulaşılamadı.",
+                    "AI analiz servisi ile iletişim "
+                            + "sırasında hata oluştu.",
                     exception
             );
         }
+    }
+
+    private static String normalizeBaseUrl(
+            String baseUrl
+    ) {
+        if (baseUrl == null
+                || baseUrl.isBlank()) {
+            throw new IllegalArgumentException(
+                    "AI servis adresi boş olamaz."
+            );
+        }
+
+        String normalized =
+                baseUrl.trim();
+
+        while (normalized.endsWith("/")) {
+            normalized =
+                    normalized.substring(
+                            0,
+                            normalized.length() - 1
+                    );
+        }
+
+        return normalized;
     }
 }
