@@ -8,7 +8,14 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.MediaType;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.http.CacheControl;
 
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 
 @RestController
@@ -51,6 +58,67 @@ public class DamageInspectionController {
                         authentication.getName()
                 )
         );
+    }
+
+    @GetMapping("/{inspectionId}/image")
+    public ResponseEntity<Resource>
+    getInspectionImage(
+            @PathVariable Long inspectionId,
+            Authentication authentication
+    ) {
+        Path imagePath =
+                inspectionService.getInspectionImage(
+                        inspectionId,
+                        authentication.getName()
+                );
+
+        try {
+            Resource resource =
+                    new UrlResource(
+                            imagePath.toUri()
+                    );
+
+            if (!resource.exists()
+                    || !resource.isReadable()) {
+
+                throw new IllegalStateException(
+                        "Fotoğraf okunamıyor."
+                );
+            }
+
+            String contentType =
+                    Files.probeContentType(
+                            imagePath
+                    );
+
+            if (contentType == null) {
+                contentType =
+                        MediaType.APPLICATION_OCTET_STREAM_VALUE;
+            }
+
+            return ResponseEntity.ok()
+                    .cacheControl(
+                            CacheControl.noStore()
+                    )
+                    .contentType(
+                            MediaType.parseMediaType(
+                                    contentType
+                            )
+                    )
+                    .body(resource);
+
+        } catch (MalformedURLException exception) {
+            throw new IllegalStateException(
+                    "Fotoğraf yolu geçersiz.",
+                    exception
+            );
+
+        } catch (IOException exception) {
+            throw new IllegalStateException(
+                    "Fotoğraf tipi belirlenemedi.",
+                    exception
+            );
+        }
     }
 
     @GetMapping("/{inspectionId}")

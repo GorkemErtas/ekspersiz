@@ -1,30 +1,30 @@
 package com.gorkem.vehicle_inspector.service;
 
 import com.gorkem.vehicle_inspector.client.AiAnalysisClient;
-import com.gorkem.vehicle_inspector.dto.response.AiAnalysisResponse;
-import com.gorkem.vehicle_inspector.dto.response.BoundingBoxResponse;
-import com.gorkem.vehicle_inspector.dto.response.DamageInspectionResponse;
-import com.gorkem.vehicle_inspector.dto.response.DetectedObjectResponse;
-import com.gorkem.vehicle_inspector.dto.response.InspectionReportResponse;
-import com.gorkem.vehicle_inspector.dto.response.RepairRecommendationResponse;
-import com.gorkem.vehicle_inspector.entity.DamageDetection;
-import com.gorkem.vehicle_inspector.entity.DamageInspection;
-import com.gorkem.vehicle_inspector.entity.DamageRepairRecommendation;
-import com.gorkem.vehicle_inspector.entity.InspectionReport;
-import com.gorkem.vehicle_inspector.entity.InspectionStatus;
-import com.gorkem.vehicle_inspector.entity.ReportStatus;
-import com.gorkem.vehicle_inspector.entity.User;
-import com.gorkem.vehicle_inspector.entity.Vehicle;
-import com.gorkem.vehicle_inspector.entity.VehiclePart;
+import com.gorkem.vehicle_inspector.dto.llm.InspectionLlmRequest;
+import com.gorkem.vehicle_inspector.dto.llm.LlmInspectionReportResult;
+import com.gorkem.vehicle_inspector.dto.response.*;
+import com.gorkem.vehicle_inspector.entity.*;
 import com.gorkem.vehicle_inspector.exception.ResourceNotFoundException;
 import com.gorkem.vehicle_inspector.mapper.DamageInspectionMapper;
+import com.gorkem.vehicle_inspector.mapper.InspectionLlmMapper;
 import com.gorkem.vehicle_inspector.mapper.InspectionReportMapper;
 import com.gorkem.vehicle_inspector.repository.DamageInspectionRepository;
 import com.gorkem.vehicle_inspector.repository.UserRepository;
 import com.gorkem.vehicle_inspector.repository.VehicleRepository;
 import com.gorkem.vehicle_inspector.service.report.GeminiInspectionReportService;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import org.springframework.stereotype.Service;
+
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.transaction.support.TransactionTemplate;
+
 import org.springframework.web.multipart.MultipartFile;
 
 import java.nio.file.Path;
@@ -37,6 +37,11 @@ import java.util.Set;
 @Service
 public class DamageInspectionService {
 
+    private static final Logger log =
+            LoggerFactory.getLogger(
+                    DamageInspectionService.class
+            );
+
     private final DamageInspectionRepository inspectionRepository;
     private final VehicleRepository vehicleRepository;
     private final UserRepository userRepository;
@@ -44,6 +49,7 @@ public class DamageInspectionService {
     private final AiAnalysisClient aiAnalysisClient;
     private final GeminiInspectionReportService
             geminiInspectionReportService;
+    private final TransactionTemplate transactionTemplate;
 
     public DamageInspectionService(
             DamageInspectionRepository inspectionRepository,
@@ -51,8 +57,8 @@ public class DamageInspectionService {
             UserRepository userRepository,
             FileStorageService fileStorageService,
             AiAnalysisClient aiAnalysisClient,
-            GeminiInspectionReportService
-                    geminiInspectionReportService
+            GeminiInspectionReportService geminiInspectionReportService,
+            PlatformTransactionManager transactionManager
     ) {
         this.inspectionRepository =
                 inspectionRepository;
@@ -71,6 +77,11 @@ public class DamageInspectionService {
 
         this.geminiInspectionReportService =
                 geminiInspectionReportService;
+
+        this.transactionTemplate =
+                new TransactionTemplate(
+                        transactionManager
+                );
     }
 
     private DamageInspectionResponse buildResponse(
@@ -93,9 +104,10 @@ public class DamageInspectionService {
             String city,
             String authenticatedEmail
     ) {
-        User user = findUserByEmail(
-                authenticatedEmail
-        );
+        User user =
+                findUserByEmail(
+                        authenticatedEmail
+                );
 
         Vehicle vehicle =
                 findVehicleByIdAndUserId(
@@ -141,9 +153,10 @@ public class DamageInspectionService {
     getMyInspections(
             String authenticatedEmail
     ) {
-        User user = findUserByEmail(
-                authenticatedEmail
-        );
+        User user =
+                findUserByEmail(
+                        authenticatedEmail
+                );
 
         return inspectionRepository
                 .findAllByUserIdOrderByCreatedAtDesc(
@@ -160,9 +173,10 @@ public class DamageInspectionService {
             Long inspectionId,
             String authenticatedEmail
     ) {
-        User user = findUserByEmail(
-                authenticatedEmail
-        );
+        User user =
+                findUserByEmail(
+                        authenticatedEmail
+                );
 
         DamageInspection inspection =
                 findInspectionByIdAndUserId(
@@ -175,15 +189,15 @@ public class DamageInspectionService {
         );
     }
 
-    @Transactional
-    public DamageInspectionResponse uploadInspectionImage(
+    @Transactional(readOnly = true)
+    public Path getInspectionImage(
             Long inspectionId,
-            MultipartFile image,
             String authenticatedEmail
     ) {
-        User user = findUserByEmail(
-                authenticatedEmail
-        );
+        User user =
+                findUserByEmail(
+                        authenticatedEmail
+                );
 
         DamageInspection inspection =
                 findInspectionByIdAndUserId(
@@ -191,13 +205,51 @@ public class DamageInspectionService {
                         user.getId()
                 );
 
+        validateImageExists(
+                inspection
+        );
+
+        return fileStorageService
+                .resolveStoredFile(
+                        inspection.getImagePath()
+                );
+    }
+
+    @Transactional
+    public DamageInspectionResponse uploadInspectionImage(
+            Long inspectionId,
+            MultipartFile image,
+            String authenticatedEmail
+    ) {
+        User user =
+                findUserByEmail(
+                        authenticatedEmail
+                );
+
+        DamageInspection inspection =
+                findInspectionByIdAndUserId(
+                        inspectionId,
+                        user.getId()
+                );
+
+        String previousImagePath =
+                inspection.getImagePath();
+
         String storedFilename =
                 fileStorageService.storeImage(
                         image
                 );
 
+        String newImagePath =
+                storedFilename;
+
+        registerImageCleanup(
+                previousImagePath,
+                newImagePath
+        );
+
         inspection.setImagePath(
-                "/uploads/" + storedFilename
+                newImagePath
         );
 
         inspection.clearDetections();
@@ -230,217 +282,595 @@ public class DamageInspectionService {
         );
     }
 
-    @Transactional
+    private void registerImageCleanup(
+            String previousImagePath,
+            String newImagePath
+    ) {
+        if (!TransactionSynchronizationManager
+                .isSynchronizationActive()) {
+
+            throw new IllegalStateException(
+                    "Fotoğraf işlemi aktif bir transaction gerektiriyor."
+            );
+        }
+
+        TransactionSynchronizationManager
+                .registerSynchronization(
+                        new TransactionSynchronization() {
+
+                            @Override
+                            public void afterCompletion(
+                                    int status
+                            ) {
+                                if (status ==
+                                        TransactionSynchronization
+                                                .STATUS_COMMITTED) {
+
+                                    deleteImageSafely(
+                                            previousImagePath
+                                    );
+
+                                } else {
+
+                                    deleteImageSafely(
+                                            newImagePath
+                                    );
+                                }
+                            }
+                        }
+                );
+    }
+
+    private void deleteImageSafely(
+            String imagePath
+    ) {
+        if (imagePath == null
+                || imagePath.isBlank()) {
+
+            return;
+        }
+
+        try {
+            fileStorageService
+                    .deleteStoredFile(
+                            imagePath
+                    );
+
+        } catch (RuntimeException exception) {
+
+            log.error(
+                    "Stored image could not be deleted: {}",
+                    imagePath,
+                    exception
+            );
+        }
+    }
+
     public DamageInspectionResponse analyzeInspection(
             Long inspectionId,
             String authenticatedEmail
     ) {
-        User user = findUserByEmail(
-                authenticatedEmail
-        );
+        AnalysisContext context =
+                transactionTemplate.execute(
+                        status -> {
 
-        DamageInspection inspection =
-                findInspectionByIdAndUserId(
-                        inspectionId,
-                        user.getId()
+                            User user =
+                                    findUserByEmail(
+                                            authenticatedEmail
+                                    );
+
+                            DamageInspection inspection =
+                                    findInspectionByIdAndUserId(
+                                            inspectionId,
+                                            user.getId()
+                                    );
+
+                            validateImageExists(
+                                    inspection
+                            );
+
+                            inspection.setStatus(
+                                    InspectionStatus.PROCESSING
+                            );
+
+                            inspection.setAnalysisMessage(
+                                    null
+                            );
+
+                            inspection.setCompletedAt(
+                                    null
+                            );
+
+                            inspectionRepository.save(
+                                    inspection
+                            );
+
+                            return new AnalysisContext(
+                                    inspection.getId(),
+                                    user.getId(),
+                                    inspection.getImagePath()
+                            );
+                        }
                 );
 
-        validateImageExists(
-                inspection
-        );
+        if (context == null) {
+            throw new IllegalStateException(
+                    "Analiz başlatılamadı."
+            );
+        }
 
-        inspection.setStatus(
-                InspectionStatus.PROCESSING
-        );
-
-        inspectionRepository.save(
-                inspection
-        );
+        AiAnalysisResponse aiResponse;
 
         try {
             Path storedImagePath =
-                    fileStorageService.resolveStoredFile(
-                            inspection.getImagePath()
-                    );
+                    fileStorageService
+                            .resolveStoredFile(
+                                    context.imagePath()
+                            );
 
-            AiAnalysisResponse aiResponse =
+            aiResponse =
                     aiAnalysisClient.analyze(
                             storedImagePath
                     );
 
-            inspection.clearDetections();
-            inspection.clearRepairRecommendations();
+        } catch (RuntimeException exception) {
 
-            saveDetections(
-                    inspection,
-                    aiResponse.getDetections()
+            return markAnalysisAsFailed(
+                    context,
+                    exception
+            );
+        }
+
+        return persistAnalysisResult(
+                context,
+                aiResponse
+        );
+    }
+
+    private DamageInspectionResponse persistAnalysisResult(
+            AnalysisContext context,
+            AiAnalysisResponse aiResponse
+    ) {
+        transactionTemplate.executeWithoutResult(
+                status -> {
+
+                    DamageInspection inspection =
+                            findInspectionByIdAndUserId(
+                                    context.inspectionId(),
+                                    context.userId()
+                            );
+
+                    inspection.clearDetections();
+                    inspection.clearRepairRecommendations();
+
+                    saveDetections(
+                            inspection,
+                            aiResponse.getDetections()
+                    );
+
+                    saveRepairRecommendations(
+                            inspection,
+                            aiResponse.getRepairRecommendations()
+                    );
+
+                    inspection.setDamageSeverity(
+                            aiResponse.getDamageSeverity()
+                    );
+
+                    inspection.setConfidenceScore(
+                            aiResponse.getConfidenceScore()
+                    );
+
+                    inspection.setAnalysisMessage(
+                            aiResponse.getAnalysisMessage()
+                    );
+
+                    inspection.setStatus(
+                            InspectionStatus.COMPLETED
+                    );
+
+                    inspection.setCompletedAt(
+                            LocalDateTime.now()
+                    );
+
+                    inspection.setReportStatus(
+                            ReportStatus.PROCESSING
+                    );
+
+                    inspection.setReportMessage(
+                            null
+                    );
+
+                    inspectionRepository.save(
+                            inspection
+                    );
+                }
+        );
+
+        generateReportOutsideTransaction(
+                context
+        );
+
+        DamageInspectionResponse response =
+                transactionTemplate.execute(
+                        status -> {
+
+                            DamageInspection inspection =
+                                    findInspectionByIdAndUserId(
+                                            context.inspectionId(),
+                                            context.userId()
+                                    );
+
+                            return buildResponse(
+                                    inspection
+                            );
+                        }
+                );
+
+        if (response == null) {
+            throw new IllegalStateException(
+                    "Analiz sonucu alınamadı."
+            );
+        }
+
+        return response;
+    }
+
+    private void generateReportOutsideTransaction(
+            AnalysisContext context
+    ) {
+        InspectionLlmRequest request =
+                transactionTemplate.execute(
+                        status -> {
+
+                            DamageInspection inspection =
+                                    findInspectionByIdAndUserId(
+                                            context.inspectionId(),
+                                            context.userId()
+                                    );
+
+                            return InspectionLlmMapper
+                                    .toRequest(
+                                            inspection
+                                    );
+                        }
+                );
+
+        if (request == null) {
+
+            markReportAsFailed(
+                    context.inspectionId(),
+                    context.userId()
             );
 
-            saveRepairRecommendations(
-                    inspection,
-                    aiResponse.getRepairRecommendations()
-            );
+            return;
+        }
 
-            inspection.setDamageSeverity(
-                    aiResponse.getDamageSeverity()
-            );
+        try {
+            LlmInspectionReportResult result =
+                    geminiInspectionReportService
+                            .generateReport(
+                                    request
+                            );
 
-            inspection.setConfidenceScore(
-                    aiResponse.getConfidenceScore()
-            );
-
-            inspection.setAnalysisMessage(
-                    aiResponse.getAnalysisMessage()
-            );
-
-            generateOrUpdateReport(
-                    inspection
-            );
-
-            inspection.setStatus(
-                    InspectionStatus.COMPLETED
-            );
-
-            inspection.setCompletedAt(
-                    LocalDateTime.now()
+            saveGeneratedReport(
+                    context.inspectionId(),
+                    context.userId(),
+                    result
             );
 
         } catch (RuntimeException exception) {
 
-            inspection.setStatus(
-                    InspectionStatus.FAILED
+            log.error(
+                    "Gemini report generation failed for inspection {}",
+                    context.inspectionId(),
+                    exception
             );
 
-            inspection.setAnalysisMessage(
-                    exception.getMessage()
+            markReportAsFailed(
+                    context.inspectionId(),
+                    context.userId()
             );
+        }
+    }
 
-            DamageInspection failedInspection =
-                    inspectionRepository.save(
-                            inspection
-                    );
-
-            return buildResponse(
-                    failedInspection
+    private void saveGeneratedReport(
+            Long inspectionId,
+            Long userId,
+            LlmInspectionReportResult result
+    ) {
+        if (result == null) {
+            throw new IllegalArgumentException(
+                    "Rapor sonucu boş olamaz."
             );
         }
 
-        DamageInspection savedInspection =
-                inspectionRepository.save(
-                        inspection
-                );
+        transactionTemplate.executeWithoutResult(
+                status -> {
 
-        return buildResponse(
-                savedInspection
+                    DamageInspection inspection =
+                            findInspectionByIdAndUserId(
+                                    inspectionId,
+                                    userId
+                            );
+
+                    InspectionReport generatedReport =
+                            new InspectionReport(
+                                    inspection,
+                                    result.title,
+                                    result.summary,
+                                    result.damageDescription,
+                                    result.repairRecommendation,
+                                    result.estimatedMinimumPrice,
+                                    result.estimatedMaximumPrice,
+                                    result.currency,
+                                    result.priceInformation,
+                                    result.priceSourceDescription,
+                                    result.disclaimer
+                            );
+
+                    InspectionReport existingReport =
+                            inspection.getReport();
+
+                    if (existingReport == null) {
+
+                        inspection.setReport(
+                                generatedReport
+                        );
+
+                    } else {
+
+                        existingReport.updateFrom(
+                                generatedReport
+                        );
+                    }
+
+                    inspection.setReportStatus(
+                            ReportStatus.COMPLETED
+                    );
+
+                    inspection.setReportMessage(
+                            null
+                    );
+
+                    inspectionRepository.save(
+                            inspection
+                    );
+                }
         );
     }
 
-    @Transactional
+    private void markReportAsFailed(
+            Long inspectionId,
+            Long userId
+    ) {
+        transactionTemplate.executeWithoutResult(
+                status -> {
+
+                    DamageInspection inspection =
+                            findInspectionByIdAndUserId(
+                                    inspectionId,
+                                    userId
+                            );
+
+                    inspection.setReportStatus(
+                            ReportStatus.FAILED
+                    );
+
+                    inspection.setReportMessage(
+                            "AI raporu şu anda oluşturulamadı."
+                    );
+
+                    inspectionRepository.save(
+                            inspection
+                    );
+                }
+        );
+    }
+
+    private DamageInspectionResponse markAnalysisAsFailed(
+            AnalysisContext context,
+            RuntimeException exception
+    ) {
+        log.error(
+                "Damage analysis failed for inspection {}",
+                context.inspectionId(),
+                exception
+        );
+
+        DamageInspectionResponse response =
+                transactionTemplate.execute(
+                        status -> {
+
+                            DamageInspection inspection =
+                                    findInspectionByIdAndUserId(
+                                            context.inspectionId(),
+                                            context.userId()
+                                    );
+
+                            inspection.setStatus(
+                                    InspectionStatus.FAILED
+                            );
+
+                            inspection.setCompletedAt(
+                                    null
+                            );
+
+                            inspection.setAnalysisMessage(
+                                    buildAnalysisErrorMessage(
+                                            exception
+                                    )
+                            );
+
+                            inspection.setReportStatus(
+                                    ReportStatus.FAILED
+                            );
+
+                            inspection.setReportMessage(
+                                    "ML analizi tamamlanamadığı için "
+                                            + "rapor oluşturulamadı."
+                            );
+
+                            DamageInspection savedInspection =
+                                    inspectionRepository.save(
+                                            inspection
+                                    );
+
+                            return buildResponse(
+                                    savedInspection
+                            );
+                        }
+                );
+
+        if (response == null) {
+            throw new IllegalStateException(
+                    "Analiz hata durumu kaydedilemedi."
+            );
+        }
+
+        return response;
+    }
+
+    private String buildAnalysisErrorMessage(
+            RuntimeException exception
+    ) {
+        if (exception instanceof IllegalStateException
+                && exception.getMessage() != null
+                && !exception.getMessage().isBlank()) {
+
+            return exception.getMessage();
+        }
+
+        return "Hasar analizi sırasında bir hata oluştu. "
+                + "Lütfen tekrar deneyin.";
+    }
+
     public DamageInspectionResponse regenerateReport(
             Long inspectionId,
             String authenticatedEmail
     ) {
-        User user = findUserByEmail(
-                authenticatedEmail
-        );
+        ReportGenerationContext context =
+                transactionTemplate.execute(
+                        status -> {
 
-        DamageInspection inspection =
-                findInspectionByIdAndUserId(
-                        inspectionId,
-                        user.getId()
-                );
+                            User user =
+                                    findUserByEmail(
+                                            authenticatedEmail
+                                    );
 
-        if (inspection.getStatus()
-                != InspectionStatus.COMPLETED) {
+                            DamageInspection inspection =
+                                    findInspectionByIdAndUserId(
+                                            inspectionId,
+                                            user.getId()
+                                    );
 
-            throw new IllegalStateException(
-                    "Rapor oluşturmak için ML analizi "
-                            + "tamamlanmış olmalıdır."
-            );
-        }
+                            if (inspection.getStatus()
+                                    != InspectionStatus.COMPLETED) {
 
-        if (inspection.getDamageSeverity() == null) {
-            throw new IllegalStateException(
-                    "İncelemeye ait ML analiz sonucu "
-                            + "bulunamadı."
-            );
-        }
+                                throw new IllegalStateException(
+                                        "Rapor oluşturmak için ML analizi "
+                                                + "tamamlanmış olmalıdır."
+                                );
+                            }
 
-        generateOrUpdateReport(
-                inspection
-        );
+                            if (inspection.getDamageSeverity()
+                                    == null) {
 
-        DamageInspection savedInspection =
-                inspectionRepository.save(
-                        inspection
-                );
+                                throw new IllegalStateException(
+                                        "İncelemeye ait ML analiz sonucu "
+                                                + "bulunamadı."
+                                );
+                            }
 
-        return buildResponse(
-                savedInspection
-        );
-    }
+                            inspection.setReportStatus(
+                                    ReportStatus.PROCESSING
+                            );
 
-    private void generateOrUpdateReport(
-            DamageInspection inspection
-    ) {
-        inspection.setReportStatus(
-                ReportStatus.PROCESSING
-        );
+                            inspection.setReportMessage(
+                                    null
+                            );
 
-        inspection.setReportMessage(null);
-
-        try {
-            InspectionReport generatedReport =
-                    geminiInspectionReportService
-                            .generateReport(
+                            inspectionRepository.save(
                                     inspection
                             );
 
-            InspectionReport existingReport =
-                    inspection.getReport();
+                            InspectionLlmRequest request =
+                                    InspectionLlmMapper
+                                            .toRequest(
+                                                    inspection
+                                            );
 
-            if (existingReport == null) {
-
-                inspection.setReport(
-                        generatedReport
+                            return new ReportGenerationContext(
+                                    inspection.getId(),
+                                    user.getId(),
+                                    request
+                            );
+                        }
                 );
 
-            } else {
-
-                existingReport.updateFrom(
-                        generatedReport
-                );
-            }
-
-            inspection.setReportStatus(
-                    ReportStatus.COMPLETED
+        if (context == null) {
+            throw new IllegalStateException(
+                    "Rapor oluşturma işlemi başlatılamadı."
             );
+        }
 
-            inspection.setReportMessage(null);
+        try {
+            LlmInspectionReportResult result =
+                    geminiInspectionReportService
+                            .generateReport(
+                                    context.request()
+                            );
+
+            saveGeneratedReport(
+                    context.inspectionId(),
+                    context.userId(),
+                    result
+            );
 
         } catch (RuntimeException exception) {
 
-            System.err.println(
-                    "GEMINI ERROR: "
-                            + exception.getMessage()
+            log.error(
+                    "Gemini report regeneration failed for inspection {}",
+                    context.inspectionId(),
+                    exception
             );
 
-            inspection.setReportStatus(
-                    ReportStatus.FAILED
-            );
-
-            inspection.setReportMessage(
-                    "AI raporu şu anda oluşturulamadı."
+            markReportAsFailed(
+                    context.inspectionId(),
+                    context.userId()
             );
         }
+
+        DamageInspectionResponse response =
+                transactionTemplate.execute(
+                        status -> {
+
+                            DamageInspection inspection =
+                                    findInspectionByIdAndUserId(
+                                            context.inspectionId(),
+                                            context.userId()
+                                    );
+
+                            return buildResponse(
+                                    inspection
+                            );
+                        }
+                );
+
+        if (response == null) {
+            throw new IllegalStateException(
+                    "Rapor sonucu alınamadı."
+            );
+        }
+
+        return response;
     }
 
     private void validateImageExists(
             DamageInspection inspection
     ) {
         if (inspection.getImagePath() == null
-                || inspection.getImagePath()
-                .isBlank()) {
+                || inspection.getImagePath().isBlank()) {
 
             throw new IllegalStateException(
                     "Analizden önce fotoğraf "
@@ -468,8 +898,7 @@ public class DamageInspectionService {
             }
 
             BoundingBoxResponse boundingBox =
-                    detectedObject
-                            .getBoundingBox();
+                    detectedObject.getBoundingBox();
 
             if (boundingBox.getX1() == null
                     || boundingBox.getY1() == null
@@ -483,10 +912,8 @@ public class DamageInspectionService {
                     new DamageDetection(
                             inspection,
                             detectedObject.getLabel(),
-                            detectedObject
-                                    .getConfidence(),
-                            detectedObject
-                                    .getAffectedPart(),
+                            detectedObject.getConfidence(),
+                            detectedObject.getAffectedPart(),
                             boundingBox.getX1(),
                             boundingBox.getY1(),
                             boundingBox.getX2(),
@@ -513,8 +940,8 @@ public class DamageInspectionService {
 
             if (response == null
                     || response.getDamageType() == null
-                    || response
-                    .getRecommendedAction() == null) {
+                    || response.getRecommendedAction()
+                    == null) {
 
                 continue;
             }
@@ -527,9 +954,10 @@ public class DamageInspectionService {
                 response.getAffectedParts()
                         .stream()
                         .filter(Objects::nonNull)
-                        .filter(part ->
-                                part
-                                        != VehiclePart.UNKNOWN
+                        .filter(
+                                part ->
+                                        part
+                                                != VehiclePart.UNKNOWN
                         )
                         .forEach(
                                 recommendationParts::add
@@ -540,8 +968,7 @@ public class DamageInspectionService {
                     new DamageRepairRecommendation(
                             inspection,
                             response.getDamageType(),
-                            response
-                                    .getRecommendedAction(),
+                            response.getRecommendedAction(),
                             Boolean.TRUE.equals(
                                     response
                                             .getPartReplacementRequired()
@@ -563,10 +990,11 @@ public class DamageInspectionService {
                         email.trim()
                                 .toLowerCase()
                 )
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Kullanıcı bulunamadı."
-                        )
+                .orElseThrow(
+                        () ->
+                                new ResourceNotFoundException(
+                                        "Kullanıcı bulunamadı."
+                                )
                 );
     }
 
@@ -580,12 +1008,13 @@ public class DamageInspectionService {
                         inspectionId,
                         userId
                 )
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Hasar incelemesi "
-                                        + "bulunamadı. ID: "
-                                        + inspectionId
-                        )
+                .orElseThrow(
+                        () ->
+                                new ResourceNotFoundException(
+                                        "Hasar incelemesi "
+                                                + "bulunamadı. ID: "
+                                                + inspectionId
+                                )
                 );
     }
 
@@ -598,11 +1027,12 @@ public class DamageInspectionService {
                         vehicleId,
                         userId
                 )
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Araç bulunamadı. ID: "
-                                        + vehicleId
-                        )
+                .orElseThrow(
+                        () ->
+                                new ResourceNotFoundException(
+                                        "Araç bulunamadı. ID: "
+                                                + vehicleId
+                                )
                 );
     }
 
@@ -620,5 +1050,19 @@ public class DamageInspectionService {
         }
 
         return normalized;
+    }
+
+    private record AnalysisContext(
+            Long inspectionId,
+            Long userId,
+            String imagePath
+    ) {
+    }
+
+    private record ReportGenerationContext(
+            Long inspectionId,
+            Long userId,
+            InspectionLlmRequest request
+    ) {
     }
 }

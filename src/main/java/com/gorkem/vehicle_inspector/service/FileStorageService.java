@@ -3,7 +3,6 @@ package com.gorkem.vehicle_inspector.service;
 import com.gorkem.vehicle_inspector.exception.FileStorageException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -16,7 +15,11 @@ import java.util.UUID;
 @Service
 public class FileStorageService {
 
-    private static final Set<String> ALLOWED_CONTENT_TYPES =
+    private static final long MAX_FILE_SIZE =
+            10L * 1024 * 1024;
+
+    private static final Set<String>
+            ALLOWED_CONTENT_TYPES =
             Set.of(
                     "image/jpeg",
                     "image/png",
@@ -29,33 +32,36 @@ public class FileStorageService {
             @Value("${application.storage.upload-dir}")
             String uploadDirectory
     ) {
-        this.uploadDirectory = Path.of(uploadDirectory)
-                .toAbsolutePath()
-                .normalize();
+        this.uploadDirectory =
+                Path.of(uploadDirectory)
+                        .toAbsolutePath()
+                        .normalize();
 
         createUploadDirectory();
     }
 
-    public String storeImage(MultipartFile file) {
+    public String storeImage(
+            MultipartFile file
+    ) {
         validateFile(file);
 
-        String originalFilename =
-                StringUtils.cleanPath(
-                        file.getOriginalFilename() == null
-                                ? "image"
-                                : file.getOriginalFilename()
+        String extension =
+                getExtensionFromContentType(
+                        file.getContentType()
                 );
 
-        String extension = getExtension(originalFilename);
-
         String storedFilename =
-                UUID.randomUUID() + extension;
+                UUID.randomUUID()
+                        + extension;
 
         Path destination =
-                uploadDirectory.resolve(storedFilename)
+                uploadDirectory
+                        .resolve(storedFilename)
                         .normalize();
 
-        if (!destination.startsWith(uploadDirectory)) {
+        if (!destination.startsWith(
+                uploadDirectory
+        )) {
             throw new FileStorageException(
                     "Geçersiz dosya yolu."
             );
@@ -65,7 +71,8 @@ public class FileStorageService {
             Files.copy(
                     file.getInputStream(),
                     destination,
-                    StandardCopyOption.REPLACE_EXISTING
+                    StandardCopyOption
+                            .REPLACE_EXISTING
             );
         } catch (IOException exception) {
             throw new FileStorageException(
@@ -77,9 +84,89 @@ public class FileStorageService {
         return storedFilename;
     }
 
+    public Path resolveStoredFile(
+            String imagePath
+    ) {
+        if (imagePath == null
+                || imagePath.isBlank()) {
+
+            throw new FileStorageException(
+                    "İncelemeye ait fotoğraf bulunamadı."
+            );
+        }
+
+        String filename =
+                Path.of(imagePath)
+                        .getFileName()
+                        .toString();
+
+        Path resolvedPath =
+                uploadDirectory
+                        .resolve(filename)
+                        .normalize();
+
+        if (!resolvedPath.startsWith(
+                uploadDirectory
+        )) {
+            throw new FileStorageException(
+                    "Geçersiz fotoğraf yolu."
+            );
+        }
+
+        if (!Files.isRegularFile(
+                resolvedPath
+        )) {
+            throw new FileStorageException(
+                    "Fotoğraf dosyası bulunamadı."
+            );
+        }
+
+        return resolvedPath;
+    }
+
+    public void deleteStoredFile(
+            String imagePath
+    ) {
+        if (imagePath == null
+                || imagePath.isBlank()) {
+            return;
+        }
+
+        String filename =
+                Path.of(imagePath)
+                        .getFileName()
+                        .toString();
+
+        Path resolvedPath =
+                uploadDirectory
+                        .resolve(filename)
+                        .normalize();
+
+        if (!resolvedPath.startsWith(
+                uploadDirectory
+        )) {
+            throw new FileStorageException(
+                    "Geçersiz fotoğraf yolu."
+            );
+        }
+
+        try {
+            Files.deleteIfExists(
+                    resolvedPath
+            );
+        } catch (IOException exception) {
+            throw new FileStorageException(
+                    "Fotoğraf silinemedi.",
+                    exception
+            );
+        }
+    }
+
     private void createUploadDirectory() {
         try {
-            Files.createDirectories(uploadDirectory);
+            Files.createDirectories(
+                    uploadDirectory
+            );
         } catch (IOException exception) {
             throw new FileStorageException(
                     "Upload klasörü oluşturulamadı.",
@@ -88,60 +175,120 @@ public class FileStorageService {
         }
     }
 
-    private void validateFile(MultipartFile file) {
-        if (file == null || file.isEmpty()) {
+    private void validateFile(
+            MultipartFile file
+    ) {
+        if (file == null
+                || file.isEmpty()) {
+
             throw new FileStorageException(
                     "Yüklenecek fotoğraf boş olamaz."
             );
         }
 
-        String contentType = file.getContentType();
+        if (file.getSize()
+                > MAX_FILE_SIZE) {
+
+            throw new FileStorageException(
+                    "Fotoğraf boyutu en fazla "
+                            + "10 MB olabilir."
+            );
+        }
+
+        String contentType =
+                file.getContentType();
 
         if (contentType == null
-                || !ALLOWED_CONTENT_TYPES.contains(contentType)) {
+                || !ALLOWED_CONTENT_TYPES
+                .contains(contentType)) {
+
             throw new FileStorageException(
-                    "Yalnızca JPG, PNG veya WEBP yüklenebilir."
+                    "Yalnızca JPG, PNG veya WEBP "
+                            + "yüklenebilir."
+            );
+        }
+
+        validateFileSignature(
+                file,
+                contentType
+        );
+    }
+
+    private void validateFileSignature(
+            MultipartFile file,
+            String contentType
+    ) {
+        try {
+            byte[] header =
+                    file.getInputStream()
+                            .readNBytes(12);
+
+            boolean valid =
+                    switch (contentType) {
+
+                        case "image/jpeg" ->
+                                header.length >= 3
+                                        && (header[0] & 0xFF)
+                                        == 0xFF
+                                        && (header[1] & 0xFF)
+                                        == 0xD8
+                                        && (header[2] & 0xFF)
+                                        == 0xFF;
+
+                        case "image/png" ->
+                                header.length >= 8
+                                        && (header[0] & 0xFF)
+                                        == 0x89
+                                        && header[1] == 0x50
+                                        && header[2] == 0x4E
+                                        && header[3] == 0x47
+                                        && header[4] == 0x0D
+                                        && header[5] == 0x0A
+                                        && header[6] == 0x1A
+                                        && header[7] == 0x0A;
+
+                        case "image/webp" ->
+                                header.length >= 12
+                                        && header[0] == 'R'
+                                        && header[1] == 'I'
+                                        && header[2] == 'F'
+                                        && header[3] == 'F'
+                                        && header[8] == 'W'
+                                        && header[9] == 'E'
+                                        && header[10] == 'B'
+                                        && header[11] == 'P';
+
+                        default -> false;
+                    };
+
+            if (!valid) {
+                throw new FileStorageException(
+                        "Dosya içeriği geçerli "
+                                + "bir fotoğraf değil."
+                );
+            }
+
+        } catch (IOException exception) {
+            throw new FileStorageException(
+                    "Fotoğraf doğrulanamadı.",
+                    exception
             );
         }
     }
 
-    private String getExtension(String filename) {
-        int dotIndex = filename.lastIndexOf(".");
+    private String getExtensionFromContentType(
+            String contentType
+    ) {
+        return switch (contentType) {
+            case "image/jpeg" -> ".jpg";
+            case "image/png" -> ".png";
+            case "image/webp" -> ".webp";
 
-        if (dotIndex < 0) {
-            return ".jpg";
-        }
-
-        return filename.substring(dotIndex).toLowerCase();
-    }
-
-    public Path resolveStoredFile(String imagePath) {
-        if (imagePath == null || imagePath.isBlank()) {
-            throw new FileStorageException(
-                    "İncelemeye ait fotoğraf bulunamadı."
-            );
-        }
-
-        String filename = Path.of(imagePath)
-                .getFileName()
-                .toString();
-
-        Path resolvedPath = uploadDirectory
-                .resolve(filename)
-                .normalize();
-
-        if (!resolvedPath.startsWith(uploadDirectory)) {
-            throw new FileStorageException(
-                    "Geçersiz fotoğraf yolu."
-            );
-        }
-
-        if (!Files.exists(resolvedPath)) {
-            throw new FileStorageException(
-                    "Fotoğraf dosyası bulunamadı."
-            );
-        }
-
-        return resolvedPath;
+            default ->
+                    throw new FileStorageException(
+                            "Desteklenmeyen "
+                                    + "fotoğraf formatı."
+                    );
+        };
     }
 }
