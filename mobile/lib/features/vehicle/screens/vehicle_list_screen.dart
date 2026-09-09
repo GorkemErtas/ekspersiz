@@ -34,7 +34,10 @@ class _VehicleListScreenState
   Future<void> _refreshVehicles() async {
     setState(_loadVehicles);
 
-    await _vehiclesFuture;
+    try {
+      await _vehiclesFuture;
+    } catch (_) {
+    }
   }
 
   Future<void> _openAddVehicleScreen() async {
@@ -118,9 +121,11 @@ class _VehicleListScreenState
             if (snapshot.hasError) {
               final error = snapshot.error;
 
-              final message = error is ApiException
-                  ? error.message
-                  : 'Araçlar yüklenemedi.';
+              final message = switch (error) {
+                ApiException() => error.message,
+                FormatException() => error.message,
+                _ => 'Araçlar yüklenemedi.',
+              };
 
               return _VehicleErrorState(
                 message: message,
@@ -157,7 +162,6 @@ class _VehicleListScreenState
                   final vehicle = vehicles[index];
 
                   return AppCard(
-                    onTap: () {},
                     child: Row(
                       children: [
                         Container(
@@ -170,7 +174,8 @@ class _VehicleListScreenState
                             BorderRadius.circular(18),
                           ),
                           child: Icon(
-                            Icons.directions_car_filled_outlined,
+                            Icons
+                                .directions_car_filled_outlined,
                             color: colorScheme.primary,
                             size: 30,
                           ),
@@ -185,12 +190,14 @@ class _VehicleListScreenState
                                 vehicle.displayName,
                                 style: const TextStyle(
                                   fontSize: 17,
-                                  fontWeight: FontWeight.w800,
+                                  fontWeight:
+                                  FontWeight.w800,
                                 ),
                               ),
                               const SizedBox(height: 5),
                               Text(
-                                '${vehicle.plate} • ${vehicle.modelYear}',
+                                '${vehicle.plate} • '
+                                    '${vehicle.modelYear}',
                                 style: TextStyle(
                                   color: colorScheme
                                       .onSurfaceVariant,
@@ -207,11 +214,6 @@ class _VehicleListScreenState
                               ),
                             ],
                           ),
-                        ),
-                        Icon(
-                          Icons.chevron_right_rounded,
-                          color:
-                          colorScheme.onSurfaceVariant,
                         ),
                       ],
                     ),
