@@ -152,9 +152,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
   String _severityLabel(String? severity) {
     return switch (severity) {
+      'NONE' => 'Görünür Hasar Tespit Edilmedi',
       'MINOR' => 'Hafif Seviyeli Hasar',
       'MODERATE' => 'Orta Seviyeli Hasar',
       'SEVERE' => 'Ağır Seviyeli Hasar',
+      'UNKNOWN' => 'Hasar Seviyesi Belirsiz',
       _ => 'Analiz Bekleniyor',
     };
   }
@@ -176,16 +178,28 @@ class _HomeScreenState extends State<HomeScreen> {
 
   String _vehiclePartLabel(String part) {
     return switch (part) {
-      'HEADLIGHT' => 'Far',
-      'GRILLE' => 'Ön ızgara',
-      'FRONT_BUMPER' => 'Ön tampon',
-      'REAR_BUMPER' => 'Arka tampon',
-      'HOOD' => 'Kaput',
+      'UNKNOWN' => 'Bilinmeyen Parça',
+      'FRONT_BUMPER' => 'Ön Tampon',
+      'REAR_BUMPER' => 'Arka Tampon',
+      'FRONT_DOOR' => 'Ön Kapı',
+      'REAR_DOOR' => 'Arka Kapı',
+      'FRONT_WHEEL' => 'Ön Tekerlek',
+      'REAR_WHEEL' => 'Arka Tekerlek',
+      'FRONT_WINDOW' => 'Ön Yan Cam',
+      'REAR_WINDOW' => 'Arka Yan Cam',
+      'WINDSHIELD' => 'Ön Cam',
+      'REAR_WINDSHIELD' => 'Arka Cam',
       'FENDER' => 'Çamurluk',
-      'FRONT_DOOR' => 'Ön kapı',
-      'REAR_DOOR' => 'Arka kapı',
-      'FRONT_WHEEL' => 'Ön tekerlek',
-      'REAR_WHEEL' => 'Arka tekerlek',
+      'QUARTER_PANEL' => 'Arka Çamurluk Paneli',
+      'ROCKER_PANEL' => 'Marşpiyel',
+      'GRILLE' => 'Ön Izgara',
+      'HEADLIGHT' => 'Far',
+      'TAIL_LIGHT' => 'Arka Stop Lambası',
+      'HOOD' => 'Kaput',
+      'LICENSE_PLATE' => 'Plaka',
+      'MIRROR' => 'Yan Ayna',
+      'ROOF' => 'Tavan',
+      'TRUNK' => 'Bagaj Kapağı',
       _ => part,
     };
   }

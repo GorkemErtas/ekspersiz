@@ -2,19 +2,19 @@ package com.gorkem.vehicle_inspector.service.report;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.genai.types.Schema;
-import com.google.genai.types.Type;
 import com.google.genai.Client;
 import com.google.genai.types.GenerateContentConfig;
 import com.google.genai.types.GenerateContentResponse;
+import com.google.genai.types.Schema;
+import com.google.genai.types.Type;
 import com.gorkem.vehicle_inspector.dto.llm.InspectionLlmRequest;
 import com.gorkem.vehicle_inspector.dto.llm.LlmInspectionReportResult;
-import com.gorkem.vehicle_inspector.entity.DamageInspection;
-import com.gorkem.vehicle_inspector.entity.InspectionReport;
-import com.gorkem.vehicle_inspector.mapper.InspectionLlmMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+
 import java.math.BigDecimal;
+import java.util.List;
+import java.util.Map;
 
 @Service
 public class GeminiInspectionReportService {
@@ -34,14 +34,14 @@ public class GeminiInspectionReportService {
         this.model = model;
     }
 
-    public InspectionReport generateReport(
-            DamageInspection inspection
+    public LlmInspectionReportResult generateReport(
+            InspectionLlmRequest request
     ) {
-
-        InspectionLlmRequest request =
-                InspectionLlmMapper.toRequest(
-                        inspection
-                );
+        if (request == null) {
+            throw new IllegalArgumentException(
+                    "Rapor isteği boş olamaz."
+            );
+        }
 
         String prompt =
                 InspectionReportPromptBuilder.build(
@@ -66,6 +66,12 @@ public class GeminiInspectionReportService {
                         config
                 );
 
+        if (response == null) {
+            throw new IllegalStateException(
+                    "Gemini yanıt döndürmedi."
+            );
+        }
+
         String responseText =
                 response.text();
 
@@ -82,21 +88,11 @@ public class GeminiInspectionReportService {
                         responseText
                 );
 
-        validateResult(result);
-
-        return new InspectionReport(
-                inspection,
-                result.title,
-                result.summary,
-                result.damageDescription,
-                result.repairRecommendation,
-                result.estimatedMinimumPrice,
-                result.estimatedMaximumPrice,
-                result.currency,
-                result.priceInformation,
-                result.priceSourceDescription,
-                result.disclaimer
+        validateResult(
+                result
         );
+
+        return result;
     }
 
     private Schema createResponseSchema() {
@@ -104,7 +100,7 @@ public class GeminiInspectionReportService {
         return Schema.builder()
                 .type(Type.Known.OBJECT)
                 .properties(
-                        java.util.Map.of(
+                        Map.of(
                                 "title",
                                 Schema.builder()
                                         .type(Type.Known.STRING)
@@ -139,7 +135,7 @@ public class GeminiInspectionReportService {
                                 Schema.builder()
                                         .type(Type.Known.STRING)
                                         .enum_(
-                                                java.util.List.of(
+                                                List.of(
                                                         "TRY"
                                                 )
                                         )
@@ -162,7 +158,7 @@ public class GeminiInspectionReportService {
                         )
                 )
                 .required(
-                        java.util.List.of(
+                        List.of(
                                 "title",
                                 "summary",
                                 "damageDescription",
@@ -207,21 +203,40 @@ public class GeminiInspectionReportService {
             );
         }
 
-        if (result.title == null
-                || result.title.isBlank()) {
+        validateRequiredText(
+                result.title,
+                "Gemini rapor başlığı oluşturmadı."
+        );
 
-            throw new IllegalStateException(
-                    "Gemini rapor başlığı oluşturmadı."
-            );
-        }
+        validateRequiredText(
+                result.summary,
+                "Gemini rapor özeti oluşturmadı."
+        );
 
-        if (result.summary == null
-                || result.summary.isBlank()) {
+        validateRequiredText(
+                result.damageDescription,
+                "Gemini hasar açıklaması oluşturmadı."
+        );
 
-            throw new IllegalStateException(
-                    "Gemini rapor özeti oluşturmadı."
-            );
-        }
+        validateRequiredText(
+                result.repairRecommendation,
+                "Gemini onarım önerisi oluşturmadı."
+        );
+
+        validateRequiredText(
+                result.priceInformation,
+                "Gemini fiyat bilgisi oluşturmadı."
+        );
+
+        validateRequiredText(
+                result.priceSourceDescription,
+                "Gemini fiyat kaynağı açıklaması oluşturmadı."
+        );
+
+        validateRequiredText(
+                result.disclaimer,
+                "Gemini uyarı metni oluşturmadı."
+        );
 
         if (result.estimatedMinimumPrice == null
                 || result.estimatedMaximumPrice == null) {
@@ -248,13 +263,17 @@ public class GeminiInspectionReportService {
             );
         }
 
-        if (!"TRY".equalsIgnoreCase(
-                result.currency
+        if (result.currency == null
+                || !"TRY".equalsIgnoreCase(
+                result.currency.trim()
         )) {
+
             throw new IllegalStateException(
                     "Gemini geçersiz para birimi döndürdü."
             );
         }
+
+        result.currency = "TRY";
 
         BigDecimal priceDifference =
                 result.estimatedMaximumPrice.subtract(
@@ -264,10 +283,24 @@ public class GeminiInspectionReportService {
         if (priceDifference.compareTo(
                 BigDecimal.valueOf(10_000)
         ) > 0) {
+
             result.estimatedMaximumPrice =
                     result.estimatedMinimumPrice.add(
                             BigDecimal.valueOf(10_000)
                     );
+        }
+    }
+
+    private void validateRequiredText(
+            String value,
+            String errorMessage
+    ) {
+        if (value == null
+                || value.isBlank()) {
+
+            throw new IllegalStateException(
+                    errorMessage
+            );
         }
     }
 }

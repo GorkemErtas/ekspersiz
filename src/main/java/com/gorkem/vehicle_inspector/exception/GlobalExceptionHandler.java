@@ -1,10 +1,14 @@
 package com.gorkem.vehicle_inspector.exception;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
@@ -13,8 +17,14 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    private static final Logger log =
+            LoggerFactory.getLogger(
+                    GlobalExceptionHandler.class
+            );
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiErrorResponse> handleValidationException(
+    public ResponseEntity<ApiErrorResponse>
+    handleValidationException(
             MethodArgumentNotValidException exception
     ) {
         Map<String, String> validationErrors =
@@ -29,64 +39,95 @@ public class GlobalExceptionHandler {
                         )
                 );
 
-        ApiErrorResponse response = new ApiErrorResponse(
-                LocalDateTime.now(),
-                HttpStatus.BAD_REQUEST.value(),
+        return buildResponse(
+                HttpStatus.BAD_REQUEST,
                 "Gönderilen bilgiler geçersiz.",
                 validationErrors
         );
-
-        return ResponseEntity
-                .badRequest()
-                .body(response);
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<ApiErrorResponse> handleResourceNotFoundException(
+    public ResponseEntity<ApiErrorResponse>
+    handleResourceNotFoundException(
             ResourceNotFoundException exception
     ) {
-        ApiErrorResponse response = new ApiErrorResponse(
-                LocalDateTime.now(),
-                HttpStatus.NOT_FOUND.value(),
-                exception.getMessage(),
-                Map.of()
+        return buildResponse(
+                HttpStatus.NOT_FOUND,
+                exception.getMessage()
         );
-
-        return ResponseEntity
-                .status(HttpStatus.NOT_FOUND)
-                .body(response);
     }
 
     @ExceptionHandler(DuplicateResourceException.class)
-    public ResponseEntity<ApiErrorResponse> handleDuplicateResourceException(
+    public ResponseEntity<ApiErrorResponse>
+    handleDuplicateResourceException(
             DuplicateResourceException exception
     ) {
-        ApiErrorResponse response = new ApiErrorResponse(
-                LocalDateTime.now(),
-                HttpStatus.CONFLICT.value(),
-                exception.getMessage(),
-                Map.of()
+        return buildResponse(
+                HttpStatus.CONFLICT,
+                exception.getMessage()
         );
-
-        return ResponseEntity
-                .status(HttpStatus.CONFLICT)
-                .body(response);
     }
 
     @ExceptionHandler(FileStorageException.class)
-    public ResponseEntity<ApiErrorResponse> handleFileStorageException(
+    public ResponseEntity<ApiErrorResponse>
+    handleFileStorageException(
             FileStorageException exception
     ) {
-        ApiErrorResponse response = new ApiErrorResponse(
-                LocalDateTime.now(),
-                HttpStatus.BAD_REQUEST.value(),
-                exception.getMessage(),
-                Map.of()
+        return buildResponse(
+                HttpStatus.BAD_REQUEST,
+                exception.getMessage()
+        );
+    }
+
+    @ExceptionHandler(AiServiceException.class)
+    public ResponseEntity<ApiErrorResponse>
+    handleAiServiceException(
+            AiServiceException exception
+    ) {
+        log.error(
+                "AI service error",
+                exception
         );
 
-        return ResponseEntity
-                .badRequest()
-                .body(response);
+        return buildResponse(
+                HttpStatus.BAD_GATEWAY,
+                exception.getMessage()
+        );
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ApiErrorResponse>
+    handleMaxUploadSizeExceededException(
+            MaxUploadSizeExceededException exception
+    ) {
+        return buildResponse(
+                HttpStatus.PAYLOAD_TOO_LARGE,
+                "Yüklenen fotoğraf izin verilen "
+                        + "maksimum boyutu aşıyor."
+        );
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiErrorResponse>
+    handleHttpMessageNotReadableException(
+            HttpMessageNotReadableException exception
+    ) {
+        return buildResponse(
+                HttpStatus.BAD_REQUEST,
+                "İstek gövdesi okunamadı veya "
+                        + "geçersiz JSON formatında."
+        );
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiErrorResponse>
+    handleIllegalArgumentException(
+            IllegalArgumentException exception
+    ) {
+        return buildResponse(
+                HttpStatus.BAD_REQUEST,
+                exception.getMessage()
+        );
     }
 
     @ExceptionHandler(IllegalStateException.class)
@@ -94,16 +135,54 @@ public class GlobalExceptionHandler {
     handleIllegalStateException(
             IllegalStateException exception
     ) {
+        return buildResponse(
+                HttpStatus.BAD_REQUEST,
+                exception.getMessage()
+        );
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiErrorResponse>
+    handleUnexpectedException(
+            Exception exception
+    ) {
+        log.error(
+                "Unexpected server error",
+                exception
+        );
+
+        return buildResponse(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                "Beklenmeyen bir sunucu hatası oluştu."
+        );
+    }
+
+    private ResponseEntity<ApiErrorResponse> buildResponse(
+            HttpStatus status,
+            String message
+    ) {
+        return buildResponse(
+                status,
+                message,
+                Map.of()
+        );
+    }
+
+    private ResponseEntity<ApiErrorResponse> buildResponse(
+            HttpStatus status,
+            String message,
+            Map<String, String> errors
+    ) {
         ApiErrorResponse response =
                 new ApiErrorResponse(
                         LocalDateTime.now(),
-                        HttpStatus.BAD_REQUEST.value(),
-                        exception.getMessage(),
-                        Map.of()
+                        status.value(),
+                        message,
+                        errors
                 );
 
         return ResponseEntity
-                .badRequest()
+                .status(status)
                 .body(response);
     }
 }
