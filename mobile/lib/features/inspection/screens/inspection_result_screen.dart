@@ -76,14 +76,15 @@ class _InspectionResultScreenState
     }
   }
 
-  String _severityLabel(
+  String _severityDisplayText(
       String? severity,
       ) {
     return switch (severity) {
-      'MINOR' => 'Hafif',
-      'MODERATE' => 'Orta',
-      'SEVERE' => 'Ağır',
-      _ => 'Belirsiz',
+      'NONE' => 'Görünür Hasar Tespit Edilmedi',
+      'MINOR' => 'Hafif Seviye Hasar',
+      'MODERATE' => 'Orta Seviye Hasar',
+      'SEVERE' => 'Ağır Seviye Hasar',
+      _ => 'Hasar Seviyesi Belirsiz',
     };
   }
 
@@ -91,9 +92,14 @@ class _InspectionResultScreenState
       String type,
       ) {
     return switch (type) {
-      'BROKEN_PART' => 'Kırık Parça',
-      'DENT' => 'Göçük',
+      'NO_VISIBLE_DAMAGE' => 'Görünür Hasar Yok',
       'SCRATCH' => 'Çizik',
+      'PAINT_DAMAGE' => 'Boya Hasarı',
+      'DENT' => 'Göçük',
+      'CRACK' => 'Çatlak',
+      'BROKEN_PART' => 'Kırık Parça',
+      'BROKEN_GLASS' => 'Kırık Cam',
+      'DEFORMATION' => 'Deformasyon',
       _ => type,
     };
   }
@@ -102,28 +108,75 @@ class _InspectionResultScreenState
       String part,
       ) {
     return switch (part) {
-      'HEADLIGHT' => 'Far',
-      'GRILLE' => 'Ön Izgara',
+      'UNKNOWN' => 'Bilinmeyen Parça',
+
       'FRONT_BUMPER' => 'Ön Tampon',
       'REAR_BUMPER' => 'Arka Tampon',
-      'HOOD' => 'Kaput',
-      'FENDER' => 'Çamurluk',
+
       'FRONT_DOOR' => 'Ön Kapı',
       'REAR_DOOR' => 'Arka Kapı',
+
       'FRONT_WHEEL' => 'Ön Tekerlek',
       'REAR_WHEEL' => 'Arka Tekerlek',
+
+      'FRONT_WINDOW' => 'Ön Yan Cam',
+      'REAR_WINDOW' => 'Arka Yan Cam',
+
+      'WINDSHIELD' => 'Ön Cam',
+      'REAR_WINDSHIELD' => 'Arka Cam',
+
+      'FENDER' => 'Çamurluk',
+      'QUARTER_PANEL' => 'Arka Çamurluk Paneli',
+      'ROCKER_PANEL' => 'Marşpiyel',
+
+      'GRILLE' => 'Ön Izgara',
+
+      'HEADLIGHT' => 'Far',
+      'TAIL_LIGHT' => 'Arka Stop Lambası',
+
+      'HOOD' => 'Kaput',
+      'LICENSE_PLATE' => 'Plaka',
+      'MIRROR' => 'Yan Ayna',
+      'ROOF' => 'Tavan',
+      'TRUNK' => 'Bagaj Kapağı',
+
       _ => part,
     };
+  }
+
+  String _reportStatusMessage() {
+    if (_inspection.isReportProcessing) {
+      return 'AI raporu oluşturuluyor...';
+    }
+
+    if (_inspection.isReportFailed) {
+      return _inspection.reportMessage ??
+          'AI raporu oluşturulamadı.';
+    }
+
+    return _inspection.reportMessage ??
+        'AI raporu henüz oluşturulmadı.';
   }
 
   String _repairActionLabel(
       String action,
       ) {
     return switch (action) {
-      'PART_REPLACEMENT' => 'Parça Değişimi',
+      'NO_ACTION' => 'İşlem Gerekmiyor',
+      'POLISHING' => 'Pasta / Cila',
+      'PAINT_TOUCH_UP' => 'Lokal Boya Rötuşu',
+      'FULL_PAINTING' => 'Tam Boyama',
+      'PAINTLESS_DENT_REPAIR' =>
+      'Boyasız Göçük Düzeltme',
       'DENT_REPAIR' => 'Göçük Düzeltme',
-      'PAINT_REPAIR' => 'Boya Onarımı',
-      'SCRATCH_REPAIR' => 'Çizik Onarımı',
+      'PLASTIC_REPAIR' => 'Plastik Onarımı',
+      'PART_REPAIR' => 'Parça Onarımı',
+      'PART_REPLACEMENT' => 'Parça Değişimi',
+      'GLASS_REPAIR' => 'Cam Onarımı',
+      'GLASS_REPLACEMENT' => 'Cam Değişimi',
+      'HEADLIGHT_REPAIR' => 'Far Onarımı',
+      'HEADLIGHT_REPLACEMENT' =>
+      'Far Değişimi',
       _ => action,
     };
   }
@@ -167,9 +220,7 @@ class _InspectionResultScreenState
             Icons.close_rounded,
           ),
           onPressed: () {
-            Navigator.of(context).popUntil(
-                  (route) => route.isFirst,
-            );
+            Navigator.of(context).pop();
           },
         ),
       ),
@@ -254,9 +305,10 @@ class _InspectionResultScreenState
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '${_severityLabel(_inspection.damageSeverity)} Seviye Hasar',
-                    style:
-                    textTheme.headlineSmall?.copyWith(
+                    _severityDisplayText(
+                      _inspection.damageSeverity,
+                    ),
+                    style: textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.w800,
                     ),
                   ),
@@ -507,6 +559,26 @@ class _InspectionResultScreenState
                         height: 1.5,
                       ),
                     ),
+                    if (report.priceSourceDescription
+                        .trim()
+                        .isNotEmpty) ...[
+                      const SizedBox(height: 14),
+                      Text(
+                        'Fiyat Tahmini Hakkında',
+                        style: textTheme
+                            .titleSmall
+                            ?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 7),
+                      Text(
+                        report.priceSourceDescription,
+                        style: const TextStyle(
+                          height: 1.5,
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 14),
                     Text(
                       report.disclaimer,
@@ -535,37 +607,47 @@ class _InspectionResultScreenState
                     ),
                     const SizedBox(height: 14),
                     Text(
-                      _inspection.reportMessage ??
-                          'AI raporu henüz oluşturulmadı.',
+                      _reportStatusMessage(),
                       textAlign: TextAlign.center,
-                      style: textTheme
-                          .bodyLarge
-                          ?.copyWith(
+                      style: textTheme.bodyLarge?.copyWith(
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    const SizedBox(height: 18),
-                    FilledButton.tonalIcon(
-                      onPressed:
-                      _isRegeneratingReport
-                          ? null
-                          : _regenerateReport,
-                      icon: _isRegeneratingReport
-                          ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child:
-                        CircularProgressIndicator(
-                          strokeWidth: 2,
+                    if (_inspection.isFailed &&
+                        _inspection.analysisMessage != null &&
+                        _inspection.analysisMessage!.trim().isNotEmpty) ...[
+                      const SizedBox(height: 10),
+                      Text(
+                        _inspection.analysisMessage!,
+                        textAlign: TextAlign.center,
+                        style: textTheme.bodyMedium?.copyWith(
+                          color: colorScheme.error,
                         ),
-                      )
-                          : const Icon(
-                        Icons.refresh_rounded,
                       ),
-                      label: const Text(
-                        'AI Raporunu Tekrar Oluştur',
+                    ],
+                    if (_inspection.isCompleted &&
+                        !_inspection.isReportProcessing) ...[
+                      const SizedBox(height: 18),
+                      FilledButton.tonalIcon(
+                        onPressed: _isRegeneratingReport
+                            ? null
+                            : _regenerateReport,
+                        icon: _isRegeneratingReport
+                            ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                          ),
+                        )
+                            : const Icon(
+                          Icons.refresh_rounded,
+                        ),
+                        label: const Text(
+                          'AI Raporunu Tekrar Oluştur',
+                        ),
                       ),
-                    ),
+                    ],
                   ],
                 ),
               ),

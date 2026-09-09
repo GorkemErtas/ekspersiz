@@ -6,16 +6,22 @@ class InspectionService {
     this.apiClient = const ApiClient(),
   });
 
+  static const Duration _analysisTimeout = Duration(
+    seconds: 90,
+  );
+
   final ApiClient apiClient;
 
   Future<DamageInspection> createInspection({
     required int vehicleId,
     required String city,
   }) async {
+    final normalizedCity = city.trim();
+
     final response = await apiClient.post(
       '/inspections'
           '?vehicleId=$vehicleId'
-          '&city=${Uri.encodeQueryComponent(city.trim())}',
+          '&city=${Uri.encodeQueryComponent(normalizedCity)}',
     );
 
     return _parseInspection(
@@ -31,17 +37,24 @@ class InspectionService {
     );
 
     if (response is! List) {
-      return [];
+      throw const FormatException(
+        'Hasar incelemeleri alınamadı.',
+      );
     }
 
-    return response
-        .whereType<Map>()
-        .map(
-          (item) => DamageInspection.fromJson(
-        Map<String, dynamic>.from(item),
-      ),
-    )
-        .toList();
+    return response.map(
+          (item) {
+        if (item is! Map) {
+          throw const FormatException(
+            'Hasar incelemesi verisi geçersiz.',
+          );
+        }
+
+        return DamageInspection.fromJson(
+          Map<String, dynamic>.from(item),
+        );
+      },
+    ).toList();
   }
 
   Future<DamageInspection> getInspectionById(
@@ -82,6 +95,7 @@ class InspectionService {
       ) async {
     final response = await apiClient.post(
       '/inspections/$inspectionId/analyze',
+      timeout: _analysisTimeout,
     );
 
     return _parseInspection(
@@ -95,6 +109,7 @@ class InspectionService {
       ) async {
     final response = await apiClient.post(
       '/inspections/$inspectionId/report',
+      timeout: _analysisTimeout,
     );
 
     return _parseInspection(
@@ -107,12 +122,16 @@ class InspectionService {
       dynamic response,
       String errorMessage,
       ) {
-    if (response is! Map<String, dynamic>) {
-      throw FormatException(errorMessage);
+    if (response is! Map) {
+      throw FormatException(
+        errorMessage,
+      );
     }
 
     return DamageInspection.fromJson(
-      response,
+      Map<String, dynamic>.from(
+        response,
+      ),
     );
   }
 }

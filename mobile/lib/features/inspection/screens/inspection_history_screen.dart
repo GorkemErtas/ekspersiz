@@ -34,7 +34,11 @@ class _InspectionHistoryScreenState
 
   Future<void> _refreshInspections() async {
     setState(_loadInspections);
-    await _inspectionsFuture;
+
+    try {
+      await _inspectionsFuture;
+    } catch (_) {
+    }
   }
 
   Future<void> _openInspection(
@@ -55,11 +59,41 @@ class _InspectionHistoryScreenState
     setState(_loadInspections);
   }
 
+  String _vehiclePartLabel(String part) {
+    return switch (part) {
+      'UNKNOWN' => 'Bilinmeyen Parça',
+      'FRONT_BUMPER' => 'Ön Tampon',
+      'REAR_BUMPER' => 'Arka Tampon',
+      'FRONT_DOOR' => 'Ön Kapı',
+      'REAR_DOOR' => 'Arka Kapı',
+      'FRONT_WHEEL' => 'Ön Tekerlek',
+      'REAR_WHEEL' => 'Arka Tekerlek',
+      'FRONT_WINDOW' => 'Ön Yan Cam',
+      'REAR_WINDOW' => 'Arka Yan Cam',
+      'WINDSHIELD' => 'Ön Cam',
+      'REAR_WINDSHIELD' => 'Arka Cam',
+      'FENDER' => 'Çamurluk',
+      'QUARTER_PANEL' => 'Arka Çamurluk Paneli',
+      'ROCKER_PANEL' => 'Marşpiyel',
+      'GRILLE' => 'Ön Izgara',
+      'HEADLIGHT' => 'Far',
+      'TAIL_LIGHT' => 'Arka Stop Lambası',
+      'HOOD' => 'Kaput',
+      'LICENSE_PLATE' => 'Plaka',
+      'MIRROR' => 'Yan Ayna',
+      'ROOF' => 'Tavan',
+      'TRUNK' => 'Bagaj Kapağı',
+      _ => part,
+    };
+  }
+
   String _severityLabel(String? severity) {
     return switch (severity) {
+      'NONE' => 'Görünür Hasar Yok',
       'MINOR' => 'Hafif Hasar',
       'MODERATE' => 'Orta Hasar',
       'SEVERE' => 'Ağır Hasar',
+      'UNKNOWN' => 'Hasar Seviyesi Belirsiz',
       _ => 'Analiz Bekleniyor',
     };
   }
@@ -217,9 +251,9 @@ class _InspectionHistoryScreenState
                                   height: 8,
                                 ),
                                 Text(
-                                  inspection
-                                      .affectedParts
+                                  inspection.affectedParts
                                       .take(3)
+                                      .map(_vehiclePartLabel)
                                       .join(', '),
                                   maxLines: 1,
                                   overflow:
