@@ -14,17 +14,24 @@ class VehicleService {
     );
 
     if (response is! List) {
-      return [];
+      throw const FormatException(
+        'Araç listesi geçerli formatta alınamadı.',
+      );
     }
 
-    return response
-        .whereType<Map>()
-        .map(
-          (item) => Vehicle.fromJson(
-        Map<String, dynamic>.from(item),
-      ),
-    )
-        .toList();
+    return response.map(
+          (item) {
+        if (item is! Map) {
+          throw const FormatException(
+            'Araç listesinde geçersiz veri bulundu.',
+          );
+        }
+
+        return Vehicle.fromJson(
+          Map<String, dynamic>.from(item),
+        );
+      },
+    ).toList();
   }
 
   Future<Vehicle> getVehicleById(
@@ -34,13 +41,15 @@ class VehicleService {
       '/vehicles/$vehicleId',
     );
 
-    if (response is! Map<String, dynamic>) {
+    if (response is! Map) {
       throw const FormatException(
         'Araç bilgisi geçerli formatta alınamadı.',
       );
     }
 
-    return Vehicle.fromJson(response);
+    return Vehicle.fromJson(
+      Map<String, dynamic>.from(response),
+    );
   }
 
   Future<Vehicle> createVehicle({
@@ -61,13 +70,15 @@ class VehicleService {
       },
     );
 
-    if (response is! Map<String, dynamic>) {
+    if (response is! Map) {
       throw const FormatException(
         'Oluşturulan araç bilgisi alınamadı.',
       );
     }
 
-    return Vehicle.fromJson(response);
+    return Vehicle.fromJson(
+      Map<String, dynamic>.from(response),
+    );
   }
 
   Future<Vehicle> updateVehicle({
@@ -81,7 +92,13 @@ class VehicleService {
     final response = await apiClient.put(
       '/vehicles/$vehicleId',
       body: {
-        'plate': plate.trim().toUpperCase(),
+        'plate': plate
+            .trim()
+            .toUpperCase()
+            .replaceAll(
+          RegExp(r'[^0-9A-Z]'),
+          '',
+        ),
         'brand': brand.trim(),
         'model': model.trim(),
         'modelYear': modelYear,
@@ -89,13 +106,15 @@ class VehicleService {
       },
     );
 
-    if (response is! Map<String, dynamic>) {
+    if (response is! Map) {
       throw const FormatException(
         'Güncellenen araç bilgisi alınamadı.',
       );
     }
 
-    return Vehicle.fromJson(response);
+    return Vehicle.fromJson(
+      Map<String, dynamic>.from(response),
+    );
   }
 
   Future<void> deleteVehicle(
