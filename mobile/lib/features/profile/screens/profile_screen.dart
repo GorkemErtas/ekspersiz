@@ -30,16 +30,16 @@ class _ProfileScreenState
   String get _roleLabel {
     return switch (widget.role) {
       'ADMIN' => 'Yönetici',
+      'INSPECTOR' => 'Eksper',
       'USER' => 'Kullanıcı',
       _ => widget.role,
     };
   }
 
   Future<void> _logout() async {
-    final shouldLogout =
-    await showDialog<bool>(
+    final shouldLogout = await showDialog<bool>(
       context: context,
-      builder: (context) {
+      builder: (dialogContext) {
         return AlertDialog(
           title: const Text(
             'Çıkış yapılsın mı?',
@@ -51,13 +51,13 @@ class _ProfileScreenState
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop(false);
+                Navigator.of(dialogContext).pop(false);
               },
               child: const Text('İptal'),
             ),
             FilledButton(
               onPressed: () {
-                Navigator.of(context).pop(true);
+                Navigator.of(dialogContext).pop(true);
               },
               child: const Text('Çıkış Yap'),
             ),

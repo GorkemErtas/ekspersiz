@@ -4,6 +4,9 @@ import '../../profile/screens/profile_screen.dart';
 import '../../inspection/screens/inspection_history_screen.dart';
 import '../../vehicle/screens/vehicle_list_screen.dart';
 import 'home_screen.dart';
+import 'dart:async';
+import '../../../core/auth/session_manager.dart';
+import '../../auth/screens/login_screen.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({
@@ -23,6 +26,8 @@ class MainShell extends StatefulWidget {
 
 class _MainShellState extends State<MainShell> {
   static const double _desktopBreakpoint = 900;
+
+  StreamSubscription<void>? _sessionSubscription;
 
   int _selectedIndex = 0;
 
@@ -46,6 +51,38 @@ class _MainShellState extends State<MainShell> {
       role: widget.role,
     ),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+
+    _sessionSubscription =
+        SessionManager.unauthorizedStream.listen(
+              (_) {
+            _handleSessionExpired();
+          },
+        );
+  }
+
+  void _handleSessionExpired() {
+    if (!mounted) {
+      return;
+    }
+
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute<void>(
+        builder: (_) => const LoginScreen(),
+      ),
+          (route) => false,
+    );
+  }
+
+  @override
+  void dispose() {
+    _sessionSubscription?.cancel();
+
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
