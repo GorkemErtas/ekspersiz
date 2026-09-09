@@ -4,14 +4,20 @@ import 'core/theme/app_theme.dart';
 import 'features/auth/screens/splash_screen.dart';
 
 void main() {
-  runApp(const VehicleInspectorApp());
+  runApp(
+    const VehicleInspectorApp(),
+  );
 }
 
 class VehicleInspectorApp extends StatelessWidget {
-  const VehicleInspectorApp({super.key});
+  const VehicleInspectorApp({
+    super.key,
+  });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+      BuildContext context,
+      ) {
     return MaterialApp(
       title: 'Vehicle Inspector',
       debugShowCheckedModeBanner: false,
