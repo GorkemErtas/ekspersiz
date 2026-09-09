@@ -1,33 +1,43 @@
 package com.gorkem.vehicle_inspector.config;
 
+import com.gorkem.vehicle_inspector.security.JwtAuthenticationFilter;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
-import com.gorkem.vehicle_inspector.security.JwtAuthenticationFilter;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.security.config.Customizer;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Configuration
 public class SecurityConfig {
 
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final JwtAuthenticationFilter
+            jwtAuthenticationFilter;
+
+    private final String allowedOrigins;
 
     public SecurityConfig(
-            JwtAuthenticationFilter jwtAuthenticationFilter
+            JwtAuthenticationFilter jwtAuthenticationFilter,
+            @Value("${application.cors.allowed-origins}")
+            String allowedOrigins
     ) {
-        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.jwtAuthenticationFilter =
+                jwtAuthenticationFilter;
+
+        this.allowedOrigins =
+                allowedOrigins;
     }
 
     @Bean
@@ -43,7 +53,11 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
 
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .cors(cors ->
+                        cors.configurationSource(
+                                corsConfigurationSource()
+                        )
+                )
 
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(
@@ -51,33 +65,50 @@ public class SecurityConfig {
                         )
                 )
 
-                .exceptionHandling(exception -> exception
-                        .authenticationEntryPoint(
-                                (request, response, authException) ->
-                                        response.sendError(
-                                                HttpServletResponse.SC_UNAUTHORIZED,
-                                                "Bu endpoint için giriş yapmalısınız."
-                                        )
-                        )
-                        .accessDeniedHandler(
-                                (request, response, accessDeniedException) ->
-                                        response.sendError(
-                                                HttpServletResponse.SC_FORBIDDEN,
-                                                "Bu işlem için yetkiniz bulunmuyor."
-                                        )
-                        )
+                .exceptionHandling(exception ->
+                        exception
+                                .authenticationEntryPoint(
+                                        (
+                                                request,
+                                                response,
+                                                authException
+                                        ) ->
+                                                response.sendError(
+                                                        HttpServletResponse
+                                                                .SC_UNAUTHORIZED,
+                                                        "Bu endpoint için giriş yapmalısınız."
+                                                )
+                                )
+                                .accessDeniedHandler(
+                                        (
+                                                request,
+                                                response,
+                                                accessDeniedException
+                                        ) ->
+                                                response.sendError(
+                                                        HttpServletResponse
+                                                                .SC_FORBIDDEN,
+                                                        "Bu işlem için yetkiniz bulunmuyor."
+                                                )
+                                )
                 )
 
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                "/api/v1/health",
-                                "/api/v1/auth/register",
-                                "/api/v1/auth/login",
-                                "/uploads/**"
-                        ).permitAll()
-                        .requestMatchers("/api/v1/admin/**")
-                        .hasRole("ADMIN")
-                        .anyRequest().authenticated()
+                .authorizeHttpRequests(auth ->
+                        auth
+                                .requestMatchers(
+                                        "/api/v1/health",
+                                        "/api/v1/auth/register",
+                                        "/api/v1/auth/login"
+                                )
+                                .permitAll()
+
+                                .requestMatchers(
+                                        "/api/v1/admin/**"
+                                )
+                                .hasRole("ADMIN")
+
+                                .anyRequest()
+                                .authenticated()
                 )
 
                 .addFilterBefore(
@@ -89,16 +120,24 @@ public class SecurityConfig {
     }
 
     @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
+    public CorsConfigurationSource
+    corsConfigurationSource() {
 
         CorsConfiguration configuration =
                 new CorsConfiguration();
 
+        List<String> origins =
+                Arrays.stream(
+                                allowedOrigins.split(",")
+                        )
+                        .map(String::trim)
+                        .filter(origin ->
+                                !origin.isBlank()
+                        )
+                        .toList();
+
         configuration.setAllowedOriginPatterns(
-                List.of(
-                        "http://localhost:*",
-                        "http://127.0.0.1:*"
-                )
+                origins
         );
 
         configuration.setAllowedMethods(
@@ -125,7 +164,9 @@ public class SecurityConfig {
                 )
         );
 
-        configuration.setAllowCredentials(true);
+        configuration.setAllowCredentials(
+                false
+        );
 
         UrlBasedCorsConfigurationSource source =
                 new UrlBasedCorsConfigurationSource();
@@ -142,6 +183,8 @@ public class SecurityConfig {
     public AuthenticationManager authenticationManager(
             AuthenticationConfiguration configuration
     ) throws Exception {
-        return configuration.getAuthenticationManager();
+
+        return configuration
+                .getAuthenticationManager();
     }
 }
