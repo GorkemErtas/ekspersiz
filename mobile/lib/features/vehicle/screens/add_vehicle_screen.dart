@@ -39,6 +39,10 @@ class _AddVehicleScreenState
   }
 
   Future<void> _saveVehicle() async {
+    if (_isLoading) {
+      return;
+    }
+
     FocusScope.of(context).unfocus();
 
     if (!_formKey.currentState!.validate()) {
@@ -75,22 +79,27 @@ class _AddVehicleScreenState
         return;
       }
 
-      Navigator.of(context).pop<Vehicle>(vehicle);
+      Navigator.of(context).pop<Vehicle>(
+        vehicle,
+      );
     } catch (exception) {
       if (!mounted) {
         return;
       }
 
-      final message = exception is ApiException
-          ? exception.message
-          : 'Araç kaydedilemedi.';
+      final message = switch (exception) {
+        ApiException() => exception.message,
+        FormatException() => exception.message,
+        _ => 'Araç kaydedilemedi.',
+      };
 
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
         ..showSnackBar(
           SnackBar(
             content: Text(message),
-            behavior: SnackBarBehavior.floating,
+            behavior:
+            SnackBarBehavior.floating,
           ),
         );
     } finally {
@@ -162,21 +171,24 @@ class _AddVehicleScreenState
                   ),
                 ),
                 validator: (value) {
-                  final plate = value
-                      ?.trim()
-                      .toUpperCase() ??
-                      '';
-
-                  final pattern = RegExp(
-                    r'^[0-9]{2}[A-Z]{1,3}[0-9]{2,4}$',
+                  final plate = (value ?? '')
+                      .trim()
+                      .toUpperCase()
+                      .replaceAll(
+                    RegExp(r'[^0-9A-Z]'),
+                    '',
                   );
 
                   if (plate.isEmpty) {
                     return 'Plaka girin.';
                   }
 
+                  final pattern = RegExp(
+                    r'^[0-9]{2}[A-Z]{1,3}[0-9]{2,4}$',
+                  );
+
                   if (!pattern.hasMatch(plate)) {
-                    return 'Geçerli bir plaka girin. Örnek: 35ABC123';
+                    return 'Geçerli bir plaka girin. Örnek: 32 TYH 345';
                   }
 
                   return null;
@@ -279,8 +291,11 @@ class _AddVehicleScreenState
                     return 'Geçerli bir model yılı girin.';
                   }
 
-                  if (year < 1950 || year > 2030) {
-                    return 'Model yılı 1950-2030 arasında olmalıdır.';
+                  final currentYear = DateTime.now().year;
+                  final maximumYear = currentYear + 1;
+
+                  if (year < 1950 || year > maximumYear) {
+                    return 'Model yılı 1950-$maximumYear arasında olmalıdır.';
                   }
 
                   return null;

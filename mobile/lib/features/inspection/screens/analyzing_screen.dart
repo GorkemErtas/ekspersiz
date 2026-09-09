@@ -51,8 +51,20 @@ class _AnalyzingScreenState
         return;
       }
 
-      await Navigator.of(context).pushReplacement(
-        MaterialPageRoute<void>(
+      if (analyzedInspection.isFailed) {
+        setState(() {
+          _hasError = true;
+          _errorMessage =
+              analyzedInspection.analysisMessage ??
+                  'Hasar analizi tamamlanamadı. '
+                      'Lütfen tekrar deneyin.';
+        });
+
+        return;
+      }
+
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
           builder: (_) => InspectionResultScreen(
             inspection: analyzedInspection,
           ),
