@@ -26,4 +26,8 @@ public interface VehicleRepository
             Long id,
             Long userId
     );
+
+    long countByUserId(
+            Long userId
+    );
 }
