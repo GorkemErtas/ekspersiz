@@ -9,6 +9,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.security.core.AuthenticationException;
 
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
@@ -65,6 +66,17 @@ public class GlobalExceptionHandler {
         return buildResponse(
                 HttpStatus.CONFLICT,
                 exception.getMessage()
+        );
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ApiErrorResponse>
+    handleAuthenticationException(
+            AuthenticationException exception
+    ) {
+        return buildResponse(
+                HttpStatus.UNAUTHORIZED,
+                "E-posta veya şifre hatalı."
         );
     }
 

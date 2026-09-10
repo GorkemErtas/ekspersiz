@@ -1,6 +1,7 @@
 package com.gorkem.vehicle_inspector.dto.response;
 
 import com.gorkem.vehicle_inspector.entity.Role;
+import com.gorkem.vehicle_inspector.entity.SubscriptionPlan;
 
 public class AuthResponse {
 
@@ -11,6 +12,7 @@ public class AuthResponse {
     private final String fullName;
     private final String email;
     private final Role role;
+    private final SubscriptionPlan subscriptionPlan;
 
     public AuthResponse(
             String accessToken,
@@ -19,7 +21,8 @@ public class AuthResponse {
             Long userId,
             String fullName,
             String email,
-            Role role
+            Role role,
+            SubscriptionPlan subscriptionPlan
     ) {
         this.accessToken = accessToken;
         this.tokenType = tokenType;
@@ -28,6 +31,8 @@ public class AuthResponse {
         this.fullName = fullName;
         this.email = email;
         this.role = role;
+        this.subscriptionPlan =
+                subscriptionPlan;
     }
 
     public String getAccessToken() {
@@ -56,5 +61,9 @@ public class AuthResponse {
 
     public Role getRole() {
         return role;
+    }
+
+    public SubscriptionPlan getSubscriptionPlan() {
+        return subscriptionPlan;
     }
 }

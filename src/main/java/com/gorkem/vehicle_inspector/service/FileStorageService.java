@@ -227,25 +227,20 @@ public class FileStorageService {
                     switch (contentType) {
 
                         case "image/jpeg" ->
-                                header.length >= 3
-                                        && (header[0] & 0xFF)
-                                        == 0xFF
-                                        && (header[1] & 0xFF)
-                                        == 0xD8
-                                        && (header[2] & 0xFF)
-                                        == 0xFF;
+                                header.length >= 2
+                                        && (header[0] & 0xFF) == 0xFF
+                                        && (header[1] & 0xFF) == 0xD8;
 
                         case "image/png" ->
                                 header.length >= 8
-                                        && (header[0] & 0xFF)
-                                        == 0x89
-                                        && header[1] == 0x50
-                                        && header[2] == 0x4E
-                                        && header[3] == 0x47
-                                        && header[4] == 0x0D
-                                        && header[5] == 0x0A
-                                        && header[6] == 0x1A
-                                        && header[7] == 0x0A;
+                                        && (header[0] & 0xFF) == 0x89
+                                        && (header[1] & 0xFF) == 0x50
+                                        && (header[2] & 0xFF) == 0x4E
+                                        && (header[3] & 0xFF) == 0x47
+                                        && (header[4] & 0xFF) == 0x0D
+                                        && (header[5] & 0xFF) == 0x0A
+                                        && (header[6] & 0xFF) == 0x1A
+                                        && (header[7] & 0xFF) == 0x0A;
 
                         case "image/webp" ->
                                 header.length >= 12
@@ -263,8 +258,7 @@ public class FileStorageService {
 
             if (!valid) {
                 throw new FileStorageException(
-                        "Dosya içeriği geçerli "
-                                + "bir fotoğraf değil."
+                        "Dosya içeriği geçerli bir fotoğraf değil."
                 );
             }
 

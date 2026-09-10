@@ -84,7 +84,8 @@ public class AuthService {
                 user.getId(),
                 user.getFullName(),
                 user.getEmail(),
-                user.getRole()
+                user.getRole(),
+                user.getSubscriptionPlan()
         );
     }
 
