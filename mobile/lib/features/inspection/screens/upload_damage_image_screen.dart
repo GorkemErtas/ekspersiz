@@ -28,13 +28,6 @@ class _UploadDamageImageScreenState
   static const int _maxImageSizeBytes =
       10 * 1024 * 1024;
 
-  static const Set<String> _supportedExtensions = {
-    'jpg',
-    'jpeg',
-    'png',
-    'webp',
-  };
-
   final ImagePicker _imagePicker = ImagePicker();
 
   final InspectionService _inspectionService =
@@ -42,6 +35,9 @@ class _UploadDamageImageScreenState
 
   XFile? _selectedImage;
   Uint8List? _selectedImageBytes;
+
+  String? _selectedContentType;
+  String? _selectedFilename;
 
   bool _isUploading = false;
 
@@ -55,18 +51,6 @@ class _UploadDamageImageScreenState
       );
 
       if (image == null || !mounted) {
-        return;
-      }
-
-      final extension = _getExtension(
-        image.name,
-      );
-
-      if (!_supportedExtensions.contains(extension)) {
-        _showMessage(
-          'Sadece JPG, JPEG, PNG veya WEBP '
-              'formatındaki fotoğraflar destekleniyor.',
-        );
         return;
       }
 
@@ -90,9 +74,29 @@ class _UploadDamageImageScreenState
         return;
       }
 
+      final detectedContentType =
+      _detectContentType(bytes);
+
+      if (detectedContentType == null) {
+        _showMessage(
+          'Seçilen dosya geçerli bir JPG, PNG veya WEBP fotoğraf değil.',
+        );
+        return;
+      }
+
+      final correctedFilename =
+      _buildCorrectFilename(
+        originalFilename: image.name,
+        contentType: detectedContentType,
+      );
+
       setState(() {
         _selectedImage = image;
         _selectedImageBytes = bytes;
+        _selectedContentType =
+            detectedContentType;
+        _selectedFilename =
+            correctedFilename;
       });
     } catch (_) {
       if (!mounted) {
@@ -105,38 +109,109 @@ class _UploadDamageImageScreenState
     }
   }
 
-  String _getExtension(
-      String filename,
+  String? _detectContentType(
+      Uint8List bytes,
       ) {
-    final parts = filename.split('.');
-
-    if (parts.length < 2) {
-      return '';
+    if (_isJpeg(bytes)) {
+      return 'image/jpeg';
     }
 
-    return parts.last.toLowerCase();
+    if (_isPng(bytes)) {
+      return 'image/png';
+    }
+
+    if (_isWebp(bytes)) {
+      return 'image/webp';
+    }
+
+    return null;
   }
 
-  String? _getContentType(
-      String filename,
+  bool _isJpeg(
+      Uint8List bytes,
       ) {
-    final extension = _getExtension(
-      filename,
+    return bytes.length >= 2 &&
+        bytes[0] == 0xFF &&
+        bytes[1] == 0xD8;
+  }
+
+  bool _isPng(
+      Uint8List bytes,
+      ) {
+    return bytes.length >= 8 &&
+        bytes[0] == 0x89 &&
+        bytes[1] == 0x50 &&
+        bytes[2] == 0x4E &&
+        bytes[3] == 0x47 &&
+        bytes[4] == 0x0D &&
+        bytes[5] == 0x0A &&
+        bytes[6] == 0x1A &&
+        bytes[7] == 0x0A;
+  }
+
+  bool _isWebp(
+      Uint8List bytes,
+      ) {
+    return bytes.length >= 12 &&
+        bytes[0] == 0x52 &&
+        bytes[1] == 0x49 &&
+        bytes[2] == 0x46 &&
+        bytes[3] == 0x46 &&
+        bytes[8] == 0x57 &&
+        bytes[9] == 0x45 &&
+        bytes[10] == 0x42 &&
+        bytes[11] == 0x50;
+  }
+
+  String _buildCorrectFilename({
+    required String originalFilename,
+    required String contentType,
+  }) {
+    final baseName =
+    _removeExtension(
+      originalFilename,
     );
 
-    return switch (extension) {
-      'png' => 'image/png',
-      'webp' => 'image/webp',
-      'jpeg' || 'jpg' => 'image/jpeg',
-      _ => null,
+    final extension =
+    switch (contentType) {
+      'image/jpeg' => 'jpg',
+      'image/png' => 'png',
+      'image/webp' => 'webp',
+      _ => 'jpg',
     };
+
+    return '$baseName.$extension';
+  }
+
+  String _removeExtension(
+      String filename,
+      ) {
+    final lastDotIndex =
+    filename.lastIndexOf('.');
+
+    if (lastDotIndex <= 0) {
+      return filename;
+    }
+
+    return filename.substring(
+      0,
+      lastDotIndex,
+    );
   }
 
   Future<void> _uploadImage() async {
-    final image = _selectedImage;
-    final imageBytes = _selectedImageBytes;
+    final imageBytes =
+        _selectedImageBytes;
 
-    if (image == null || imageBytes == null) {
+    final contentType =
+        _selectedContentType;
+
+    final filename =
+        _selectedFilename;
+
+    if (imageBytes == null ||
+        contentType == null ||
+        filename == null) {
       _showMessage(
         'Lütfen önce bir fotoğraf seçin.',
       );
@@ -150,20 +225,10 @@ class _UploadDamageImageScreenState
       return;
     }
 
-    if (imageBytes.length > _maxImageSizeBytes) {
+    if (imageBytes.length >
+        _maxImageSizeBytes) {
       _showMessage(
         'Fotoğraf boyutu 10 MB’dan büyük olamaz.',
-      );
-      return;
-    }
-
-    final contentType = _getContentType(
-      image.name,
-    );
-
-    if (contentType == null) {
-      _showMessage(
-        'Bu fotoğraf formatı desteklenmiyor.',
       );
       return;
     }
@@ -175,10 +240,14 @@ class _UploadDamageImageScreenState
     try {
       final updatedInspection =
       await _inspectionService.uploadImage(
-        inspectionId: widget.inspection.id,
-        imageBytes: imageBytes,
-        filename: image.name,
-        contentType: contentType,
+        inspectionId:
+        widget.inspection.id,
+        imageBytes:
+        imageBytes,
+        filename:
+        filename,
+        contentType:
+        contentType,
       );
 
       if (!mounted) {
@@ -187,9 +256,11 @@ class _UploadDamageImageScreenState
 
       Navigator.of(context).pushReplacement(
         MaterialPageRoute<void>(
-          builder: (_) => AnalyzingScreen(
-            inspection: updatedInspection,
-          ),
+          builder: (_) =>
+              AnalyzingScreen(
+                inspection:
+                updatedInspection,
+              ),
         ),
       );
     } catch (exception) {
@@ -197,7 +268,8 @@ class _UploadDamageImageScreenState
         return;
       }
 
-      final message = exception is ApiException
+      final message =
+      exception is ApiException
           ? exception.message
           : 'Fotoğraf yüklenemedi.';
 
@@ -219,7 +291,8 @@ class _UploadDamageImageScreenState
       ..showSnackBar(
         SnackBar(
           content: Text(message),
-          behavior: SnackBarBehavior.floating,
+          behavior:
+          SnackBarBehavior.floating,
         ),
       );
   }
@@ -235,14 +308,16 @@ class _UploadDamageImageScreenState
       builder: (context) {
         return SafeArea(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(
+            padding:
+            const EdgeInsets.fromLTRB(
               20,
               8,
               20,
               24,
             ),
             child: Column(
-              mainAxisSize: MainAxisSize.min,
+              mainAxisSize:
+              MainAxisSize.min,
               children: [
                 ListTile(
                   leading: const Icon(
@@ -283,7 +358,9 @@ class _UploadDamageImageScreenState
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+      BuildContext context,
+      ) {
     final colorScheme =
         Theme.of(context).colorScheme;
 
@@ -299,11 +376,13 @@ class _UploadDamageImageScreenState
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(
+            constraints:
+            const BoxConstraints(
               maxWidth: 760,
             ),
             child: ListView(
-              padding: const EdgeInsets.fromLTRB(
+              padding:
+              const EdgeInsets.fromLTRB(
                 20,
                 12,
                 20,
@@ -312,8 +391,11 @@ class _UploadDamageImageScreenState
               children: [
                 Text(
                   'Hasarlı bölgeyi ekleyin',
-                  style: textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
+                  style: textTheme
+                      .headlineSmall
+                      ?.copyWith(
+                    fontWeight:
+                    FontWeight.w800,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -322,8 +404,11 @@ class _UploadDamageImageScreenState
                       'Çok karanlık veya aşırı yakın görüntüler '
                       'analiz doğruluğunu düşürebilir. '
                       'Maksimum dosya boyutu 10 MB’dır.',
-                  style: textTheme.bodyLarge?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
+                  style: textTheme
+                      .bodyLarge
+                      ?.copyWith(
+                    color: colorScheme
+                        .onSurfaceVariant,
                     height: 1.4,
                   ),
                 ),
@@ -332,25 +417,32 @@ class _UploadDamageImageScreenState
                 AppCard(
                   child: Column(
                     crossAxisAlignment:
-                    CrossAxisAlignment.start,
+                    CrossAxisAlignment
+                        .start,
                     children: [
                       Text(
                         'Hasar İncelemesi',
-                        style:
-                        textTheme.labelLarge?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          color:
-                          colorScheme.onSurfaceVariant,
+                        style: textTheme
+                            .labelLarge
+                            ?.copyWith(
+                          fontWeight:
+                          FontWeight.w700,
+                          color: colorScheme
+                              .onSurfaceVariant,
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(
+                        height: 8,
+                      ),
                       Text(
                         '${widget.inspection.vehiclePlate} '
                             '• '
                             '${widget.inspection.locationCity}',
-                        style:
-                        textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w800,
+                        style: textTheme
+                            .titleMedium
+                            ?.copyWith(
+                          fontWeight:
+                          FontWeight.w800,
                         ),
                       ),
                     ],
@@ -364,55 +456,78 @@ class _UploadDamageImageScreenState
                       ? null
                       : _showImageSourceSheet,
                   child: Container(
-                    constraints: const BoxConstraints(
+                    constraints:
+                    const BoxConstraints(
                       minHeight: 280,
                       maxHeight: 420,
                     ),
-                    decoration: BoxDecoration(
-                      color:
-                      colorScheme.surfaceContainerLow,
+                    decoration:
+                    BoxDecoration(
+                      color: colorScheme
+                          .surfaceContainerLow,
                       borderRadius:
-                      BorderRadius.circular(22),
+                      BorderRadius.circular(
+                        22,
+                      ),
                       border: Border.all(
-                        color: colorScheme.outlineVariant,
+                        color: colorScheme
+                            .outlineVariant,
                       ),
                     ),
-                    clipBehavior: Clip.antiAlias,
-                    child: _selectedImageBytes == null
+                    clipBehavior:
+                    Clip.antiAlias,
+                    child:
+                    _selectedImageBytes ==
+                        null
                         ? Column(
                       mainAxisAlignment:
-                      MainAxisAlignment.center,
+                      MainAxisAlignment
+                          .center,
                       children: [
                         Container(
                           width: 72,
                           height: 72,
-                          decoration: BoxDecoration(
-                            color: colorScheme
+                          decoration:
+                          BoxDecoration(
+                            color:
+                            colorScheme
                                 .primaryContainer,
                             borderRadius:
-                            BorderRadius.circular(
+                            BorderRadius
+                                .circular(
                               22,
                             ),
                           ),
                           child: Icon(
-                            Icons.add_a_photo_outlined,
-                            color: colorScheme.primary,
+                            Icons
+                                .add_a_photo_outlined,
+                            color:
+                            colorScheme
+                                .primary,
                             size: 34,
                           ),
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(
+                          height: 16,
+                        ),
                         const Text(
                           'Fotoğraf eklemek için dokunun',
-                          style: TextStyle(
+                          style:
+                          TextStyle(
                             fontWeight:
-                            FontWeight.w700,
+                            FontWeight
+                                .w700,
                           ),
                         ),
-                        const SizedBox(height: 6),
+                        const SizedBox(
+                          height: 6,
+                        ),
                         Text(
                           'Kamera veya galeri',
-                          style: TextStyle(
-                            color: colorScheme
+                          style:
+                          TextStyle(
+                            color:
+                            colorScheme
                                 .onSurfaceVariant,
                           ),
                         ),
@@ -420,17 +535,23 @@ class _UploadDamageImageScreenState
                     )
                         : Image.memory(
                       _selectedImageBytes!,
-                      width: double.infinity,
-                      height: double.infinity,
-                      fit: BoxFit.cover,
+                      width:
+                      double.infinity,
+                      height:
+                      double.infinity,
+                      fit:
+                      BoxFit.cover,
                     ),
                   ),
                 ),
 
                 if (_selectedImage != null) ...[
-                  const SizedBox(height: 12),
+                  const SizedBox(
+                    height: 12,
+                  ),
                   OutlinedButton.icon(
-                    onPressed: _isUploading
+                    onPressed:
+                    _isUploading
                         ? null
                         : _showImageSourceSheet,
                     icon: const Icon(
@@ -446,9 +567,11 @@ class _UploadDamageImageScreenState
 
                 PrimaryButton(
                   label: 'Fotoğrafı Yükle',
-                  icon: Icons.cloud_upload_outlined,
+                  icon: Icons
+                      .cloud_upload_outlined,
                   isLoading: _isUploading,
-                  onPressed: _isUploading
+                  onPressed:
+                  _isUploading
                       ? null
                       : _uploadImage,
                 ),

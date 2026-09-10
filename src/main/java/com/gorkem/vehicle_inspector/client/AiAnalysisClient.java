@@ -49,6 +49,32 @@ public class AiAnalysisClient {
         HttpHeaders imageHeaders =
                 new HttpHeaders();
 
+        String detectedContentType;
+
+        try {
+            detectedContentType =
+                    Files.probeContentType(imagePath);
+        } catch (Exception exception) {
+            detectedContentType = null;
+        }
+
+        MediaType imageMediaType;
+
+        if ("image/png".equals(detectedContentType)) {
+            imageMediaType = MediaType.IMAGE_PNG;
+
+        } else if ("image/webp".equals(detectedContentType)) {
+            imageMediaType =
+                    MediaType.parseMediaType("image/webp");
+
+        } else {
+            imageMediaType = MediaType.IMAGE_JPEG;
+        }
+
+        imageHeaders.setContentType(
+                imageMediaType
+        );
+
         imageHeaders.setContentDisposition(
                 ContentDisposition
                         .formData()
