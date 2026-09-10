@@ -1,4 +1,7 @@
 package com.gorkem.vehicle_inspector.entity;
 
-public class SubscriptionPlan {
+public enum SubscriptionPlan {
+    FREE,
+    PLUS,
+    PRO
 }

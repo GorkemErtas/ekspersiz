@@ -2,6 +2,8 @@ package com.gorkem.vehicle_inspector.entity;
 
 import jakarta.persistence.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(
         name = "users",
@@ -44,6 +46,24 @@ public class User {
     )
     private Role role;
 
+    @Enumerated(EnumType.STRING)
+    @Column(
+            name = "subscription_plan",
+            nullable = false,
+            length = 20
+    )
+    private SubscriptionPlan subscriptionPlan;
+
+    @Column(
+            name = "subscription_started_at"
+    )
+    private LocalDateTime subscriptionStartedAt;
+
+    @Column(
+            name = "subscription_expires_at"
+    )
+    private LocalDateTime subscriptionExpiresAt;
+
     protected User() {
     }
 
@@ -57,6 +77,9 @@ public class User {
         this.email = email;
         this.password = password;
         this.role = role;
+
+        this.subscriptionPlan =
+                SubscriptionPlan.FREE;
     }
 
     public Long getId() {
@@ -79,19 +102,76 @@ public class User {
         return role;
     }
 
-    public void setFullName(String fullName) {
+    public SubscriptionPlan getSubscriptionPlan() {
+        return subscriptionPlan;
+    }
+
+    public LocalDateTime getSubscriptionStartedAt() {
+        return subscriptionStartedAt;
+    }
+
+    public LocalDateTime getSubscriptionExpiresAt() {
+        return subscriptionExpiresAt;
+    }
+
+    public void setFullName(
+            String fullName
+    ) {
         this.fullName = fullName;
     }
 
-    public void setEmail(String email) {
+    public void setEmail(
+            String email
+    ) {
         this.email = email;
     }
 
-    public void setPassword(String password) {
+    public void setPassword(
+            String password
+    ) {
         this.password = password;
     }
 
-    public void setRole(Role role) {
+    public void setRole(
+            Role role
+    ) {
         this.role = role;
+    }
+
+    public void setSubscriptionPlan(
+            SubscriptionPlan subscriptionPlan
+    ) {
+        this.subscriptionPlan =
+                subscriptionPlan;
+    }
+
+    public void setSubscriptionStartedAt(
+            LocalDateTime subscriptionStartedAt
+    ) {
+        this.subscriptionStartedAt =
+                subscriptionStartedAt;
+    }
+
+    public void setSubscriptionExpiresAt(
+            LocalDateTime subscriptionExpiresAt
+    ) {
+        this.subscriptionExpiresAt =
+                subscriptionExpiresAt;
+    }
+
+    public boolean hasActiveSubscription() {
+        if (subscriptionPlan == null
+                || subscriptionPlan
+                == SubscriptionPlan.FREE) {
+
+            return false;
+        }
+
+        if (subscriptionExpiresAt == null) {
+            return true;
+        }
+
+        return subscriptionExpiresAt
+                .isAfter(LocalDateTime.now());
     }
 }

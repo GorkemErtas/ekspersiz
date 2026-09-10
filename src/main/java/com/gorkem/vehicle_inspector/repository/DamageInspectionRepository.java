@@ -3,17 +3,20 @@ package com.gorkem.vehicle_inspector.repository;
 import com.gorkem.vehicle_inspector.entity.DamageInspection;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
 public interface DamageInspectionRepository
         extends JpaRepository<DamageInspection, Long> {
 
-    List<DamageInspection> findAllByUserIdOrderByCreatedAtDesc(
+    List<DamageInspection>
+    findAllByUserIdOrderByCreatedAtDesc(
             Long userId
     );
 
-    Optional<DamageInspection> findByIdAndUserId(
+    Optional<DamageInspection>
+    findByIdAndUserId(
             Long id,
             Long userId
     );
@@ -22,5 +25,11 @@ public interface DamageInspectionRepository
     findAllByVehicleIdAndUserIdOrderByCreatedAtDesc(
             Long vehicleId,
             Long userId
+    );
+
+    long countByUserIdAndCreatedAtBetween(
+            Long userId,
+            LocalDateTime start,
+            LocalDateTime end
     );
 }
