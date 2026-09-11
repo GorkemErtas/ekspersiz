@@ -50,6 +50,7 @@ public class DamageInspectionService {
     private final GeminiInspectionReportService
             geminiInspectionReportService;
     private final TransactionTemplate transactionTemplate;
+    private final SubscriptionService subscriptionService;
 
     public DamageInspectionService(
             DamageInspectionRepository inspectionRepository,
@@ -58,7 +59,8 @@ public class DamageInspectionService {
             FileStorageService fileStorageService,
             AiAnalysisClient aiAnalysisClient,
             GeminiInspectionReportService geminiInspectionReportService,
-            PlatformTransactionManager transactionManager
+            PlatformTransactionManager transactionManager,
+            SubscriptionService subscriptionService
     ) {
         this.inspectionRepository =
                 inspectionRepository;
@@ -82,6 +84,9 @@ public class DamageInspectionService {
                 new TransactionTemplate(
                         transactionManager
                 );
+
+        this.subscriptionService =
+                subscriptionService;
     }
 
     private DamageInspectionResponse buildResponse(
@@ -270,6 +275,7 @@ public class DamageInspectionService {
         inspection.setDamageSeverity(null);
         inspection.setConfidenceScore(null);
         inspection.setAnalysisMessage(null);
+        inspection.setAnalysisStartedAt(null);
         inspection.setCompletedAt(null);
 
         DamageInspection updatedInspection =
@@ -359,6 +365,9 @@ public class DamageInspectionService {
                                             authenticatedEmail
                                     );
 
+                            subscriptionService
+                                    .validateInspectionLimit(user);
+
                             DamageInspection inspection =
                                     findInspectionByIdAndUserId(
                                             inspectionId,
@@ -367,6 +376,10 @@ public class DamageInspectionService {
 
                             validateImageExists(
                                     inspection
+                            );
+
+                            inspection.setAnalysisStartedAt(
+                                    LocalDateTime.now()
                             );
 
                             inspection.setStatus(

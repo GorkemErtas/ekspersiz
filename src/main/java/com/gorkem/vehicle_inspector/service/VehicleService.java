@@ -20,13 +20,16 @@ public class VehicleService {
 
     private final VehicleRepository vehicleRepository;
     private final UserRepository userRepository;
+    private final SubscriptionService subscriptionService;
 
     public VehicleService(
             VehicleRepository vehicleRepository,
-            UserRepository userRepository
+            UserRepository userRepository,
+            SubscriptionService subscriptionService
     ) {
         this.vehicleRepository = vehicleRepository;
         this.userRepository = userRepository;
+        this.subscriptionService = subscriptionService;
     }
 
     @Transactional
@@ -35,6 +38,8 @@ public class VehicleService {
             String authenticatedEmail
     ) {
         User user = findUserByEmail(authenticatedEmail);
+
+        subscriptionService.validateVehicleLimit(user);
 
         String normalizedPlate =
                 normalizePlate(request.getPlate());
