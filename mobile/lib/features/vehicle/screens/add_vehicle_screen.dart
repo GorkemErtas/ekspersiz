@@ -13,7 +13,12 @@ import '../services/vehicle_service.dart';
 class AddVehicleScreen extends StatefulWidget {
   const AddVehicleScreen({
     super.key,
+    this.vehicle,
   });
+
+  final Vehicle? vehicle;
+
+  bool get isEditing => vehicle != null;
 
   @override
   State<AddVehicleScreen> createState() =>
@@ -44,6 +49,34 @@ class _AddVehicleScreenState
 
   bool _isLoading = false;
 
+  bool get _isEditing =>
+      widget.vehicle != null;
+
+  @override
+  void initState() {
+    super.initState();
+
+    final vehicle =
+        widget.vehicle;
+
+    if (vehicle != null) {
+      _plateController.text =
+          vehicle.plate;
+
+      _brandController.text =
+          vehicle.brand;
+
+      _modelController.text =
+          vehicle.model;
+
+      _modelYearController.text =
+          vehicle.modelYear.toString();
+
+      _mileageController.text =
+          vehicle.mileage.toString();
+    }
+  }
+
   @override
   void dispose() {
     _plateController.dispose();
@@ -62,7 +95,8 @@ class _AddVehicleScreenState
 
     FocusScope.of(context).unfocus();
 
-    if (!(_formKey.currentState?.validate() ?? false)) {
+    if (!(_formKey.currentState?.validate() ??
+        false)) {
       return;
     }
 
@@ -86,19 +120,39 @@ class _AddVehicleScreenState
     });
 
     try {
-      final vehicle =
-      await _vehicleService.createVehicle(
-        plate:
-        _plateController.text,
-        brand:
-        _brandController.text,
-        model:
-        _modelController.text,
-        modelYear:
-        modelYear,
-        mileage:
-        mileage,
-      );
+      final Vehicle vehicle;
+
+      if (_isEditing) {
+        vehicle =
+        await _vehicleService.updateVehicle(
+          vehicleId:
+          widget.vehicle!.id,
+          plate:
+          _plateController.text,
+          brand:
+          _brandController.text,
+          model:
+          _modelController.text,
+          modelYear:
+          modelYear,
+          mileage:
+          mileage,
+        );
+      } else {
+        vehicle =
+        await _vehicleService.createVehicle(
+          plate:
+          _plateController.text,
+          brand:
+          _brandController.text,
+          model:
+          _modelController.text,
+          modelYear:
+          modelYear,
+          mileage:
+          mileage,
+        );
+      }
 
       if (!mounted) {
         return;
@@ -119,7 +173,9 @@ class _AddVehicleScreenState
         FormatException() =>
         exception.message,
         _ =>
-        'Araç kaydedilemedi.',
+        _isEditing
+            ? 'Araç güncellenemedi.'
+            : 'Araç kaydedilemedi.',
       };
 
       ScaffoldMessenger.of(context)
@@ -259,8 +315,10 @@ class _AddVehicleScreenState
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Araç Ekle',
+        title: Text(
+          _isEditing
+              ? 'Araç Düzenle'
+              : 'Araç Ekle',
         ),
       ),
 
@@ -285,14 +343,18 @@ class _AddVehicleScreenState
                 ),
 
                 children: [
-                  const AppPageHeader(
+                  AppPageHeader(
                     icon:
                     Icons
                         .directions_car_filled_rounded,
                     title:
-                    'Yeni aracınızı ekleyin',
+                    _isEditing
+                        ? 'Araç bilgilerini düzenleyin'
+                        : 'Yeni aracınızı ekleyin',
                     subtitle:
-                    'Araç bilgileri, hasar analizlerinin doğru araçla eşleştirilmesi için kullanılır.',
+                    _isEditing
+                        ? 'Aracınıza ait marka, model, plaka, model yılı ve kilometre bilgilerini güncelleyebilirsiniz.'
+                        : 'Araç bilgileri, hasar analizlerinin doğru araçla eşleştirilmesi için kullanılır.',
                   ),
 
                   const SizedBox(
@@ -369,8 +431,7 @@ class _AddVehicleScreenState
                             'Honda',
                             prefixIcon:
                             Icon(
-                              Icons
-                                  .factory_outlined,
+                              Icons.factory_outlined,
                             ),
                           ),
                           validator:
@@ -496,8 +557,7 @@ class _AddVehicleScreenState
                                       'km',
                                       prefixIcon:
                                       Icon(
-                                        Icons
-                                            .speed_outlined,
+                                        Icons.speed_outlined,
                                       ),
                                     ),
                                     validator:
@@ -564,8 +624,7 @@ class _AddVehicleScreenState
                                       'km',
                                       prefixIcon:
                                       Icon(
-                                        Icons
-                                            .speed_outlined,
+                                        Icons.speed_outlined,
                                       ),
                                     ),
                                     validator:
@@ -620,15 +679,16 @@ class _AddVehicleScreenState
 
                         Expanded(
                           child: Text(
-                            'Araç bilgilerinizi doğru girmeniz, analiz geçmişinizi araç bazında takip etmenizi kolaylaştırır.',
+                            _isEditing
+                                ? 'Yaptığınız değişiklikler mevcut analiz geçmişinizi silmez.'
+                                : 'Araç bilgilerinizi doğru girmeniz, analiz geçmişinizi araç bazında takip etmenizi kolaylaştırır.',
                             style:
                             textTheme.bodyMedium
                                 ?.copyWith(
                               color:
                               colorScheme
                                   .onSurfaceVariant,
-                              height:
-                              1.45,
+                              height: 1.45,
                             ),
                           ),
                         ),
@@ -642,9 +702,13 @@ class _AddVehicleScreenState
 
                   PrimaryButton(
                     label:
-                    'Aracı Kaydet',
+                    _isEditing
+                        ? 'Değişiklikleri Kaydet'
+                        : 'Aracı Kaydet',
                     icon:
-                    Icons.check_rounded,
+                    _isEditing
+                        ? Icons.save_rounded
+                        : Icons.check_rounded,
                     isLoading:
                     _isLoading,
                     onPressed:
