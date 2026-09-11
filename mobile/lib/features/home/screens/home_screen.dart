@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_card.dart';
+import '../../../core/widgets/app_icon_box.dart';
+import '../../../core/widgets/app_status_badge.dart';
 import '../../../core/widgets/section_title.dart';
 
 import '../../inspection/models/damage_inspection.dart';
@@ -73,7 +75,8 @@ class _HomeScreenState extends State<HomeScreen> {
         inspections
             .where(
               (inspection) =>
-          inspection.status == 'COMPLETED',
+          inspection.status ==
+              'COMPLETED',
         )
             .toList();
 
@@ -235,70 +238,48 @@ class _HomeScreenState extends State<HomeScreen> {
     return switch (part) {
       'UNKNOWN' =>
       'Bilinmeyen Parça',
-
       'FRONT_BUMPER' =>
       'Ön Tampon',
-
       'REAR_BUMPER' =>
       'Arka Tampon',
-
       'FRONT_DOOR' =>
       'Ön Kapı',
-
       'REAR_DOOR' =>
       'Arka Kapı',
-
       'FRONT_WHEEL' =>
       'Ön Tekerlek',
-
       'REAR_WHEEL' =>
       'Arka Tekerlek',
-
       'FRONT_WINDOW' =>
       'Ön Yan Cam',
-
       'REAR_WINDOW' =>
       'Arka Yan Cam',
-
       'WINDSHIELD' =>
       'Ön Cam',
-
       'REAR_WINDSHIELD' =>
       'Arka Cam',
-
       'FENDER' =>
       'Çamurluk',
-
       'QUARTER_PANEL' =>
       'Arka Çamurluk Paneli',
-
       'ROCKER_PANEL' =>
       'Marşpiyel',
-
       'GRILLE' =>
       'Ön Izgara',
-
       'HEADLIGHT' =>
       'Far',
-
       'TAIL_LIGHT' =>
       'Arka Stop Lambası',
-
       'HOOD' =>
       'Kaput',
-
       'LICENSE_PLATE' =>
       'Plaka',
-
       'MIRROR' =>
       'Yan Ayna',
-
       'ROOF' =>
       'Tavan',
-
       'TRUNK' =>
       'Bagaj Kapağı',
-
       _ => part,
     };
   }
@@ -310,7 +291,7 @@ class _HomeScreenState extends State<HomeScreen> {
       return '-';
     }
 
-    final months = [
+    const months = [
       'Ocak',
       'Şubat',
       'Mart',
@@ -362,9 +343,11 @@ class _HomeScreenState extends State<HomeScreen> {
               maxWidth:
               AppTheme.maxContentWidth,
             ),
+
             child: RefreshIndicator(
               onRefresh:
               _loadHomeData,
+
               child: ListView(
                 physics:
                 const AlwaysScrollableScrollPhysics(),
@@ -414,38 +397,17 @@ class _HomeScreenState extends State<HomeScreen> {
                   else if (_vehicle != null)
                     AppCard(
                       onTap:
-                      widget
-                          .onOpenVehicles,
+                      widget.onOpenVehicles,
 
                       child: Row(
                         children: [
-                          Container(
-                            width: 60,
-                            height: 60,
-
-                            decoration:
-                            BoxDecoration(
-                              color:
-                              colorScheme
-                                  .primaryContainer,
-
-                              borderRadius:
-                              BorderRadius.circular(
-                                AppTheme
-                                    .radiusMedium,
-                              ),
-                            ),
-
-                            child: Icon(
-                              Icons
-                                  .directions_car_filled_rounded,
-
-                              color:
-                              colorScheme
-                                  .primary,
-
-                              size: 30,
-                            ),
+                          const AppIconBox(
+                            icon:
+                            Icons
+                                .directions_car_filled_rounded,
+                            size: 60,
+                            iconSize: 30,
+                            borderRadius: 16,
                           ),
 
                           const SizedBox(
@@ -455,21 +417,16 @@ class _HomeScreenState extends State<HomeScreen> {
                           Expanded(
                             child: Column(
                               crossAxisAlignment:
-                              CrossAxisAlignment
-                                  .start,
-
+                              CrossAxisAlignment.start,
                               children: [
                                 Text(
                                   _vehicle!
                                       .displayName,
-
                                   style:
-                                  textTheme
-                                      .titleMedium
+                                  textTheme.titleMedium
                                       ?.copyWith(
                                     fontWeight:
-                                    FontWeight
-                                        .w800,
+                                    FontWeight.w800,
                                   ),
                                 ),
 
@@ -480,10 +437,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                 Text(
                                   '${_vehicle!.plate}  •  '
                                       '${_vehicle!.modelYear}',
-
                                   style:
-                                  textTheme
-                                      .bodyMedium,
+                                  textTheme.bodyMedium,
                                 ),
                               ],
                             ),
@@ -492,25 +447,20 @@ class _HomeScreenState extends State<HomeScreen> {
                           Container(
                             width: 36,
                             height: 36,
-
                             decoration:
                             BoxDecoration(
                               color:
                               colorScheme
                                   .surfaceContainer,
-
                               borderRadius:
                               BorderRadius.circular(
                                 12,
                               ),
                             ),
-
                             child: Icon(
                               Icons
                                   .arrow_forward_ios_rounded,
-
                               size: 15,
-
                               color:
                               colorScheme
                                   .onSurfaceVariant,
@@ -522,36 +472,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   else
                     AppCard(
                       onTap:
-                      widget
-                          .onOpenVehicles,
+                      widget.onOpenVehicles,
 
                       child: Row(
                         children: [
-                          Container(
-                            width: 54,
-                            height: 54,
-
-                            decoration:
-                            BoxDecoration(
-                              color:
-                              colorScheme
-                                  .primaryContainer,
-
-                              borderRadius:
-                              BorderRadius.circular(
-                                AppTheme
-                                    .radiusMedium,
-                              ),
-                            ),
-
-                            child: Icon(
-                              Icons
-                                  .add_rounded,
-
-                              color:
-                              colorScheme
-                                  .primary,
-                            ),
+                          const AppIconBox(
+                            icon:
+                            Icons.add_rounded,
+                            size: 54,
                           ),
 
                           const SizedBox(
@@ -561,18 +489,14 @@ class _HomeScreenState extends State<HomeScreen> {
                           const Expanded(
                             child: Column(
                               crossAxisAlignment:
-                              CrossAxisAlignment
-                                  .start,
-
+                              CrossAxisAlignment.start,
                               children: [
                                 Text(
                                   'Araç ekleyin',
-
                                   style:
                                   TextStyle(
                                     fontWeight:
-                                    FontWeight
-                                        .w800,
+                                    FontWeight.w800,
                                   ),
                                 ),
 
@@ -606,8 +530,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     actionLabel:
                     'Geçmiş',
                     onActionPressed:
-                    widget
-                        .onOpenInspections,
+                    widget.onOpenInspections,
                   ),
 
                   const SizedBox(
@@ -664,31 +587,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
                       child: Row(
                         children: [
-                          Container(
-                            width: 54,
-                            height: 54,
-
-                            decoration:
-                            BoxDecoration(
-                              color:
-                              colorScheme
-                                  .surfaceContainer,
-
-                              borderRadius:
-                              BorderRadius.circular(
-                                AppTheme
-                                    .radiusMedium,
-                              ),
-                            ),
-
-                            child: Icon(
-                              Icons
-                                  .analytics_outlined,
-
-                              color:
-                              colorScheme
-                                  .primary,
-                            ),
+                          const AppIconBox(
+                            icon:
+                            Icons
+                                .analytics_outlined,
                           ),
 
                           const SizedBox(
@@ -698,18 +600,14 @@ class _HomeScreenState extends State<HomeScreen> {
                           const Expanded(
                             child: Column(
                               crossAxisAlignment:
-                              CrossAxisAlignment
-                                  .start,
-
+                              CrossAxisAlignment.start,
                               children: [
                                 Text(
                                   'Henüz analiz yok',
-
                                   style:
                                   TextStyle(
                                     fontWeight:
-                                    FontWeight
-                                        .w800,
+                                    FontWeight.w800,
                                   ),
                                 ),
 
@@ -766,18 +664,15 @@ class _HomeHeader extends StatelessWidget {
           child: Column(
             crossAxisAlignment:
             CrossAxisAlignment.start,
-
             children: [
               Text(
                 'Hoş geldin',
-
                 style:
                 textTheme.bodyMedium
                     ?.copyWith(
                   color:
                   colorScheme
                       .onSurfaceVariant,
-
                   fontWeight:
                   FontWeight.w600,
                 ),
@@ -789,10 +684,8 @@ class _HomeHeader extends StatelessWidget {
 
               Text(
                 firstName,
-
                 style:
-                textTheme
-                    .headlineMedium
+                textTheme.headlineMedium
                     ?.copyWith(
                   fontWeight:
                   FontWeight.w900,
@@ -814,10 +707,8 @@ class _HomeHeader extends StatelessWidget {
                 AppTheme.primaryColor,
                 AppTheme.secondaryColor,
               ],
-
               begin:
               Alignment.topLeft,
-
               end:
               Alignment.bottomRight,
             ),
@@ -838,16 +729,14 @@ class _HomeHeader extends StatelessWidget {
             _initials(
               fullName,
             ),
-
             style:
             const TextStyle(
               color:
               Colors.white,
-
               fontWeight:
               FontWeight.w900,
-
-              fontSize: 16,
+              fontSize:
+              16,
             ),
           ),
         ),
@@ -924,7 +813,6 @@ class _AnalysisHeroCard
 
           begin:
           Alignment.topLeft,
-
           end:
           Alignment.bottomRight,
         ),
@@ -987,74 +875,19 @@ class _AnalysisHeroCard
           Column(
             crossAxisAlignment:
             CrossAxisAlignment.start,
-
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding:
-                    const EdgeInsets
-                        .symmetric(
-                      horizontal: 10,
-                      vertical: 6,
-                    ),
-
-                    decoration:
-                    BoxDecoration(
-                      color:
-                      Colors.white
-                          .withValues(
-                        alpha: 0.14,
-                      ),
-
-                      borderRadius:
-                      BorderRadius.circular(
-                        AppTheme.radiusPill,
-                      ),
-                    ),
-
-                    child:
-                    const Row(
-                      mainAxisSize:
-                      MainAxisSize.min,
-
-                      children: [
-                        Icon(
-                          Icons
-                              .auto_awesome_rounded,
-
-                          size: 15,
-
-                          color:
-                          Colors.white,
-                        ),
-
-                        SizedBox(
-                          width: 6,
-                        ),
-
-                        Text(
-                          'AI INSPECTION',
-
-                          style:
-                          TextStyle(
-                            color:
-                            Colors.white,
-
-                            fontSize: 11,
-
-                            fontWeight:
-                            FontWeight
-                                .w800,
-
-                            letterSpacing:
-                            0.6,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+              const AppStatusBadge(
+                icon:
+                Icons
+                    .auto_awesome_rounded,
+                label:
+                'AI INSPECTION',
+                color:
+                Colors.white,
+                backgroundColor:
+                Color(0x24FFFFFF),
+                compact:
+                true,
               ),
 
               const SizedBox(
@@ -1063,19 +896,15 @@ class _AnalysisHeroCard
 
               Text(
                 'Aracını yapay zekâ\nile analiz et',
-
                 style:
-                textTheme
-                    .headlineMedium
+                textTheme.headlineMedium
                     ?.copyWith(
                   color:
                   Colors.white,
-
                   fontWeight:
                   FontWeight.w900,
-
-                  height: 1.08,
-
+                  height:
+                  1.08,
                   letterSpacing:
                   -0.8,
                 ),
@@ -1089,18 +918,16 @@ class _AnalysisHeroCard
                 'Hasarlı bölgenin fotoğrafını yükle. '
                     'AI hasarı, etkilenen parçaları ve '
                     'onarım önerilerini analiz etsin.',
-
                 style:
-                textTheme
-                    .bodyMedium
+                textTheme.bodyMedium
                     ?.copyWith(
                   color:
                   Colors.white
                       .withValues(
                     alpha: 0.82,
                   ),
-
-                  height: 1.5,
+                  height:
+                  1.5,
                 ),
               ),
 
@@ -1113,14 +940,12 @@ class _AnalysisHeroCard
                 onPressed,
 
                 style:
-                FilledButton
-                    .styleFrom(
+                FilledButton.styleFrom(
                   backgroundColor:
                   Colors.white,
 
                   foregroundColor:
-                  AppTheme
-                      .primaryDark,
+                  AppTheme.primaryDark,
 
                   minimumSize:
                   const Size(
@@ -1131,8 +956,7 @@ class _AnalysisHeroCard
                   shape:
                   RoundedRectangleBorder(
                     borderRadius:
-                    BorderRadius
-                        .circular(
+                    BorderRadius.circular(
                       AppTheme
                           .radiusMedium,
                     ),
@@ -1199,75 +1023,16 @@ class _LatestInspectionCard
       child: Column(
         crossAxisAlignment:
         CrossAxisAlignment.start,
-
         children: [
           Row(
             children: [
-              Container(
-                padding:
-                const EdgeInsets
-                    .symmetric(
-                  horizontal: 9,
-                  vertical: 5,
-                ),
-
-                decoration:
-                BoxDecoration(
-                  color:
-                  severityColor
-                      .withValues(
-                    alpha: 0.12,
-                  ),
-
-                  borderRadius:
-                  BorderRadius.circular(
-                    AppTheme.radiusPill,
-                  ),
-                ),
-
-                child: Row(
-                  mainAxisSize:
-                  MainAxisSize.min,
-
-                  children: [
-                    Container(
-                      width: 7,
-                      height: 7,
-
-                      decoration:
-                      BoxDecoration(
-                        color:
-                        severityColor,
-
-                        shape:
-                        BoxShape.circle,
-                      ),
-                    ),
-
-                    const SizedBox(
-                      width: 6,
-                    ),
-
-                    Text(
-                      severityLabel,
-
-                      style:
-                      TextStyle(
-                        fontSize: 11,
-
-                        color:
-                        severityColor,
-
-                        fontWeight:
-                        FontWeight
-                            .w800,
-
-                        letterSpacing:
-                        0.4,
-                      ),
-                    ),
-                  ],
-                ),
+              AppStatusBadge(
+                label:
+                severityLabel,
+                color:
+                severityColor,
+                compact:
+                true,
               ),
 
               const Spacer(),
@@ -1275,9 +1040,8 @@ class _LatestInspectionCard
               Icon(
                 Icons
                     .north_east_rounded,
-
-                size: 19,
-
+                size:
+                19,
                 color:
                 colorScheme
                     .onSurfaceVariant,
@@ -1291,10 +1055,8 @@ class _LatestInspectionCard
 
           Text(
             title,
-
             style:
-            textTheme
-                .titleLarge
+            textTheme.titleLarge
                 ?.copyWith(
               fontWeight:
               FontWeight.w900,
@@ -1307,12 +1069,10 @@ class _LatestInspectionCard
 
           Text(
             summary,
-
-            maxLines: 2,
-
+            maxLines:
+            2,
             overflow:
             TextOverflow.ellipsis,
-
             style:
             textTheme.bodyMedium,
           ),
@@ -1326,9 +1086,8 @@ class _LatestInspectionCard
               Icon(
                 Icons
                     .directions_car_outlined,
-
-                size: 17,
-
+                size:
+                17,
                 color:
                 colorScheme
                     .onSurfaceVariant,
@@ -1342,14 +1101,11 @@ class _LatestInspectionCard
                 child: Text(
                   inspection
                       .vehiclePlate,
-
                   style:
-                  textTheme
-                      .bodySmall
+                  textTheme.bodySmall
                       ?.copyWith(
                     fontWeight:
-                    FontWeight
-                        .w700,
+                    FontWeight.w700,
                   ),
                 ),
               ),
@@ -1357,9 +1113,8 @@ class _LatestInspectionCard
               Icon(
                 Icons
                     .calendar_today_outlined,
-
-                size: 15,
-
+                size:
+                15,
                 color:
                 colorScheme
                     .onSurfaceVariant,
@@ -1371,10 +1126,8 @@ class _LatestInspectionCard
 
               Text(
                 date,
-
                 style:
-                textTheme
-                    .bodySmall,
+                textTheme.bodySmall,
               ),
             ],
           ),
@@ -1395,7 +1148,6 @@ class _LoadingCard
     return const AppCard(
       child: SizedBox(
         height: 68,
-
         child: Center(
           child:
           CircularProgressIndicator(),
