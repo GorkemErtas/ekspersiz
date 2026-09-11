@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/app_icon_box.dart';
 import '../../../core/widgets/auth_shell.dart';
+import '../../../core/widgets/primary_button.dart';
+
 import '../../home/screens/main_shell.dart';
 import '../services/auth_service.dart';
 import 'register_screen.dart';
@@ -53,8 +57,7 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       final authResponse =
       await _authService.login(
-        email:
-        _emailController.text
+        email: _emailController.text
             .trim()
             .toLowerCase(),
         password:
@@ -76,8 +79,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 role:
                 authResponse.role,
                 subscriptionPlan:
-                authResponse
-                    .subscriptionPlan,
+                authResponse.subscriptionPlan,
               ),
         ),
       );
@@ -86,7 +88,8 @@ class _LoginScreenState extends State<LoginScreen> {
         return;
       }
 
-      final message = exception
+      final message =
+      exception
           .toString()
           .replaceFirst(
         'Exception: ',
@@ -97,8 +100,9 @@ class _LoginScreenState extends State<LoginScreen> {
         ..hideCurrentSnackBar()
         ..showSnackBar(
           SnackBar(
-            content:
-            Text(message),
+            content: Text(
+              message,
+            ),
           ),
         );
     } finally {
@@ -120,7 +124,8 @@ class _LoginScreenState extends State<LoginScreen> {
       return 'E-posta adresinizi girin.';
     }
 
-    final emailRegex = RegExp(
+    final emailRegex =
+    RegExp(
       r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
     );
 
@@ -146,19 +151,93 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(
       BuildContext context,
       ) {
+    final colorScheme =
+        Theme.of(context).colorScheme;
+
+    final textTheme =
+        Theme.of(context).textTheme;
+
     return AuthShell(
       child: Form(
         key: _formKey,
+
         child: Column(
           crossAxisAlignment:
           CrossAxisAlignment.start,
           children: [
+            Row(
+              children: [
+                const AppIconBox(
+                  icon:
+                  Icons
+                      .directions_car_filled_rounded,
+                  size: 54,
+                  iconSize: 27,
+                  borderRadius: 18,
+                  iconColor:
+                  Colors.white,
+                  gradient:
+                  LinearGradient(
+                    colors: [
+                      AppTheme.primaryColor,
+                      AppTheme.secondaryColor,
+                    ],
+                    begin:
+                    Alignment.topLeft,
+                    end:
+                    Alignment.bottomRight,
+                  ),
+                  showShadow:
+                  true,
+                ),
+
+                const SizedBox(
+                  width: 14,
+                ),
+
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment:
+                    CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Vehicle Inspector',
+                        style:
+                        textTheme.titleMedium
+                            ?.copyWith(
+                          fontWeight:
+                          FontWeight.w900,
+                        ),
+                      ),
+
+                      const SizedBox(
+                        height: 2,
+                      ),
+
+                      Text(
+                        'AI destekli araç hasar analizi',
+                        style:
+                        textTheme.bodySmall
+                            ?.copyWith(
+                          color:
+                          colorScheme
+                              .onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(
+              height: 30,
+            ),
+
             Text(
               'Tekrar hoş geldiniz',
               style:
-              Theme.of(context)
-                  .textTheme
-                  .headlineSmall
+              textTheme.headlineSmall
                   ?.copyWith(
                 fontWeight:
                 FontWeight.w900,
@@ -173,9 +252,14 @@ class _LoginScreenState extends State<LoginScreen> {
               'Hesabınıza giriş yaparak araç '
                   'analizlerinize devam edin.',
               style:
-              Theme.of(context)
-                  .textTheme
-                  .bodyMedium,
+              textTheme.bodyMedium
+                  ?.copyWith(
+                color:
+                colorScheme
+                    .onSurfaceVariant,
+                height:
+                1.5,
+              ),
             ),
 
             const SizedBox(
@@ -189,9 +273,12 @@ class _LoginScreenState extends State<LoginScreen> {
               TextInputType.emailAddress,
               textInputAction:
               TextInputAction.next,
-              autocorrect: false,
-              enableSuggestions: false,
-              autofillHints: const [
+              autocorrect:
+              false,
+              enableSuggestions:
+              false,
+              autofillHints:
+              const [
                 AutofillHints.email,
               ],
               decoration:
@@ -221,10 +308,12 @@ class _LoginScreenState extends State<LoginScreen> {
               _obscurePassword,
               textInputAction:
               TextInputAction.done,
-              autofillHints: const [
+              autofillHints:
+              const [
                 AutofillHints.password,
               ],
-              onFieldSubmitted: (_) {
+              onFieldSubmitted:
+                  (_) {
                 if (!_isLoading) {
                   _login();
                 }
@@ -233,6 +322,8 @@ class _LoginScreenState extends State<LoginScreen> {
               InputDecoration(
                 labelText:
                 'Şifre',
+                hintText:
+                'Şifrenizi girin',
                 prefixIcon:
                 const Icon(
                   Icons
@@ -244,13 +335,17 @@ class _LoginScreenState extends State<LoginScreen> {
                   _obscurePassword
                       ? 'Şifreyi göster'
                       : 'Şifreyi gizle',
-                  onPressed: () {
+                  onPressed:
+                  _isLoading
+                      ? null
+                      : () {
                     setState(() {
                       _obscurePassword =
                       !_obscurePassword;
                     });
                   },
-                  icon: Icon(
+                  icon:
+                  Icon(
                     _obscurePassword
                         ? Icons
                         .visibility_outlined
@@ -267,94 +362,93 @@ class _LoginScreenState extends State<LoginScreen> {
               height: 24,
             ),
 
-            FilledButton.icon(
+            PrimaryButton(
+              label:
+              'Giriş Yap',
+              icon:
+              Icons.login_rounded,
+              isLoading:
+              _isLoading,
               onPressed:
               _isLoading
                   ? null
                   : _login,
-              icon:
-              _isLoading
-                  ? const SizedBox(
-                width: 18,
-                height: 18,
-                child:
-                CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color:
-                  Colors.white,
-                ),
-              )
-                  : const Icon(
-                Icons
-                    .login_rounded,
-              ),
-              label: Text(
-                _isLoading
-                    ? 'Giriş yapılıyor...'
-                    : 'Giriş Yap',
-              ),
             ),
 
             const SizedBox(
-              height: 22,
+              height: 24,
             ),
 
             Row(
               children: [
-                const Expanded(
-                  child:
-                  Divider(),
+                Expanded(
+                  child: Divider(
+                    color:
+                    colorScheme
+                        .outlineVariant,
+                  ),
                 ),
 
                 Padding(
                   padding:
-                  const EdgeInsets
-                      .symmetric(
+                  const EdgeInsets.symmetric(
                     horizontal: 12,
                   ),
                   child: Text(
                     'veya',
                     style:
-                    Theme.of(context)
-                        .textTheme
-                        .bodySmall,
+                    textTheme.bodySmall
+                        ?.copyWith(
+                      color:
+                      colorScheme
+                          .onSurfaceVariant,
+                    ),
                   ),
                 ),
 
-                const Expanded(
-                  child:
-                  Divider(),
+                Expanded(
+                  child: Divider(
+                    color:
+                    colorScheme
+                        .outlineVariant,
+                  ),
                 ),
               ],
             ),
 
             const SizedBox(
-              height: 22,
+              height: 24,
             ),
 
-            OutlinedButton.icon(
-              onPressed:
-              _isLoading
-                  ? null
-                  : () {
-                Navigator.of(
-                  context,
-                ).push(
-                  MaterialPageRoute<
-                      void>(
-                    builder: (_) =>
-                    const RegisterScreen(),
-                  ),
-                );
-              },
-              icon:
-              const Icon(
-                Icons
-                    .person_add_alt_1_rounded,
-              ),
-              label:
-              const Text(
-                'Yeni Hesap Oluştur',
+            SizedBox(
+              width:
+              double.infinity,
+              child:
+              OutlinedButton.icon(
+                onPressed:
+                _isLoading
+                    ? null
+                    : () {
+                  Navigator.of(
+                    context,
+                  ).push(
+                    MaterialPageRoute<
+                        void>(
+                      builder:
+                          (_) =>
+                      const RegisterScreen(),
+                    ),
+                  );
+                },
+                icon:
+                const Icon(
+                  Icons
+                      .person_add_alt_1_rounded,
+                ),
+                label:
+                const Text(
+                  'Yeni Hesap Oluştur',
+                ),
               ),
             ),
           ],

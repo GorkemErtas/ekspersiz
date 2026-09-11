@@ -9,7 +9,6 @@ import '../../auth/screens/login_screen.dart';
 import '../../inspection/screens/inspection_history_screen.dart';
 import '../../profile/screens/profile_screen.dart';
 import '../../vehicle/screens/vehicle_list_screen.dart';
-
 import 'home_screen.dart';
 
 class MainShell extends StatefulWidget {
@@ -32,39 +31,25 @@ class MainShell extends StatefulWidget {
 }
 
 class _MainShellState extends State<MainShell> {
-  static const double _desktopBreakpoint =
-  900;
+  static const double _desktopBreakpoint = 900;
 
-  StreamSubscription<void>?
-  _sessionSubscription;
+  StreamSubscription<void>? _sessionSubscription;
 
   int _selectedIndex = 0;
-
-  void _selectTab(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-  }
 
   late final List<Widget> _screens = [
     HomeScreen(
       fullName: widget.fullName,
-      onOpenVehicles: () =>
-          _selectTab(1),
-      onOpenInspections: () =>
-          _selectTab(2),
+      onOpenVehicles: () => _selectTab(1),
+      onOpenInspections: () => _selectTab(2),
     ),
-
     const VehicleListScreen(),
-
     const InspectionHistoryScreen(),
-
     ProfileScreen(
       fullName: widget.fullName,
       email: widget.email,
       role: widget.role,
-      subscriptionPlan:
-      widget.subscriptionPlan,
+      subscriptionPlan: widget.subscriptionPlan,
     ),
   ];
 
@@ -73,13 +58,23 @@ class _MainShellState extends State<MainShell> {
     super.initState();
 
     _sessionSubscription =
-        SessionManager
-            .unauthorizedStream
-            .listen(
+        SessionManager.unauthorizedStream.listen(
               (_) {
             _handleSessionExpired();
           },
         );
+  }
+
+  void _selectTab(
+      int index,
+      ) {
+    if (_selectedIndex == index) {
+      return;
+    }
+
+    setState(() {
+      _selectedIndex = index;
+    });
   }
 
   void _handleSessionExpired() {
@@ -87,8 +82,7 @@ class _MainShellState extends State<MainShell> {
       return;
     }
 
-    Navigator.of(context)
-        .pushAndRemoveUntil(
+    Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute<void>(
         builder: (_) =>
         const LoginScreen(),
@@ -105,7 +99,9 @@ class _MainShellState extends State<MainShell> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+      BuildContext context,
+      ) {
     return LayoutBuilder(
       builder: (
           context,
@@ -119,10 +115,8 @@ class _MainShellState extends State<MainShell> {
           return _DesktopShell(
             selectedIndex:
             _selectedIndex,
-
             onDestinationSelected:
             _selectTab,
-
             screens:
             _screens,
           );
@@ -131,10 +125,8 @@ class _MainShellState extends State<MainShell> {
         return _MobileShell(
           selectedIndex:
           _selectedIndex,
-
           onDestinationSelected:
           _selectTab,
-
           screens:
           _screens,
         );
@@ -143,7 +135,8 @@ class _MainShellState extends State<MainShell> {
   }
 }
 
-class _MobileShell extends StatelessWidget {
+class _MobileShell
+    extends StatelessWidget {
   const _MobileShell({
     required this.selectedIndex,
     required this.onDestinationSelected,
@@ -151,14 +144,14 @@ class _MobileShell extends StatelessWidget {
   });
 
   final int selectedIndex;
-
   final ValueChanged<int>
   onDestinationSelected;
-
   final List<Widget> screens;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+      BuildContext context,
+      ) {
     final colorScheme =
         Theme.of(context).colorScheme;
 
@@ -170,18 +163,24 @@ class _MobileShell extends StatelessWidget {
         children: screens,
       ),
 
-      bottomNavigationBar:
-      SafeArea(
+      bottomNavigationBar: SafeArea(
+        top: false,
         minimum:
         const EdgeInsets.fromLTRB(
           14,
           0,
           14,
-          12,
+          10,
         ),
 
         child: Container(
           height: 76,
+
+          padding:
+          const EdgeInsets.symmetric(
+            horizontal: 7,
+            vertical: 5,
+          ),
 
           decoration:
           BoxDecoration(
@@ -190,7 +189,7 @@ class _MobileShell extends StatelessWidget {
 
             borderRadius:
             BorderRadius.circular(
-              24,
+              26,
             ),
 
             border:
@@ -201,56 +200,50 @@ class _MobileShell extends StatelessWidget {
             ),
 
             boxShadow:
-            AppTheme
-                .elevatedShadow,
+            AppTheme.elevatedShadow,
           ),
 
           child: Row(
             children: [
               Expanded(
-                child:
-                _NavigationItem(
-                  index: 0,
-                  selectedIndex:
-                  selectedIndex,
+                child: _NavigationItem(
                   icon:
                   Icons
                       .home_outlined,
                   selectedIcon:
-                  Icons
-                      .home_rounded,
+                  Icons.home_rounded,
                   label:
                   'Ana Sayfa',
-                  onTap:
-                  onDestinationSelected,
+                  selected:
+                  selectedIndex == 0,
+                  onTap: () =>
+                      onDestinationSelected(
+                        0,
+                      ),
                 ),
               ),
 
               Expanded(
-                child:
-                _NavigationItem(
-                  index: 1,
-                  selectedIndex:
-                  selectedIndex,
+                child: _NavigationItem(
                   icon:
                   Icons
                       .directions_car_outlined,
                   selectedIcon:
                   Icons
-                      .directions_car_filled_rounded,
+                      .directions_car_rounded,
                   label:
                   'Araçlar',
-                  onTap:
-                  onDestinationSelected,
+                  selected:
+                  selectedIndex == 1,
+                  onTap: () =>
+                      onDestinationSelected(
+                        1,
+                      ),
                 ),
               ),
 
               Expanded(
-                child:
-                _NavigationItem(
-                  index: 2,
-                  selectedIndex:
-                  selectedIndex,
+                child: _NavigationItem(
                   icon:
                   Icons
                       .description_outlined,
@@ -259,27 +252,30 @@ class _MobileShell extends StatelessWidget {
                       .description_rounded,
                   label:
                   'Analizler',
-                  onTap:
-                  onDestinationSelected,
+                  selected:
+                  selectedIndex == 2,
+                  onTap: () =>
+                      onDestinationSelected(
+                        2,
+                      ),
                 ),
               ),
 
               Expanded(
-                child:
-                _NavigationItem(
-                  index: 3,
-                  selectedIndex:
-                  selectedIndex,
+                child: _NavigationItem(
                   icon:
                   Icons
                       .person_outline_rounded,
                   selectedIcon:
-                  Icons
-                      .person_rounded,
+                  Icons.person_rounded,
                   label:
                   'Profil',
-                  onTap:
-                  onDestinationSelected,
+                  selected:
+                  selectedIndex == 3,
+                  onTap: () =>
+                      onDestinationSelected(
+                        3,
+                      ),
                 ),
               ),
             ],
@@ -293,135 +289,154 @@ class _MobileShell extends StatelessWidget {
 class _NavigationItem
     extends StatelessWidget {
   const _NavigationItem({
-    required this.index,
-    required this.selectedIndex,
     required this.icon,
     required this.selectedIcon,
     required this.label,
+    required this.selected,
     required this.onTap,
   });
-
-  final int index;
-  final int selectedIndex;
 
   final IconData icon;
   final IconData selectedIcon;
 
   final String label;
 
-  final ValueChanged<int> onTap;
+  final bool selected;
 
-  bool get isSelected =>
-      index == selectedIndex;
+  final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+      BuildContext context,
+      ) {
     final colorScheme =
         Theme.of(context).colorScheme;
 
-    return InkWell(
-      onTap: () {
-        onTap(index);
-      },
+    final textTheme =
+        Theme.of(context).textTheme;
+
+    return Material(
+      color:
+      Colors.transparent,
 
       borderRadius:
       BorderRadius.circular(
         20,
       ),
 
-      child: AnimatedContainer(
-        duration:
-        const Duration(
-          milliseconds: 220,
+      child: InkWell(
+        onTap:
+        onTap,
+
+        borderRadius:
+        BorderRadius.circular(
+          20,
         ),
 
-        curve:
-        Curves.easeOutCubic,
-
-        margin:
-        const EdgeInsets.all(
-          6,
-        ),
-
-        padding:
-        const EdgeInsets.symmetric(
-          horizontal: 8,
-          vertical: 5,
-        ),
-
-        decoration:
-        BoxDecoration(
-          color:
-          isSelected
-              ? colorScheme
-              .primaryContainer
-              : Colors
-              .transparent,
-
-          borderRadius:
-          BorderRadius.circular(
-            18,
+        child: AnimatedContainer(
+          duration:
+          const Duration(
+            milliseconds: 180,
           ),
-        ),
 
-        child: Column(
-          mainAxisAlignment:
-          MainAxisAlignment.center,
+          curve:
+          Curves.easeOut,
 
-          children: [
-            AnimatedSwitcher(
-              duration:
-              const Duration(
-                milliseconds: 180,
-              ),
+          padding:
+          const EdgeInsets.symmetric(
+            horizontal: 4,
+            vertical: 5,
+          ),
 
-              child: Icon(
-                isSelected
-                    ? selectedIcon
-                    : icon,
+          decoration:
+          BoxDecoration(
+            color:
+            selected
+                ? colorScheme
+                .primaryContainer
+                : Colors.transparent,
 
-                key:
-                ValueKey(
-                  isSelected,
+            borderRadius:
+            BorderRadius.circular(
+              20,
+            ),
+          ),
+
+          child: Column(
+            mainAxisAlignment:
+            MainAxisAlignment.center,
+
+            mainAxisSize:
+            MainAxisSize.min,
+
+            children: [
+              AnimatedSwitcher(
+                duration:
+                const Duration(
+                  milliseconds: 160,
                 ),
 
-                size:
-                isSelected
-                    ? 23
-                    : 22,
+                child: Icon(
+                  selected
+                      ? selectedIcon
+                      : icon,
 
-                color:
-                isSelected
-                    ? colorScheme
-                    .primary
-                    : colorScheme
-                    .onSurfaceVariant,
+                  key:
+                  ValueKey(
+                    selected,
+                  ),
+
+                  size:
+                  22,
+
+                  color:
+                  selected
+                      ? colorScheme
+                      .primary
+                      : colorScheme
+                      .onSurfaceVariant,
+                ),
               ),
-            ),
 
-            const SizedBox(
-              height: 4,
-            ),
-
-            Text(
-              label,
-
-              maxLines: 1,
-
-              style: TextStyle(
-                fontSize: 10.5,
-                height: 1.0,
-                fontWeight:
-                isSelected
-                    ? FontWeight.w800
-                    : FontWeight.w500,
-                color:
-                isSelected
-                    ? colorScheme.primary
-                    : colorScheme.onSurfaceVariant,
+              const SizedBox(
+                height: 3,
               ),
-            ),
-          ],
+
+              Flexible(
+                child: Text(
+                  label,
+
+                  maxLines:
+                  1,
+
+                  overflow:
+                  TextOverflow.ellipsis,
+
+                  style:
+                  textTheme.labelSmall
+                      ?.copyWith(
+                    height:
+                    1.0,
+
+                    fontSize:
+                    10.5,
+
+                    fontWeight:
+                    selected
+                        ? FontWeight.w900
+                        : FontWeight.w600,
+
+                    color:
+                    selected
+                        ? colorScheme
+                        .primary
+                        : colorScheme
+                        .onSurfaceVariant,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -444,7 +459,9 @@ class _DesktopShell
   final List<Widget> screens;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+      BuildContext context,
+      ) {
     final colorScheme =
         Theme.of(context).colorScheme;
 
@@ -455,23 +472,18 @@ class _DesktopShell
             child: Padding(
               padding:
               const EdgeInsets.all(
-                12,
+                14,
               ),
 
               child: Container(
-                width: 96,
-
                 decoration:
                 BoxDecoration(
                   color:
-                  colorScheme
-                      .surface,
+                  colorScheme.surface,
 
                   borderRadius:
-                  BorderRadius
-                      .circular(
-                    AppTheme
-                        .radiusLarge,
+                  BorderRadius.circular(
+                    AppTheme.radiusLarge,
                   ),
 
                   border:
@@ -482,42 +494,34 @@ class _DesktopShell
                   ),
 
                   boxShadow:
-                  AppTheme
-                      .softShadow,
+                  AppTheme.softShadow,
                 ),
 
-                child:
-                NavigationRail(
+                child: NavigationRail(
                   selectedIndex:
                   selectedIndex,
 
                   onDestinationSelected:
                   onDestinationSelected,
 
-                  backgroundColor:
-                  Colors
-                      .transparent,
-
                   labelType:
                   NavigationRailLabelType
                       .all,
 
                   groupAlignment:
-                  -0.75,
+                  -0.72,
 
                   leading:
                   Padding(
                     padding:
-                    const EdgeInsets
-                        .only(
+                    const EdgeInsets.only(
                       top: 18,
-                      bottom: 22,
+                      bottom: 30,
                     ),
 
-                    child:
-                    Container(
-                      width: 50,
-                      height: 50,
+                    child: Container(
+                      width: 54,
+                      height: 54,
 
                       decoration:
                       BoxDecoration(
@@ -531,18 +535,15 @@ class _DesktopShell
                           ],
 
                           begin:
-                          Alignment
-                              .topLeft,
+                          Alignment.topLeft,
 
                           end:
-                          Alignment
-                              .bottomRight,
+                          Alignment.bottomRight,
                         ),
 
                         borderRadius:
-                        BorderRadius
-                            .circular(
-                          16,
+                        BorderRadius.circular(
+                          18,
                         ),
 
                         boxShadow:
@@ -554,13 +555,10 @@ class _DesktopShell
                       const Icon(
                         Icons
                             .car_crash_rounded,
-
                         color:
-                        Colors
-                            .white,
-
+                        Colors.white,
                         size:
-                        26,
+                        28,
                       ),
                     ),
                   ),
@@ -593,7 +591,7 @@ class _DesktopShell
                       selectedIcon:
                       Icon(
                         Icons
-                            .directions_car_filled_rounded,
+                            .directions_car_rounded,
                       ),
                       label:
                       Text(
@@ -644,7 +642,6 @@ class _DesktopShell
             child: IndexedStack(
               index:
               selectedIndex,
-
               children:
               screens,
             ),
