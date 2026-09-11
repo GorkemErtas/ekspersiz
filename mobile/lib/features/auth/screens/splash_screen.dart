@@ -3,11 +3,11 @@ import 'package:flutter/material.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/storage/token_storage.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/app_icon_box.dart';
 
-import '../../home/screens/main_shell.dart';
 import '../services/auth_service.dart';
-
 import 'login_screen.dart';
+import '../../home/screens/main_shell.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({
@@ -46,15 +46,13 @@ class _SplashScreenState
 
     try {
       final user =
-      await _authService
-          .getCurrentUser();
+      await _authService.getCurrentUser();
 
       if (!mounted) {
         return;
       }
 
-      Navigator.of(context)
-          .pushReplacement(
+      Navigator.of(context).pushReplacement(
         MaterialPageRoute<void>(
           builder: (_) =>
               MainShell(
@@ -72,8 +70,7 @@ class _SplashScreenState
     } on ApiException catch (exception) {
       if (exception.statusCode == 401 ||
           exception.statusCode == 403) {
-        await TokenStorage
-            .deleteAccessToken();
+        await TokenStorage.deleteAccessToken();
 
         if (!mounted) {
           return;
@@ -106,8 +103,7 @@ class _SplashScreenState
       return;
     }
 
-    Navigator.of(context)
-        .pushReplacement(
+    Navigator.of(context).pushReplacement(
       MaterialPageRoute<void>(
         builder: (_) =>
         const LoginScreen(),
@@ -121,12 +117,9 @@ class _SplashScreenState
     showDialog<void>(
       context: context,
       barrierDismissible: false,
-      builder: (
-          dialogContext,
-          ) {
+      builder: (dialogContext) {
         return AlertDialog(
-          title:
-          const Text(
+          title: const Text(
             'Bağlantı Hatası',
           ),
           content:
@@ -140,12 +133,10 @@ class _SplashScreenState
 
                 _restoreSession();
               },
-              child:
-              const Text(
+              child: const Text(
                 'Tekrar Dene',
               ),
             ),
-
             TextButton(
               onPressed: () async {
                 Navigator.of(
@@ -161,8 +152,7 @@ class _SplashScreenState
 
                 _goToLogin();
               },
-              child:
-              const Text(
+              child: const Text(
                 'Giriş Yap',
               ),
             ),
@@ -176,94 +166,126 @@ class _SplashScreenState
   Widget build(
       BuildContext context,
       ) {
+    final colorScheme =
+        Theme.of(context).colorScheme;
+
+    final textTheme =
+        Theme.of(context).textTheme;
+
     return Scaffold(
       body: SafeArea(
         child: Center(
-          child: Column(
-            mainAxisSize:
-            MainAxisSize.min,
-            children: [
-              Container(
-                width: 82,
-                height: 82,
-                decoration:
-                BoxDecoration(
-                  gradient:
-                  const LinearGradient(
-                    colors: [
-                      AppTheme
-                          .primaryColor,
-                      AppTheme
-                          .secondaryColor,
-                    ],
-                    begin:
-                    Alignment
-                        .topLeft,
-                    end:
-                    Alignment
-                        .bottomRight,
+          child: Padding(
+            padding:
+            const EdgeInsets.symmetric(
+              horizontal: 24,
+            ),
+            child: ConstrainedBox(
+              constraints:
+              const BoxConstraints(
+                maxWidth: 460,
+              ),
+              child: Column(
+                mainAxisSize:
+                MainAxisSize.min,
+                children: [
+                  const AppIconBox(
+                    icon:
+                    Icons
+                        .car_crash_rounded,
+                    size: 88,
+                    iconSize: 42,
+                    borderRadius: 28,
+                    iconColor:
+                    Colors.white,
+                    gradient:
+                    LinearGradient(
+                      colors: [
+                        AppTheme.primaryColor,
+                        AppTheme.secondaryColor,
+                      ],
+                      begin:
+                      Alignment.topLeft,
+                      end:
+                      Alignment.bottomRight,
+                    ),
+                    showShadow:
+                    true,
                   ),
-                  borderRadius:
-                  BorderRadius.circular(
-                    26,
+
+                  const SizedBox(
+                    height: 26,
                   ),
-                  boxShadow:
-                  AppTheme
-                      .primaryShadow,
-                ),
-                child:
-                const Icon(
-                  Icons
-                      .car_crash_rounded,
-                  color:
-                  Colors.white,
-                  size: 40,
-                ),
-              ),
 
-              const SizedBox(
-                height: 24,
-              ),
+                  Text(
+                    'Vehicle Inspector',
+                    textAlign:
+                    TextAlign.center,
+                    style:
+                    textTheme
+                        .headlineMedium
+                        ?.copyWith(
+                      fontWeight:
+                      FontWeight.w900,
+                      letterSpacing:
+                      -0.6,
+                    ),
+                  ),
 
-              Text(
-                'Vehicle Inspector',
-                style:
-                Theme.of(context)
-                    .textTheme
-                    .headlineMedium
-                    ?.copyWith(
-                  fontWeight:
-                  FontWeight.w900,
-                ),
-              ),
+                  const SizedBox(
+                    height: 8,
+                  ),
 
-              const SizedBox(
-                height: 8,
-              ),
+                  Text(
+                    'AI destekli araç hasar analizi',
+                    textAlign:
+                    TextAlign.center,
+                    style:
+                    textTheme.bodyMedium
+                        ?.copyWith(
+                      color:
+                      colorScheme
+                          .onSurfaceVariant,
+                    ),
+                  ),
 
-              Text(
-                'AI destekli araç hasar analizi',
-                textAlign:
-                TextAlign.center,
-                style:
-                Theme.of(context)
-                    .textTheme
-                    .bodyMedium,
-              ),
+                  const SizedBox(
+                    height: 32,
+                  ),
 
-              const SizedBox(
-                height: 32,
-              ),
+                  SizedBox(
+                    width: 30,
+                    height: 30,
+                    child:
+                    CircularProgressIndicator(
+                      strokeWidth:
+                      2.5,
+                      color:
+                      colorScheme.primary,
+                    ),
+                  ),
 
-              const SizedBox(
-                width: 26,
-                height: 26,
-                child:
-                CircularProgressIndicator(
-                  strokeWidth: 2.5,
-                ),
+                  const SizedBox(
+                    height: 16,
+                  ),
+
+                  Text(
+                    'Oturum kontrol ediliyor...',
+                    textAlign:
+                    TextAlign.center,
+                    style:
+                    textTheme.bodySmall
+                        ?.copyWith(
+                      color:
+                      colorScheme
+                          .onSurfaceVariant,
+                      fontWeight:
+                      FontWeight.w600,
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),

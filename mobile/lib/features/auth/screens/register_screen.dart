@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/app_icon_box.dart';
 import '../../../core/widgets/auth_shell.dart';
+import '../../../core/widgets/primary_button.dart';
+
 import '../services/auth_service.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -13,8 +17,10 @@ class RegisterScreen extends StatefulWidget {
       _RegisterScreenState();
 }
 
-class _RegisterScreenState extends State<RegisterScreen> {
-  final _formKey = GlobalKey<FormState>();
+class _RegisterScreenState
+    extends State<RegisterScreen> {
+  final _formKey =
+  GlobalKey<FormState>();
 
   final _fullNameController =
   TextEditingController();
@@ -58,10 +64,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     try {
       await _authService.register(
-        fullName: _fullNameController.text.trim(),
+        fullName:
+        _fullNameController.text.trim(),
         email:
-        _emailController.text.trim().toLowerCase(),
-        password: _passwordController.text,
+        _emailController.text
+            .trim()
+            .toLowerCase(),
+        password:
+        _passwordController.text,
       );
 
       if (!mounted) {
@@ -84,7 +94,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
         return;
       }
 
-      final message = exception
+      final message =
+      exception
           .toString()
           .replaceFirst(
         'Exception: ',
@@ -95,7 +106,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ..hideCurrentSnackBar()
         ..showSnackBar(
           SnackBar(
-            content: Text(message),
+            content: Text(
+              message,
+            ),
           ),
         );
     } finally {
@@ -142,7 +155,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return 'E-posta en fazla 150 karakter olabilir.';
     }
 
-    final emailRegex = RegExp(
+    final emailRegex =
+    RegExp(
       r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
     );
 
@@ -194,20 +208,96 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget build(
       BuildContext context,
       ) {
+    final colorScheme =
+        Theme.of(context).colorScheme;
+
+    final textTheme =
+        Theme.of(context).textTheme;
+
     return AuthShell(
       maxWidth: 520,
+
       child: Form(
         key: _formKey,
+
         child: Column(
           crossAxisAlignment:
           CrossAxisAlignment.start,
+
           children: [
+            Row(
+              children: [
+                const AppIconBox(
+                  icon:
+                  Icons.person_add_alt_1_rounded,
+                  size: 54,
+                  iconSize: 27,
+                  borderRadius: 18,
+                  iconColor:
+                  Colors.white,
+                  gradient:
+                  LinearGradient(
+                    colors: [
+                      AppTheme.primaryColor,
+                      AppTheme.secondaryColor,
+                    ],
+                    begin:
+                    Alignment.topLeft,
+                    end:
+                    Alignment.bottomRight,
+                  ),
+                  showShadow:
+                  true,
+                ),
+
+                const SizedBox(
+                  width: 14,
+                ),
+
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment:
+                    CrossAxisAlignment.start,
+
+                    children: [
+                      Text(
+                        'Vehicle Inspector',
+                        style:
+                        textTheme.titleMedium
+                            ?.copyWith(
+                          fontWeight:
+                          FontWeight.w900,
+                        ),
+                      ),
+
+                      const SizedBox(
+                        height: 2,
+                      ),
+
+                      Text(
+                        'AI destekli araç hasar analizi',
+                        style:
+                        textTheme.bodySmall
+                            ?.copyWith(
+                          color:
+                          colorScheme
+                              .onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(
+              height: 30,
+            ),
+
             Text(
               'Hesabını oluştur',
               style:
-              Theme.of(context)
-                  .textTheme
-                  .headlineSmall
+              textTheme.headlineSmall
                   ?.copyWith(
                 fontWeight:
                 FontWeight.w900,
@@ -222,9 +312,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
               'Araçlarını kaydet ve AI destekli '
                   'hasar analizlerini tek yerden yönet.',
               style:
-              Theme.of(context)
-                  .textTheme
-                  .bodyMedium,
+              textTheme.bodyMedium
+                  ?.copyWith(
+                color:
+                colorScheme
+                    .onSurfaceVariant,
+                height: 1.5,
+              ),
             ),
 
             const SizedBox(
@@ -238,9 +332,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
               TextInputAction.next,
               textCapitalization:
               TextCapitalization.words,
-              autofillHints: const [
+
+              autofillHints:
+              const [
                 AutofillHints.name,
               ],
+
               decoration:
               const InputDecoration(
                 labelText:
@@ -253,6 +350,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       .person_outline_rounded,
                 ),
               ),
+
               validator:
               _validateFullName,
             ),
@@ -268,11 +366,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
               TextInputType.emailAddress,
               textInputAction:
               TextInputAction.next,
-              autocorrect: false,
-              enableSuggestions: false,
-              autofillHints: const [
+
+              autocorrect:
+              false,
+              enableSuggestions:
+              false,
+
+              autofillHints:
+              const [
                 AutofillHints.email,
               ],
+
               decoration:
               const InputDecoration(
                 labelText:
@@ -285,6 +389,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       .mail_outline_rounded,
                 ),
               ),
+
               validator:
               _validateEmail,
             ),
@@ -300,33 +405,44 @@ class _RegisterScreenState extends State<RegisterScreen> {
               _obscurePassword,
               textInputAction:
               TextInputAction.next,
-              autofillHints: const [
+
+              autofillHints:
+              const [
                 AutofillHints.newPassword,
               ],
+
               decoration:
               InputDecoration(
                 labelText:
                 'Şifre',
                 hintText:
                 'En az 8 karakter',
+
                 prefixIcon:
                 const Icon(
                   Icons
                       .lock_outline_rounded,
                 ),
+
                 suffixIcon:
                 IconButton(
                   tooltip:
                   _obscurePassword
                       ? 'Şifreyi göster'
                       : 'Şifreyi gizle',
-                  onPressed: () {
+
+                  onPressed:
+                  _isLoading
+                      ? null
+                      : () {
                     setState(() {
                       _obscurePassword =
                       !_obscurePassword;
                     });
                   },
-                  icon: Icon(
+
+                  icon:
+                  Icon(
                     _obscurePassword
                         ? Icons
                         .visibility_outlined
@@ -335,6 +451,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                 ),
               ),
+
               validator:
               _validatePassword,
             ),
@@ -350,35 +467,46 @@ class _RegisterScreenState extends State<RegisterScreen> {
               _obscurePasswordConfirm,
               textInputAction:
               TextInputAction.done,
-              onFieldSubmitted: (_) {
+
+              onFieldSubmitted:
+                  (_) {
                 if (!_isLoading) {
                   _register();
                 }
               },
+
               decoration:
               InputDecoration(
                 labelText:
                 'Şifre Tekrar',
                 hintText:
                 'Şifrenizi tekrar girin',
+
                 prefixIcon:
                 const Icon(
                   Icons
                       .lock_reset_rounded,
                 ),
+
                 suffixIcon:
                 IconButton(
                   tooltip:
                   _obscurePasswordConfirm
                       ? 'Şifreyi göster'
                       : 'Şifreyi gizle',
-                  onPressed: () {
+
+                  onPressed:
+                  _isLoading
+                      ? null
+                      : () {
                     setState(() {
                       _obscurePasswordConfirm =
                       !_obscurePasswordConfirm;
                     });
                   },
-                  icon: Icon(
+
+                  icon:
+                  Icon(
                     _obscurePasswordConfirm
                         ? Icons
                         .visibility_outlined
@@ -387,49 +515,137 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                 ),
               ),
+
               validator:
               _validatePasswordConfirm,
+            ),
+
+            const SizedBox(
+              height: 12,
+            ),
+
+            Container(
+              padding:
+              const EdgeInsets.all(
+                14,
+              ),
+
+              decoration:
+              BoxDecoration(
+                color:
+                colorScheme
+                    .surfaceContainerLow,
+
+                borderRadius:
+                BorderRadius.circular(
+                  AppTheme.radiusMedium,
+                ),
+              ),
+
+              child: Row(
+                crossAxisAlignment:
+                CrossAxisAlignment.start,
+
+                children: [
+                  Icon(
+                    Icons
+                        .shield_outlined,
+                    size: 19,
+                    color:
+                    colorScheme.primary,
+                  ),
+
+                  const SizedBox(
+                    width: 10,
+                  ),
+
+                  Expanded(
+                    child: Text(
+                      'Şifreniz en az 8, en fazla 72 karakter olmalıdır.',
+                      style:
+                      textTheme.bodySmall
+                          ?.copyWith(
+                        color:
+                        colorScheme
+                            .onSurfaceVariant,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
 
             const SizedBox(
               height: 24,
             ),
 
-            FilledButton.icon(
+            PrimaryButton(
+              label:
+              'Hesap Oluştur',
+              icon:
+              Icons
+                  .person_add_alt_1_rounded,
+              isLoading:
+              _isLoading,
               onPressed:
               _isLoading
                   ? null
                   : _register,
-              icon:
-              _isLoading
-                  ? const SizedBox(
-                width: 18,
-                height: 18,
-                child:
-                CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color:
-                  Colors.white,
-                ),
-              )
-                  : const Icon(
-                Icons
-                    .person_add_alt_1_rounded,
-              ),
-              label: Text(
-                _isLoading
-                    ? 'Hesap oluşturuluyor...'
-                    : 'Hesap Oluştur',
-              ),
             ),
 
             const SizedBox(
-              height: 14,
+              height: 18,
+            ),
+
+            Row(
+              children: [
+                Expanded(
+                  child: Divider(
+                    color:
+                    colorScheme
+                        .outlineVariant,
+                  ),
+                ),
+
+                Padding(
+                  padding:
+                  const EdgeInsets.symmetric(
+                    horizontal: 12,
+                  ),
+
+                  child: Text(
+                    'veya',
+                    style:
+                    textTheme.bodySmall
+                        ?.copyWith(
+                      color:
+                      colorScheme
+                          .onSurfaceVariant,
+                    ),
+                  ),
+                ),
+
+                Expanded(
+                  child: Divider(
+                    color:
+                    colorScheme
+                        .outlineVariant,
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(
+              height: 18,
             ),
 
             SizedBox(
-              width: double.infinity,
-              child: TextButton(
+              width:
+              double.infinity,
+
+              child:
+              OutlinedButton.icon(
                 onPressed:
                 _isLoading
                     ? null
@@ -438,9 +654,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     context,
                   ).pop();
                 },
-                child:
+
+                icon:
+                const Icon(
+                  Icons.login_rounded,
+                ),
+
+                label:
                 const Text(
-                  'Zaten hesabınız var mı? Giriş yapın',
+                  'Zaten Hesabım Var',
                 ),
               ),
             ),
