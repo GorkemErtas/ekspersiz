@@ -27,7 +27,7 @@ public interface DamageInspectionRepository
             Long userId
     );
 
-    long countByUserIdAndCreatedAtBetween(
+    long countByUserIdAndAnalysisStartedAtGreaterThanEqualAndAnalysisStartedAtLessThan(
             Long userId,
             LocalDateTime start,
             LocalDateTime end

@@ -92,6 +92,9 @@ public class DamageInspection {
     )
     private LocalDateTime createdAt;
 
+    @Column(name = "analysis_started_at")
+    private LocalDateTime analysisStartedAt;
+
     @Column(name = "completed_at")
     private LocalDateTime completedAt;
 
@@ -288,6 +291,16 @@ public class DamageInspection {
     ) {
         detections.add(detection);
         detection.setInspection(this);
+    }
+
+    public LocalDateTime getAnalysisStartedAt() {
+        return analysisStartedAt;
+    }
+
+    public void setAnalysisStartedAt(
+            LocalDateTime analysisStartedAt
+    ) {
+        this.analysisStartedAt = analysisStartedAt;
     }
 
     public void clearDetections() {
