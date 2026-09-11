@@ -71,6 +71,225 @@ class _VehicleListScreenState
     );
   }
 
+  Future<void> _openEditVehicleScreen(
+      Vehicle vehicle,
+      ) async {
+    final updatedVehicle =
+    await Navigator.of(context).push<Vehicle>(
+      MaterialPageRoute<Vehicle>(
+        builder: (_) =>
+            AddVehicleScreen(
+              vehicle: vehicle,
+            ),
+      ),
+    );
+
+    if (!mounted ||
+        updatedVehicle == null) {
+      return;
+    }
+
+    setState(_loadVehicles);
+
+    _showMessage(
+      '${updatedVehicle.displayName} başarıyla güncellendi.',
+    );
+  }
+
+  Future<void> _confirmDeleteVehicle(
+      Vehicle vehicle,
+      ) async {
+    final shouldDelete =
+    await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        final colorScheme =
+            Theme.of(dialogContext).colorScheme;
+
+        final textTheme =
+            Theme.of(dialogContext).textTheme;
+
+        return AlertDialog(
+          icon: Container(
+            width: 58,
+            height: 58,
+            decoration: BoxDecoration(
+              color:
+              colorScheme.errorContainer,
+              borderRadius:
+              BorderRadius.circular(18),
+            ),
+            child: Icon(
+              Icons.delete_outline_rounded,
+              color:
+              colorScheme.error,
+              size: 29,
+            ),
+          ),
+
+          title: const Text(
+            'Araç silinsin mi?',
+            textAlign: TextAlign.center,
+          ),
+
+          content: Column(
+            mainAxisSize:
+            MainAxisSize.min,
+            children: [
+              Text(
+                '${vehicle.displayName} aracını silmek üzeresiniz.',
+                textAlign:
+                TextAlign.center,
+                style:
+                textTheme.bodyLarge,
+              ),
+
+              const SizedBox(
+                height: 10,
+              ),
+
+              Text(
+                'Bu işlem geri alınamaz.',
+                textAlign:
+                TextAlign.center,
+                style:
+                textTheme.bodyMedium
+                    ?.copyWith(
+                  color:
+                  colorScheme
+                      .onSurfaceVariant,
+                ),
+              ),
+
+              const SizedBox(
+                height: 14,
+              ),
+
+              Container(
+                width: double.infinity,
+                padding:
+                const EdgeInsets.all(12),
+                decoration:
+                BoxDecoration(
+                  color:
+                  colorScheme
+                      .surfaceContainerHighest
+                      .withValues(
+                    alpha: 0.45,
+                  ),
+                  borderRadius:
+                  BorderRadius.circular(
+                    AppTheme.radiusMedium,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.badge_outlined,
+                      size: 18,
+                      color:
+                      colorScheme
+                          .onSurfaceVariant,
+                    ),
+
+                    const SizedBox(
+                      width: 8,
+                    ),
+
+                    Expanded(
+                      child: Text(
+                        vehicle.plate,
+                        style:
+                        textTheme.bodyMedium
+                            ?.copyWith(
+                          fontWeight:
+                          FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(
+                  dialogContext,
+                ).pop(false);
+              },
+              child: const Text(
+                'Vazgeç',
+              ),
+            ),
+
+            FilledButton(
+              style:
+              FilledButton.styleFrom(
+                backgroundColor:
+                colorScheme.error,
+                foregroundColor:
+                colorScheme.onError,
+              ),
+              onPressed: () {
+                Navigator.of(
+                  dialogContext,
+                ).pop(true);
+              },
+              child: const Text(
+                'Aracı Sil',
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldDelete != true) {
+      return;
+    }
+
+    await _deleteVehicle(vehicle);
+  }
+
+  Future<void> _deleteVehicle(
+      Vehicle vehicle,
+      ) async {
+    try {
+      await _vehicleService.deleteVehicle(
+        vehicle.id,
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(_loadVehicles);
+
+      _showMessage(
+        '${vehicle.displayName} başarıyla silindi.',
+      );
+    } catch (exception) {
+      if (!mounted) {
+        return;
+      }
+
+      final message =
+      switch (exception) {
+        ApiException() =>
+        exception.message,
+        FormatException() =>
+        exception.message,
+        _ =>
+        'Araç silinemedi.',
+      };
+
+      _showMessage(message);
+    }
+  }
+
   void _showMessage(
       String message,
       ) {
@@ -78,7 +297,8 @@ class _VehicleListScreenState
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          content: Text(message),
+          content:
+          Text(message),
         ),
       );
   }
@@ -277,6 +497,14 @@ class _VehicleListScreenState
                         _formatMileage(
                           vehicle.mileage,
                         ),
+                        onEdit: () =>
+                            _openEditVehicleScreen(
+                              vehicle,
+                            ),
+                        onDelete: () =>
+                            _confirmDeleteVehicle(
+                              vehicle,
+                            ),
                       );
                     },
                   ),
@@ -314,27 +542,34 @@ class _VehicleHeader extends StatelessWidget {
         Text(
           'Garajınız',
           style:
-          textTheme.headlineSmall?.copyWith(
+          textTheme.headlineSmall
+              ?.copyWith(
             fontWeight:
             FontWeight.w900,
           ),
         ),
 
-        const SizedBox(height: 6),
+        const SizedBox(
+          height: 6,
+        ),
 
         Text(
           'Kayıtlı araçlarınızı buradan '
-              'görüntüleyebilir ve yeni araç ekleyebilirsiniz.',
+              'görüntüleyebilir, düzenleyebilir ve yönetebilirsiniz.',
           style:
-          textTheme.bodyLarge?.copyWith(
+          textTheme.bodyLarge
+              ?.copyWith(
             color:
-            colorScheme.onSurfaceVariant,
+            colorScheme
+                .onSurfaceVariant,
             height:
             1.45,
           ),
         ),
 
-        const SizedBox(height: 20),
+        const SizedBox(
+          height: 20,
+        ),
 
         AppStatusBadge(
           icon:
@@ -355,10 +590,15 @@ class _VehicleCard extends StatelessWidget {
   const _VehicleCard({
     required this.vehicle,
     required this.mileage,
+    required this.onEdit,
+    required this.onDelete,
   });
 
   final Vehicle vehicle;
   final String mileage;
+
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
 
   @override
   Widget build(
@@ -376,7 +616,7 @@ class _VehicleCard extends StatelessWidget {
 
       child: Row(
         crossAxisAlignment:
-        CrossAxisAlignment.center,
+        CrossAxisAlignment.start,
         children: [
           const AppIconBox(
             icon:
@@ -387,27 +627,50 @@ class _VehicleCard extends StatelessWidget {
             borderRadius: 20,
           ),
 
-          const SizedBox(width: 16),
+          const SizedBox(
+            width: 16,
+          ),
 
           Expanded(
             child: Column(
               crossAxisAlignment:
               CrossAxisAlignment.start,
               children: [
-                Text(
-                  vehicle.displayName,
-                  maxLines: 1,
-                  overflow:
-                  TextOverflow.ellipsis,
-                  style:
-                  textTheme.titleMedium
-                      ?.copyWith(
-                    fontWeight:
-                    FontWeight.w900,
-                  ),
+                Row(
+                  crossAxisAlignment:
+                  CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        vehicle.displayName,
+                        maxLines: 1,
+                        overflow:
+                        TextOverflow.ellipsis,
+                        style:
+                        textTheme.titleMedium
+                            ?.copyWith(
+                          fontWeight:
+                          FontWeight.w900,
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(
+                      width: 8,
+                    ),
+
+                    _VehicleActionsMenu(
+                      onEdit:
+                      onEdit,
+                      onDelete:
+                      onDelete,
+                    ),
+                  ],
                 ),
 
-                const SizedBox(height: 10),
+                const SizedBox(
+                  height: 10,
+                ),
 
                 Wrap(
                   spacing: 8,
@@ -430,7 +693,9 @@ class _VehicleCard extends StatelessWidget {
                   ],
                 ),
 
-                const SizedBox(height: 12),
+                const SizedBox(
+                  height: 12,
+                ),
 
                 Row(
                   children: [
@@ -442,7 +707,9 @@ class _VehicleCard extends StatelessWidget {
                           .onSurfaceVariant,
                     ),
 
-                    const SizedBox(width: 6),
+                    const SizedBox(
+                      width: 6,
+                    ),
 
                     Text(
                       '$mileage km',
@@ -463,6 +730,92 @@ class _VehicleCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+enum _VehicleAction {
+  edit,
+  delete,
+}
+
+class _VehicleActionsMenu
+    extends StatelessWidget {
+  const _VehicleActionsMenu({
+    required this.onEdit,
+    required this.onDelete,
+  });
+
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
+
+  @override
+  Widget build(
+      BuildContext context,
+      ) {
+    final colorScheme =
+        Theme.of(context).colorScheme;
+
+    return PopupMenuButton<_VehicleAction>(
+      tooltip:
+      'Araç işlemleri',
+      icon:
+      const Icon(
+        Icons.more_vert_rounded,
+      ),
+      onSelected: (action) {
+        switch (action) {
+          case _VehicleAction.edit:
+            onEdit();
+          case _VehicleAction.delete:
+            onDelete();
+        }
+      },
+      itemBuilder: (context) => [
+        const PopupMenuItem(
+          value:
+          _VehicleAction.edit,
+          child: Row(
+            children: [
+              Icon(
+                Icons.edit_outlined,
+                size: 20,
+              ),
+              SizedBox(
+                width: 12,
+              ),
+              Text(
+                'Düzenle',
+              ),
+            ],
+          ),
+        ),
+        PopupMenuItem(
+          value:
+          _VehicleAction.delete,
+          child: Row(
+            children: [
+              Icon(
+                Icons.delete_outline_rounded,
+                size: 20,
+                color:
+                colorScheme.error,
+              ),
+              const SizedBox(
+                width: 12,
+              ),
+              Text(
+                'Sil',
+                style:
+                TextStyle(
+                  color:
+                  colorScheme.error,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
@@ -517,7 +870,9 @@ class _InfoBadge extends StatelessWidget {
                 .onSurfaceVariant,
           ),
 
-          const SizedBox(width: 5),
+          const SizedBox(
+            width: 5,
+          ),
 
           Text(
             label,

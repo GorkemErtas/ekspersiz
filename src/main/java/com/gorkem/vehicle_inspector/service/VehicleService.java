@@ -10,6 +10,7 @@ import com.gorkem.vehicle_inspector.exception.ResourceNotFoundException;
 import com.gorkem.vehicle_inspector.mapper.VehicleMapper;
 import com.gorkem.vehicle_inspector.repository.UserRepository;
 import com.gorkem.vehicle_inspector.repository.VehicleRepository;
+import com.gorkem.vehicle_inspector.repository.DamageInspectionRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,15 +22,18 @@ public class VehicleService {
     private final VehicleRepository vehicleRepository;
     private final UserRepository userRepository;
     private final SubscriptionService subscriptionService;
+    private final DamageInspectionRepository damageInspectionRepository;
 
     public VehicleService(
             VehicleRepository vehicleRepository,
             UserRepository userRepository,
-            SubscriptionService subscriptionService
+            SubscriptionService subscriptionService,
+            DamageInspectionRepository damageInspectionRepository
     ) {
         this.vehicleRepository = vehicleRepository;
         this.userRepository = userRepository;
         this.subscriptionService = subscriptionService;
+        this.damageInspectionRepository = damageInspectionRepository;
     }
 
     @Transactional
@@ -136,6 +140,12 @@ public class VehicleService {
                         id,
                         user.getId()
                 );
+
+        if (damageInspectionRepository.existsByVehicleId(id)) {
+            throw new IllegalStateException(
+                    "Bu araca ait analiz geçmişi bulunduğu için araç silinemez."
+            );
+        }
 
         vehicleRepository.delete(vehicle);
     }
