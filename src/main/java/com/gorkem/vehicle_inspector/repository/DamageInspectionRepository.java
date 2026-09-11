@@ -27,6 +27,8 @@ public interface DamageInspectionRepository
             Long userId
     );
 
+    boolean existsByVehicleId(Long vehicleId);
+
     long countByUserIdAndAnalysisStartedAtGreaterThanEqualAndAnalysisStartedAtLessThan(
             Long userId,
             LocalDateTime start,

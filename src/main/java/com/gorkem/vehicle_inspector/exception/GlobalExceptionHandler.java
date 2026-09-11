@@ -148,7 +148,7 @@ public class GlobalExceptionHandler {
             IllegalStateException exception
     ) {
         return buildResponse(
-                HttpStatus.BAD_REQUEST,
+                HttpStatus.CONFLICT,
                 exception.getMessage()
         );
     }
