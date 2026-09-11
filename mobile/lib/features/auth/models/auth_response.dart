@@ -7,6 +7,7 @@ class AuthResponse {
     required this.fullName,
     required this.email,
     required this.role,
+    required this.subscriptionPlan,
   });
 
   final String accessToken;
@@ -16,6 +17,7 @@ class AuthResponse {
   final String fullName;
   final String email;
   final String role;
+  final String subscriptionPlan;
 
   factory AuthResponse.fromJson(
       Map<String, dynamic> json,
@@ -35,6 +37,8 @@ class AuthResponse {
       json['email'] as String? ?? '',
       role:
       json['role'] as String? ?? 'USER',
+      subscriptionPlan:
+      json['subscriptionPlan'] as String? ?? 'FREE',
     );
   }
 }
