@@ -14,11 +14,13 @@ class MainShell extends StatefulWidget {
     required this.fullName,
     required this.email,
     required this.role,
+    required this.subscriptionPlan,
   });
 
   final String fullName;
   final String email;
   final String role;
+  final String subscriptionPlan;
 
   @override
   State<MainShell> createState() => _MainShellState();
@@ -49,6 +51,7 @@ class _MainShellState extends State<MainShell> {
       fullName: widget.fullName,
       email: widget.email,
       role: widget.role,
+      subscriptionPlan: widget.subscriptionPlan,
     ),
   ];
 

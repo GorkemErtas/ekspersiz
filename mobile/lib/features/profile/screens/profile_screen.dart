@@ -9,11 +9,13 @@ class ProfileScreen extends StatefulWidget {
     required this.fullName,
     required this.email,
     required this.role,
+    required this.subscriptionPlan,
   });
 
   final String fullName;
   final String email;
   final String role;
+  final String subscriptionPlan;
 
   @override
   State<ProfileScreen> createState() =>
@@ -33,6 +35,15 @@ class _ProfileScreenState
       'INSPECTOR' => 'Eksper',
       'USER' => 'Kullanıcı',
       _ => widget.role,
+    };
+  }
+
+  String get _subscriptionPlanLabel {
+    return switch (widget.subscriptionPlan) {
+      'FREE' => 'Free',
+      'PLUS' => 'Plus',
+      'PRO' => 'Pro',
+      _ => widget.subscriptionPlan,
     };
   }
 
@@ -220,6 +231,14 @@ class _ProfileScreenState
               Icons.verified_user_outlined,
               title: 'Hesap Türü',
               value: _roleLabel,
+            ),
+
+            const SizedBox(height: 12),
+
+            _ProfileItem(
+              icon: Icons.workspace_premium_outlined,
+              title: 'Abonelik Planı',
+              value: _subscriptionPlanLabel,
             ),
 
             const SizedBox(height: 32),
