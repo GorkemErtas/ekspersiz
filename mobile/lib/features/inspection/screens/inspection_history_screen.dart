@@ -150,9 +150,16 @@ class _InspectionHistoryScreenState
               );
             }
 
-            final inspections =
+            final allInspections =
                 snapshot.data ??
                     const <DamageInspection>[];
+
+            final inspections = allInspections
+                .where(
+                  (inspection) =>
+              inspection.status == 'COMPLETED',
+            )
+                .toList();
 
             if (inspections.isEmpty) {
               return const _InspectionEmptyState();
