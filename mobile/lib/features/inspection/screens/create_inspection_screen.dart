@@ -1,16 +1,24 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/network/api_exception.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_card.dart';
+import '../../../core/widgets/app_page_header.dart';
+import '../../../core/widgets/app_section_header.dart';
+import '../../../core/widgets/app_state_view.dart';
 import '../../../core/widgets/primary_button.dart';
+
 import '../../vehicle/models/vehicle.dart';
 import '../../vehicle/services/vehicle_service.dart';
+
 import '../models/damage_inspection.dart';
 import '../services/inspection_service.dart';
 import 'upload_damage_image_screen.dart';
 
 class CreateInspectionScreen extends StatefulWidget {
-  const CreateInspectionScreen({super.key});
+  const CreateInspectionScreen({
+    super.key,
+  });
 
   @override
   State<CreateInspectionScreen> createState() =>
@@ -47,12 +55,21 @@ class _CreateInspectionScreenState
   @override
   void initState() {
     super.initState();
-    _vehiclesFuture = _vehicleService.getVehicles();
+
+    _vehiclesFuture =
+        _vehicleService.getVehicles();
   }
 
   Future<void> _createInspection() async {
-    final vehicle = _selectedVehicle;
-    final city = _selectedCity;
+    if (_isCreating) {
+      return;
+    }
+
+    final vehicle =
+        _selectedVehicle;
+
+    final city =
+        _selectedCity;
 
     if (vehicle == null) {
       _showMessage(
@@ -61,7 +78,8 @@ class _CreateInspectionScreenState
       return;
     }
 
-    if (city == null || city.isEmpty) {
+    if (city == null ||
+        city.isEmpty) {
       _showMessage(
         'Lütfen şehir seçin.',
       );
@@ -84,11 +102,14 @@ class _CreateInspectionScreenState
       }
 
       final uploadedInspection =
-      await Navigator.of(context).push<DamageInspection>(
+      await Navigator.of(context)
+          .push<DamageInspection>(
         MaterialPageRoute<DamageInspection>(
-          builder: (_) => UploadDamageImageScreen(
-            inspection: inspection,
-          ),
+          builder: (_) =>
+              UploadDamageImageScreen(
+                inspection:
+                inspection,
+              ),
         ),
       );
 
@@ -97,7 +118,8 @@ class _CreateInspectionScreenState
         return;
       }
 
-      Navigator.of(context).pop<DamageInspection>(
+      Navigator.of(context)
+          .pop<DamageInspection>(
         uploadedInspection,
       );
     } catch (exception) {
@@ -105,11 +127,14 @@ class _CreateInspectionScreenState
         return;
       }
 
-      final message = exception is ApiException
+      final message =
+      exception is ApiException
           ? exception.message
           : 'Hasar incelemesi oluşturulamadı.';
 
-      _showMessage(message);
+      _showMessage(
+        message,
+      );
     } finally {
       if (mounted) {
         setState(() {
@@ -126,14 +151,16 @@ class _CreateInspectionScreenState
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          content: Text(message),
-          behavior: SnackBarBehavior.floating,
+          content:
+          Text(message),
         ),
       );
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+      BuildContext context,
+      ) {
     final colorScheme =
         Theme.of(context).colorScheme;
 
@@ -146,215 +173,290 @@ class _CreateInspectionScreenState
           'Yeni Hasar Analizi',
         ),
       ),
+
       body: SafeArea(
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(
-                maxWidth: 1100,
-              ),
-        child: FutureBuilder<List<Vehicle>>(
-          future: _vehiclesFuture,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState ==
-                ConnectionState.waiting) {
-              return const Center(
-                child: CircularProgressIndicator(),
-              );
-            }
+        child: Center(
+          child: ConstrainedBox(
+            constraints:
+            const BoxConstraints(
+              maxWidth: 760,
+            ),
 
-            if (snapshot.hasError) {
-              final error = snapshot.error;
+            child:
+            FutureBuilder<List<Vehicle>>(
+              future:
+              _vehiclesFuture,
 
-              final message =
-              error is ApiException
-                  ? error.message
-                  : 'Araçlar yüklenemedi.';
+              builder:
+                  (
+                  context,
+                  snapshot,
+                  ) {
+                if (snapshot
+                    .connectionState ==
+                    ConnectionState.waiting) {
+                  return const AppStateView.loading(
+                    title:
+                    'Araçlar yükleniyor',
+                    message:
+                    'Analiz için kayıtlı araçlarınız hazırlanıyor.',
+                  );
+                }
 
-              return Center(
-                child: Padding(
+                if (snapshot.hasError) {
+                  final error =
+                      snapshot.error;
+
+                  final message =
+                  error is ApiException
+                      ? error.message
+                      : 'Araçlar yüklenemedi.';
+
+                  return AppStateView.error(
+                    title:
+                    'Araçlar yüklenemedi',
+                    message:
+                    message,
+                    onActionPressed:
+                        () {
+                      setState(() {
+                        _vehiclesFuture =
+                            _vehicleService
+                                .getVehicles();
+                      });
+                    },
+                  );
+                }
+
+                final vehicles =
+                    snapshot.data ??
+                        const <Vehicle>[];
+
+                if (vehicles.isEmpty) {
+                  return const AppStateView.empty(
+                    icon:
+                    Icons
+                        .directions_car_outlined,
+                    title:
+                    'Önce bir araç ekleyin',
+                    message:
+                    'Hasar analizi oluşturmak için hesabınızda en az bir kayıtlı araç bulunmalıdır.',
+                  );
+                }
+
+                return ListView(
                   padding:
-                  const EdgeInsets.all(32),
-                  child: Column(
-                    mainAxisSize:
-                    MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.error_outline_rounded,
-                        size: 52,
-                        color: colorScheme.error,
-                      ),
-                      const SizedBox(height: 18),
-                      Text(
-                        message,
-                        textAlign:
-                        TextAlign.center,
-                      ),
-                      const SizedBox(height: 20),
-                      FilledButton.tonalIcon(
-                        onPressed: () {
-                          setState(() {
-                            _vehiclesFuture =
-                                _vehicleService
-                                    .getVehicles();
-                          });
-                        },
-                        icon: const Icon(
-                          Icons.refresh_rounded,
-                        ),
-                        label: const Text(
-                          'Tekrar Dene',
-                        ),
-                      ),
-                    ],
+                  const EdgeInsets.fromLTRB(
+                    20,
+                    16,
+                    20,
+                    36,
                   ),
-                ),
-              );
-            }
 
-            final vehicles =
-                snapshot.data ??
-                    const <Vehicle>[];
-
-            if (vehicles.isEmpty) {
-              return Center(
-                child: Padding(
-                  padding:
-                  const EdgeInsets.all(32),
-                  child: Column(
-                    mainAxisSize:
-                    MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons
-                            .directions_car_outlined,
-                        size: 54,
-                        color:
-                        colorScheme.primary,
-                      ),
-                      const SizedBox(height: 18),
-                      Text(
-                        'Kayıtlı araç bulunamadı',
-                        style: textTheme
-                            .titleLarge
-                            ?.copyWith(
-                          fontWeight:
-                          FontWeight.w800,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Hasar analizi başlatmak için önce bir araç eklemelisiniz.',
-                        textAlign:
-                        TextAlign.center,
-                        style: textTheme
-                            .bodyMedium
-                            ?.copyWith(
-                          color: colorScheme
-                              .onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            }
-
-            return ListView(
-              padding:
-              const EdgeInsets.fromLTRB(
-                20,
-                12,
-                20,
-                28,
-              ),
-              children: [
-                Text(
-                  'Analiz bilgileri',
-                  style: textTheme
-                      .headlineSmall
-                      ?.copyWith(
-                    fontWeight:
-                    FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Hasar analizi yapılacak aracı ve fiyat tahmini için kullanılacak şehri seçin.',
-                  style:
-                  textTheme.bodyLarge?.copyWith(
-                    color: colorScheme
-                        .onSurfaceVariant,
-                    height: 1.4,
-                  ),
-                ),
-                const SizedBox(height: 28),
-
-                Text(
-                  'Araç',
-                  style: textTheme
-                      .labelLarge
-                      ?.copyWith(
-                    fontWeight:
-                    FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 10),
-
-                ...vehicles.map(
-                      (vehicle) => Padding(
-                    padding:
-                    const EdgeInsets.only(
-                      bottom: 10,
+                  children: [
+                    const AppPageHeader(
+                      icon:
+                      Icons
+                          .auto_awesome_rounded,
+                      title:
+                      'AI hasar analizi',
+                      subtitle:
+                      'Aracınızı ve bulunduğunuz şehri seçin. Bir sonraki adımda hasarlı bölgenin fotoğrafını ekleyeceksiniz.',
+                      badge:
+                      'AI INSPECTION',
                     ),
-                    child: AppCard(
-                      onTap: () {
-                        setState(() {
-                          _selectedVehicle =
-                              vehicle;
-                        });
-                      },
-                      child: Row(
+
+                    const SizedBox(
+                      height: 24,
+                    ),
+
+                    AppCard(
+                      padding:
+                      const EdgeInsets.all(
+                        20,
+                      ),
+
+                      child: Column(
+                        crossAxisAlignment:
+                        CrossAxisAlignment.start,
                         children: [
-                          Radio<int>(
-                            value: vehicle.id,
-                            groupValue:
-                            _selectedVehicle
-                                ?.id,
-                            onChanged: (_) {
+                          const AppSectionHeader(
+                            icon:
+                            Icons
+                                .directions_car_outlined,
+                            title:
+                            'Araç seçimi',
+                            subtitle:
+                            'Hasar analizi yapılacak aracınızı seçin.',
+                          ),
+
+                          const SizedBox(
+                            height: 18,
+                          ),
+
+                          ...vehicles.map(
+                                (
+                                vehicle,
+                                ) {
+                              final selected =
+                                  _selectedVehicle
+                                      ?.id ==
+                                      vehicle.id;
+
+                              return Padding(
+                                padding:
+                                const EdgeInsets.only(
+                                  bottom: 12,
+                                ),
+                                child:
+                                _VehicleSelectionCard(
+                                  vehicle:
+                                  vehicle,
+                                  selected:
+                                  selected,
+                                  onTap: () {
+                                    setState(() {
+                                      _selectedVehicle =
+                                          vehicle;
+                                    });
+                                  },
+                                ),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(
+                      height: 16,
+                    ),
+
+                    AppCard(
+                      padding:
+                      const EdgeInsets.all(
+                        20,
+                      ),
+
+                      child: Column(
+                        crossAxisAlignment:
+                        CrossAxisAlignment.start,
+                        children: [
+                          const AppSectionHeader(
+                            icon:
+                            Icons
+                                .location_city_outlined,
+                            title:
+                            'Konum',
+                            subtitle:
+                            'Fiyat tahmini için kullanılacak şehri seçin.',
+                          ),
+
+                          const SizedBox(
+                            height: 18,
+                          ),
+
+                          DropdownButtonFormField<
+                              String>(
+                            value:
+                            _selectedCity,
+                            isExpanded:
+                            true,
+                            decoration:
+                            const InputDecoration(
+                              labelText:
+                              'Şehir',
+                              hintText:
+                              'Şehir seçin',
+                              prefixIcon:
+                              Icon(
+                                Icons
+                                    .location_on_outlined,
+                              ),
+                            ),
+                            items:
+                            _cities
+                                .map(
+                                  (
+                                  city,
+                                  ) =>
+                                  DropdownMenuItem<
+                                      String>(
+                                    value:
+                                    city,
+                                    child:
+                                    Text(
+                                      city,
+                                    ),
+                                  ),
+                            )
+                                .toList(),
+                            onChanged:
+                            _isCreating
+                                ? null
+                                : (
+                                value,
+                                ) {
                               setState(() {
-                                _selectedVehicle =
-                                    vehicle;
+                                _selectedCity =
+                                    value;
                               });
                             },
                           ),
+
                           const SizedBox(
-                            width: 8,
+                            height: 14,
                           ),
-                          Expanded(
-                            child: Column(
+
+                          Container(
+                            padding:
+                            const EdgeInsets.all(
+                              14,
+                            ),
+                            decoration:
+                            BoxDecoration(
+                              color:
+                              colorScheme
+                                  .primaryContainer
+                                  .withValues(
+                                alpha: 0.40,
+                              ),
+                              borderRadius:
+                              BorderRadius.circular(
+                                AppTheme
+                                    .radiusMedium,
+                              ),
+                            ),
+                            child: Row(
                               crossAxisAlignment:
-                              CrossAxisAlignment
-                                  .start,
+                              CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  vehicle
-                                      .displayName,
-                                  style:
-                                  const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight:
-                                    FontWeight
-                                        .w800,
-                                  ),
+                                Icon(
+                                  Icons
+                                      .info_outline_rounded,
+                                  size: 19,
+                                  color:
+                                  colorScheme
+                                      .primary,
                                 ),
+
                                 const SizedBox(
-                                  height: 5,
+                                  width: 10,
                                 ),
-                                Text(
-                                  '${vehicle.plate} • ${vehicle.modelYear}',
-                                  style: TextStyle(
-                                    color: colorScheme
-                                        .onSurfaceVariant,
+
+                                Expanded(
+                                  child:
+                                  Text(
+                                    'Şehir bilgisi, AI tarafından oluşturulan tahmini onarım maliyetinin bölgesel fiyatlara göre hazırlanmasında kullanılır.',
+                                    style:
+                                    textTheme.bodySmall
+                                        ?.copyWith(
+                                      color:
+                                      colorScheme
+                                          .onSurfaceVariant,
+                                      height:
+                                      1.45,
+                                    ),
                                   ),
                                 ),
                               ],
@@ -363,63 +465,231 @@ class _CreateInspectionScreenState
                         ],
                       ),
                     ),
-                  ),
-                ),
 
-                const SizedBox(height: 24),
-
-                Text(
-                  'Şehir',
-                  style: textTheme
-                      .labelLarge
-                      ?.copyWith(
-                    fontWeight:
-                    FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 8),
-
-                DropdownButtonFormField<String>(
-                  value: _selectedCity,
-                  decoration:
-                  const InputDecoration(
-                    hintText: 'Şehir seçin',
-                    prefixIcon: Icon(
-                      Icons.location_city_outlined,
+                    const SizedBox(
+                      height: 26,
                     ),
-                  ),
-                  items: _cities
-                      .map(
-                        (city) =>
-                        DropdownMenuItem<String>(
-                          value: city,
-                          child: Text(city),
-                        ),
-                  )
-                      .toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedCity = value;
-                    });
-                  },
-                ),
 
-                const SizedBox(height: 30),
-
-                PrimaryButton(
-                  label: 'Devam Et',
-                  icon:
-                  Icons.arrow_forward_rounded,
-                  isLoading: _isCreating,
-                  onPressed:
-                  _createInspection,
-                ),
-              ],
-            );
-          },
+                    PrimaryButton(
+                      label:
+                      'Fotoğraf Eklemeye Devam Et',
+                      icon:
+                      Icons
+                          .arrow_forward_rounded,
+                      isLoading:
+                      _isCreating,
+                      onPressed:
+                      _createInspection,
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
         ),
       ),
+    );
+  }
+}
+
+class _VehicleSelectionCard
+    extends StatelessWidget {
+  const _VehicleSelectionCard({
+    required this.vehicle,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final Vehicle vehicle;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(
+      BuildContext context,
+      ) {
+    final colorScheme =
+        Theme.of(context).colorScheme;
+
+    final textTheme =
+        Theme.of(context).textTheme;
+
+    return Material(
+      color:
+      Colors.transparent,
+      borderRadius:
+      BorderRadius.circular(
+        AppTheme.radiusMedium,
+      ),
+
+      child: InkWell(
+        onTap:
+        onTap,
+        borderRadius:
+        BorderRadius.circular(
+          AppTheme.radiusMedium,
+        ),
+
+        child: AnimatedContainer(
+          duration:
+          const Duration(
+            milliseconds: 180,
           ),
+          curve:
+          Curves.easeOut,
+          padding:
+          const EdgeInsets.all(
+            16,
+          ),
+
+          decoration:
+          BoxDecoration(
+            color:
+            selected
+                ? colorScheme
+                .primaryContainer
+                .withValues(
+              alpha: 0.55,
+            )
+                : colorScheme
+                .surfaceContainerLow,
+
+            borderRadius:
+            BorderRadius.circular(
+              AppTheme.radiusMedium,
+            ),
+
+            border:
+            Border.all(
+              color:
+              selected
+                  ? colorScheme.primary
+                  : colorScheme
+                  .outlineVariant,
+              width:
+              selected
+                  ? 1.6
+                  : 1,
+            ),
+          ),
+
+          child: Row(
+            children: [
+              Container(
+                width: 50,
+                height: 50,
+                decoration:
+                BoxDecoration(
+                  color:
+                  selected
+                      ? colorScheme
+                      .primary
+                      : colorScheme
+                      .surfaceContainerHighest,
+                  borderRadius:
+                  BorderRadius.circular(
+                    16,
+                  ),
+                ),
+                child: Icon(
+                  Icons
+                      .directions_car_filled_rounded,
+                  color:
+                  selected
+                      ? colorScheme
+                      .onPrimary
+                      : colorScheme
+                      .onSurfaceVariant,
+                  size: 25,
+                ),
+              ),
+
+              const SizedBox(
+                width: 14,
+              ),
+
+              Expanded(
+                child: Column(
+                  crossAxisAlignment:
+                  CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      vehicle.displayName,
+                      maxLines: 1,
+                      overflow:
+                      TextOverflow.ellipsis,
+                      style:
+                      textTheme.titleMedium
+                          ?.copyWith(
+                        fontWeight:
+                        FontWeight.w800,
+                      ),
+                    ),
+
+                    const SizedBox(
+                      height: 5,
+                    ),
+
+                    Text(
+                      '${vehicle.plate} • ${vehicle.modelYear}',
+                      style:
+                      textTheme.bodyMedium
+                          ?.copyWith(
+                        color:
+                        colorScheme
+                            .onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(
+                width: 10,
+              ),
+
+              AnimatedContainer(
+                duration:
+                const Duration(
+                  milliseconds: 180,
+                ),
+                width: 28,
+                height: 28,
+                decoration:
+                BoxDecoration(
+                  color:
+                  selected
+                      ? colorScheme
+                      .primary
+                      : Colors
+                      .transparent,
+                  shape:
+                  BoxShape.circle,
+                  border:
+                  Border.all(
+                    color:
+                    selected
+                        ? colorScheme
+                        .primary
+                        : colorScheme
+                        .outline,
+                  ),
+                ),
+                child:
+                selected
+                    ? Icon(
+                  Icons
+                      .check_rounded,
+                  size: 17,
+                  color:
+                  colorScheme
+                      .onPrimary,
+                )
+                    : null,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

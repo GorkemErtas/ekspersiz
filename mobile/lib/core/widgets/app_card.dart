@@ -20,7 +20,6 @@ class AppCard extends StatelessWidget {
   final VoidCallback? onTap;
 
   final Color? backgroundColor;
-
   final Color? borderColor;
 
   final bool showShadow;
@@ -32,71 +31,49 @@ class AppCard extends StatelessWidget {
 
     final decoration =
     BoxDecoration(
-      color:
-      backgroundColor ??
+      color: backgroundColor ??
           colorScheme.surface,
-
       borderRadius:
       BorderRadius.circular(
         AppTheme.radiusLarge,
       ),
-
-      border:
-      Border.all(
-        color:
-        borderColor ??
+      border: Border.all(
+        color: borderColor ??
             colorScheme.outlineVariant,
       ),
-
       boxShadow:
       showShadow
           ? AppTheme.softShadow
           : null,
     );
 
-    final content =
-    Container(
-      width:
-      double.infinity,
-
-      padding:
-      padding,
-
-      decoration:
-      decoration,
-
-      child:
-      child,
-    );
-
     if (onTap == null) {
-      return content;
+      return Container(
+        width: double.infinity,
+        padding: padding,
+        decoration: decoration,
+        child: child,
+      );
     }
 
     return Material(
-      color:
-      Colors.transparent,
-
+      color: Colors.transparent,
       borderRadius:
       BorderRadius.circular(
         AppTheme.radiusLarge,
       ),
-
       clipBehavior:
       Clip.antiAlias,
-
-      child:
-      InkWell(
-        onTap:
-        onTap,
-
-        borderRadius:
-        BorderRadius.circular(
-          AppTheme.radiusLarge,
+      child: Ink(
+        width: double.infinity,
+        decoration: decoration,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: padding,
+            child: child,
+          ),
         ),
-
-        child:
-        content,
       ),
     );
   }
