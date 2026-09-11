@@ -4,8 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../core/network/api_exception.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_card.dart';
+import '../../../core/widgets/app_icon_box.dart';
+import '../../../core/widgets/app_page_header.dart';
+import '../../../core/widgets/app_status_badge.dart';
 import '../../../core/widgets/primary_button.dart';
+
 import '../models/damage_inspection.dart';
 import '../services/inspection_service.dart';
 import 'analyzing_screen.dart';
@@ -28,7 +33,8 @@ class _UploadDamageImageScreenState
   static const int _maxImageSizeBytes =
       10 * 1024 * 1024;
 
-  final ImagePicker _imagePicker = ImagePicker();
+  final ImagePicker _imagePicker =
+  ImagePicker();
 
   final InspectionService _inspectionService =
   const InspectionService();
@@ -45,16 +51,19 @@ class _UploadDamageImageScreenState
       ImageSource source,
       ) async {
     try {
-      final image = await _imagePicker.pickImage(
+      final image =
+      await _imagePicker.pickImage(
         source: source,
         imageQuality: 90,
       );
 
-      if (image == null || !mounted) {
+      if (image == null ||
+          !mounted) {
         return;
       }
 
-      final bytes = await image.readAsBytes();
+      final bytes =
+      await image.readAsBytes();
 
       if (!mounted) {
         return;
@@ -67,7 +76,8 @@ class _UploadDamageImageScreenState
         return;
       }
 
-      if (bytes.length > _maxImageSizeBytes) {
+      if (bytes.length >
+          _maxImageSizeBytes) {
         _showMessage(
           'Fotoğraf boyutu 10 MB’dan büyük olamaz.',
         );
@@ -75,7 +85,9 @@ class _UploadDamageImageScreenState
       }
 
       final detectedContentType =
-      _detectContentType(bytes);
+      _detectContentType(
+        bytes,
+      );
 
       if (detectedContentType == null) {
         _showMessage(
@@ -86,15 +98,22 @@ class _UploadDamageImageScreenState
 
       final correctedFilename =
       _buildCorrectFilename(
-        originalFilename: image.name,
-        contentType: detectedContentType,
+        originalFilename:
+        image.name,
+        contentType:
+        detectedContentType,
       );
 
       setState(() {
-        _selectedImage = image;
-        _selectedImageBytes = bytes;
+        _selectedImage =
+            image;
+
+        _selectedImageBytes =
+            bytes;
+
         _selectedContentType =
             detectedContentType;
+
         _selectedFilename =
             correctedFilename;
       });
@@ -254,7 +273,8 @@ class _UploadDamageImageScreenState
         return;
       }
 
-      Navigator.of(context).pushReplacement(
+      Navigator.of(context)
+          .pushReplacement(
         MaterialPageRoute<void>(
           builder: (_) =>
               AnalyzingScreen(
@@ -273,7 +293,9 @@ class _UploadDamageImageScreenState
           ? exception.message
           : 'Fotoğraf yüklenemedi.';
 
-      _showMessage(message);
+      _showMessage(
+        message,
+      );
     } finally {
       if (mounted) {
         setState(() {
@@ -290,9 +312,8 @@ class _UploadDamageImageScreenState
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          content: Text(message),
-          behavior:
-          SnackBarBehavior.floating,
+          content:
+          Text(message),
         ),
       );
   }
@@ -305,56 +326,128 @@ class _UploadDamageImageScreenState
     showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
-      builder: (context) {
-        return SafeArea(
-          child: Padding(
-            padding:
-            const EdgeInsets.fromLTRB(
-              20,
-              8,
-              20,
-              24,
-            ),
-            child: Column(
-              mainAxisSize:
-              MainAxisSize.min,
-              children: [
-                ListTile(
-                  leading: const Icon(
-                    Icons.camera_alt_outlined,
-                  ),
-                  title: const Text(
-                    'Kamera ile çek',
-                  ),
-                  onTap: () {
-                    Navigator.of(context).pop();
+      useSafeArea: true,
+      builder: (
+          context,
+          ) {
+        final colorScheme =
+            Theme.of(context)
+                .colorScheme;
 
-                    _pickImage(
-                      ImageSource.camera,
-                    );
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(
-                    Icons.photo_library_outlined,
-                  ),
-                  title: const Text(
-                    'Galeriden seç',
-                  ),
-                  onTap: () {
-                    Navigator.of(context).pop();
+        final textTheme =
+            Theme.of(context)
+                .textTheme;
 
-                    _pickImage(
-                      ImageSource.gallery,
-                    );
-                  },
+        return Padding(
+          padding:
+          const EdgeInsets.fromLTRB(
+            20,
+            4,
+            20,
+            24,
+          ),
+          child: Column(
+            mainAxisSize:
+            MainAxisSize.min,
+            crossAxisAlignment:
+            CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Fotoğraf kaynağı',
+                style:
+                textTheme.titleLarge
+                    ?.copyWith(
+                  fontWeight:
+                  FontWeight.w900,
                 ),
-              ],
-            ),
+              ),
+
+              const SizedBox(
+                height: 6,
+              ),
+
+              Text(
+                'Hasarlı bölgenin fotoğrafını nasıl eklemek istediğinizi seçin.',
+                style:
+                textTheme.bodyMedium
+                    ?.copyWith(
+                  color:
+                  colorScheme
+                      .onSurfaceVariant,
+                ),
+              ),
+
+              const SizedBox(
+                height: 20,
+              ),
+
+              _ImageSourceOption(
+                icon:
+                Icons
+                    .photo_camera_outlined,
+                title:
+                'Kamera ile çek',
+                subtitle:
+                'Yeni bir fotoğraf çekin',
+                onTap: () {
+                  Navigator.of(context)
+                      .pop();
+
+                  _pickImage(
+                    ImageSource.camera,
+                  );
+                },
+              ),
+
+              const SizedBox(
+                height: 10,
+              ),
+
+              _ImageSourceOption(
+                icon:
+                Icons
+                    .photo_library_outlined,
+                title:
+                'Galeriden seç',
+                subtitle:
+                'Mevcut bir fotoğraf kullanın',
+                onTap: () {
+                  Navigator.of(context)
+                      .pop();
+
+                  _pickImage(
+                    ImageSource.gallery,
+                  );
+                },
+              ),
+            ],
           ),
         );
       },
     );
+  }
+
+  String _formatFileSize() {
+    final bytes =
+        _selectedImageBytes;
+
+    if (bytes == null) {
+      return '';
+    }
+
+    final mb =
+        bytes.length /
+            (1024 * 1024);
+
+    if (mb >= 1) {
+      return '${mb.toStringAsFixed(1)} MB';
+    }
+
+    final kb =
+        bytes.length /
+            1024;
+
+    return '${kb.toStringAsFixed(0)} KB';
   }
 
   @override
@@ -362,221 +455,806 @@ class _UploadDamageImageScreenState
       BuildContext context,
       ) {
     final colorScheme =
-        Theme.of(context).colorScheme;
+        Theme.of(context)
+            .colorScheme;
 
     final textTheme =
-        Theme.of(context).textTheme;
+        Theme.of(context)
+            .textTheme;
+
+    final hasImage =
+        _selectedImageBytes != null;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
+        title:
+        const Text(
           'Hasar Fotoğrafı',
         ),
       ),
+
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints:
             const BoxConstraints(
-              maxWidth: 760,
+              maxWidth:
+              760,
             ),
+
             child: ListView(
               padding:
               const EdgeInsets.fromLTRB(
                 20,
-                12,
+                16,
                 20,
-                28,
+                36,
               ),
+
               children: [
-                Text(
-                  'Hasarlı bölgeyi ekleyin',
-                  style: textTheme
-                      .headlineSmall
-                      ?.copyWith(
-                    fontWeight:
-                    FontWeight.w800,
-                  ),
+                const AppPageHeader(
+                  icon:
+                  Icons.image_search_rounded,
+                  title:
+                  'Hasarlı bölgeyi görüntüleyin',
+                  subtitle:
+                  'Hasarın net göründüğü tek bir fotoğraf yükleyin. '
+                      'AI modeli fotoğrafı inceleyerek hasar tipini, '
+                      'etkilenen parçaları ve hasar seviyesini belirleyecek.',
+                  badge:
+                  'AI IMAGE ANALYSIS',
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  'Hasarın net göründüğü bir fotoğraf seçin. '
-                      'Çok karanlık veya aşırı yakın görüntüler '
-                      'analiz doğruluğunu düşürebilir. '
-                      'Maksimum dosya boyutu 10 MB’dır.',
-                  style: textTheme
-                      .bodyLarge
-                      ?.copyWith(
-                    color: colorScheme
-                        .onSurfaceVariant,
-                    height: 1.4,
-                  ),
+
+                const SizedBox(
+                  height: 24,
                 ),
-                const SizedBox(height: 24),
 
                 AppCard(
-                  child: Column(
-                    crossAxisAlignment:
-                    CrossAxisAlignment
-                        .start,
+                  padding:
+                  const EdgeInsets.all(
+                    18,
+                  ),
+
+                  child: Row(
                     children: [
-                      Text(
-                        'Hasar İncelemesi',
-                        style: textTheme
-                            .labelLarge
-                            ?.copyWith(
-                          fontWeight:
-                          FontWeight.w700,
-                          color: colorScheme
-                              .onSurfaceVariant,
-                        ),
+                      const AppIconBox(
+                        icon:
+                        Icons
+                            .directions_car_filled_rounded,
+                        size: 52,
+                        iconSize: 26,
+                        borderRadius: 17,
                       ),
+
                       const SizedBox(
-                        height: 8,
+                        width: 14,
                       ),
-                      Text(
-                        '${widget.inspection.vehiclePlate} '
-                            '• '
-                            '${widget.inspection.locationCity}',
-                        style: textTheme
-                            .titleMedium
-                            ?.copyWith(
-                          fontWeight:
-                          FontWeight.w800,
+
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment:
+                          CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              widget.inspection
+                                  .vehiclePlate,
+                              style:
+                              textTheme.titleMedium
+                                  ?.copyWith(
+                                fontWeight:
+                                FontWeight.w900,
+                              ),
+                            ),
+
+                            const SizedBox(
+                              height: 4,
+                            ),
+
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons
+                                      .location_on_outlined,
+                                  size: 16,
+                                  color:
+                                  colorScheme
+                                      .onSurfaceVariant,
+                                ),
+
+                                const SizedBox(
+                                  width: 4,
+                                ),
+
+                                Expanded(
+                                  child: Text(
+                                    widget.inspection
+                                        .locationCity,
+                                    style:
+                                    textTheme.bodyMedium
+                                        ?.copyWith(
+                                      color:
+                                      colorScheme
+                                          .onSurfaceVariant,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
+                      ),
+
+                      const AppStatusBadge(
+                        label:
+                        'AI',
+                        color:
+                        AppTheme.infoColor,
+                        backgroundColor:
+                        AppTheme.infoSoft,
+                        compact:
+                        true,
                       ),
                     ],
                   ),
                 ),
 
-                const SizedBox(height: 20),
-
-                GestureDetector(
-                  onTap: _isUploading
-                      ? null
-                      : _showImageSourceSheet,
-                  child: Container(
-                    constraints:
-                    const BoxConstraints(
-                      minHeight: 280,
-                      maxHeight: 420,
-                    ),
-                    decoration:
-                    BoxDecoration(
-                      color: colorScheme
-                          .surfaceContainerLow,
-                      borderRadius:
-                      BorderRadius.circular(
-                        22,
-                      ),
-                      border: Border.all(
-                        color: colorScheme
-                            .outlineVariant,
-                      ),
-                    ),
-                    clipBehavior:
-                    Clip.antiAlias,
-                    child:
-                    _selectedImageBytes ==
-                        null
-                        ? Column(
-                      mainAxisAlignment:
-                      MainAxisAlignment
-                          .center,
-                      children: [
-                        Container(
-                          width: 72,
-                          height: 72,
-                          decoration:
-                          BoxDecoration(
-                            color:
-                            colorScheme
-                                .primaryContainer,
-                            borderRadius:
-                            BorderRadius
-                                .circular(
-                              22,
-                            ),
-                          ),
-                          child: Icon(
-                            Icons
-                                .add_a_photo_outlined,
-                            color:
-                            colorScheme
-                                .primary,
-                            size: 34,
-                          ),
-                        ),
-                        const SizedBox(
-                          height: 16,
-                        ),
-                        const Text(
-                          'Fotoğraf eklemek için dokunun',
-                          style:
-                          TextStyle(
-                            fontWeight:
-                            FontWeight
-                                .w700,
-                          ),
-                        ),
-                        const SizedBox(
-                          height: 6,
-                        ),
-                        Text(
-                          'Kamera veya galeri',
-                          style:
-                          TextStyle(
-                            color:
-                            colorScheme
-                                .onSurfaceVariant,
-                          ),
-                        ),
-                      ],
-                    )
-                        : Image.memory(
-                      _selectedImageBytes!,
-                      width:
-                      double.infinity,
-                      height:
-                      double.infinity,
-                      fit:
-                      BoxFit.cover,
-                    ),
-                  ),
+                const SizedBox(
+                  height: 18,
                 ),
 
-                if (_selectedImage != null) ...[
+                _PhotoUploadArea(
+                  imageBytes:
+                  _selectedImageBytes,
+                  isUploading:
+                  _isUploading,
+                  onTap:
+                  _showImageSourceSheet,
+                ),
+
+                if (hasImage) ...[
                   const SizedBox(
                     height: 12,
                   ),
-                  OutlinedButton.icon(
-                    onPressed:
+
+                  _SelectedFileInfo(
+                    filename:
+                    _selectedFilename ??
+                        'Fotoğraf',
+                    fileSize:
+                    _formatFileSize(),
+                    onChange:
                     _isUploading
                         ? null
                         : _showImageSourceSheet,
-                    icon: const Icon(
-                      Icons.refresh_rounded,
-                    ),
-                    label: const Text(
-                      'Fotoğrafı Değiştir',
-                    ),
                   ),
                 ],
 
-                const SizedBox(height: 28),
+                const SizedBox(
+                  height: 18,
+                ),
+
+                const _PhotoTipsCard(),
+
+                const SizedBox(
+                  height: 26,
+                ),
 
                 PrimaryButton(
-                  label: 'Fotoğrafı Yükle',
-                  icon: Icons
-                      .cloud_upload_outlined,
-                  isLoading: _isUploading,
+                  label:
+                  hasImage
+                      ? 'AI Analizini Başlat'
+                      : 'Fotoğraf Seç',
+                  icon:
+                  hasImage
+                      ? Icons
+                      .auto_awesome_rounded
+                      : Icons
+                      .add_a_photo_outlined,
+                  isLoading:
+                  _isUploading,
                   onPressed:
                   _isUploading
                       ? null
-                      : _uploadImage,
+                      : hasImage
+                      ? _uploadImage
+                      : _showImageSourceSheet,
                 ),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PhotoUploadArea
+    extends StatelessWidget {
+  const _PhotoUploadArea({
+    required this.imageBytes,
+    required this.isUploading,
+    required this.onTap,
+  });
+
+  final Uint8List? imageBytes;
+  final bool isUploading;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(
+      BuildContext context,
+      ) {
+    final colorScheme =
+        Theme.of(context)
+            .colorScheme;
+
+    final textTheme =
+        Theme.of(context)
+            .textTheme;
+
+    final hasImage =
+        imageBytes != null;
+
+    return Material(
+      color:
+      Colors.transparent,
+      borderRadius:
+      BorderRadius.circular(
+        AppTheme.radiusLarge,
+      ),
+      clipBehavior:
+      Clip.antiAlias,
+
+      child: InkWell(
+        onTap:
+        isUploading
+            ? null
+            : onTap,
+
+        child: AnimatedContainer(
+          duration:
+          const Duration(
+            milliseconds: 200,
+          ),
+
+          constraints:
+          const BoxConstraints(
+            minHeight: 300,
+            maxHeight: 430,
+          ),
+
+          width:
+          double.infinity,
+
+          decoration:
+          BoxDecoration(
+            color:
+            colorScheme
+                .surfaceContainerLow,
+
+            borderRadius:
+            BorderRadius.circular(
+              AppTheme.radiusLarge,
+            ),
+
+            border:
+            Border.all(
+              color:
+              hasImage
+                  ? colorScheme.primary
+                  .withValues(
+                alpha: 0.55,
+              )
+                  : colorScheme
+                  .outlineVariant,
+              width:
+              hasImage ? 1.5 : 1,
+            ),
+          ),
+
+          child:
+          hasImage
+              ? Stack(
+            fit:
+            StackFit.expand,
+            children: [
+              Image.memory(
+                imageBytes!,
+                fit:
+                BoxFit.cover,
+              ),
+
+              Positioned(
+                top: 14,
+                right: 14,
+                child:
+                Container(
+                  padding:
+                  const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 7,
+                  ),
+                  decoration:
+                  BoxDecoration(
+                    color:
+                    Colors.black
+                        .withValues(
+                      alpha: 0.64,
+                    ),
+                    borderRadius:
+                    BorderRadius.circular(
+                      AppTheme
+                          .radiusPill,
+                    ),
+                  ),
+                  child:
+                  const Row(
+                    mainAxisSize:
+                    MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons
+                            .check_circle_rounded,
+                        color:
+                        Colors.white,
+                        size: 16,
+                      ),
+                      SizedBox(
+                        width: 5,
+                      ),
+                      Text(
+                        'Hazır',
+                        style:
+                        TextStyle(
+                          color:
+                          Colors.white,
+                          fontWeight:
+                          FontWeight.w800,
+                          fontSize:
+                          12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          )
+              : Padding(
+            padding:
+            const EdgeInsets.all(
+              28,
+            ),
+            child:
+            Column(
+              mainAxisAlignment:
+              MainAxisAlignment.center,
+              children: [
+                AppIconBox(
+                  icon:
+                  Icons
+                      .add_a_photo_outlined,
+                  size: 82,
+                  iconSize: 38,
+                  borderRadius: 26,
+                  backgroundColor:
+                  colorScheme
+                      .primaryContainer,
+                ),
+
+                const SizedBox(
+                  height: 20,
+                ),
+
+                Text(
+                  'Hasar fotoğrafı ekleyin',
+                  textAlign:
+                  TextAlign.center,
+                  style:
+                  textTheme.titleMedium
+                      ?.copyWith(
+                    fontWeight:
+                    FontWeight.w900,
+                  ),
+                ),
+
+                const SizedBox(
+                  height: 7,
+                ),
+
+                Text(
+                  'Kamera ile çekin veya galerinizden seçin',
+                  textAlign:
+                  TextAlign.center,
+                  style:
+                  textTheme.bodyMedium
+                      ?.copyWith(
+                    color:
+                    colorScheme
+                        .onSurfaceVariant,
+                  ),
+                ),
+
+                const SizedBox(
+                  height: 16,
+                ),
+
+                Container(
+                  padding:
+                  const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 7,
+                  ),
+                  decoration:
+                  BoxDecoration(
+                    color:
+                    colorScheme
+                        .surfaceContainerHighest,
+                    borderRadius:
+                    BorderRadius.circular(
+                      AppTheme
+                          .radiusPill,
+                    ),
+                  ),
+                  child:
+                  Text(
+                    'JPG • PNG • WEBP • Maks. 10 MB',
+                    style:
+                    textTheme.labelSmall
+                        ?.copyWith(
+                      color:
+                      colorScheme
+                          .onSurfaceVariant,
+                      fontWeight:
+                      FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SelectedFileInfo
+    extends StatelessWidget {
+  const _SelectedFileInfo({
+    required this.filename,
+    required this.fileSize,
+    required this.onChange,
+  });
+
+  final String filename;
+  final String fileSize;
+  final VoidCallback? onChange;
+
+  @override
+  Widget build(
+      BuildContext context,
+      ) {
+    final colorScheme =
+        Theme.of(context)
+            .colorScheme;
+
+    final textTheme =
+        Theme.of(context)
+            .textTheme;
+
+    return Row(
+      children: [
+        Expanded(
+          child: Row(
+            children: [
+              Icon(
+                Icons.image_outlined,
+                size: 18,
+                color:
+                colorScheme
+                    .onSurfaceVariant,
+              ),
+
+              const SizedBox(
+                width: 8,
+              ),
+
+              Expanded(
+                child: Text(
+                  '$filename • $fileSize',
+                  maxLines: 1,
+                  overflow:
+                  TextOverflow.ellipsis,
+                  style:
+                  textTheme.bodySmall
+                      ?.copyWith(
+                    color:
+                    colorScheme
+                        .onSurfaceVariant,
+                    fontWeight:
+                    FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(
+          width: 12,
+        ),
+
+        TextButton.icon(
+          onPressed:
+          onChange,
+          icon: const Icon(
+            Icons.refresh_rounded,
+            size: 18,
+          ),
+          label: const Text(
+            'Değiştir',
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _PhotoTipsCard
+    extends StatelessWidget {
+  const _PhotoTipsCard();
+
+  @override
+  Widget build(
+      BuildContext context,
+      ) {
+    final colorScheme =
+        Theme.of(context)
+            .colorScheme;
+
+    return AppCard(
+      showShadow:
+      false,
+      backgroundColor:
+      colorScheme
+          .surfaceContainerLow,
+      padding:
+      const EdgeInsets.all(
+        18,
+      ),
+
+      child: Column(
+        crossAxisAlignment:
+        CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              AppIconBox(
+                icon:
+                Icons
+                    .tips_and_updates_outlined,
+                size: 38,
+                iconSize: 20,
+                borderRadius: 12,
+                backgroundColor:
+                AppTheme.infoSoft,
+                iconColor:
+                AppTheme.infoColor,
+              ),
+
+              SizedBox(
+                width: 11,
+              ),
+
+              Expanded(
+                child: Text(
+                  'Daha iyi sonuç için',
+                  style: TextStyle(
+                    fontWeight:
+                    FontWeight.w900,
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(
+            height: 16,
+          ),
+
+          const _PhotoTip(
+            icon:
+            Icons.wb_sunny_outlined,
+            text:
+            'Fotoğrafı yeterli ışıkta çekin.',
+          ),
+
+          const SizedBox(
+            height: 10,
+          ),
+
+          const _PhotoTip(
+            icon:
+            Icons
+                .center_focus_strong_outlined,
+            text:
+            'Hasarlı bölgenin tamamını kadraja alın.',
+          ),
+
+          const SizedBox(
+            height: 10,
+          ),
+
+          const _PhotoTip(
+            icon:
+            Icons.zoom_out_map_rounded,
+            text:
+            'Aşırı yakın veya bulanık görüntülerden kaçının.',
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PhotoTip
+    extends StatelessWidget {
+  const _PhotoTip({
+    required this.icon,
+    required this.text,
+  });
+
+  final IconData icon;
+  final String text;
+
+  @override
+  Widget build(
+      BuildContext context,
+      ) {
+    final colorScheme =
+        Theme.of(context)
+            .colorScheme;
+
+    final textTheme =
+        Theme.of(context)
+            .textTheme;
+
+    return Row(
+      crossAxisAlignment:
+      CrossAxisAlignment.start,
+      children: [
+        Icon(
+          icon,
+          size: 18,
+          color:
+          colorScheme.primary,
+        ),
+
+        const SizedBox(
+          width: 10,
+        ),
+
+        Expanded(
+          child: Text(
+            text,
+            style:
+            textTheme.bodyMedium
+                ?.copyWith(
+              color:
+              colorScheme
+                  .onSurfaceVariant,
+              height: 1.4,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ImageSourceOption
+    extends StatelessWidget {
+  const _ImageSourceOption({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(
+      BuildContext context,
+      ) {
+    final colorScheme =
+        Theme.of(context)
+            .colorScheme;
+
+    final textTheme =
+        Theme.of(context)
+            .textTheme;
+
+    return Material(
+      color:
+      colorScheme
+          .surfaceContainerLow,
+      borderRadius:
+      BorderRadius.circular(
+        AppTheme.radiusMedium,
+      ),
+
+      child: InkWell(
+        onTap:
+        onTap,
+        borderRadius:
+        BorderRadius.circular(
+          AppTheme.radiusMedium,
+        ),
+
+        child: Padding(
+          padding:
+          const EdgeInsets.all(
+            16,
+          ),
+          child: Row(
+            children: [
+              AppIconBox(
+                icon:
+                icon,
+                size: 48,
+                borderRadius: 15,
+              ),
+
+              const SizedBox(
+                width: 14,
+              ),
+
+              Expanded(
+                child: Column(
+                  crossAxisAlignment:
+                  CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style:
+                      textTheme.titleSmall
+                          ?.copyWith(
+                        fontWeight:
+                        FontWeight.w800,
+                      ),
+                    ),
+
+                    const SizedBox(
+                      height: 3,
+                    ),
+
+                    Text(
+                      subtitle,
+                      style:
+                      textTheme.bodySmall
+                          ?.copyWith(
+                        color:
+                        colorScheme
+                            .onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              Icon(
+                Icons
+                    .chevron_right_rounded,
+                color:
+                colorScheme
+                    .onSurfaceVariant,
+              ),
+            ],
           ),
         ),
       ),
