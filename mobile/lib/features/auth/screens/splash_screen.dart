@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 
 import '../../../core/network/api_exception.dart';
 import '../../../core/storage/token_storage.dart';
-import '../services/auth_service.dart';
-import 'login_screen.dart';
+import '../../../core/theme/app_theme.dart';
+
 import '../../home/screens/main_shell.dart';
+import '../services/auth_service.dart';
+
+import 'login_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({
@@ -16,7 +19,8 @@ class SplashScreen extends StatefulWidget {
       _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
+class _SplashScreenState
+    extends State<SplashScreen> {
   final AuthService _authService =
   const AuthService();
 
@@ -42,26 +46,34 @@ class _SplashScreenState extends State<SplashScreen> {
 
     try {
       final user =
-      await _authService.getCurrentUser();
+      await _authService
+          .getCurrentUser();
 
       if (!mounted) {
         return;
       }
 
-      Navigator.of(context).pushReplacement(
+      Navigator.of(context)
+          .pushReplacement(
         MaterialPageRoute<void>(
-          builder: (_) => MainShell(
-            fullName: user.fullName,
-            email: user.email,
-            role: user.role,
-            subscriptionPlan: user.subscriptionPlan,
-          ),
+          builder: (_) =>
+              MainShell(
+                fullName:
+                user.fullName,
+                email:
+                user.email,
+                role:
+                user.role,
+                subscriptionPlan:
+                user.subscriptionPlan,
+              ),
         ),
       );
     } on ApiException catch (exception) {
       if (exception.statusCode == 401 ||
           exception.statusCode == 403) {
-        await TokenStorage.deleteAccessToken();
+        await TokenStorage
+            .deleteAccessToken();
 
         if (!mounted) {
           return;
@@ -94,9 +106,11 @@ class _SplashScreenState extends State<SplashScreen> {
       return;
     }
 
-    Navigator.of(context).pushReplacement(
+    Navigator.of(context)
+        .pushReplacement(
       MaterialPageRoute<void>(
-        builder: (_) => const LoginScreen(),
+        builder: (_) =>
+        const LoginScreen(),
       ),
     );
   }
@@ -107,14 +121,16 @@ class _SplashScreenState extends State<SplashScreen> {
     showDialog<void>(
       context: context,
       barrierDismissible: false,
-      builder: (dialogContext) {
+      builder: (
+          dialogContext,
+          ) {
         return AlertDialog(
-          title: const Text(
+          title:
+          const Text(
             'Bağlantı Hatası',
           ),
-          content: Text(
-            message,
-          ),
+          content:
+          Text(message),
           actions: [
             TextButton(
               onPressed: () {
@@ -124,10 +140,12 @@ class _SplashScreenState extends State<SplashScreen> {
 
                 _restoreSession();
               },
-              child: const Text(
+              child:
+              const Text(
                 'Tekrar Dene',
               ),
             ),
+
             TextButton(
               onPressed: () async {
                 Navigator.of(
@@ -143,7 +161,8 @@ class _SplashScreenState extends State<SplashScreen> {
 
                 _goToLogin();
               },
-              child: const Text(
+              child:
+              const Text(
                 'Giriş Yap',
               ),
             ),
@@ -154,95 +173,97 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final colorScheme =
-        Theme.of(context).colorScheme;
-
-    final textTheme =
-        Theme.of(context).textTheme;
-
+  Widget build(
+      BuildContext context,
+      ) {
     return Scaffold(
       body: SafeArea(
         child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(
-              maxWidth: 460,
-            ),
-            child: Container(
-              margin: const EdgeInsets.symmetric(
-                horizontal: 24,
-              ),
-              padding: const EdgeInsets.symmetric(
-                horizontal: 40,
-                vertical: 44,
-              ),
-              decoration: BoxDecoration(
-                color: colorScheme.surface,
-                borderRadius:
-                BorderRadius.circular(28),
-                border: Border.all(
+          child: Column(
+            mainAxisSize:
+            MainAxisSize.min,
+            children: [
+              Container(
+                width: 82,
+                height: 82,
+                decoration:
+                BoxDecoration(
+                  gradient:
+                  const LinearGradient(
+                    colors: [
+                      AppTheme
+                          .primaryColor,
+                      AppTheme
+                          .secondaryColor,
+                    ],
+                    begin:
+                    Alignment
+                        .topLeft,
+                    end:
+                    Alignment
+                        .bottomRight,
+                  ),
+                  borderRadius:
+                  BorderRadius.circular(
+                    26,
+                  ),
+                  boxShadow:
+                  AppTheme
+                      .primaryShadow,
+                ),
+                child:
+                const Icon(
+                  Icons
+                      .car_crash_rounded,
                   color:
-                  colorScheme.outlineVariant,
+                  Colors.white,
+                  size: 40,
                 ),
               ),
-              child: Column(
-                mainAxisSize:
-                MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 96,
-                    height: 96,
-                    decoration: BoxDecoration(
-                      color:
-                      colorScheme.primary,
-                      borderRadius:
-                      BorderRadius.circular(
-                        26,
-                      ),
-                    ),
-                    child: Icon(
-                      Icons.car_crash_outlined,
-                      color:
-                      colorScheme.onPrimary,
-                      size: 44,
-                    ),
-                  ),
-                  const SizedBox(
-                    height: 28,
-                  ),
-                  Text(
-                    'Vehicle Inspector',
-                    textAlign:
-                    TextAlign.center,
-                    style: textTheme
-                        .headlineMedium
-                        ?.copyWith(
-                      fontWeight:
-                      FontWeight.w800,
-                      letterSpacing: -0.6,
-                    ),
-                  ),
-                  const SizedBox(
-                    height: 10,
-                  ),
-                  Text(
-                    'Yapay zekâ destekli araç hasar analizi',
-                    textAlign:
-                    TextAlign.center,
-                    style:
-                    textTheme.bodyLarge
-                        ?.copyWith(
-                      color: colorScheme
-                          .onSurfaceVariant,
-                    ),
-                  ),
-                  const SizedBox(
-                    height: 28,
-                  ),
-                  const CircularProgressIndicator(),
-                ],
+
+              const SizedBox(
+                height: 24,
               ),
-            ),
+
+              Text(
+                'Vehicle Inspector',
+                style:
+                Theme.of(context)
+                    .textTheme
+                    .headlineMedium
+                    ?.copyWith(
+                  fontWeight:
+                  FontWeight.w900,
+                ),
+              ),
+
+              const SizedBox(
+                height: 8,
+              ),
+
+              Text(
+                'AI destekli araç hasar analizi',
+                textAlign:
+                TextAlign.center,
+                style:
+                Theme.of(context)
+                    .textTheme
+                    .bodyMedium,
+              ),
+
+              const SizedBox(
+                height: 32,
+              ),
+
+              const SizedBox(
+                width: 26,
+                height: 26,
+                child:
+                CircularProgressIndicator(
+                  strokeWidth: 2.5,
+                ),
+              ),
+            ],
           ),
         ),
       ),
