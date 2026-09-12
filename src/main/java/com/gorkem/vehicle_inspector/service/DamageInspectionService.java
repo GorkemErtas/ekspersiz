@@ -107,6 +107,8 @@ public class DamageInspectionService {
     public DamageInspectionResponse createInspection(
             Long vehicleId,
             String city,
+            Double latitude,
+            Double longitude,
             String authenticatedEmail
     ) {
         User user =
@@ -126,6 +128,24 @@ public class DamageInspectionService {
             );
         }
 
+        if (latitude == null
+                || latitude < -90
+                || latitude > 90) {
+
+            throw new IllegalArgumentException(
+                    "Geçerli bir enlem bilgisi zorunludur."
+            );
+        }
+
+        if (longitude == null
+                || longitude < -180
+                || longitude > 180) {
+
+            throw new IllegalArgumentException(
+                    "Geçerli bir boylam bilgisi zorunludur."
+            );
+        }
+
         DamageInspection inspection =
                 new DamageInspection(
                         vehicle,
@@ -135,6 +155,14 @@ public class DamageInspectionService {
 
         inspection.setLocationCity(
                 normalizeCity(city)
+        );
+
+        inspection.setLocationLatitude(
+                latitude
+        );
+
+        inspection.setLocationLongitude(
+                longitude
         );
 
         inspection.setReportStatus(

@@ -46,6 +46,16 @@ public class DamageInspection {
     )
     private String locationCity;
 
+    @Column(
+            name = "location_latitude"
+    )
+    private Double locationLatitude;
+
+    @Column(
+            name = "location_longitude"
+    )
+    private Double locationLongitude;
+
     @OneToMany(
             mappedBy = "inspection",
             cascade = CascadeType.ALL,
@@ -305,5 +315,27 @@ public class DamageInspection {
 
     public void clearDetections() {
         detections.clear();
+    }
+
+    public Double getLocationLatitude() {
+        return locationLatitude;
+    }
+
+    public Double getLocationLongitude() {
+        return locationLongitude;
+    }
+
+    public void setLocationLatitude(
+            Double locationLatitude
+    ) {
+        this.locationLatitude =
+                locationLatitude;
+    }
+
+    public void setLocationLongitude(
+            Double locationLongitude
+    ) {
+        this.locationLongitude =
+                locationLongitude;
     }
 }
