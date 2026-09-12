@@ -18,9 +18,7 @@ public class VehicleController {
 
     private final VehicleService vehicleService;
 
-    public VehicleController(
-            VehicleService vehicleService
-    ) {
+    public VehicleController(VehicleService vehicleService) {
         this.vehicleService = vehicleService;
     }
 
@@ -29,39 +27,27 @@ public class VehicleController {
             @Valid @RequestBody CreateVehicleRequest request,
             Authentication authentication
     ) {
-        VehicleResponse response =
-                vehicleService.createVehicle(
-                        request,
-                        authentication.getName()
-                );
-
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(response);
+                .body(vehicleService.createVehicle(request, authentication.getName()));
     }
 
     @GetMapping
-    public ResponseEntity<List<VehicleResponse>>
-    getMyVehicles(Authentication authentication) {
-
+    public ResponseEntity<List<VehicleResponse>> getMyVehicles(
+            Authentication authentication
+    ) {
         return ResponseEntity.ok(
-                vehicleService.getMyVehicles(
-                        authentication.getName()
-                )
+                vehicleService.getMyVehicles(authentication.getName())
         );
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<VehicleResponse>
-    getMyVehicleById(
+    public ResponseEntity<VehicleResponse> getMyVehicleById(
             @PathVariable Long id,
             Authentication authentication
     ) {
         return ResponseEntity.ok(
-                vehicleService.getMyVehicleById(
-                        id,
-                        authentication.getName()
-                )
+                vehicleService.getMyVehicleById(id, authentication.getName())
         );
     }
 
@@ -71,14 +57,19 @@ public class VehicleController {
             @Valid @RequestBody UpdateVehicleRequest request,
             Authentication authentication
     ) {
-        VehicleResponse response =
-                vehicleService.updateVehicle(
-                        id,
-                        request,
-                        authentication.getName()
-                );
+        return ResponseEntity.ok(
+                vehicleService.updateVehicle(id, request, authentication.getName())
+        );
+    }
 
-        return ResponseEntity.ok(response);
+    @PutMapping("/{id}/primary")
+    public ResponseEntity<VehicleResponse> setPrimaryVehicle(
+            @PathVariable Long id,
+            Authentication authentication
+    ) {
+        return ResponseEntity.ok(
+                vehicleService.setPrimaryVehicle(id, authentication.getName())
+        );
     }
 
     @DeleteMapping("/{id}")
@@ -86,11 +77,7 @@ public class VehicleController {
             @PathVariable Long id,
             Authentication authentication
     ) {
-        vehicleService.deleteVehicle(
-                id,
-                authentication.getName()
-        );
-
+        vehicleService.deleteVehicle(id, authentication.getName());
         return ResponseEntity.noContent().build();
     }
 }

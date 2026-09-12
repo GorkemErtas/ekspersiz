@@ -11,10 +11,7 @@ public final class VehicleMapper {
     private VehicleMapper() {
     }
 
-    public static Vehicle toEntity(
-            CreateVehicleRequest request,
-            User user
-    ) {
+    public static Vehicle toEntity(CreateVehicleRequest request, User user) {
         return new Vehicle(
                 request.getPlate().trim().toUpperCase(),
                 request.getBrand().trim(),
@@ -32,17 +29,13 @@ public final class VehicleMapper {
                 vehicle.getBrand(),
                 vehicle.getModel(),
                 vehicle.getModelYear(),
-                vehicle.getMileage()
+                vehicle.getMileage(),
+                vehicle.isPrimaryVehicle()
         );
     }
 
-    public static void updateEntity(
-            Vehicle vehicle,
-            UpdateVehicleRequest request
-    ) {
-        vehicle.setPlate(
-                request.getPlate().trim().toUpperCase()
-        );
+    public static void updateEntity(Vehicle vehicle, UpdateVehicleRequest request) {
+        vehicle.setPlate(request.getPlate().trim().toUpperCase());
         vehicle.setBrand(request.getBrand().trim());
         vehicle.setModel(request.getModel().trim());
         vehicle.setModelYear(request.getModelYear());
