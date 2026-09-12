@@ -6,6 +6,7 @@ class Vehicle {
     required this.model,
     required this.modelYear,
     required this.mileage,
+    required this.primaryVehicle,
   });
 
   final int id;
@@ -14,6 +15,7 @@ class Vehicle {
   final String model;
   final int modelYear;
   final int mileage;
+  final bool primaryVehicle;
 
   String get displayName => '$brand $model';
 
@@ -29,6 +31,8 @@ class Vehicle {
       (json['modelYear'] as num?)?.toInt() ?? 0,
       mileage:
       (json['mileage'] as num?)?.toInt() ?? 0,
+      primaryVehicle:
+      json['primaryVehicle'] as bool? ?? false,
     );
   }
 }

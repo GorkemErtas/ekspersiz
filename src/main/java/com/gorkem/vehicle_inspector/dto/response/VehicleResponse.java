@@ -8,6 +8,7 @@ public class VehicleResponse {
     private String model;
     private Integer modelYear;
     private Integer mileage;
+    private boolean primaryVehicle;
 
     public VehicleResponse(
             Long id,
@@ -15,7 +16,8 @@ public class VehicleResponse {
             String brand,
             String model,
             Integer modelYear,
-            Integer mileage
+            Integer mileage,
+            boolean primaryVehicle
     ) {
         this.id = id;
         this.plate = plate;
@@ -23,29 +25,14 @@ public class VehicleResponse {
         this.model = model;
         this.modelYear = modelYear;
         this.mileage = mileage;
+        this.primaryVehicle = primaryVehicle;
     }
 
-    public Long getId() {
-        return id;
-    }
-
-    public String getPlate() {
-        return plate;
-    }
-
-    public String getBrand() {
-        return brand;
-    }
-
-    public String getModel() {
-        return model;
-    }
-
-    public Integer getModelYear() {
-        return modelYear;
-    }
-
-    public Integer getMileage() {
-        return mileage;
-    }
+    public Long getId() { return id; }
+    public String getPlate() { return plate; }
+    public String getBrand() { return brand; }
+    public String getModel() { return model; }
+    public Integer getModelYear() { return modelYear; }
+    public Integer getMileage() { return mileage; }
+    public boolean isPrimaryVehicle() { return primaryVehicle; }
 }

@@ -38,57 +38,41 @@ public class VehicleService {
             String authenticatedEmail
     ) {
         User user = findUserByEmail(authenticatedEmail);
-
         subscriptionService.validateVehicleLimit(user);
 
-        String normalizedPlate =
-                normalizePlate(request.getPlate());
+        String normalizedPlate = normalizePlate(request.getPlate());
 
         if (vehicleRepository.existsByPlate(normalizedPlate)) {
             throw new DuplicateResourceException(
-                    "Bu plakaya ait araç zaten kayıtlı: "
-                            + normalizedPlate
+                    "Bu plakaya ait araç zaten kayıtlı: " + normalizedPlate
             );
         }
 
-        Vehicle vehicle =
-                VehicleMapper.toEntity(request, user);
+        Vehicle vehicle = VehicleMapper.toEntity(request, user);
 
-        Vehicle savedVehicle =
-                vehicleRepository.save(vehicle);
+        boolean hasActiveVehicle =
+                vehicleRepository.countByUserIdAndArchivedFalse(user.getId()) > 0;
 
-        return VehicleMapper.toResponse(savedVehicle);
+        vehicle.setPrimaryVehicle(!hasActiveVehicle);
+
+        return VehicleMapper.toResponse(vehicleRepository.save(vehicle));
     }
 
     @Transactional(readOnly = true)
-    public List<VehicleResponse> getMyVehicles(
-            String authenticatedEmail
-    ) {
+    public List<VehicleResponse> getMyVehicles(String authenticatedEmail) {
         User user = findUserByEmail(authenticatedEmail);
 
         return vehicleRepository
-                .findAllByUserIdAndArchivedFalseOrderByIdDesc(
-                        user.getId()
-                )
+                .findAllByUserIdAndArchivedFalseOrderByIdDesc(user.getId())
                 .stream()
                 .map(VehicleMapper::toResponse)
                 .toList();
     }
 
     @Transactional(readOnly = true)
-    public VehicleResponse getMyVehicleById(
-            Long id,
-            String authenticatedEmail
-    ) {
+    public VehicleResponse getMyVehicleById(Long id, String authenticatedEmail) {
         User user = findUserByEmail(authenticatedEmail);
-
-        Vehicle vehicle =
-                findVehicleByIdAndUserId(
-                        id,
-                        user.getId()
-                );
-
-        return VehicleMapper.toResponse(vehicle);
+        return VehicleMapper.toResponse(findVehicleByIdAndUserId(id, user.getId()));
     }
 
     @Transactional
@@ -98,78 +82,74 @@ public class VehicleService {
             String authenticatedEmail
     ) {
         User user = findUserByEmail(authenticatedEmail);
+        Vehicle vehicle = findVehicleByIdAndUserId(id, user.getId());
 
-        Vehicle vehicle =
-                findVehicleByIdAndUserId(
-                        id,
-                        user.getId()
-                );
+        String normalizedPlate = normalizePlate(request.getPlate());
 
-        String normalizedPlate =
-                normalizePlate(request.getPlate());
-
-        if (vehicleRepository.existsByPlateAndIdNot(
-                normalizedPlate,
-                id
-        )) {
+        if (vehicleRepository.existsByPlateAndIdNot(normalizedPlate, id)) {
             throw new DuplicateResourceException(
-                    "Bu plaka başka bir araç tarafından kullanılıyor: "
-                            + normalizedPlate
+                    "Bu plaka başka bir araç tarafından kullanılıyor: " + normalizedPlate
             );
         }
 
         VehicleMapper.updateEntity(vehicle, request);
-
-        Vehicle updatedVehicle =
-                vehicleRepository.save(vehicle);
-
-        return VehicleMapper.toResponse(updatedVehicle);
+        return VehicleMapper.toResponse(vehicleRepository.save(vehicle));
     }
 
     @Transactional
-    public void deleteVehicle(
-            Long id,
-            String authenticatedEmail
-    ) {
+    public VehicleResponse setPrimaryVehicle(Long id, String authenticatedEmail) {
         User user = findUserByEmail(authenticatedEmail);
+        Vehicle selectedVehicle = findVehicleByIdAndUserId(id, user.getId());
 
-        Vehicle vehicle =
-                findVehicleByIdAndUserId(
-                        id,
-                        user.getId()
-                );
+        vehicleRepository
+                .findByUserIdAndPrimaryVehicleTrueAndArchivedFalse(user.getId())
+                .filter(current -> !current.getId().equals(selectedVehicle.getId()))
+                .ifPresent(current -> current.setPrimaryVehicle(false));
 
+        selectedVehicle.setPrimaryVehicle(true);
+
+        return VehicleMapper.toResponse(vehicleRepository.save(selectedVehicle));
+    }
+
+    @Transactional
+    public void deleteVehicle(Long id, String authenticatedEmail) {
+        User user = findUserByEmail(authenticatedEmail);
+        Vehicle vehicle = findVehicleByIdAndUserId(id, user.getId());
+
+        boolean wasPrimary = vehicle.isPrimaryVehicle();
+
+        vehicle.setPrimaryVehicle(false);
         vehicle.setArchived(true);
-
         vehicleRepository.save(vehicle);
+
+        if (wasPrimary) {
+            vehicleRepository
+                    .findAllByUserIdAndArchivedFalseOrderByIdDesc(user.getId())
+                    .stream()
+                    .findFirst()
+                    .ifPresent(nextVehicle -> {
+                        nextVehicle.setPrimaryVehicle(true);
+                        vehicleRepository.save(nextVehicle);
+                    });
+        }
     }
 
     private User findUserByEmail(String email) {
-        String normalizedEmail =
-                email.trim().toLowerCase();
+        String normalizedEmail = email.trim().toLowerCase();
 
         return userRepository
                 .findByEmail(normalizedEmail)
                 .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Kullanıcı bulunamadı."
-                        )
+                        new ResourceNotFoundException("Kullanıcı bulunamadı.")
                 );
     }
 
-    private Vehicle findVehicleByIdAndUserId(
-            Long vehicleId,
-            Long userId
-    ) {
+    private Vehicle findVehicleByIdAndUserId(Long vehicleId, Long userId) {
         return vehicleRepository
-                .findByIdAndUserIdAndArchivedFalse(
-                        vehicleId,
-                        userId
-                )
+                .findByIdAndUserIdAndArchivedFalse(vehicleId, userId)
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
-                                "Araç bulunamadı. ID: "
-                                        + vehicleId
+                                "Araç bulunamadı. ID: " + vehicleId
                         )
                 );
     }
