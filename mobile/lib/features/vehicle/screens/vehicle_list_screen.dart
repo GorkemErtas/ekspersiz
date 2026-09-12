@@ -128,7 +128,7 @@ class _VehicleListScreenState
           ),
 
           title: const Text(
-            'Araç silinsin mi?',
+            'Araç garajdan kaldırılsın mı?',
             textAlign: TextAlign.center,
           ),
 
@@ -137,7 +137,7 @@ class _VehicleListScreenState
             MainAxisSize.min,
             children: [
               Text(
-                '${vehicle.displayName} aracını silmek üzeresiniz.',
+                '${vehicle.displayName} aktif araçlarınızdan kaldırılacak.',
                 textAlign:
                 TextAlign.center,
                 style:
@@ -149,7 +149,7 @@ class _VehicleListScreenState
               ),
 
               Text(
-                'Bu işlem geri alınamaz.',
+                'Geçmiş analizleriniz korunmaya devam eder.',
                 textAlign:
                 TextAlign.center,
                 style:
@@ -239,7 +239,7 @@ class _VehicleListScreenState
                 ).pop(true);
               },
               child: const Text(
-                'Aracı Sil',
+                'Garajdan Kaldır',
               ),
             ),
           ],
@@ -269,7 +269,7 @@ class _VehicleListScreenState
       setState(_loadVehicles);
 
       _showMessage(
-        '${vehicle.displayName} başarıyla silindi.',
+        '${vehicle.displayName} garajdan kaldırıldı.',
       );
     } catch (exception) {
       if (!mounted) {
@@ -283,7 +283,7 @@ class _VehicleListScreenState
         FormatException() =>
         exception.message,
         _ =>
-        'Araç silinemedi.',
+        'Araç garajdan kaldırılamadı.',
       };
 
       _showMessage(message);
@@ -767,8 +767,10 @@ class _VehicleActionsMenu
         switch (action) {
           case _VehicleAction.edit:
             onEdit();
+            break;
           case _VehicleAction.delete:
             onDelete();
+            break;
         }
       },
       itemBuilder: (context) => [
@@ -805,7 +807,7 @@ class _VehicleActionsMenu
                 width: 12,
               ),
               Text(
-                'Sil',
+                'Garajdan Kaldır',
                 style:
                 TextStyle(
                   color:

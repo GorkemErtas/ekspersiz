@@ -9,25 +9,31 @@ import java.util.Optional;
 public interface VehicleRepository
         extends JpaRepository<Vehicle, Long> {
 
-    Optional<Vehicle> findByPlate(String plate);
+    Optional<Vehicle> findByPlate(
+            String plate
+    );
 
-    boolean existsByPlate(String plate);
+    boolean existsByPlate(
+            String plate
+    );
 
     boolean existsByPlateAndIdNot(
             String plate,
             Long id
     );
 
-    List<Vehicle> findAllByUserIdOrderByIdDesc(
+    List<Vehicle>
+    findAllByUserIdAndArchivedFalseOrderByIdDesc(
             Long userId
     );
 
-    Optional<Vehicle> findByIdAndUserId(
+    Optional<Vehicle>
+    findByIdAndUserIdAndArchivedFalse(
             Long id,
             Long userId
     );
 
-    long countByUserId(
+    long countByUserIdAndArchivedFalse(
             Long userId
     );
 }

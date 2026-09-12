@@ -10,7 +10,6 @@ import com.gorkem.vehicle_inspector.exception.ResourceNotFoundException;
 import com.gorkem.vehicle_inspector.mapper.VehicleMapper;
 import com.gorkem.vehicle_inspector.repository.UserRepository;
 import com.gorkem.vehicle_inspector.repository.VehicleRepository;
-import com.gorkem.vehicle_inspector.repository.DamageInspectionRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,18 +21,15 @@ public class VehicleService {
     private final VehicleRepository vehicleRepository;
     private final UserRepository userRepository;
     private final SubscriptionService subscriptionService;
-    private final DamageInspectionRepository damageInspectionRepository;
 
     public VehicleService(
             VehicleRepository vehicleRepository,
             UserRepository userRepository,
-            SubscriptionService subscriptionService,
-            DamageInspectionRepository damageInspectionRepository
+            SubscriptionService subscriptionService
     ) {
         this.vehicleRepository = vehicleRepository;
         this.userRepository = userRepository;
         this.subscriptionService = subscriptionService;
-        this.damageInspectionRepository = damageInspectionRepository;
     }
 
     @Transactional
@@ -71,7 +67,9 @@ public class VehicleService {
         User user = findUserByEmail(authenticatedEmail);
 
         return vehicleRepository
-                .findAllByUserIdOrderByIdDesc(user.getId())
+                .findAllByUserIdAndArchivedFalseOrderByIdDesc(
+                        user.getId()
+                )
                 .stream()
                 .map(VehicleMapper::toResponse)
                 .toList();
@@ -141,13 +139,9 @@ public class VehicleService {
                         user.getId()
                 );
 
-        if (damageInspectionRepository.existsByVehicleId(id)) {
-            throw new IllegalStateException(
-                    "Bu araca ait analiz geçmişi bulunduğu için araç silinemez."
-            );
-        }
+        vehicle.setArchived(true);
 
-        vehicleRepository.delete(vehicle);
+        vehicleRepository.save(vehicle);
     }
 
     private User findUserByEmail(String email) {
@@ -168,7 +162,10 @@ public class VehicleService {
             Long userId
     ) {
         return vehicleRepository
-                .findByIdAndUserId(vehicleId, userId)
+                .findByIdAndUserIdAndArchivedFalse(
+                        vehicleId,
+                        userId
+                )
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
                                 "Araç bulunamadı. ID: "
