@@ -21,77 +21,197 @@ class AppPageHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
+    final colorScheme =
+        Theme.of(context)
+            .colorScheme;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
+    final textTheme =
+        Theme.of(context)
+            .textTheme;
+
+    return LayoutBuilder(
+      builder:
+          (
+          context,
+          constraints,
+          ) {
+        final isWide =
+            constraints.maxWidth >=
+                720;
+
+        final iconWidget =
         AppIconBox(
-          icon: icon,
-          size: 56,
-          iconSize: 28,
-          borderRadius: 18,
+          icon:
+          icon,
+
+          size:
+          isWide
+              ? 62
+              : 56,
+
+          iconSize:
+          isWide
+              ? 30
+              : 28,
+
+          borderRadius:
+          isWide
+              ? 20
+              : 18,
+
           iconColor:
-          iconGradient ? Colors.white : colorScheme.primary,
-          gradient: iconGradient
+          iconGradient
+              ? Colors.white
+              : colorScheme.primary,
+
+          gradient:
+          iconGradient
               ? const LinearGradient(
             colors: [
               AppTheme.primaryColor,
               AppTheme.secondaryColor,
             ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+
+            begin:
+            Alignment.topLeft,
+
+            end:
+            Alignment.bottomRight,
           )
               : null,
-          showShadow: iconGradient,
-        ),
 
-        const SizedBox(
-          height: AppTheme.spacingM,
-        ),
+          showShadow:
+          iconGradient,
+        );
 
-        if (badge != null) ...[
-          Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 10,
-              vertical: 6,
-            ),
-            decoration: BoxDecoration(
-              color: colorScheme.primaryContainer,
-              borderRadius: BorderRadius.circular(
-                AppTheme.radiusPill,
+        final content =
+        Column(
+          crossAxisAlignment:
+          CrossAxisAlignment.start,
+
+          children: [
+            if (badge != null) ...[
+              Container(
+                padding:
+                const EdgeInsets.symmetric(
+                  horizontal:
+                  10,
+
+                  vertical:
+                  6,
+                ),
+
+                decoration:
+                BoxDecoration(
+                  color:
+                  colorScheme
+                      .primaryContainer,
+
+                  borderRadius:
+                  BorderRadius.circular(
+                    AppTheme.radiusPill,
+                  ),
+                ),
+
+                child:
+                Text(
+                  badge!,
+
+                  style:
+                  textTheme
+                      .labelSmall
+                      ?.copyWith(
+                    color:
+                    colorScheme
+                        .primary,
+
+                    fontWeight:
+                    FontWeight.w900,
+
+                    letterSpacing:
+                    0.4,
+                  ),
+                ),
+              ),
+
+              const SizedBox(
+                height:
+                10,
+              ),
+            ],
+
+            Text(
+              title,
+
+              style:
+              textTheme
+                  .headlineSmall
+                  ?.copyWith(
+                fontWeight:
+                FontWeight.w900,
               ),
             ),
-            child: Text(
-              badge!,
-              style: textTheme.labelSmall?.copyWith(
-                color: colorScheme.primary,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 0.4,
+
+            const SizedBox(
+              height:
+              7,
+            ),
+
+            Text(
+              subtitle,
+
+              style:
+              textTheme
+                  .bodyLarge
+                  ?.copyWith(
+                color:
+                colorScheme
+                    .onSurfaceVariant,
+
+                height:
+                1.5,
               ),
             ),
-          ),
-          const SizedBox(height: 10),
-        ],
+          ],
+        );
 
-        Text(
-          title,
-          style: textTheme.headlineSmall?.copyWith(
-            fontWeight: FontWeight.w900,
-          ),
-        ),
+        if (isWide) {
+          return Row(
+            crossAxisAlignment:
+            CrossAxisAlignment.start,
 
-        const SizedBox(height: 7),
+            children: [
+              iconWidget,
 
-        Text(
-          subtitle,
-          style: textTheme.bodyLarge?.copyWith(
-            color: colorScheme.onSurfaceVariant,
-            height: 1.5,
-          ),
-        ),
-      ],
+              const SizedBox(
+                width:
+                18,
+              ),
+
+              Expanded(
+                child:
+                content,
+              ),
+            ],
+          );
+        }
+
+        return Column(
+          crossAxisAlignment:
+          CrossAxisAlignment.start,
+
+          children: [
+            iconWidget,
+
+            const SizedBox(
+              height:
+              AppTheme.spacingM,
+            ),
+
+            content,
+          ],
+        );
+      },
     );
   }
 }

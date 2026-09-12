@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
   AppTheme._();
@@ -24,7 +25,7 @@ class AppTheme {
   // =========================================================
 
   static const Color backgroundColor =
-  Color(0xFFF8FAFC);
+  Color(0xFFF8F9FA);
 
   static const Color surfaceColor =
   Color(0xFFFFFFFF);
@@ -114,7 +115,7 @@ class AppTheme {
 
   static const double radiusSmall = 12;
   static const double radiusMedium = 16;
-  static const double radiusLarge = 22;
+  static const double radiusLarge = 24;
   static const double radiusXLarge = 28;
   static const double radiusPill = 999;
 
@@ -147,9 +148,9 @@ class AppTheme {
   static List<BoxShadow> get softShadow => [
     BoxShadow(
       color: Colors.black.withValues(
-        alpha: 0.035,
+        alpha: 0.04,
       ),
-      blurRadius: 24,
+      blurRadius: 20,
       offset: const Offset(0, 8),
     ),
   ];
@@ -227,108 +228,104 @@ class AppTheme {
       canvasColor:
       backgroundColor,
 
-      fontFamily: 'Roboto',
+      textTheme: GoogleFonts.interTextTheme(
+        const TextTheme(
+          displayLarge: TextStyle(
+            color: textPrimary,
+            fontSize: 48,
+            fontWeight: FontWeight.w900,
+            letterSpacing: -1.6,
+            height: 1.05,
+          ),
+
+          displayMedium: TextStyle(
+            color: textPrimary,
+            fontSize: 40,
+            fontWeight: FontWeight.w900,
+            letterSpacing: -1.3,
+            height: 1.08,
+          ),
+
+          headlineLarge: TextStyle(
+            color: textPrimary,
+            fontSize: 32,
+            fontWeight: FontWeight.w900,
+            letterSpacing: -1,
+            height: 1.1,
+          ),
+
+          headlineMedium: TextStyle(
+            color: textPrimary,
+            fontSize: 28,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.8,
+            height: 1.15,
+          ),
+
+          headlineSmall: TextStyle(
+            color: textPrimary,
+            fontSize: 23,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.5,
+            height: 1.2,
+          ),
+
+          titleLarge: TextStyle(
+            color: textPrimary,
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.3,
+          ),
+
+          titleMedium: TextStyle(
+            color: textPrimary,
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+          ),
+
+          titleSmall: TextStyle(
+            color: textPrimary,
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+          ),
+
+          bodyLarge: TextStyle(
+            color: textPrimary,
+            fontSize: 16,
+            height: 1.5,
+          ),
+
+          bodyMedium: TextStyle(
+            color: textSecondary,
+            fontSize: 14,
+            height: 1.5,
+          ),
+
+          bodySmall: TextStyle(
+            color: textSecondary,
+            fontSize: 12,
+            height: 1.45,
+          ),
+
+          labelLarge: TextStyle(
+            color: textPrimary,
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+          ),
+
+          labelMedium: TextStyle(
+            color: textSecondary,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
 
       visualDensity:
       VisualDensity.standard,
 
       splashFactory:
       InkSparkle.splashFactory,
-
-      // =====================================================
-      // TEXT
-      // =====================================================
-
-      textTheme: const TextTheme(
-        displayLarge: TextStyle(
-          color: textPrimary,
-          fontSize: 48,
-          fontWeight: FontWeight.w900,
-          letterSpacing: -1.6,
-          height: 1.05,
-        ),
-
-        displayMedium: TextStyle(
-          color: textPrimary,
-          fontSize: 40,
-          fontWeight: FontWeight.w900,
-          letterSpacing: -1.3,
-          height: 1.08,
-        ),
-
-        headlineLarge: TextStyle(
-          color: textPrimary,
-          fontSize: 32,
-          fontWeight: FontWeight.w900,
-          letterSpacing: -1,
-          height: 1.1,
-        ),
-
-        headlineMedium: TextStyle(
-          color: textPrimary,
-          fontSize: 28,
-          fontWeight: FontWeight.w800,
-          letterSpacing: -0.8,
-          height: 1.15,
-        ),
-
-        headlineSmall: TextStyle(
-          color: textPrimary,
-          fontSize: 23,
-          fontWeight: FontWeight.w800,
-          letterSpacing: -0.5,
-          height: 1.2,
-        ),
-
-        titleLarge: TextStyle(
-          color: textPrimary,
-          fontSize: 20,
-          fontWeight: FontWeight.w800,
-          letterSpacing: -0.3,
-        ),
-
-        titleMedium: TextStyle(
-          color: textPrimary,
-          fontSize: 16,
-          fontWeight: FontWeight.w700,
-        ),
-
-        titleSmall: TextStyle(
-          color: textPrimary,
-          fontSize: 14,
-          fontWeight: FontWeight.w700,
-        ),
-
-        bodyLarge: TextStyle(
-          color: textPrimary,
-          fontSize: 16,
-          height: 1.5,
-        ),
-
-        bodyMedium: TextStyle(
-          color: textSecondary,
-          fontSize: 14,
-          height: 1.5,
-        ),
-
-        bodySmall: TextStyle(
-          color: textSecondary,
-          fontSize: 12,
-          height: 1.45,
-        ),
-
-        labelLarge: TextStyle(
-          color: textPrimary,
-          fontSize: 14,
-          fontWeight: FontWeight.w700,
-        ),
-
-        labelMedium: TextStyle(
-          color: textSecondary,
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
 
       // =====================================================
       // APP BAR
@@ -1003,6 +1000,11 @@ class AppTheme {
     );
 
     return base.copyWith(
+      textTheme:
+      GoogleFonts.interTextTheme(
+        base.textTheme,
+      ),
+
       scaffoldBackgroundColor:
       const Color(0xFF0B1120),
 

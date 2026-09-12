@@ -18,40 +18,77 @@ class AppSectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
+    final colorScheme =
+        Theme.of(context)
+            .colorScheme;
+
+    final textTheme =
+        Theme.of(context)
+            .textTheme;
 
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment:
+      CrossAxisAlignment.start,
+
       children: [
         AppIconBox(
-          icon: icon,
-          size: 42,
-          iconSize: 21,
-          borderRadius: 14,
+          icon:
+          icon,
+
+          size:
+          42,
+
+          iconSize:
+          21,
+
+          borderRadius:
+          14,
         ),
 
-        const SizedBox(width: 12),
+        const SizedBox(
+          width:
+          12,
+        ),
 
         Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child:
+          Column(
+            crossAxisAlignment:
+            CrossAxisAlignment.start,
+
             children: [
               Text(
                 title,
-                style: textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w900,
+
+                style:
+                textTheme
+                    .titleMedium
+                    ?.copyWith(
+                  fontWeight:
+                  FontWeight.w900,
                 ),
               ),
 
-              if (subtitle != null) ...[
-                const SizedBox(height: 3),
+              if (subtitle !=
+                  null) ...[
+                const SizedBox(
+                  height:
+                  3,
+                ),
 
                 Text(
                   subtitle!,
-                  style: textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                    height: 1.4,
+
+                  style:
+                  textTheme
+                      .bodySmall
+                      ?.copyWith(
+                    color:
+                    colorScheme
+                        .onSurfaceVariant,
+
+                    height:
+                    1.4,
                   ),
                 ),
               ],
@@ -59,8 +96,13 @@ class AppSectionHeader extends StatelessWidget {
           ),
         ),
 
-        if (trailing != null) ...[
-          const SizedBox(width: 12),
+        if (trailing !=
+            null) ...[
+          const SizedBox(
+            width:
+            12,
+          ),
+
           trailing!,
         ],
       ],

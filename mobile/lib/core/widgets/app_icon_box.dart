@@ -30,33 +30,27 @@ class AppIconBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme =
-        Theme.of(context).colorScheme;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Container(
       width: size,
       height: size,
       decoration: BoxDecoration(
         color: gradient == null
-            ? backgroundColor ??
-            colorScheme.primaryContainer
+            ? backgroundColor ?? colorScheme.primaryContainer
             : null,
         gradient: gradient,
-        borderRadius:
-        BorderRadius.circular(
+        borderRadius: BorderRadius.circular(
           borderRadius,
         ),
-        boxShadow:
-        showShadow
+        boxShadow: showShadow
             ? AppTheme.primaryShadow
             : null,
       ),
       child: Icon(
         icon,
         size: iconSize,
-        color:
-        iconColor ??
-            colorScheme.primary,
+        color: iconColor ?? colorScheme.primary,
       ),
     );
   }

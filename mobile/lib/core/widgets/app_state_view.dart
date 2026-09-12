@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
+import 'app_motion.dart';
 
 class AppStateView extends StatelessWidget {
   const AppStateView({
@@ -21,7 +22,8 @@ class AppStateView extends StatelessWidget {
     this.title = 'Yükleniyor',
     this.message = 'Lütfen bekleyin...',
     this.bottomPadding = 32,
-  })  : icon = Icons.hourglass_top_rounded,
+  })  : icon =
+      Icons.hourglass_top_rounded,
         actionLabel = null,
         onActionPressed = null,
         actionIcon = null,
@@ -42,12 +44,16 @@ class AppStateView extends StatelessWidget {
 
   const AppStateView.error({
     super.key,
-    this.icon = Icons.error_outline_rounded,
-    this.title = 'Bir sorun oluştu',
+    this.icon =
+        Icons.error_outline_rounded,
+    this.title =
+    'Bir sorun oluştu',
     required this.message,
-    this.actionLabel = 'Tekrar Dene',
+    this.actionLabel =
+    'Tekrar Dene',
     this.onActionPressed,
-    this.actionIcon = Icons.refresh_rounded,
+    this.actionIcon =
+        Icons.refresh_rounded,
     this.bottomPadding = 32,
   })  : isLoading = false,
         isError = true;
@@ -69,11 +75,18 @@ class AppStateView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
+    final colorScheme =
+        Theme.of(context)
+            .colorScheme;
+
+    final textTheme =
+        Theme.of(context)
+            .textTheme;
 
     final foregroundColor =
-    isError ? colorScheme.error : colorScheme.primary;
+    isError
+        ? colorScheme.error
+        : colorScheme.primary;
 
     final backgroundColor =
     isError
@@ -81,89 +94,188 @@ class AppStateView extends StatelessWidget {
         : colorScheme.primaryContainer;
 
     return Center(
-      child: SingleChildScrollView(
+      child:
+      SingleChildScrollView(
         physics:
         const AlwaysScrollableScrollPhysics(),
-        padding: EdgeInsets.fromLTRB(
+
+        padding:
+        EdgeInsets.fromLTRB(
           32,
           32,
           32,
           bottomPadding,
         ),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(
-            maxWidth: 440,
+
+        child:
+        ConstrainedBox(
+          constraints:
+          const BoxConstraints(
+            maxWidth:
+            440,
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 92,
-                height: 92,
-                decoration: BoxDecoration(
-                  color: backgroundColor,
-                  borderRadius: BorderRadius.circular(
-                    28,
+
+          child:
+          AppFadeSlideIn(
+            child:
+            Column(
+              mainAxisSize:
+              MainAxisSize.min,
+
+              children: [
+                TweenAnimationBuilder<double>(
+                  tween:
+                  Tween<double>(
+                    begin:
+                    0.94,
+
+                    end:
+                    1,
                   ),
-                ),
-                child: isLoading
-                    ? Padding(
-                  padding:
-                  const EdgeInsets.all(
-                    28,
+
+                  duration:
+                  const Duration(
+                    milliseconds:
+                    360,
                   ),
+
+                  curve:
+                  Curves.easeOutBack,
+
+                  builder:
+                      (
+                      context,
+                      scale,
+                      child,
+                      ) {
+                    return Transform.scale(
+                      scale:
+                      scale,
+
+                      child:
+                      child,
+                    );
+                  },
+
                   child:
-                  CircularProgressIndicator(
-                    strokeWidth: 3,
-                    color: foregroundColor,
+                  Container(
+                    width:
+                    92,
+
+                    height:
+                    92,
+
+                    decoration:
+                    BoxDecoration(
+                      color:
+                      backgroundColor,
+
+                      borderRadius:
+                      BorderRadius.circular(
+                        28,
+                      ),
+
+                      boxShadow:
+                      isError
+                          ? null
+                          : AppTheme.softShadow,
+                    ),
+
+                    child:
+                    isLoading
+                        ? Padding(
+                      padding:
+                      const EdgeInsets.all(
+                        28,
+                      ),
+
+                      child:
+                      CircularProgressIndicator(
+                        strokeWidth:
+                        3,
+
+                        color:
+                        foregroundColor,
+                      ),
+                    )
+                        : Icon(
+                      icon,
+
+                      size:
+                      44,
+
+                      color:
+                      foregroundColor,
+                    ),
                   ),
-                )
-                    : Icon(
-                  icon,
-                  size: 44,
-                  color: foregroundColor,
                 ),
-              ),
 
-              const SizedBox(height: 24),
-
-              Text(
-                title,
-                textAlign: TextAlign.center,
-                style:
-                textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w900,
+                const SizedBox(
+                  height:
+                  24,
                 ),
-              ),
 
-              const SizedBox(height: 9),
+                Text(
+                  title,
 
-              Text(
-                message,
-                textAlign: TextAlign.center,
-                style:
-                textTheme.bodyLarge?.copyWith(
-                  color:
-                  colorScheme.onSurfaceVariant,
-                  height: 1.5,
-                ),
-              ),
+                  textAlign:
+                  TextAlign.center,
 
-              if (actionLabel != null &&
-                  onActionPressed != null) ...[
-                const SizedBox(height: 24),
-
-                FilledButton.tonalIcon(
-                  onPressed: onActionPressed,
-                  icon: Icon(
-                    actionIcon ??
-                        Icons
-                            .arrow_forward_rounded,
+                  style:
+                  textTheme
+                      .headlineSmall
+                      ?.copyWith(
+                    fontWeight:
+                    FontWeight.w900,
                   ),
-                  label: Text(actionLabel!),
                 ),
+
+                const SizedBox(
+                  height:
+                  9,
+                ),
+
+                Text(
+                  message,
+
+                  textAlign:
+                  TextAlign.center,
+
+                  style:
+                  textTheme
+                      .bodyLarge
+                      ?.copyWith(
+                    color:
+                    colorScheme
+                        .onSurfaceVariant,
+
+                    height:
+                    1.5,
+                  ),
+                ),
+
+                if (actionLabel !=
+                    null &&
+                    onActionPressed !=
+                        null) ...[
+                  const SizedBox(
+                    height:
+                    24,
+                  ),
+
+                  FilledButton.tonalIcon(
+                    onPressed: onActionPressed,
+                    icon: Icon(
+                      actionIcon ??
+                          Icons.arrow_forward_rounded,
+                    ),
+                    label: Text(
+                      actionLabel!,
+                    ),
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       ),
