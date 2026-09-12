@@ -23,6 +23,8 @@ class DamageInspection {
     required this.detections,
     required this.report,
     required this.locationCity,
+    required this.locationLatitude,
+    required this.locationLongitude,
   });
 
   final int id;
@@ -57,6 +59,9 @@ class DamageInspection {
   final InspectionReport? report;
 
   final String locationCity;
+
+  final double? locationLatitude;
+  final double? locationLongitude;
 
   bool get isPending => status == 'PENDING';
 
@@ -149,6 +154,14 @@ class DamageInspection {
           : null,
       locationCity: _parseString(
         json['locationCity'],
+      ),
+      locationLatitude:
+      _parseNullableDouble(
+        json['locationLatitude'],
+      ),
+      locationLongitude:
+      _parseNullableDouble(
+        json['locationLongitude'],
       ),
     );
   }
