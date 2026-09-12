@@ -105,7 +105,9 @@ public final class DamageInspectionMapper {
                 inspection.getCompletedAt(),
                 detections,
                 report,
-                inspection.getLocationCity()
+                inspection.getLocationCity(),
+                inspection.getLocationLatitude(),
+                inspection.getLocationLongitude()
         );
     }
 }

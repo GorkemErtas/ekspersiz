@@ -39,6 +39,9 @@ public class DamageInspectionResponse {
     private final ReportStatus reportStatus;
     private final String reportMessage;
 
+    private final Double locationLatitude;
+    private final Double locationLongitude;
+
     public DamageInspectionResponse(
             Long id,
             Long vehicleId,
@@ -58,7 +61,9 @@ public class DamageInspectionResponse {
             LocalDateTime completedAt,
             List<DamageDetectionResponse> detections,
             InspectionReportResponse report,
-            String locationCity
+            String locationCity,
+            Double locationLatitude,
+            Double locationLongitude
     ) {
         this.id = id;
         this.vehicleId = vehicleId;
@@ -85,6 +90,10 @@ public class DamageInspectionResponse {
         this.detections = detections;
         this.report = report;
         this.locationCity = locationCity;
+
+        this.locationLatitude = locationLatitude;
+
+        this.locationLongitude = locationLongitude;
     }
 
     public Long getId() {
@@ -162,5 +171,13 @@ public class DamageInspectionResponse {
 
     public String getLocationCity() {
         return locationCity;
+    }
+
+    public Double getLocationLatitude() {
+        return locationLatitude;
+    }
+
+    public Double getLocationLongitude() {
+        return locationLongitude;
     }
 }

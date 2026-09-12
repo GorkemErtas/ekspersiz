@@ -35,12 +35,16 @@ public class DamageInspectionController {
     createInspection(
             @RequestParam Long vehicleId,
             @RequestParam String city,
+            @RequestParam Double latitude,
+            @RequestParam Double longitude,
             Authentication authentication
     ) {
         DamageInspectionResponse response =
                 inspectionService.createInspection(
                         vehicleId,
                         city,
+                        latitude,
+                        longitude,
                         authentication.getName()
                 );
 
