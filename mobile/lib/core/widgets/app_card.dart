@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
+import 'app_motion.dart';
 
 class AppCard extends StatelessWidget {
   const AppCard({
     super.key,
     required this.child,
-    this.padding = const EdgeInsets.all(20),
+    this.padding =
+    const EdgeInsets.all(20),
     this.onTap,
     this.backgroundColor,
     this.borderColor,
@@ -27,54 +29,62 @@ class AppCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme =
-        Theme.of(context).colorScheme;
+        Theme.of(context)
+            .colorScheme;
 
-    final decoration =
-    BoxDecoration(
-      color: backgroundColor ??
-          colorScheme.surface,
-      borderRadius:
-      BorderRadius.circular(
-        AppTheme.radiusLarge,
+    final radius =
+    BorderRadius.circular(
+      AppTheme.radiusLarge,
+    );
+
+    final card =
+    Ink(
+      width:
+      double.infinity,
+
+      padding:
+      padding,
+
+      decoration:
+      BoxDecoration(
+        color:
+        backgroundColor ??
+            colorScheme.surface,
+
+        borderRadius:
+        radius,
+
+        border:
+        Border.all(
+          color:
+          borderColor ??
+              colorScheme
+                  .outlineVariant,
+        ),
+
+        boxShadow:
+        showShadow
+            ? AppTheme.softShadow
+            : null,
       ),
-      border: Border.all(
-        color: borderColor ??
-            colorScheme.outlineVariant,
-      ),
-      boxShadow:
-      showShadow
-          ? AppTheme.softShadow
-          : null,
+
+      child:
+      child,
     );
 
     if (onTap == null) {
-      return Container(
-        width: double.infinity,
-        padding: padding,
-        decoration: decoration,
-        child: child,
-      );
+      return card;
     }
 
-    return Material(
-      color: Colors.transparent,
+    return AppPressScale(
+      onTap:
+      onTap,
+
       borderRadius:
-      BorderRadius.circular(
-        AppTheme.radiusLarge,
-      ),
-      clipBehavior:
-      Clip.antiAlias,
-      child: Ink(
-        width: double.infinity,
-        decoration: decoration,
-        child: InkWell(
-          onTap: onTap,
-          child: Padding(
-            padding: padding,
-            child: child,
-          ),
-        ),
-      ),
+      radius,
+
+      child:
+      card,
     );
   }
 }

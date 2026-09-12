@@ -297,10 +297,6 @@ class ApiClient {
     );
   }
 
-  Future<void> _clearInvalidSession() async {
-    await TokenStorage.deleteAccessToken();
-  }
-
   String _extractErrorMessage(
       int statusCode,
       dynamic body,
