@@ -15,13 +15,17 @@ class InspectionService {
   Future<DamageInspection> createInspection({
     required int vehicleId,
     required String city,
+    required double latitude,
+    required double longitude,
   }) async {
     final normalizedCity = city.trim();
 
     final response = await apiClient.post(
       '/inspections'
           '?vehicleId=$vehicleId'
-          '&city=${Uri.encodeQueryComponent(normalizedCity)}',
+          '&city=${Uri.encodeQueryComponent(normalizedCity)}'
+          '&latitude=${Uri.encodeQueryComponent(latitude.toString())}'
+          '&longitude=${Uri.encodeQueryComponent(longitude.toString())}',
     );
 
     return _parseInspection(
