@@ -25,6 +25,9 @@ public class Vehicle {
     @Column(nullable = false)
     private Integer mileage;
 
+    @Column(nullable = false)
+    private boolean archived = false;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(
             name = "user_id",
@@ -52,6 +55,7 @@ public class Vehicle {
         this.modelYear = modelYear;
         this.mileage = mileage;
         this.user = user;
+        this.archived = false;
     }
 
     public Long getId() {
@@ -104,5 +108,13 @@ public class Vehicle {
 
     public void setUser(User user) {
         this.user = user;
+    }
+
+    public boolean isArchived() {
+        return archived;
+    }
+
+    public void setArchived(boolean archived) {
+        this.archived = archived;
     }
 }

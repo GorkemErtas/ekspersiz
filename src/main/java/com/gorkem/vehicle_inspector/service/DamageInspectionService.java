@@ -1036,7 +1036,7 @@ public class DamageInspectionService {
             Long userId
     ) {
         return vehicleRepository
-                .findByIdAndUserId(
+                .findByIdAndUserIdAndArchivedFalse(
                         vehicleId,
                         userId
                 )

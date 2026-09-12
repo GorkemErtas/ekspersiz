@@ -142,9 +142,10 @@ public class SubscriptionService {
                 };
 
         long vehicleCount =
-                vehicleRepository.countByUserId(
-                        user.getId()
-                );
+                vehicleRepository
+                        .countByUserIdAndArchivedFalse(
+                                user.getId()
+                        );
 
         if (vehicleCount >= limit) {
             throw new IllegalStateException(
