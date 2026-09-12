@@ -358,7 +358,7 @@ class _CreateInspectionScreenState
 
                           DropdownButtonFormField<
                               String>(
-                            value:
+                            initialValue:
                             _selectedCity,
                             isExpanded:
                             true,

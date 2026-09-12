@@ -26,8 +26,7 @@ class MainShell extends StatefulWidget {
   final String subscriptionPlan;
 
   @override
-  State<MainShell> createState() =>
-      _MainShellState();
+  State<MainShell> createState() => _MainShellState();
 }
 
 class _MainShellState extends State<MainShell> {
@@ -42,6 +41,7 @@ class _MainShellState extends State<MainShell> {
       fullName: widget.fullName,
       onOpenVehicles: () => _selectTab(1),
       onOpenInspections: () => _selectTab(2),
+      onOpenProfile: () => _selectTab(3),
     ),
     const VehicleListScreen(),
     const InspectionHistoryScreen(),
@@ -58,16 +58,12 @@ class _MainShellState extends State<MainShell> {
     super.initState();
 
     _sessionSubscription =
-        SessionManager.unauthorizedStream.listen(
-              (_) {
-            _handleSessionExpired();
-          },
-        );
+        SessionManager.unauthorizedStream.listen((_) {
+          _handleSessionExpired();
+        });
   }
 
-  void _selectTab(
-      int index,
-      ) {
+  void _selectTab(int index) {
     if (_selectedIndex == index) {
       return;
     }
@@ -84,8 +80,7 @@ class _MainShellState extends State<MainShell> {
 
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute<void>(
-        builder: (_) =>
-        const LoginScreen(),
+        builder: (_) => const LoginScreen(),
       ),
           (route) => false,
     );
@@ -94,49 +89,35 @@ class _MainShellState extends State<MainShell> {
   @override
   void dispose() {
     _sessionSubscription?.cancel();
-
     super.dispose();
   }
 
   @override
-  Widget build(
-      BuildContext context,
-      ) {
+  Widget build(BuildContext context) {
     return LayoutBuilder(
-      builder: (
-          context,
-          constraints,
-          ) {
+      builder: (context, constraints) {
         final isDesktop =
-            constraints.maxWidth >=
-                _desktopBreakpoint;
+            constraints.maxWidth >= _desktopBreakpoint;
 
         if (isDesktop) {
           return _DesktopShell(
-            selectedIndex:
-            _selectedIndex,
-            onDestinationSelected:
-            _selectTab,
-            screens:
-            _screens,
+            selectedIndex: _selectedIndex,
+            onDestinationSelected: _selectTab,
+            screens: _screens,
           );
         }
 
         return _MobileShell(
-          selectedIndex:
-          _selectedIndex,
-          onDestinationSelected:
-          _selectTab,
-          screens:
-          _screens,
+          selectedIndex: _selectedIndex,
+          onDestinationSelected: _selectTab,
+          screens: _screens,
         );
       },
     );
   }
 }
 
-class _MobileShell
-    extends StatelessWidget {
+class _MobileShell extends StatelessWidget {
   const _MobileShell({
     required this.selectedIndex,
     required this.onDestinationSelected,
@@ -144,138 +125,77 @@ class _MobileShell
   });
 
   final int selectedIndex;
-  final ValueChanged<int>
-  onDestinationSelected;
+  final ValueChanged<int> onDestinationSelected;
   final List<Widget> screens;
 
   @override
-  Widget build(
-      BuildContext context,
-      ) {
-    final colorScheme =
-        Theme.of(context).colorScheme;
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
       extendBody: true,
-
       body: IndexedStack(
         index: selectedIndex,
         children: screens,
       ),
-
       bottomNavigationBar: SafeArea(
         top: false,
-        minimum:
-        const EdgeInsets.fromLTRB(
+        minimum: const EdgeInsets.fromLTRB(
           14,
           0,
           14,
           10,
         ),
-
         child: Container(
           height: 76,
-
-          padding:
-          const EdgeInsets.symmetric(
+          padding: const EdgeInsets.symmetric(
             horizontal: 7,
             vertical: 5,
           ),
-
-          decoration:
-          BoxDecoration(
-            color:
-            colorScheme.surface,
-
-            borderRadius:
-            BorderRadius.circular(
-              26,
+          decoration: BoxDecoration(
+            color: colorScheme.surface,
+            borderRadius: BorderRadius.circular(26),
+            border: Border.all(
+              color: colorScheme.outlineVariant,
             ),
-
-            border:
-            Border.all(
-              color:
-              colorScheme
-                  .outlineVariant,
-            ),
-
-            boxShadow:
-            AppTheme.elevatedShadow,
+            boxShadow: AppTheme.elevatedShadow,
           ),
-
           child: Row(
             children: [
               Expanded(
                 child: _NavigationItem(
-                  icon:
-                  Icons
-                      .home_outlined,
-                  selectedIcon:
-                  Icons.home_rounded,
-                  label:
-                  'Ana Sayfa',
-                  selected:
-                  selectedIndex == 0,
-                  onTap: () =>
-                      onDestinationSelected(
-                        0,
-                      ),
+                  icon: Icons.home_outlined,
+                  selectedIcon: Icons.home_rounded,
+                  label: 'Ana Sayfa',
+                  selected: selectedIndex == 0,
+                  onTap: () => onDestinationSelected(0),
                 ),
               ),
-
               Expanded(
                 child: _NavigationItem(
-                  icon:
-                  Icons
-                      .directions_car_outlined,
-                  selectedIcon:
-                  Icons
-                      .directions_car_rounded,
-                  label:
-                  'Araçlar',
-                  selected:
-                  selectedIndex == 1,
-                  onTap: () =>
-                      onDestinationSelected(
-                        1,
-                      ),
+                  icon: Icons.directions_car_outlined,
+                  selectedIcon: Icons.directions_car_rounded,
+                  label: 'Araçlar',
+                  selected: selectedIndex == 1,
+                  onTap: () => onDestinationSelected(1),
                 ),
               ),
-
               Expanded(
                 child: _NavigationItem(
-                  icon:
-                  Icons
-                      .description_outlined,
-                  selectedIcon:
-                  Icons
-                      .description_rounded,
-                  label:
-                  'Analizler',
-                  selected:
-                  selectedIndex == 2,
-                  onTap: () =>
-                      onDestinationSelected(
-                        2,
-                      ),
+                  icon: Icons.description_outlined,
+                  selectedIcon: Icons.description_rounded,
+                  label: 'Analizler',
+                  selected: selectedIndex == 2,
+                  onTap: () => onDestinationSelected(2),
                 ),
               ),
-
               Expanded(
                 child: _NavigationItem(
-                  icon:
-                  Icons
-                      .person_outline_rounded,
-                  selectedIcon:
-                  Icons.person_rounded,
-                  label:
-                  'Profil',
-                  selected:
-                  selectedIndex == 3,
-                  onTap: () =>
-                      onDestinationSelected(
-                        3,
-                      ),
+                  icon: Icons.person_outline_rounded,
+                  selectedIcon: Icons.person_rounded,
+                  label: 'Profil',
+                  selected: selectedIndex == 3,
+                  onTap: () => onDestinationSelected(3),
                 ),
               ),
             ],
@@ -286,8 +206,7 @@ class _MobileShell
   }
 }
 
-class _NavigationItem
-    extends StatelessWidget {
+class _NavigationItem extends StatelessWidget {
   const _NavigationItem({
     required this.icon,
     required this.selectedIcon,
@@ -298,144 +217,73 @@ class _NavigationItem
 
   final IconData icon;
   final IconData selectedIcon;
-
   final String label;
-
   final bool selected;
-
   final VoidCallback onTap;
 
   @override
-  Widget build(
-      BuildContext context,
-      ) {
-    final colorScheme =
-        Theme.of(context).colorScheme;
-
-    final textTheme =
-        Theme.of(context).textTheme;
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
 
     return Material(
-      color:
-      Colors.transparent,
-
-      borderRadius:
-      BorderRadius.circular(
-        20,
-      ),
-
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(20),
       child: InkWell(
-        onTap:
-        onTap,
-
-        borderRadius:
-        BorderRadius.circular(
-          20,
-        ),
-
-        child: AnimatedContainer(
-          duration:
-          const Duration(
-            milliseconds: 180,
-          ),
-
-          curve:
-          Curves.easeOut,
-
-          padding:
-          const EdgeInsets.symmetric(
-            horizontal: 4,
-            vertical: 5,
-          ),
-
-          decoration:
-          BoxDecoration(
-            color:
-            selected
-                ? colorScheme
-                .primaryContainer
-                : Colors.transparent,
-
-            borderRadius:
-            BorderRadius.circular(
-              20,
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: AnimatedScale(
+          scale: selected ? 1.0 : 0.985,
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOutCubic,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeOutCubic,
+            padding: const EdgeInsets.symmetric(
+              horizontal: 4,
+              vertical: 5,
             ),
-          ),
-
-          child: Column(
-            mainAxisAlignment:
-            MainAxisAlignment.center,
-
-            mainAxisSize:
-            MainAxisSize.min,
-
-            children: [
-              AnimatedSwitcher(
-                duration:
-                const Duration(
-                  milliseconds: 160,
-                ),
-
-                child: Icon(
-                  selected
-                      ? selectedIcon
-                      : icon,
-
-                  key:
-                  ValueKey(
-                    selected,
-                  ),
-
-                  size:
-                  22,
-
-                  color:
-                  selected
-                      ? colorScheme
-                      .primary
-                      : colorScheme
-                      .onSurfaceVariant,
-                ),
-              ),
-
-              const SizedBox(
-                height: 3,
-              ),
-
-              Flexible(
-                child: Text(
-                  label,
-
-                  maxLines:
-                  1,
-
-                  overflow:
-                  TextOverflow.ellipsis,
-
-                  style:
-                  textTheme.labelSmall
-                      ?.copyWith(
-                    height:
-                    1.0,
-
-                    fontSize:
-                    10.5,
-
-                    fontWeight:
-                    selected
-                        ? FontWeight.w900
-                        : FontWeight.w600,
-
-                    color:
-                    selected
-                        ? colorScheme
-                        .primary
-                        : colorScheme
-                        .onSurfaceVariant,
+            decoration: BoxDecoration(
+              color: selected
+                  ? colorScheme.primaryContainer
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 160),
+                  child: Icon(
+                    selected ? selectedIcon : icon,
+                    key: ValueKey(selected),
+                    size: 22,
+                    color: selected
+                        ? colorScheme.primary
+                        : colorScheme.onSurfaceVariant,
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 3),
+                Flexible(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: textTheme.labelSmall?.copyWith(
+                      height: 1.0,
+                      fontSize: 10.5,
+                      fontWeight: selected
+                          ? FontWeight.w900
+                          : FontWeight.w600,
+                      color: selected
+                          ? colorScheme.primary
+                          : colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -443,8 +291,7 @@ class _NavigationItem
   }
 }
 
-class _DesktopShell
-    extends StatelessWidget {
+class _DesktopShell extends StatelessWidget {
   const _DesktopShell({
     required this.selectedIndex,
     required this.onDestinationSelected,
@@ -452,198 +299,113 @@ class _DesktopShell
   });
 
   final int selectedIndex;
-
-  final ValueChanged<int>
-  onDestinationSelected;
-
+  final ValueChanged<int> onDestinationSelected;
   final List<Widget> screens;
 
   @override
-  Widget build(
-      BuildContext context,
-      ) {
-    final colorScheme =
-        Theme.of(context).colorScheme;
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
       body: Row(
         children: [
           SafeArea(
             child: Padding(
-              padding:
-              const EdgeInsets.all(
-                14,
-              ),
-
+              padding: const EdgeInsets.all(14),
               child: Container(
-                decoration:
-                BoxDecoration(
-                  color:
-                  colorScheme.surface,
-
-                  borderRadius:
-                  BorderRadius.circular(
+                decoration: BoxDecoration(
+                  color: colorScheme.surface,
+                  borderRadius: BorderRadius.circular(
                     AppTheme.radiusLarge,
                   ),
-
-                  border:
-                  Border.all(
-                    color:
-                    colorScheme
-                        .outlineVariant,
+                  border: Border.all(
+                    color: colorScheme.outlineVariant,
                   ),
-
-                  boxShadow:
-                  AppTheme.softShadow,
+                  boxShadow: AppTheme.softShadow,
                 ),
-
                 child: NavigationRail(
-                  selectedIndex:
-                  selectedIndex,
-
+                  selectedIndex: selectedIndex,
                   onDestinationSelected:
                   onDestinationSelected,
-
                   labelType:
-                  NavigationRailLabelType
-                      .all,
-
-                  groupAlignment:
-                  -0.72,
-
-                  leading:
-                  Padding(
-                    padding:
-                    const EdgeInsets.only(
+                  NavigationRailLabelType.all,
+                  groupAlignment: -0.72,
+                  leading: Padding(
+                    padding: const EdgeInsets.only(
                       top: 18,
                       bottom: 30,
                     ),
-
                     child: Container(
                       width: 54,
                       height: 54,
-
-                      decoration:
-                      BoxDecoration(
+                      decoration: BoxDecoration(
                         gradient:
                         const LinearGradient(
                           colors: [
-                            AppTheme
-                                .primaryColor,
-                            AppTheme
-                                .secondaryColor,
+                            AppTheme.primaryColor,
+                            AppTheme.secondaryColor,
                           ],
-
-                          begin:
-                          Alignment.topLeft,
-
-                          end:
-                          Alignment.bottomRight,
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
                         ),
-
                         borderRadius:
-                        BorderRadius.circular(
-                          18,
-                        ),
-
+                        BorderRadius.circular(18),
                         boxShadow:
-                        AppTheme
-                            .primaryShadow,
+                        AppTheme.primaryShadow,
                       ),
-
-                      child:
-                      const Icon(
-                        Icons
-                            .car_crash_rounded,
-                        color:
-                        Colors.white,
-                        size:
-                        28,
+                      child: const Icon(
+                        Icons.car_crash_rounded,
+                        color: Colors.white,
+                        size: 28,
                       ),
                     ),
                   ),
-
-                  destinations:
-                  const [
+                  destinations: const [
                     NavigationRailDestination(
-                      icon:
-                      Icon(
-                        Icons
-                            .home_outlined,
+                      icon: Icon(
+                        Icons.home_outlined,
                       ),
-                      selectedIcon:
-                      Icon(
-                        Icons
-                            .home_rounded,
+                      selectedIcon: Icon(
+                        Icons.home_rounded,
                       ),
-                      label:
-                      Text(
-                        'Ana Sayfa',
-                      ),
+                      label: Text('Ana Sayfa'),
                     ),
-
                     NavigationRailDestination(
-                      icon:
-                      Icon(
-                        Icons
-                            .directions_car_outlined,
+                      icon: Icon(
+                        Icons.directions_car_outlined,
                       ),
-                      selectedIcon:
-                      Icon(
-                        Icons
-                            .directions_car_rounded,
+                      selectedIcon: Icon(
+                        Icons.directions_car_rounded,
                       ),
-                      label:
-                      Text(
-                        'Araçlar',
-                      ),
+                      label: Text('Araçlar'),
                     ),
-
                     NavigationRailDestination(
-                      icon:
-                      Icon(
-                        Icons
-                            .description_outlined,
+                      icon: Icon(
+                        Icons.description_outlined,
                       ),
-                      selectedIcon:
-                      Icon(
-                        Icons
-                            .description_rounded,
+                      selectedIcon: Icon(
+                        Icons.description_rounded,
                       ),
-                      label:
-                      Text(
-                        'Analizler',
-                      ),
+                      label: Text('Analizler'),
                     ),
-
                     NavigationRailDestination(
-                      icon:
-                      Icon(
-                        Icons
-                            .person_outline_rounded,
+                      icon: Icon(
+                        Icons.person_outline_rounded,
                       ),
-                      selectedIcon:
-                      Icon(
-                        Icons
-                            .person_rounded,
+                      selectedIcon: Icon(
+                        Icons.person_rounded,
                       ),
-                      label:
-                      Text(
-                        'Profil',
-                      ),
+                      label: Text('Profil'),
                     ),
                   ],
                 ),
               ),
             ),
           ),
-
           Expanded(
             child: IndexedStack(
-              index:
-              selectedIndex,
-              children:
-              screens,
+              index: selectedIndex,
+              children: screens,
             ),
           ),
         ],

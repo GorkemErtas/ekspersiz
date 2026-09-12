@@ -210,6 +210,7 @@ class _ProfileScreenState
               AppTheme.pagePadding,
               children: [
                 AppCard(
+                  showShadow: false,
                   padding:
                   const EdgeInsets.all(
                     24,
@@ -238,9 +239,6 @@ class _ProfileScreenState
                           BorderRadius.circular(
                             30,
                           ),
-                          boxShadow:
-                          AppTheme
-                              .primaryShadow,
                         ),
                         alignment:
                         Alignment.center,
@@ -330,6 +328,7 @@ class _ProfileScreenState
                   height: 20,
                 ),
                 AppCard(
+                  showShadow: false,
                   padding:
                   EdgeInsets.zero,
                   child: Column(

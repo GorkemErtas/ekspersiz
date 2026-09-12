@@ -39,7 +39,6 @@ class _UploadDamageImageScreenState
   final InspectionService _inspectionService =
   const InspectionService();
 
-  XFile? _selectedImage;
   Uint8List? _selectedImageBytes;
 
   String? _selectedContentType;
@@ -105,9 +104,6 @@ class _UploadDamageImageScreenState
       );
 
       setState(() {
-        _selectedImage =
-            image;
-
         _selectedImageBytes =
             bytes;
 

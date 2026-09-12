@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_card.dart';
-import '../../../core/widgets/app_icon_box.dart';
+import '../../../core/widgets/app_motion.dart';
 import '../../../core/widgets/app_status_badge.dart';
 import '../../../core/widgets/section_title.dart';
 
@@ -20,27 +20,26 @@ class HomeScreen extends StatefulWidget {
     required this.fullName,
     required this.onOpenVehicles,
     required this.onOpenInspections,
+    required this.onOpenProfile,
   });
 
   final String fullName;
   final VoidCallback onOpenVehicles;
   final VoidCallback onOpenInspections;
+  final VoidCallback onOpenProfile;
 
   @override
-  State<HomeScreen> createState() =>
-      _HomeScreenState();
+  State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final VehicleService _vehicleService =
-  const VehicleService();
-
-  final InspectionService _inspectionService =
-  const InspectionService();
+  final VehicleService _vehicleService = const VehicleService();
+  final InspectionService _inspectionService = const InspectionService();
 
   bool _isLoading = true;
 
-  Vehicle? _vehicle;
+  List<Vehicle> _vehicles = const [];
+  Vehicle? _mainVehicle;
   DamageInspection? _latestInspection;
 
   @override
@@ -62,63 +61,43 @@ class _HomeScreenState extends State<HomeScreen> {
         _inspectionService.getInspections(),
       ]);
 
-      final vehicles =
-      results[0] as List<Vehicle>;
+      final vehicles = results[0] as List<Vehicle>;
+      final inspections = results[1] as List<DamageInspection>;
 
-      final inspections =
-      results[1] as List<DamageInspection>;
+      final completedInspections = inspections
+          .where((inspection) => inspection.status == 'COMPLETED')
+          .toList()
+        ..sort((a, b) {
+          final aDate = a.completedAt ??
+              a.createdAt ??
+              DateTime.fromMillisecondsSinceEpoch(0);
+          final bDate = b.completedAt ??
+              b.createdAt ??
+              DateTime.fromMillisecondsSinceEpoch(0);
 
-      DamageInspection? latestInspection;
+          return bDate.compareTo(aDate);
+        });
 
-      if (inspections.isNotEmpty) {
-        final completedInspections =
-        inspections
-            .where(
-              (inspection) =>
-          inspection.status ==
-              'COMPLETED',
-        )
-            .toList();
+      Vehicle? mainVehicle;
 
-        if (completedInspections.isNotEmpty) {
-          completedInspections.sort(
-                (a, b) {
-              final aDate =
-                  a.completedAt ??
-                      a.createdAt ??
-                      DateTime.fromMillisecondsSinceEpoch(
-                        0,
-                      );
-
-              final bDate =
-                  b.completedAt ??
-                      b.createdAt ??
-                      DateTime.fromMillisecondsSinceEpoch(
-                        0,
-                      );
-
-              return bDate.compareTo(aDate);
-            },
-          );
-
-          latestInspection =
-              completedInspections.first;
+      for (final vehicle in vehicles) {
+        if (vehicle.primaryVehicle) {
+          mainVehicle = vehicle;
+          break;
         }
       }
+
+      mainVehicle ??= vehicles.isNotEmpty ? vehicles.first : null;
 
       if (!mounted) {
         return;
       }
 
       setState(() {
-        _vehicle =
-        vehicles.isNotEmpty
-            ? vehicles.first
-            : null;
-
+        _vehicles = vehicles;
+        _mainVehicle = mainVehicle;
         _latestInspection =
-            latestInspection;
-
+        completedInspections.isNotEmpty ? completedInspections.first : null;
         _isLoading = false;
       });
     } catch (_) {
@@ -132,10 +111,37 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Route<T> _premiumRoute<T>(Widget page) {
+    return PageRouteBuilder<T>(
+      pageBuilder: (_, animation, _) => page,
+      transitionDuration: const Duration(milliseconds: 320),
+      reverseTransitionDuration: const Duration(milliseconds: 240),
+      transitionsBuilder: (_, animation, secondaryAnimation, child) {
+        final curved = CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOutCubic,
+          reverseCurve: Curves.easeInCubic,
+        );
+
+        final slide = Tween<Offset>(
+          begin: const Offset(0.04, 0.025),
+          end: Offset.zero,
+        ).animate(curved);
+
+        return FadeTransition(
+          opacity: curved,
+          child: SlideTransition(
+            position: slide,
+            child: child,
+          ),
+        );
+      },
+    );
+  }
+
   Future<void> _startInspection() async {
     await Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) =>
+      _premiumRoute<void>(
         const CreateInspectionScreen(),
       ),
     );
@@ -148,19 +154,18 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _openLatestInspection() async {
-    final inspection =
-        _latestInspection;
+    final inspection = _latestInspection;
 
     if (inspection == null) {
+      await _startInspection();
       return;
     }
 
     await Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) =>
-            InspectionResultScreen(
-              inspection: inspection,
-            ),
+      _premiumRoute<void>(
+        InspectionResultScreen(
+          inspection: inspection,
+        ),
       ),
     );
 
@@ -171,28 +176,241 @@ class _HomeScreenState extends State<HomeScreen> {
     await _loadHomeData();
   }
 
-  String _severityLabel(
-      String? severity,
-      ) {
+  Future<void> _selectMainVehicle() async {
+    if (_vehicles.isEmpty) {
+      widget.onOpenVehicles();
+      return;
+    }
+
+    final selectedVehicle = await showModalBottomSheet<Vehicle>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      builder: (sheetContext) {
+        return SafeArea(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.sizeOf(sheetContext).height * 0.72,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 4, 20, 14),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Ana Aracı Seç',
+                          style: Theme.of(sheetContext)
+                              .textTheme
+                              .titleLarge
+                              ?.copyWith(
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        '${_vehicles.length} araç',
+                        style: Theme.of(sheetContext)
+                            .textTheme
+                            .bodySmall
+                            ?.copyWith(
+                          color: Theme.of(sheetContext)
+                              .colorScheme
+                              .onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Flexible(
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+                    itemCount: _vehicles.length,
+                    separatorBuilder: (_, index) =>
+                    const SizedBox(height: 8),
+                    itemBuilder: (context, index) {
+                      final vehicle = _vehicles[index];
+                      final isSelected =
+                          vehicle.id == _mainVehicle?.id;
+
+                      return Material(
+                        color: isSelected
+                            ? Theme.of(context)
+                            .colorScheme
+                            .primaryContainer
+                            .withValues(alpha: 0.55)
+                            : Theme.of(context).colorScheme.surface,
+                        borderRadius: BorderRadius.circular(18),
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(18),
+                          onTap: () {
+                            Navigator.of(sheetContext).pop(vehicle);
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.all(14),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 46,
+                                  height: 46,
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .primaryContainer,
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                  child: Icon(
+                                    Icons.directions_car_filled_rounded,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .primary,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                    CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        vehicle.displayName,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .titleSmall
+                                            ?.copyWith(
+                                          fontWeight: FontWeight.w900,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 3),
+                                      Text(
+                                        '${vehicle.plate} • ${vehicle.modelYear}',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall
+                                            ?.copyWith(
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSurfaceVariant,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                if (isSelected)
+                                  Icon(
+                                    Icons.check_circle_rounded,
+                                    color:
+                                    Theme.of(context).colorScheme.primary,
+                                  )
+                                else
+                                  Icon(
+                                    Icons.circle_outlined,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .outline,
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    if (selectedVehicle == null || !mounted) {
+      return;
+    }
+
+    if (selectedVehicle.id == _mainVehicle?.id) {
+      return;
+    }
+
+    try {
+      final updatedVehicle =
+      await _vehicleService.setPrimaryVehicle(selectedVehicle.id);
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _mainVehicle = updatedVehicle;
+        _vehicles = _vehicles
+            .map(
+              (vehicle) => Vehicle(
+            id: vehicle.id,
+            plate: vehicle.plate,
+            brand: vehicle.brand,
+            model: vehicle.model,
+            modelYear: vehicle.modelYear,
+            mileage: vehicle.mileage,
+            primaryVehicle: vehicle.id == updatedVehicle.id,
+          ),
+        )
+            .toList();
+      });
+
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            content: Text(
+              '${updatedVehicle.displayName} ana araç olarak seçildi.',
+            ),
+          ),
+        );
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Ana araç değiştirilemedi. Lütfen tekrar deneyin.',
+            ),
+          ),
+        );
+    }
+  }
+
+  void _openNotifications() {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        const SnackBar(
+          content: Text('Yeni bildirim bulunmuyor.'),
+        ),
+      );
+  }
+
+  String _severityLabel(String? severity) {
     return switch (severity) {
-      'NONE' =>
-      'Görünür Hasar Tespit Edilmedi',
-      'MINOR' =>
-      'Hafif Seviye Hasar',
-      'MODERATE' =>
-      'Orta Seviye Hasar',
-      'SEVERE' =>
-      'Ağır Seviye Hasar',
-      'UNKNOWN' =>
-      'Hasar Seviyesi Belirsiz',
-      _ =>
-      'Analiz Sonucu',
+      'NONE' => 'Görünür Hasar Tespit Edilmedi',
+      'MINOR' => 'Hafif Seviye Hasar',
+      'MODERATE' => 'Orta Seviye Hasar',
+      'SEVERE' => 'Ağır Seviye Hasar',
+      'UNKNOWN' => 'Hasar Seviyesi Belirsiz',
+      _ => 'Analiz Sonucu',
     };
   }
 
-  String _severityShortLabel(
-      String? severity,
-      ) {
+  String _severityShortLabel(String? severity) {
     return switch (severity) {
       'NONE' => 'HASAR YOK',
       'MINOR' => 'HAFİF',
@@ -202,26 +420,17 @@ class _HomeScreenState extends State<HomeScreen> {
     };
   }
 
-  Color _severityColor(
-      String? severity,
-      ) {
+  Color _severityColor(String? severity) {
     return switch (severity) {
-      'NONE' =>
-      AppTheme.severityNone,
-      'MINOR' =>
-      AppTheme.severityMinor,
-      'MODERATE' =>
-      AppTheme.severityModerate,
-      'SEVERE' =>
-      AppTheme.severitySevere,
-      _ =>
-      AppTheme.severityUnknown,
+      'NONE' => AppTheme.severityNone,
+      'MINOR' => AppTheme.severityMinor,
+      'MODERATE' => AppTheme.severityModerate,
+      'SEVERE' => AppTheme.severitySevere,
+      _ => AppTheme.severityUnknown,
     };
   }
 
-  String _damageSummary(
-      DamageInspection inspection,
-      ) {
+  String _damageSummary(DamageInspection inspection) {
     if (inspection.affectedParts.isEmpty) {
       return 'Hasar analizi tamamlandı';
     }
@@ -232,61 +441,35 @@ class _HomeScreenState extends State<HomeScreen> {
         .join(' • ');
   }
 
-  String _vehiclePartLabel(
-      String part,
-      ) {
+  String _vehiclePartLabel(String part) {
     return switch (part) {
-      'UNKNOWN' =>
-      'Bilinmeyen Parça',
-      'FRONT_BUMPER' =>
-      'Ön Tampon',
-      'REAR_BUMPER' =>
-      'Arka Tampon',
-      'FRONT_DOOR' =>
-      'Ön Kapı',
-      'REAR_DOOR' =>
-      'Arka Kapı',
-      'FRONT_WHEEL' =>
-      'Ön Tekerlek',
-      'REAR_WHEEL' =>
-      'Arka Tekerlek',
-      'FRONT_WINDOW' =>
-      'Ön Yan Cam',
-      'REAR_WINDOW' =>
-      'Arka Yan Cam',
-      'WINDSHIELD' =>
-      'Ön Cam',
-      'REAR_WINDSHIELD' =>
-      'Arka Cam',
-      'FENDER' =>
-      'Çamurluk',
-      'QUARTER_PANEL' =>
-      'Arka Çamurluk Paneli',
-      'ROCKER_PANEL' =>
-      'Marşpiyel',
-      'GRILLE' =>
-      'Ön Izgara',
-      'HEADLIGHT' =>
-      'Far',
-      'TAIL_LIGHT' =>
-      'Arka Stop Lambası',
-      'HOOD' =>
-      'Kaput',
-      'LICENSE_PLATE' =>
-      'Plaka',
-      'MIRROR' =>
-      'Yan Ayna',
-      'ROOF' =>
-      'Tavan',
-      'TRUNK' =>
-      'Bagaj Kapağı',
+      'UNKNOWN' => 'Bilinmeyen Parça',
+      'FRONT_BUMPER' => 'Ön Tampon',
+      'REAR_BUMPER' => 'Arka Tampon',
+      'FRONT_DOOR' => 'Ön Kapı',
+      'REAR_DOOR' => 'Arka Kapı',
+      'FRONT_WHEEL' => 'Ön Tekerlek',
+      'REAR_WHEEL' => 'Arka Tekerlek',
+      'FRONT_WINDOW' => 'Ön Yan Cam',
+      'REAR_WINDOW' => 'Arka Yan Cam',
+      'WINDSHIELD' => 'Ön Cam',
+      'REAR_WINDSHIELD' => 'Arka Cam',
+      'FENDER' => 'Çamurluk',
+      'QUARTER_PANEL' => 'Arka Çamurluk Paneli',
+      'ROCKER_PANEL' => 'Marşpiyel',
+      'GRILLE' => 'Ön Izgara',
+      'HEADLIGHT' => 'Far',
+      'TAIL_LIGHT' => 'Arka Stop Lambası',
+      'HOOD' => 'Kaput',
+      'LICENSE_PLATE' => 'Plaka',
+      'MIRROR' => 'Yan Ayna',
+      'ROOF' => 'Tavan',
+      'TRUNK' => 'Bagaj Kapağı',
       _ => part,
     };
   }
 
-  String _formatDate(
-      DateTime? date,
-      ) {
+  String _formatDate(DateTime? date) {
     if (date == null) {
       return '-';
     }
@@ -306,329 +489,136 @@ class _HomeScreenState extends State<HomeScreen> {
       'Aralık',
     ];
 
-    return '${date.day} '
-        '${months[date.month - 1]} '
-        '${date.year}';
+    return '${date.day} ${months[date.month - 1]} ${date.year}';
+  }
+
+  String _formatMileage(int mileage) {
+    final value = mileage.toString();
+    final buffer = StringBuffer();
+
+    for (var index = 0; index < value.length; index++) {
+      final reversedIndex = value.length - index;
+      buffer.write(value[index]);
+
+      if (reversedIndex > 1 && reversedIndex % 3 == 1) {
+        buffer.write('.');
+      }
+    }
+
+    return buffer.toString();
   }
 
   String _firstName() {
-    final value =
-    widget.fullName.trim();
+    final value = widget.fullName.trim();
 
     if (value.isEmpty) {
       return 'Kullanıcı';
     }
 
-    return value
-        .split(RegExp(r'\s+'))
-        .first;
+    return value.split(RegExp(r'\s+')).first;
   }
 
   @override
-  Widget build(
-      BuildContext context,
-      ) {
-    final colorScheme =
-        Theme.of(context).colorScheme;
-
-    final textTheme =
-        Theme.of(context).textTheme;
-
+  Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Theme.of(context).brightness == Brightness.light
+          ? const Color(0xFFF8F9FA)
+          : null,
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
-            constraints:
-            const BoxConstraints(
-              maxWidth:
-              AppTheme.maxContentWidth,
+            constraints: const BoxConstraints(
+              maxWidth: AppTheme.maxContentWidth,
             ),
-
             child: RefreshIndicator(
-              onRefresh:
-              _loadHomeData,
-
+              onRefresh: _loadHomeData,
               child: ListView(
-                physics:
-                const AlwaysScrollableScrollPhysics(),
-
-                padding:
-                AppTheme.pagePadding,
-
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: AppTheme.pagePadding,
                 children: [
-                  _HomeHeader(
-                    fullName:
-                    widget.fullName,
-                    firstName:
-                    _firstName(),
-                  ),
-
-                  const SizedBox(
-                    height:
-                    AppTheme.spacingL,
-                  ),
-
-                  _AnalysisHeroCard(
-                    onPressed:
-                    _startInspection,
-                  ),
-
-                  const SizedBox(
-                    height:
-                    AppTheme.spacingXL,
-                  ),
-
-                  SectionTitle(
-                    title:
-                    'Aracım',
-                    actionLabel:
-                    'Tümünü Gör',
-                    onActionPressed:
-                    widget.onOpenVehicles,
-                  ),
-
-                  const SizedBox(
-                    height:
-                    AppTheme.spacingM,
-                  ),
-
-                  if (_isLoading)
-                    const _LoadingCard()
-                  else if (_vehicle != null)
-                    AppCard(
-                      onTap:
-                      widget.onOpenVehicles,
-
-                      child: Row(
-                        children: [
-                          const AppIconBox(
-                            icon:
-                            Icons
-                                .directions_car_filled_rounded,
-                            size: 60,
-                            iconSize: 30,
-                            borderRadius: 16,
-                          ),
-
-                          const SizedBox(
-                            width: 16,
-                          ),
-
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment:
-                              CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  _vehicle!
-                                      .displayName,
-                                  style:
-                                  textTheme.titleMedium
-                                      ?.copyWith(
-                                    fontWeight:
-                                    FontWeight.w800,
-                                  ),
-                                ),
-
-                                const SizedBox(
-                                  height: 6,
-                                ),
-
-                                Text(
-                                  '${_vehicle!.plate}  •  '
-                                      '${_vehicle!.modelYear}',
-                                  style:
-                                  textTheme.bodyMedium,
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          Container(
-                            width: 36,
-                            height: 36,
-                            decoration:
-                            BoxDecoration(
-                              color:
-                              colorScheme
-                                  .surfaceContainer,
-                              borderRadius:
-                              BorderRadius.circular(
-                                12,
-                              ),
-                            ),
-                            child: Icon(
-                              Icons
-                                  .arrow_forward_ios_rounded,
-                              size: 15,
-                              color:
-                              colorScheme
-                                  .onSurfaceVariant,
-                            ),
-                          ),
-                        ],
-                      ),
-                    )
-                  else
-                    AppCard(
-                      onTap:
-                      widget.onOpenVehicles,
-
-                      child: Row(
-                        children: [
-                          const AppIconBox(
-                            icon:
-                            Icons.add_rounded,
-                            size: 54,
-                          ),
-
-                          const SizedBox(
-                            width: 14,
-                          ),
-
-                          const Expanded(
-                            child: Column(
-                              crossAxisAlignment:
-                              CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Araç ekleyin',
-                                  style:
-                                  TextStyle(
-                                    fontWeight:
-                                    FontWeight.w800,
-                                  ),
-                                ),
-
-                                SizedBox(
-                                  height: 4,
-                                ),
-
-                                Text(
-                                  'Analiz başlatmak için önce aracınızı kaydedin.',
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          const Icon(
-                            Icons
-                                .chevron_right_rounded,
-                          ),
-                        ],
-                      ),
+                  AppFadeSlideIn(
+                    delay: const Duration(milliseconds: 20),
+                    child: _DashboardHeader(
+                      fullName: widget.fullName,
+                      firstName: _firstName(),
+                      onProfileTap: widget.onOpenProfile,
+                      onNotificationTap: _openNotifications,
                     ),
-
-                  const SizedBox(
-                    height:
-                    AppTheme.spacingXL,
                   ),
-
-                  SectionTitle(
-                    title:
-                    'Son Analiz',
-                    actionLabel:
-                    'Geçmiş',
-                    onActionPressed:
-                    widget.onOpenInspections,
+                  const SizedBox(height: AppTheme.spacingL),
+                  AppFadeSlideIn(
+                    delay: const Duration(milliseconds: 70),
+                    child: _HeroAnalysisCard(
+                      onTap: _startInspection,
+                    ),
                   ),
-
-                  const SizedBox(
-                    height:
-                    AppTheme.spacingM,
+                  const SizedBox(height: AppTheme.spacingXL),
+                  AppFadeSlideIn(
+                    delay: const Duration(milliseconds: 120),
+                    child: SectionTitle(
+                      title: 'Ana Araç',
+                      actionLabel:
+                      _vehicles.length > 1 ? 'Değiştir' : 'Araçlarım',
+                      onActionPressed: _vehicles.length > 1
+                          ? _selectMainVehicle
+                          : widget.onOpenVehicles,
+                    ),
                   ),
-
-                  if (_isLoading)
-                    const _LoadingCard()
-                  else if (_latestInspection !=
-                      null)
-                    _LatestInspectionCard(
-                      inspection:
-                      _latestInspection!,
-
-                      title:
-                      _severityLabel(
-                        _latestInspection!
-                            .damageSeverity,
+                  const SizedBox(height: AppTheme.spacingM),
+                  AppFadeSlideIn(
+                    delay: const Duration(milliseconds: 160),
+                    child: _isLoading
+                        ? const _LoadingCard()
+                        : _mainVehicle == null
+                        ? _EmptyVehicleCard(
+                      onTap: widget.onOpenVehicles,
+                    )
+                        : _MainVehicleCard(
+                      vehicle: _mainVehicle!,
+                      mileage:
+                      _formatMileage(_mainVehicle!.mileage),
+                      onTap: _selectMainVehicle,
+                    ),
+                  ),
+                  const SizedBox(height: AppTheme.spacingXL),
+                  AppFadeSlideIn(
+                    delay: const Duration(milliseconds: 210),
+                    child: SectionTitle(
+                      title: 'Son Analiz',
+                      actionLabel: 'Geçmiş',
+                      onActionPressed: widget.onOpenInspections,
+                    ),
+                  ),
+                  const SizedBox(height: AppTheme.spacingM),
+                  AppFadeSlideIn(
+                    delay: const Duration(milliseconds: 250),
+                    child: _isLoading
+                        ? const _LoadingCard()
+                        : _latestInspection != null
+                        ? _LatestInspectionCard(
+                      inspection: _latestInspection!,
+                      title: _severityLabel(
+                        _latestInspection!.damageSeverity,
                       ),
-
-                      severityLabel:
-                      _severityShortLabel(
-                        _latestInspection!
-                            .damageSeverity,
+                      severityLabel: _severityShortLabel(
+                        _latestInspection!.damageSeverity,
                       ),
-
-                      severityColor:
-                      _severityColor(
-                        _latestInspection!
-                            .damageSeverity,
+                      severityColor: _severityColor(
+                        _latestInspection!.damageSeverity,
                       ),
-
-                      summary:
-                      _damageSummary(
+                      summary: _damageSummary(
                         _latestInspection!,
                       ),
-
-                      date:
-                      _formatDate(
-                        _latestInspection!
-                            .completedAt ??
-                            _latestInspection!
-                                .createdAt,
+                      date: _formatDate(
+                        _latestInspection!.completedAt ??
+                            _latestInspection!.createdAt,
                       ),
-
-                      onTap:
-                      _openLatestInspection,
+                      onTap: _openLatestInspection,
                     )
-                  else
-                    AppCard(
-                      onTap:
-                      _startInspection,
-
-                      child: Row(
-                        children: [
-                          const AppIconBox(
-                            icon:
-                            Icons
-                                .analytics_outlined,
-                          ),
-
-                          const SizedBox(
-                            width: 14,
-                          ),
-
-                          const Expanded(
-                            child: Column(
-                              crossAxisAlignment:
-                              CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Henüz analiz yok',
-                                  style:
-                                  TextStyle(
-                                    fontWeight:
-                                    FontWeight.w800,
-                                  ),
-                                ),
-
-                                SizedBox(
-                                  height: 4,
-                                ),
-
-                                Text(
-                                  'İlk AI hasar analizini başlatın.',
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          const Icon(
-                            Icons
-                                .chevron_right_rounded,
-                          ),
-                        ],
-                      ),
+                        : _EmptyAnalysisCard(
+                      onTap: _startInspection,
                     ),
+                  ),
                 ],
               ),
             ),
@@ -639,124 +629,24 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-class _HomeHeader extends StatelessWidget {
-  const _HomeHeader({
+class _DashboardHeader extends StatelessWidget {
+  const _DashboardHeader({
     required this.fullName,
     required this.firstName,
+    required this.onProfileTap,
+    required this.onNotificationTap,
   });
 
   final String fullName;
   final String firstName;
+  final VoidCallback onProfileTap;
+  final VoidCallback onNotificationTap;
 
-  @override
-  Widget build(
-      BuildContext context,
-      ) {
-    final colorScheme =
-        Theme.of(context).colorScheme;
-
-    final textTheme =
-        Theme.of(context).textTheme;
-
-    return Row(
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment:
-            CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Hoş geldin',
-                style:
-                textTheme.bodyMedium
-                    ?.copyWith(
-                  color:
-                  colorScheme
-                      .onSurfaceVariant,
-                  fontWeight:
-                  FontWeight.w600,
-                ),
-              ),
-
-              const SizedBox(
-                height: 3,
-              ),
-
-              Text(
-                firstName,
-                style:
-                textTheme.headlineMedium
-                    ?.copyWith(
-                  fontWeight:
-                  FontWeight.w900,
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        Container(
-          width: 48,
-          height: 48,
-
-          decoration:
-          BoxDecoration(
-            gradient:
-            const LinearGradient(
-              colors: [
-                AppTheme.primaryColor,
-                AppTheme.secondaryColor,
-              ],
-              begin:
-              Alignment.topLeft,
-              end:
-              Alignment.bottomRight,
-            ),
-
-            borderRadius:
-            BorderRadius.circular(
-              16,
-            ),
-
-            boxShadow:
-            AppTheme.primaryShadow,
-          ),
-
-          alignment:
-          Alignment.center,
-
-          child: Text(
-            _initials(
-              fullName,
-            ),
-            style:
-            const TextStyle(
-              color:
-              Colors.white,
-              fontWeight:
-              FontWeight.w900,
-              fontSize:
-              16,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  static String _initials(
-      String fullName,
-      ) {
-    final parts =
-    fullName
+  static String _initials(String fullName) {
+    final parts = fullName
         .trim()
-        .split(
-      RegExp(r'\s+'),
-    )
-        .where(
-          (part) =>
-      part.isNotEmpty,
-    )
+        .split(RegExp(r'\s+'))
+        .where((part) => part.isNotEmpty)
         .toList();
 
     if (parts.isEmpty) {
@@ -764,217 +654,285 @@ class _HomeHeader extends StatelessWidget {
     }
 
     if (parts.length == 1) {
-      return parts.first
-          .substring(0, 1)
-          .toUpperCase();
+      return parts.first.substring(0, 1).toUpperCase();
     }
 
-    return (
-        parts.first
-            .substring(0, 1) +
-            parts.last
-                .substring(0, 1)
-    ).toUpperCase();
+    return '${parts.first.substring(0, 1)}${parts.last.substring(0, 1)}'
+        .toUpperCase();
   }
-}
-
-class _AnalysisHeroCard
-    extends StatelessWidget {
-  const _AnalysisHeroCard({
-    required this.onPressed,
-  });
-
-  final VoidCallback onPressed;
 
   @override
-  Widget build(
-      BuildContext context,
-      ) {
-    final textTheme =
-        Theme.of(context).textTheme;
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
 
-    return Container(
-      padding:
-      const EdgeInsets.all(
-        24,
-      ),
-
-      decoration:
-      BoxDecoration(
-        gradient:
-        const LinearGradient(
-          colors: [
-            Color(
-              0xFF0F3D74,
+    return Row(
+      children: [
+        AppPressScale(
+          onTap: onProfileTap,
+          borderRadius: BorderRadius.circular(999),
+          child: Container(
+            width: 50,
+            height: 50,
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(
+                colors: [
+                  AppTheme.primaryColor,
+                  AppTheme.secondaryColor,
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
             ),
-            AppTheme.primaryColor,
-            AppTheme.secondaryColor,
-          ],
-
-          begin:
-          Alignment.topLeft,
-          end:
-          Alignment.bottomRight,
-        ),
-
-        borderRadius:
-        BorderRadius.circular(
-          AppTheme.radiusXLarge,
-        ),
-
-        boxShadow:
-        AppTheme.primaryShadow,
-      ),
-
-      child: Stack(
-        children: [
-          Positioned(
-            right: -30,
-            top: -45,
-
-            child: Container(
-              width: 150,
-              height: 150,
-
-              decoration:
-              BoxDecoration(
-                color:
-                Colors.white
-                    .withValues(
-                  alpha: 0.06,
-                ),
-
-                shape:
-                BoxShape.circle,
+            alignment: Alignment.center,
+            child: Text(
+              _initials(fullName),
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w900,
+                fontSize: 15,
               ),
             ),
           ),
-
-          Positioned(
-            right: 30,
-            bottom: -70,
-
-            child: Container(
-              width: 130,
-              height: 130,
-
-              decoration:
-              BoxDecoration(
-                color:
-                Colors.white
-                    .withValues(
-                  alpha: 0.05,
-                ),
-
-                shape:
-                BoxShape.circle,
-              ),
-            ),
-          ),
-
-          Column(
-            crossAxisAlignment:
-            CrossAxisAlignment.start,
+        ),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const AppStatusBadge(
-                icon:
-                Icons
-                    .auto_awesome_rounded,
-                label:
-                'AI INSPECTION',
-                color:
-                Colors.white,
-                backgroundColor:
-                Color(0x24FFFFFF),
-                compact:
-                true,
-              ),
-
-              const SizedBox(
-                height: 20,
-              ),
-
               Text(
-                'Aracını yapay zekâ\nile analiz et',
-                style:
-                textTheme.headlineMedium
-                    ?.copyWith(
-                  color:
-                  Colors.white,
-                  fontWeight:
-                  FontWeight.w900,
-                  height:
-                  1.08,
-                  letterSpacing:
-                  -0.8,
+                'Merhaba, $firstName',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -0.4,
                 ),
               ),
-
-              const SizedBox(
-                height: 12,
-              ),
-
+              const SizedBox(height: 4),
               Text(
-                'Hasarlı bölgenin fotoğrafını yükle. '
-                    'AI hasarı, etkilenen parçaları ve '
-                    'onarım önerilerini analiz etsin.',
-                style:
-                textTheme.bodyMedium
-                    ?.copyWith(
-                  color:
-                  Colors.white
-                      .withValues(
-                    alpha: 0.82,
-                  ),
-                  height:
-                  1.5,
-                ),
-              ),
-
-              const SizedBox(
-                height: 22,
-              ),
-
-              FilledButton.icon(
-                onPressed:
-                onPressed,
-
-                style:
-                FilledButton.styleFrom(
-                  backgroundColor:
-                  Colors.white,
-
-                  foregroundColor:
-                  AppTheme.primaryDark,
-
-                  minimumSize:
-                  const Size(
-                    double.infinity,
-                    52,
-                  ),
-
-                  shape:
-                  RoundedRectangleBorder(
-                    borderRadius:
-                    BorderRadius.circular(
-                      AppTheme
-                          .radiusMedium,
-                    ),
-                  ),
-                ),
-
-                icon:
-                const Icon(
-                  Icons
-                      .photo_camera_outlined,
-                ),
-
-                label:
-                const Text(
-                  'Yeni Analiz Başlat',
+                'Aracınızı ve son analiz durumunu görüntüleyin.',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: textTheme.bodySmall?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],
+          ),
+        ),
+        const SizedBox(width: 12),
+        AppPressScale(
+          onTap: onNotificationTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            width: 46,
+            height: 46,
+            decoration: BoxDecoration(
+              color: colorScheme.surface,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: colorScheme.outlineVariant,
+              ),
+            ),
+            child: const Center(
+              child: Icon(
+                Icons.notifications_none_rounded,
+                size: 23,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _HeroAnalysisCard extends StatelessWidget {
+  const _HeroAnalysisCard({
+    required this.onTap,
+  });
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
+    return AppPressScale(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(24),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
+          gradient: const LinearGradient(
+            colors: [
+              Color(0xFF153A6B),
+              AppTheme.primaryColor,
+              AppTheme.secondaryColor,
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          boxShadow: AppTheme.primaryShadow,
+        ),
+        child: Stack(
+          children: [
+            Positioned(
+              right: -28,
+              top: -38,
+              child: Container(
+                width: 132,
+                height: 132,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.07),
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.14),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: const Icon(
+                    Icons.auto_awesome_rounded,
+                    color: Colors.white,
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'AI Hasar Analizi',
+                  style: textTheme.headlineSmall?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 7),
+                Text(
+                  'Hasarlı bölgenin fotoğrafını yükleyin, AI destekli raporunuzu oluşturun.',
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: Colors.white.withValues(alpha: 0.82),
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 18),
+                Row(
+                  children: [
+                    Text(
+                      'Yeni Analiz Başlat',
+                      style: textTheme.labelLarge?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    const Icon(
+                      Icons.arrow_forward_rounded,
+                      color: Colors.white,
+                      size: 19,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MainVehicleCard extends StatelessWidget {
+  const _MainVehicleCard({
+    required this.vehicle,
+    required this.mileage,
+    required this.onTap,
+  });
+
+  final Vehicle vehicle;
+  final String mileage;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return AppCard(
+      onTap: onTap,
+      child: Row(
+        children: [
+          Container(
+            width: 62,
+            height: 62,
+            decoration: BoxDecoration(
+              color: colorScheme.primaryContainer,
+              borderRadius: BorderRadius.circular(19),
+            ),
+            child: Icon(
+              Icons.directions_car_filled_rounded,
+              color: colorScheme.primary,
+              size: 31,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        vehicle.displayName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    AppStatusBadge(
+                      label: 'ANA ARAÇ',
+                      color: colorScheme.primary,
+                      compact: true,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 7),
+                Text(
+                  '${vehicle.plate} • ${vehicle.modelYear}',
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  '$mileage km',
+                  style: textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Icon(
+            Icons.swap_horiz_rounded,
+            color: colorScheme.primary,
           ),
         ],
       ),
@@ -982,8 +940,63 @@ class _AnalysisHeroCard
   }
 }
 
-class _LatestInspectionCard
-    extends StatelessWidget {
+class _EmptyVehicleCard extends StatelessWidget {
+  const _EmptyVehicleCard({
+    required this.onTap,
+  });
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return AppCard(
+      onTap: onTap,
+      child: Row(
+        children: [
+          Container(
+            width: 54,
+            height: 54,
+            decoration: BoxDecoration(
+              color: colorScheme.primaryContainer,
+              borderRadius: BorderRadius.circular(17),
+            ),
+            child: Icon(
+              Icons.add_rounded,
+              color: colorScheme.primary,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Henüz araç yok',
+                  style: textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'İlk aracınızı ekleyerek analize başlayın.',
+                  style: textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Icon(Icons.chevron_right_rounded),
+        ],
+      ),
+    );
+  }
+}
+
+class _LatestInspectionCard extends StatelessWidget {
   const _LatestInspectionCard({
     required this.inspection,
     required this.title,
@@ -995,139 +1008,78 @@ class _LatestInspectionCard
   });
 
   final DamageInspection inspection;
-
   final String title;
   final String severityLabel;
-
   final Color severityColor;
-
   final String summary;
   final String date;
-
   final VoidCallback onTap;
 
   @override
-  Widget build(
-      BuildContext context,
-      ) {
-    final colorScheme =
-        Theme.of(context).colorScheme;
-
-    final textTheme =
-        Theme.of(context).textTheme;
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
 
     return AppCard(
-      onTap:
-      onTap,
-
+      onTap: onTap,
       child: Column(
-        crossAxisAlignment:
-        CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               AppStatusBadge(
-                label:
-                severityLabel,
-                color:
-                severityColor,
-                compact:
-                true,
+                label: severityLabel,
+                color: severityColor,
+                compact: true,
               ),
-
               const Spacer(),
-
               Icon(
-                Icons
-                    .north_east_rounded,
-                size:
-                19,
-                color:
-                colorScheme
-                    .onSurfaceVariant,
+                Icons.north_east_rounded,
+                size: 19,
+                color: colorScheme.onSurfaceVariant,
               ),
             ],
           ),
-
-          const SizedBox(
-            height: 18,
-          ),
-
+          const SizedBox(height: 18),
           Text(
             title,
-            style:
-            textTheme.titleLarge
-                ?.copyWith(
-              fontWeight:
-              FontWeight.w900,
+            style: textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w900,
             ),
           ),
-
-          const SizedBox(
-            height: 7,
-          ),
-
+          const SizedBox(height: 7),
           Text(
             summary,
-            maxLines:
-            2,
-            overflow:
-            TextOverflow.ellipsis,
-            style:
-            textTheme.bodyMedium,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: textTheme.bodyMedium,
           ),
-
-          const SizedBox(
-            height: 18,
-          ),
-
+          const SizedBox(height: 18),
           Row(
             children: [
               Icon(
-                Icons
-                    .directions_car_outlined,
-                size:
-                17,
-                color:
-                colorScheme
-                    .onSurfaceVariant,
+                Icons.directions_car_outlined,
+                size: 17,
+                color: colorScheme.onSurfaceVariant,
               ),
-
-              const SizedBox(
-                width: 6,
-              ),
-
+              const SizedBox(width: 6),
               Expanded(
                 child: Text(
-                  inspection
-                      .vehiclePlate,
-                  style:
-                  textTheme.bodySmall
-                      ?.copyWith(
-                    fontWeight:
-                    FontWeight.w700,
+                  inspection.vehiclePlate,
+                  style: textTheme.bodySmall?.copyWith(
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
-
               Icon(
-                Icons
-                    .calendar_today_outlined,
-                size:
-                15,
-                color:
-                colorScheme
-                    .onSurfaceVariant,
+                Icons.calendar_today_outlined,
+                size: 15,
+                color: colorScheme.onSurfaceVariant,
               ),
-
-              const SizedBox(
-                width: 6,
-              ),
-
+              const SizedBox(width: 6),
               Text(
                 date,
-                style:
-                textTheme.bodySmall,
+                style: textTheme.bodySmall,
               ),
             ],
           ),
@@ -1137,20 +1089,72 @@ class _LatestInspectionCard
   }
 }
 
-class _LoadingCard
-    extends StatelessWidget {
+class _EmptyAnalysisCard extends StatelessWidget {
+  const _EmptyAnalysisCard({
+    required this.onTap,
+  });
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return AppCard(
+      onTap: onTap,
+      child: Row(
+        children: [
+          Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              color: colorScheme.primaryContainer,
+              borderRadius: BorderRadius.circular(17),
+            ),
+            child: Icon(
+              Icons.analytics_outlined,
+              color: colorScheme.primary,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Henüz analiz yok',
+                  style: textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'İlk AI hasar analizini başlatın.',
+                  style: textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Icon(Icons.chevron_right_rounded),
+        ],
+      ),
+    );
+  }
+}
+
+class _LoadingCard extends StatelessWidget {
   const _LoadingCard();
 
   @override
-  Widget build(
-      BuildContext context,
-      ) {
+  Widget build(BuildContext context) {
     return const AppCard(
       child: SizedBox(
-        height: 68,
+        height: 72,
         child: Center(
-          child:
-          CircularProgressIndicator(),
+          child: CircularProgressIndicator(),
         ),
       ),
     );
