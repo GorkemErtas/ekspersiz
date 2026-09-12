@@ -344,15 +344,23 @@ class _VehicleListScreenState
         ),
       ),
 
+      floatingActionButtonLocation:
+      FloatingActionButtonLocation.endFloat,
+
       floatingActionButton:
-      FloatingActionButton.extended(
-        onPressed:
-        _openAddVehicleScreen,
-        icon: const Icon(
-          Icons.add_rounded,
+      Padding(
+        padding: const EdgeInsets.only(
+          bottom: 82,
         ),
-        label: const Text(
-          'Araç Ekle',
+        child: FloatingActionButton.extended(
+          onPressed:
+          _openAddVehicleScreen,
+          icon: const Icon(
+            Icons.add_rounded,
+          ),
+          label: const Text(
+            'Araç Ekle',
+          ),
         ),
       ),
 

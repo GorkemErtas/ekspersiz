@@ -117,6 +117,25 @@ class VehicleService {
     );
   }
 
+  Future<Vehicle> setPrimaryVehicle(
+      int vehicleId,
+      ) async {
+    final response = await apiClient.put(
+      '/vehicles/$vehicleId/primary',
+      body: const {},
+    );
+
+    if (response is! Map) {
+      throw const FormatException(
+        'Ana araç bilgisi güncellenemedi.',
+      );
+    }
+
+    return Vehicle.fromJson(
+      Map<String, dynamic>.from(response),
+    );
+  }
+
   Future<void> deleteVehicle(
       int vehicleId,
       ) async {
