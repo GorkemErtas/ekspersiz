@@ -2,6 +2,8 @@ package com.gorkem.vehicle_inspector.controller;
 
 import com.gorkem.vehicle_inspector.dto.response.DamageInspectionResponse;
 import com.gorkem.vehicle_inspector.service.DamageInspectionService;
+import com.gorkem.vehicle_inspector.dto.response.NearbyServiceResponse;
+import com.gorkem.vehicle_inspector.service.NearbyServiceService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -23,11 +25,14 @@ import java.util.List;
 public class DamageInspectionController {
 
     private final DamageInspectionService inspectionService;
+    private final NearbyServiceService nearbyServiceService;
 
     public DamageInspectionController(
-            DamageInspectionService inspectionService
+            DamageInspectionService inspectionService,
+            NearbyServiceService nearbyServiceService
     ) {
         this.inspectionService = inspectionService;
+        this.nearbyServiceService = nearbyServiceService;
     }
 
     @PostMapping
@@ -182,6 +187,20 @@ public class DamageInspectionController {
     ) {
         return ResponseEntity.ok(
                 inspectionService.regenerateReport(
+                        inspectionId,
+                        authentication.getName()
+                )
+        );
+    }
+
+    @GetMapping("/{inspectionId}/nearby-services")
+    public ResponseEntity<List<NearbyServiceResponse>>
+    getNearbyServices(
+            @PathVariable Long inspectionId,
+            Authentication authentication
+    ) {
+        return ResponseEntity.ok(
+                nearbyServiceService.getNearbyServices(
                         inspectionId,
                         authentication.getName()
                 )
