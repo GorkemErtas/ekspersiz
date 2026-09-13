@@ -64,6 +64,24 @@ public class User {
     )
     private LocalDateTime subscriptionExpiresAt;
 
+    @Column(
+            name = "email_verified",
+            nullable = false,
+            columnDefinition = "boolean default true"
+    )
+    private boolean emailVerified;
+
+    @Column(
+            name = "email_verification_code_hash",
+            length = 100
+    )
+    private String emailVerificationCodeHash;
+
+    @Column(
+            name = "email_verification_code_expires_at"
+    )
+    private LocalDateTime emailVerificationCodeExpiresAt;
+
     protected User() {
     }
 
@@ -80,6 +98,8 @@ public class User {
 
         this.subscriptionPlan =
                 SubscriptionPlan.FREE;
+
+        this.emailVerified = false;
     }
 
     public Long getId() {
@@ -112,6 +132,18 @@ public class User {
 
     public LocalDateTime getSubscriptionExpiresAt() {
         return subscriptionExpiresAt;
+    }
+
+    public boolean isEmailVerified() {
+        return emailVerified;
+    }
+
+    public String getEmailVerificationCodeHash() {
+        return emailVerificationCodeHash;
+    }
+
+    public LocalDateTime getEmailVerificationCodeExpiresAt() {
+        return emailVerificationCodeExpiresAt;
     }
 
     public void setFullName(
@@ -157,6 +189,28 @@ public class User {
     ) {
         this.subscriptionExpiresAt =
                 subscriptionExpiresAt;
+    }
+
+    public void setEmailVerificationCode(
+            String emailVerificationCodeHash,
+            LocalDateTime emailVerificationCodeExpiresAt
+    ) {
+        this.emailVerificationCodeHash =
+                emailVerificationCodeHash;
+        this.emailVerificationCodeExpiresAt =
+                emailVerificationCodeExpiresAt;
+    }
+
+    public void markEmailVerified() {
+        this.emailVerified = true;
+        this.emailVerificationCodeHash = null;
+        this.emailVerificationCodeExpiresAt = null;
+    }
+
+    public boolean isEmailVerificationCodeExpired() {
+        return emailVerificationCodeExpiresAt == null
+                || emailVerificationCodeExpiresAt
+                .isBefore(LocalDateTime.now());
     }
 
     public boolean hasActiveSubscription() {
