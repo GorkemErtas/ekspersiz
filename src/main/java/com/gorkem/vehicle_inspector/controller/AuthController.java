@@ -1,6 +1,9 @@
 package com.gorkem.vehicle_inspector.controller;
 
+import com.gorkem.vehicle_inspector.dto.request.ChangePasswordRequest;
 import com.gorkem.vehicle_inspector.dto.request.RegisterRequest;
+import com.gorkem.vehicle_inspector.dto.request.ResendVerificationRequest;
+import com.gorkem.vehicle_inspector.dto.request.VerifyEmailRequest;
 import com.gorkem.vehicle_inspector.dto.response.UserResponse;
 import com.gorkem.vehicle_inspector.service.AuthService;
 import com.gorkem.vehicle_inspector.dto.request.LoginRequest;
@@ -32,6 +35,24 @@ public class AuthController {
                 .body(response);
     }
 
+    @PostMapping("/verify-email")
+    public ResponseEntity<Void> verifyEmail(
+            @Valid @RequestBody VerifyEmailRequest request
+    ) {
+        authService.verifyEmail(request);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/resend-verification")
+    public ResponseEntity<Void> resendVerification(
+            @Valid @RequestBody ResendVerificationRequest request
+    ) {
+        authService.resendVerificationCode(request);
+
+        return ResponseEntity.noContent().build();
+    }
+
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(
             @Valid @RequestBody LoginRequest request
@@ -39,6 +60,19 @@ public class AuthController {
         return ResponseEntity.ok(
                 authService.login(request)
         );
+    }
+
+    @PostMapping("/change-password")
+    public ResponseEntity<Void> changePassword(
+            @Valid @RequestBody ChangePasswordRequest request,
+            Authentication authentication
+    ) {
+        authService.changePassword(
+                authentication.getName(),
+                request
+        );
+
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/me")

@@ -67,6 +67,42 @@ class AuthService {
     );
   }
 
+  Future<void> verifyEmail({
+    required String email,
+    required String code,
+  }) async {
+    await apiClient.post(
+      '/auth/verify-email',
+      includeAuth: false,
+      clearTokenOnUnauthorized: false,
+      body: {'email': email.trim().toLowerCase(), 'code': code.trim()},
+    );
+  }
+
+  Future<void> resendVerificationCode({required String email}) async {
+    await apiClient.post(
+      '/auth/resend-verification',
+      includeAuth: false,
+      clearTokenOnUnauthorized: false,
+      body: {'email': email.trim().toLowerCase()},
+    );
+  }
+
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+    required String confirmNewPassword,
+  }) async {
+    await apiClient.post(
+      '/auth/change-password',
+      body: {
+        'currentPassword': currentPassword,
+        'newPassword': newPassword,
+        'confirmNewPassword': confirmNewPassword,
+      },
+    );
+  }
+
   Future<UserProfile> getCurrentUser() async {
     final response = await apiClient.get('/auth/me');
 
