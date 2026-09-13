@@ -6,6 +6,7 @@ import '../../../core/widgets/auth_shell.dart';
 import '../../../core/widgets/primary_button.dart';
 
 import '../services/auth_service.dart';
+import 'email_verification_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -63,15 +64,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
         return;
       }
 
-      Navigator.of(context).pop();
+      final email = _emailController.text.trim().toLowerCase();
 
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          const SnackBar(
-            content: Text('Hesabınız oluşturuldu. Şimdi giriş yapabilirsiniz.'),
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute<void>(
+          builder: (_) => EmailVerificationScreen(
+            email: email,
           ),
-        );
+        ),
+      );
     } catch (exception) {
       if (!mounted) {
         return;
@@ -232,7 +233,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
             Text(
               'Araçlarını kaydet ve AI destekli '
-              'hasar analizlerini tek yerden yönet.',
+                  'hasar analizlerini tek yerden yönet.',
               style: textTheme.bodyMedium?.copyWith(
                 color: colorScheme.onSurfaceVariant,
                 height: 1.5,
@@ -301,10 +302,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   onPressed: _isLoading
                       ? null
                       : () {
-                          setState(() {
-                            _obscurePassword = !_obscurePassword;
-                          });
-                        },
+                    setState(() {
+                      _obscurePassword = !_obscurePassword;
+                    });
+                  },
 
                   icon: Icon(
                     _obscurePassword
@@ -344,10 +345,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   onPressed: _isLoading
                       ? null
                       : () {
-                          setState(() {
-                            _obscurePasswordConfirm = !_obscurePasswordConfirm;
-                          });
-                        },
+                    setState(() {
+                      _obscurePasswordConfirm = !_obscurePasswordConfirm;
+                    });
+                  },
 
                   icon: Icon(
                     _obscurePasswordConfirm
@@ -435,8 +436,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 onPressed: _isLoading
                     ? null
                     : () {
-                        Navigator.of(context).pop();
-                      },
+                  Navigator.of(context).pop();
+                },
 
                 icon: const Icon(Icons.login_rounded),
 

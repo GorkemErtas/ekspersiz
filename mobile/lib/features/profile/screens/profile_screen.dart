@@ -5,6 +5,7 @@ import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/app_icon_box.dart';
 import '../../../core/widgets/app_status_badge.dart';
 
+import '../../auth/screens/change_password_screen.dart';
 import '../../auth/screens/login_screen.dart';
 import '../../auth/services/auth_service.dart';
 
@@ -63,6 +64,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
       'PRO' => AppTheme.warningSoft,
       _ => const Color(0xFFF1F5F9),
     };
+  }
+
+  Future<void> _openChangePassword() async {
+    final changed = await Navigator.of(context).push<bool>(
+      MaterialPageRoute<bool>(builder: (_) => const ChangePasswordScreen()),
+    );
+
+    if (changed != true || !mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        const SnackBar(
+          content: Text('Şifreniz başarıyla güncellendi.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
   }
 
   Future<void> _logout() async {
@@ -154,7 +174,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
@@ -270,6 +289,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const SizedBox(height: 20),
                 AppCard(
                   showShadow: false,
+                  padding: EdgeInsets.zero,
+                  child: _ActionProfileItem(
+                    icon: Icons.lock_reset_rounded,
+                    title: 'Şifre Değiştir',
+                    subtitle: 'Hesap şifrenizi güvenli şekilde güncelleyin.',
+                    onTap: _openChangePassword,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                AppCard(
+                  showShadow: false,
                   backgroundColor: colorScheme.surfaceContainerLow,
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -295,7 +325,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Araç hasarlarını yapay zekâ destekli görüntü analizi ile inceleyin.',
+                              'Araç hasarlarını yapay zekâ destekli '
+                              'görüntü analizi ile inceleyin.',
                               style: textTheme.bodySmall?.copyWith(
                                 color: colorScheme.onSurfaceVariant,
                                 height: 1.45,
@@ -357,7 +388,6 @@ class _ProfileItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-
     final textTheme = Theme.of(context).textTheme;
 
     return Padding(
@@ -388,6 +418,66 @@ class _ProfileItem extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ActionProfileItem extends StatelessWidget {
+  const _ActionProfileItem({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+        child: Row(
+          children: [
+            AppIconBox(icon: icon, size: 46, iconSize: 22, borderRadius: 14),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: textTheme.bodyLarge?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                      height: 1.35,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 10),
+            Icon(
+              Icons.chevron_right_rounded,
+              color: colorScheme.onSurfaceVariant,
+            ),
+          ],
+        ),
       ),
     );
   }
