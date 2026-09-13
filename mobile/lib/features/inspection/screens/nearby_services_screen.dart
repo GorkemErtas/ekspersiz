@@ -36,6 +36,22 @@ class _NearbyServicesScreenState extends State<NearbyServicesScreen> {
 
   String? _selectedPlaceId;
 
+  NearbyService? get _selectedService {
+    final selectedPlaceId = _selectedPlaceId;
+
+    if (selectedPlaceId == null) {
+      return null;
+    }
+
+    for (final service in _services) {
+      if (service.placeId == selectedPlaceId) {
+        return service;
+      }
+    }
+
+    return null;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -92,27 +108,49 @@ class _NearbyServicesScreenState extends State<NearbyServicesScreen> {
       Marker(
         markerId: const MarkerId('inspection-location'),
         position: LatLng(widget.latitude, widget.longitude),
-        infoWindow: const InfoWindow(title: 'İnceleme Konumu'),
         icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
+        zIndexInt: 20,
       ),
     };
 
     for (final service in _services) {
+      final isSelected = _selectedPlaceId == service.placeId;
+
       markers.add(
         Marker(
           markerId: MarkerId(service.placeId),
           position: LatLng(service.latitude, service.longitude),
-          infoWindow: InfoWindow(title: service.name, snippet: service.address),
-          onTap: () {
-            setState(() {
-              _selectedPlaceId = service.placeId;
-            });
-          },
+          icon: BitmapDescriptor.defaultMarkerWithHue(
+            isSelected ? BitmapDescriptor.hueOrange : BitmapDescriptor.hueRed,
+          ),
+          zIndexInt: isSelected ? 10 : 1,
+          alpha: isSelected ? 1 : 0.85,
+          onTap: () => _focusService(service),
         ),
       );
     }
 
     return markers;
+  }
+
+  Set<Circle> get _selectionCircles {
+    final service = _selectedService;
+
+    if (service == null) {
+      return const {};
+    }
+
+    return {
+      Circle(
+        circleId: CircleId('selected-${service.placeId}'),
+        center: LatLng(service.latitude, service.longitude),
+        radius: 35,
+        fillColor: Colors.red.withValues(alpha: 0.16),
+        strokeColor: Colors.red.withValues(alpha: 0.70),
+        strokeWidth: 2,
+        zIndex: 2,
+      ),
+    };
   }
 
   Future<void> _focusService(NearbyService service) async {
@@ -124,7 +162,7 @@ class _NearbyServicesScreenState extends State<NearbyServicesScreen> {
       CameraUpdate.newCameraPosition(
         CameraPosition(
           target: LatLng(service.latitude, service.longitude),
-          zoom: 15,
+          zoom: 16,
         ),
       ),
     );
@@ -250,6 +288,8 @@ class _NearbyServicesScreenState extends State<NearbyServicesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final selectedService = _selectedService;
+
     return Scaffold(
       appBar: AppBar(title: const Text('Yakındaki Servisler')),
       body: Stack(
@@ -260,9 +300,18 @@ class _NearbyServicesScreenState extends State<NearbyServicesScreen> {
               zoom: 13,
             ),
             markers: _markers,
+            circles: _selectionCircles,
             myLocationButtonEnabled: false,
-            zoomControlsEnabled: false,
+            zoomControlsEnabled: true,
+            zoomGesturesEnabled: true,
             mapToolbarEnabled: false,
+            onTap: (_) {
+              if (_selectedPlaceId != null) {
+                setState(() {
+                  _selectedPlaceId = null;
+                });
+              }
+            },
             onMapCreated: (GoogleMapController controller) {
               _mapController = controller;
             },
@@ -285,31 +334,21 @@ class _NearbyServicesScreenState extends State<NearbyServicesScreen> {
               bottom: 24,
               child: _EmptyServicesCard(),
             ),
-          if (!_isLoading && _services.isNotEmpty)
+          if (!_isLoading && _errorMessage == null && selectedService != null)
             Positioned(
-              left: 0,
-              right: 0,
+              left: 16,
+              right: 16,
               bottom: 20,
-              child: SizedBox(
-                height: 236,
-                child: ListView.separated(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  scrollDirection: Axis.horizontal,
-                  itemCount: _services.length,
-                  separatorBuilder: (_, _) => const SizedBox(width: 12),
-                  itemBuilder: (context, index) {
-                    final service = _services[index];
-
-                    return _ServiceCard(
-                      service: service,
-                      selected: _selectedPlaceId == service.placeId,
-                      distance: _formatDistance(service.distanceKm),
-                      rating: _formatRating(service),
-                      onTap: () => _focusService(service),
-                      onDirections: () => _openDirections(service),
-                    );
-                  },
-                ),
+              child: _ServiceCard(
+                service: selectedService,
+                distance: _formatDistance(selectedService.distanceKm),
+                rating: _formatRating(selectedService),
+                onDirections: () => _openDirections(selectedService),
+                onClose: () {
+                  setState(() {
+                    _selectedPlaceId = null;
+                  });
+                },
               ),
             ),
         ],
@@ -321,102 +360,96 @@ class _NearbyServicesScreenState extends State<NearbyServicesScreen> {
 class _ServiceCard extends StatelessWidget {
   const _ServiceCard({
     required this.service,
-    required this.selected,
     required this.distance,
     required this.rating,
-    required this.onTap,
     required this.onDirections,
+    required this.onClose,
   });
 
   final NearbyService service;
-  final bool selected;
   final String distance;
   final String rating;
-  final VoidCallback onTap;
   final VoidCallback onDirections;
+  final VoidCallback onClose;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return SizedBox(
-      width: 290,
-      child: Material(
-        color: theme.colorScheme.surface,
-        elevation: selected ? 8 : 3,
-        borderRadius: BorderRadius.circular(18),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(18),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+    return Material(
+      color: theme.colorScheme.surface,
+      elevation: 8,
+      borderRadius: BorderRadius.circular(18),
+      clipBehavior: Clip.antiAlias,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 14, 10, 14),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 42,
-                      height: 42,
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.primaryContainer,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(
-                        Icons.car_repair_outlined,
-                        color: theme.colorScheme.onPrimaryContainer,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        service.name.isEmpty
-                            ? 'Otomotiv Servisi'
-                            : service.name,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  service.address,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodySmall,
-                ),
-                const Spacer(),
-                Row(
-                  children: [
-                    Icon(
-                      Icons.location_on_outlined,
-                      size: 18,
-                      color: theme.colorScheme.primary,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(distance),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Text(rating, overflow: TextOverflow.ellipsis),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton.tonalIcon(
-                    onPressed: onDirections,
-                    icon: const Icon(Icons.directions_rounded, size: 18),
-                    label: const Text('Yol Tarifi Al'),
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(12),
                   ),
+                  child: Icon(
+                    Icons.car_repair_outlined,
+                    color: theme.colorScheme.onPrimaryContainer,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    service.name.isEmpty ? 'Otomotiv Servisi' : service.name,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  tooltip: 'Kapat',
+                  onPressed: onClose,
+                  icon: const Icon(Icons.close_rounded),
                 ),
               ],
             ),
-          ),
+            const SizedBox(height: 10),
+            Text(
+              service.address,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.bodySmall,
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Icon(
+                  Icons.location_on_outlined,
+                  size: 18,
+                  color: theme.colorScheme.primary,
+                ),
+                const SizedBox(width: 4),
+                Text(distance),
+                const SizedBox(width: 16),
+                Expanded(child: Text(rating, overflow: TextOverflow.ellipsis)),
+              ],
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.tonalIcon(
+                onPressed: onDirections,
+                icon: const Icon(Icons.directions_rounded, size: 18),
+                label: const Text('Yol Tarifi Al'),
+              ),
+            ),
+          ],
         ),
       ),
     );
