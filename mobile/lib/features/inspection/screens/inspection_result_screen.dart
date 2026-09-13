@@ -9,6 +9,7 @@ import '../../../core/widgets/app_status_badge.dart';
 
 import '../models/damage_inspection.dart';
 import '../services/inspection_service.dart';
+import 'nearby_services_screen.dart';
 
 class InspectionResultScreen extends StatefulWidget {
   const InspectionResultScreen({super.key, required this.inspection});
@@ -71,6 +72,25 @@ class _InspectionResultScreenState extends State<InspectionResultScreen> {
         });
       }
     }
+  }
+
+  Future<void> _openNearbyServices() async {
+    final latitude = _inspection.locationLatitude;
+    final longitude = _inspection.locationLongitude;
+
+    if (latitude == null || longitude == null) {
+      return;
+    }
+
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (context) => NearbyServicesScreen(
+          inspectionId: _inspection.id,
+          latitude: latitude,
+          longitude: longitude,
+        ),
+      ),
+    );
   }
 
   String _severityDisplayText(String? severity) {
@@ -403,6 +423,13 @@ class _InspectionResultScreenState extends State<InspectionResultScreen> {
 
                     disclaimer: report.disclaimer,
                   ),
+
+                  if (_inspection.locationLatitude != null &&
+                      _inspection.locationLongitude != null) ...[
+                    const SizedBox(height: 16),
+
+                    _NearbyServicesCard(onExplore: _openNearbyServices),
+                  ],
                 ] else ...[
                   _ReportStatusCard(
                     inspection: _inspection,
@@ -1154,6 +1181,75 @@ class _PriceEstimateCard extends StatelessWidget {
               ),
             ),
           ],
+        ],
+      ),
+    );
+  }
+}
+
+class _NearbyServicesCard extends StatelessWidget {
+  const _NearbyServicesCard({required this.onExplore});
+
+  final VoidCallback onExplore;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return AppCard(
+      padding: const EdgeInsets.all(22),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          AppSectionHeader(
+            icon: Icons.location_on_outlined,
+            title: 'Yakındaki Uygun Servisler',
+            subtitle: 'Araç ve hasar bilgilerine göre servis keşfi',
+          ),
+          const SizedBox(height: 18),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: colorScheme.primaryContainer.withValues(alpha: 0.45),
+              borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                AppIconBox(
+                  icon: Icons.auto_awesome_rounded,
+                  size: 44,
+                  iconSize: 22,
+                  borderRadius: 14,
+                  backgroundColor: colorScheme.primary.withValues(alpha: 0.12),
+                  iconColor: colorScheme.primary,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Yapay zekânın araç markası, modeli ve tespit edilen '
+                    'hasara göre belirlediği aramalarla yakınınızdaki gerçek '
+                    'servisleri haritada görüntüleyin.',
+                    style: textTheme.bodyMedium?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                      height: 1.5,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 18),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: onExplore,
+              icon: const Icon(Icons.map_outlined),
+              label: const Text('Haritada Keşfet'),
+            ),
+          ),
         ],
       ),
     );
