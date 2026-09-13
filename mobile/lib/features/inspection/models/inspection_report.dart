@@ -29,39 +29,21 @@ class InspectionReport {
 
   final DateTime? generatedAt;
 
-  factory InspectionReport.fromJson(
-      Map<String, dynamic> json,
-      ) {
+  factory InspectionReport.fromJson(Map<String, dynamic> json) {
     return InspectionReport(
-      title:
-      json['title'] as String? ?? '',
-      summary:
-      json['summary'] as String? ?? '',
-      damageDescription:
-      json['damageDescription'] as String? ?? '',
-      repairRecommendation:
-      json['repairRecommendation'] as String? ?? '',
+      title: json['title'] as String? ?? '',
+      summary: json['summary'] as String? ?? '',
+      damageDescription: json['damageDescription'] as String? ?? '',
+      repairRecommendation: json['repairRecommendation'] as String? ?? '',
       estimatedMinimumPrice:
-      (json['estimatedMinimumPrice'] as num?)
-          ?.toDouble() ??
-          0,
+          (json['estimatedMinimumPrice'] as num?)?.toDouble() ?? 0,
       estimatedMaximumPrice:
-      (json['estimatedMaximumPrice'] as num?)
-          ?.toDouble() ??
-          0,
-      currency:
-      json['currency'] as String? ?? 'TRY',
-      priceInformation:
-      json['priceInformation'] as String? ?? '',
-      priceSourceDescription:
-      json['priceSourceDescription']
-      as String? ??
-          '',
-      disclaimer:
-      json['disclaimer'] as String? ?? '',
-      generatedAt: DateTime.tryParse(
-        json['generatedAt'] as String? ?? '',
-      ),
+          (json['estimatedMaximumPrice'] as num?)?.toDouble() ?? 0,
+      currency: json['currency'] as String? ?? 'TRY',
+      priceInformation: json['priceInformation'] as String? ?? '',
+      priceSourceDescription: json['priceSourceDescription'] as String? ?? '',
+      disclaimer: json['disclaimer'] as String? ?? '',
+      generatedAt: DateTime.tryParse(json['generatedAt'] as String? ?? ''),
     );
   }
 }

@@ -64,19 +64,22 @@ class _HomeScreenState extends State<HomeScreen> {
       final vehicles = results[0] as List<Vehicle>;
       final inspections = results[1] as List<DamageInspection>;
 
-      final completedInspections = inspections
-          .where((inspection) => inspection.status == 'COMPLETED')
-          .toList()
-        ..sort((a, b) {
-          final aDate = a.completedAt ??
-              a.createdAt ??
-              DateTime.fromMillisecondsSinceEpoch(0);
-          final bDate = b.completedAt ??
-              b.createdAt ??
-              DateTime.fromMillisecondsSinceEpoch(0);
+      final completedInspections =
+          inspections
+              .where((inspection) => inspection.status == 'COMPLETED')
+              .toList()
+            ..sort((a, b) {
+              final aDate =
+                  a.completedAt ??
+                  a.createdAt ??
+                  DateTime.fromMillisecondsSinceEpoch(0);
+              final bDate =
+                  b.completedAt ??
+                  b.createdAt ??
+                  DateTime.fromMillisecondsSinceEpoch(0);
 
-          return bDate.compareTo(aDate);
-        });
+              return bDate.compareTo(aDate);
+            });
 
       Vehicle? mainVehicle;
 
@@ -96,8 +99,9 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() {
         _vehicles = vehicles;
         _mainVehicle = mainVehicle;
-        _latestInspection =
-        completedInspections.isNotEmpty ? completedInspections.first : null;
+        _latestInspection = completedInspections.isNotEmpty
+            ? completedInspections.first
+            : null;
         _isLoading = false;
       });
     } catch (_) {
@@ -130,21 +134,16 @@ class _HomeScreenState extends State<HomeScreen> {
 
         return FadeTransition(
           opacity: curved,
-          child: SlideTransition(
-            position: slide,
-            child: child,
-          ),
+          child: SlideTransition(position: slide, child: child),
         );
       },
     );
   }
 
   Future<void> _startInspection() async {
-    await Navigator.of(context).push(
-      _premiumRoute<void>(
-        const CreateInspectionScreen(),
-      ),
-    );
+    await Navigator.of(
+      context,
+    ).push(_premiumRoute<void>(const CreateInspectionScreen()));
 
     if (!mounted) {
       return;
@@ -161,13 +160,9 @@ class _HomeScreenState extends State<HomeScreen> {
       return;
     }
 
-    await Navigator.of(context).push(
-      _premiumRoute<void>(
-        InspectionResultScreen(
-          inspection: inspection,
-        ),
-      ),
-    );
+    await Navigator.of(
+      context,
+    ).push(_premiumRoute<void>(InspectionResultScreen(inspection: inspection)));
 
     if (!mounted) {
       return;
@@ -203,24 +198,18 @@ class _HomeScreenState extends State<HomeScreen> {
                       Expanded(
                         child: Text(
                           'Ana Aracı Seç',
-                          style: Theme.of(sheetContext)
-                              .textTheme
-                              .titleLarge
-                              ?.copyWith(
-                            fontWeight: FontWeight.w900,
-                          ),
+                          style: Theme.of(sheetContext).textTheme.titleLarge
+                              ?.copyWith(fontWeight: FontWeight.w900),
                         ),
                       ),
                       Text(
                         '${_vehicles.length} araç',
-                        style: Theme.of(sheetContext)
-                            .textTheme
-                            .bodySmall
+                        style: Theme.of(sheetContext).textTheme.bodySmall
                             ?.copyWith(
-                          color: Theme.of(sheetContext)
-                              .colorScheme
-                              .onSurfaceVariant,
-                        ),
+                              color: Theme.of(
+                                sheetContext,
+                              ).colorScheme.onSurfaceVariant,
+                            ),
                       ),
                     ],
                   ),
@@ -230,19 +219,15 @@ class _HomeScreenState extends State<HomeScreen> {
                     shrinkWrap: true,
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
                     itemCount: _vehicles.length,
-                    separatorBuilder: (_, index) =>
-                    const SizedBox(height: 8),
+                    separatorBuilder: (_, index) => const SizedBox(height: 8),
                     itemBuilder: (context, index) {
                       final vehicle = _vehicles[index];
-                      final isSelected =
-                          vehicle.id == _mainVehicle?.id;
+                      final isSelected = vehicle.id == _mainVehicle?.id;
 
                       return Material(
                         color: isSelected
-                            ? Theme.of(context)
-                            .colorScheme
-                            .primaryContainer
-                            .withValues(alpha: 0.55)
+                            ? Theme.of(context).colorScheme.primaryContainer
+                                  .withValues(alpha: 0.55)
                             : Theme.of(context).colorScheme.surface,
                         borderRadius: BorderRadius.circular(18),
                         child: InkWell(
@@ -258,23 +243,23 @@ class _HomeScreenState extends State<HomeScreen> {
                                   width: 46,
                                   height: 46,
                                   decoration: BoxDecoration(
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .primaryContainer,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.primaryContainer,
                                     borderRadius: BorderRadius.circular(14),
                                   ),
                                   child: Icon(
                                     Icons.directions_car_filled_rounded,
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .primary,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.primary,
                                   ),
                                 ),
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment:
-                                    CrossAxisAlignment.start,
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         vehicle.displayName,
@@ -284,8 +269,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                             .textTheme
                                             .titleSmall
                                             ?.copyWith(
-                                          fontWeight: FontWeight.w900,
-                                        ),
+                                              fontWeight: FontWeight.w900,
+                                            ),
                                       ),
                                       const SizedBox(height: 3),
                                       Text(
@@ -294,10 +279,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                             .textTheme
                                             .bodySmall
                                             ?.copyWith(
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .onSurfaceVariant,
-                                        ),
+                                              color: Theme.of(
+                                                context,
+                                              ).colorScheme.onSurfaceVariant,
+                                            ),
                                       ),
                                     ],
                                   ),
@@ -305,15 +290,16 @@ class _HomeScreenState extends State<HomeScreen> {
                                 if (isSelected)
                                   Icon(
                                     Icons.check_circle_rounded,
-                                    color:
-                                    Theme.of(context).colorScheme.primary,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.primary,
                                   )
                                 else
                                   Icon(
                                     Icons.circle_outlined,
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .outline,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.outline,
                                   ),
                               ],
                             ),
@@ -339,8 +325,9 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     try {
-      final updatedVehicle =
-      await _vehicleService.setPrimaryVehicle(selectedVehicle.id);
+      final updatedVehicle = await _vehicleService.setPrimaryVehicle(
+        selectedVehicle.id,
+      );
 
       if (!mounted) {
         return;
@@ -351,15 +338,15 @@ class _HomeScreenState extends State<HomeScreen> {
         _vehicles = _vehicles
             .map(
               (vehicle) => Vehicle(
-            id: vehicle.id,
-            plate: vehicle.plate,
-            brand: vehicle.brand,
-            model: vehicle.model,
-            modelYear: vehicle.modelYear,
-            mileage: vehicle.mileage,
-            primaryVehicle: vehicle.id == updatedVehicle.id,
-          ),
-        )
+                id: vehicle.id,
+                plate: vehicle.plate,
+                brand: vehicle.brand,
+                model: vehicle.model,
+                modelYear: vehicle.modelYear,
+                mileage: vehicle.mileage,
+                primaryVehicle: vehicle.id == updatedVehicle.id,
+              ),
+            )
             .toList();
       });
 
@@ -381,9 +368,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ..hideCurrentSnackBar()
         ..showSnackBar(
           const SnackBar(
-            content: Text(
-              'Ana araç değiştirilemedi. Lütfen tekrar deneyin.',
-            ),
+            content: Text('Ana araç değiştirilemedi. Lütfen tekrar deneyin.'),
           ),
         );
     }
@@ -393,9 +378,7 @@ class _HomeScreenState extends State<HomeScreen> {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
-        const SnackBar(
-          content: Text('Yeni bildirim bulunmuyor.'),
-        ),
+        const SnackBar(content: Text('Yeni bildirim bulunmuyor.')),
       );
   }
 
@@ -435,10 +418,7 @@ class _HomeScreenState extends State<HomeScreen> {
       return 'Hasar analizi tamamlandı';
     }
 
-    return inspection.affectedParts
-        .take(3)
-        .map(_vehiclePartLabel)
-        .join(' • ');
+    return inspection.affectedParts.take(3).map(_vehiclePartLabel).join(' • ');
   }
 
   String _vehiclePartLabel(String part) {
@@ -548,17 +528,16 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(height: AppTheme.spacingL),
                   AppFadeSlideIn(
                     delay: const Duration(milliseconds: 70),
-                    child: _HeroAnalysisCard(
-                      onTap: _startInspection,
-                    ),
+                    child: _HeroAnalysisCard(onTap: _startInspection),
                   ),
                   const SizedBox(height: AppTheme.spacingXL),
                   AppFadeSlideIn(
                     delay: const Duration(milliseconds: 120),
                     child: SectionTitle(
                       title: 'Ana Araç',
-                      actionLabel:
-                      _vehicles.length > 1 ? 'Değiştir' : 'Araçlarım',
+                      actionLabel: _vehicles.length > 1
+                          ? 'Değiştir'
+                          : 'Araçlarım',
                       onActionPressed: _vehicles.length > 1
                           ? _selectMainVehicle
                           : widget.onOpenVehicles,
@@ -570,15 +549,12 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: _isLoading
                         ? const _LoadingCard()
                         : _mainVehicle == null
-                        ? _EmptyVehicleCard(
-                      onTap: widget.onOpenVehicles,
-                    )
+                        ? _EmptyVehicleCard(onTap: widget.onOpenVehicles)
                         : _MainVehicleCard(
-                      vehicle: _mainVehicle!,
-                      mileage:
-                      _formatMileage(_mainVehicle!.mileage),
-                      onTap: _selectMainVehicle,
-                    ),
+                            vehicle: _mainVehicle!,
+                            mileage: _formatMileage(_mainVehicle!.mileage),
+                            onTap: _selectMainVehicle,
+                          ),
                   ),
                   const SizedBox(height: AppTheme.spacingXL),
                   AppFadeSlideIn(
@@ -596,28 +572,24 @@ class _HomeScreenState extends State<HomeScreen> {
                         ? const _LoadingCard()
                         : _latestInspection != null
                         ? _LatestInspectionCard(
-                      inspection: _latestInspection!,
-                      title: _severityLabel(
-                        _latestInspection!.damageSeverity,
-                      ),
-                      severityLabel: _severityShortLabel(
-                        _latestInspection!.damageSeverity,
-                      ),
-                      severityColor: _severityColor(
-                        _latestInspection!.damageSeverity,
-                      ),
-                      summary: _damageSummary(
-                        _latestInspection!,
-                      ),
-                      date: _formatDate(
-                        _latestInspection!.completedAt ??
-                            _latestInspection!.createdAt,
-                      ),
-                      onTap: _openLatestInspection,
-                    )
-                        : _EmptyAnalysisCard(
-                      onTap: _startInspection,
-                    ),
+                            inspection: _latestInspection!,
+                            title: _severityLabel(
+                              _latestInspection!.damageSeverity,
+                            ),
+                            severityLabel: _severityShortLabel(
+                              _latestInspection!.damageSeverity,
+                            ),
+                            severityColor: _severityColor(
+                              _latestInspection!.damageSeverity,
+                            ),
+                            summary: _damageSummary(_latestInspection!),
+                            date: _formatDate(
+                              _latestInspection!.completedAt ??
+                                  _latestInspection!.createdAt,
+                            ),
+                            onTap: _openLatestInspection,
+                          )
+                        : _EmptyAnalysisCard(onTap: _startInspection),
                   ),
                 ],
               ),
@@ -677,10 +649,7 @@ class _DashboardHeader extends StatelessWidget {
             decoration: const BoxDecoration(
               shape: BoxShape.circle,
               gradient: LinearGradient(
-                colors: [
-                  AppTheme.primaryColor,
-                  AppTheme.secondaryColor,
-                ],
+                colors: [AppTheme.primaryColor, AppTheme.secondaryColor],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -733,15 +702,10 @@ class _DashboardHeader extends StatelessWidget {
             decoration: BoxDecoration(
               color: colorScheme.surface,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: colorScheme.outlineVariant,
-              ),
+              border: Border.all(color: colorScheme.outlineVariant),
             ),
             child: const Center(
-              child: Icon(
-                Icons.notifications_none_rounded,
-                size: 23,
-              ),
+              child: Icon(Icons.notifications_none_rounded, size: 23),
             ),
           ),
         ),
@@ -751,9 +715,7 @@ class _DashboardHeader extends StatelessWidget {
 }
 
 class _HeroAnalysisCard extends StatelessWidget {
-  const _HeroAnalysisCard({
-    required this.onTap,
-  });
+  const _HeroAnalysisCard({required this.onTap});
 
   final VoidCallback onTap;
 
@@ -930,10 +892,7 @@ class _MainVehicleCard extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          Icon(
-            Icons.swap_horiz_rounded,
-            color: colorScheme.primary,
-          ),
+          Icon(Icons.swap_horiz_rounded, color: colorScheme.primary),
         ],
       ),
     );
@@ -941,9 +900,7 @@ class _MainVehicleCard extends StatelessWidget {
 }
 
 class _EmptyVehicleCard extends StatelessWidget {
-  const _EmptyVehicleCard({
-    required this.onTap,
-  });
+  const _EmptyVehicleCard({required this.onTap});
 
   final VoidCallback onTap;
 
@@ -963,10 +920,7 @@ class _EmptyVehicleCard extends StatelessWidget {
               color: colorScheme.primaryContainer,
               borderRadius: BorderRadius.circular(17),
             ),
-            child: Icon(
-              Icons.add_rounded,
-              color: colorScheme.primary,
-            ),
+            child: Icon(Icons.add_rounded, color: colorScheme.primary),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -1043,9 +997,7 @@ class _LatestInspectionCard extends StatelessWidget {
           const SizedBox(height: 18),
           Text(
             title,
-            style: textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w900,
-            ),
+            style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
           ),
           const SizedBox(height: 7),
           Text(
@@ -1077,10 +1029,7 @@ class _LatestInspectionCard extends StatelessWidget {
                 color: colorScheme.onSurfaceVariant,
               ),
               const SizedBox(width: 6),
-              Text(
-                date,
-                style: textTheme.bodySmall,
-              ),
+              Text(date, style: textTheme.bodySmall),
             ],
           ),
         ],
@@ -1090,9 +1039,7 @@ class _LatestInspectionCard extends StatelessWidget {
 }
 
 class _EmptyAnalysisCard extends StatelessWidget {
-  const _EmptyAnalysisCard({
-    required this.onTap,
-  });
+  const _EmptyAnalysisCard({required this.onTap});
 
   final VoidCallback onTap;
 
@@ -1112,10 +1059,7 @@ class _EmptyAnalysisCard extends StatelessWidget {
               color: colorScheme.primaryContainer,
               borderRadius: BorderRadius.circular(17),
             ),
-            child: Icon(
-              Icons.analytics_outlined,
-              color: colorScheme.primary,
-            ),
+            child: Icon(Icons.analytics_outlined, color: colorScheme.primary),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -1153,9 +1097,7 @@ class _LoadingCard extends StatelessWidget {
     return const AppCard(
       child: SizedBox(
         height: 72,
-        child: Center(
-          child: CircularProgressIndicator(),
-        ),
+        child: Center(child: CircularProgressIndicator()),
       ),
     );
   }

@@ -19,20 +19,14 @@ class SectionTitle extends StatelessWidget {
         Expanded(
           child: Text(
             title,
-            style: Theme.of(context)
-                .textTheme
-                .titleLarge
-                ?.copyWith(
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.w800,
               letterSpacing: -0.3,
             ),
           ),
         ),
         if (actionLabel != null)
-          TextButton(
-            onPressed: onActionPressed,
-            child: Text(actionLabel!),
-          ),
+          TextButton(onPressed: onActionPressed, child: Text(actionLabel!)),
       ],
     );
   }

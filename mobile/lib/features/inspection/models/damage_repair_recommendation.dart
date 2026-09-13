@@ -11,22 +11,14 @@ class DamageRepairRecommendation {
   final bool partReplacementRequired;
   final List<String> affectedParts;
 
-  factory DamageRepairRecommendation.fromJson(
-      Map<String, dynamic> json,
-      ) {
+  factory DamageRepairRecommendation.fromJson(Map<String, dynamic> json) {
     return DamageRepairRecommendation(
-      damageType:
-      json['damageType'] as String? ?? 'UNKNOWN',
-      recommendedAction:
-      json['recommendedAction'] as String? ??
-          'NO_ACTION',
+      damageType: json['damageType'] as String? ?? 'UNKNOWN',
+      recommendedAction: json['recommendedAction'] as String? ?? 'NO_ACTION',
       partReplacementRequired:
-      json['partReplacementRequired'] as bool? ??
-          false,
+          json['partReplacementRequired'] as bool? ?? false,
       affectedParts:
-      (json['affectedParts'] as List?)
-          ?.whereType<String>()
-          .toList() ??
+          (json['affectedParts'] as List?)?.whereType<String>().toList() ??
           const [],
     );
   }

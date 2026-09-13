@@ -12,19 +12,14 @@ import '../services/vehicle_service.dart';
 import 'add_vehicle_screen.dart';
 
 class VehicleListScreen extends StatefulWidget {
-  const VehicleListScreen({
-    super.key,
-  });
+  const VehicleListScreen({super.key});
 
   @override
-  State<VehicleListScreen> createState() =>
-      _VehicleListScreenState();
+  State<VehicleListScreen> createState() => _VehicleListScreenState();
 }
 
-class _VehicleListScreenState
-    extends State<VehicleListScreen> {
-  final VehicleService _vehicleService =
-  const VehicleService();
+class _VehicleListScreenState extends State<VehicleListScreen> {
+  final VehicleService _vehicleService = const VehicleService();
 
   late Future<List<Vehicle>> _vehiclesFuture;
 
@@ -36,8 +31,7 @@ class _VehicleListScreenState
   }
 
   void _loadVehicles() {
-    _vehiclesFuture =
-        _vehicleService.getVehicles();
+    _vehiclesFuture = _vehicleService.getVehicles();
   }
 
   Future<void> _refreshVehicles() async {
@@ -51,78 +45,54 @@ class _VehicleListScreenState
   }
 
   Future<void> _openAddVehicleScreen() async {
-    final createdVehicle =
-    await Navigator.of(context).push<Vehicle>(
-      MaterialPageRoute<Vehicle>(
-        builder: (_) =>
-        const AddVehicleScreen(),
-      ),
+    final createdVehicle = await Navigator.of(context).push<Vehicle>(
+      MaterialPageRoute<Vehicle>(builder: (_) => const AddVehicleScreen()),
     );
 
-    if (!mounted ||
-        createdVehicle == null) {
+    if (!mounted || createdVehicle == null) {
       return;
     }
 
     setState(_loadVehicles);
 
-    _showMessage(
-      '${createdVehicle.displayName} başarıyla eklendi.',
-    );
+    _showMessage('${createdVehicle.displayName} başarıyla eklendi.');
   }
 
-  Future<void> _openEditVehicleScreen(
-      Vehicle vehicle,
-      ) async {
-    final updatedVehicle =
-    await Navigator.of(context).push<Vehicle>(
+  Future<void> _openEditVehicleScreen(Vehicle vehicle) async {
+    final updatedVehicle = await Navigator.of(context).push<Vehicle>(
       MaterialPageRoute<Vehicle>(
-        builder: (_) =>
-            AddVehicleScreen(
-              vehicle: vehicle,
-            ),
+        builder: (_) => AddVehicleScreen(vehicle: vehicle),
       ),
     );
 
-    if (!mounted ||
-        updatedVehicle == null) {
+    if (!mounted || updatedVehicle == null) {
       return;
     }
 
     setState(_loadVehicles);
 
-    _showMessage(
-      '${updatedVehicle.displayName} başarıyla güncellendi.',
-    );
+    _showMessage('${updatedVehicle.displayName} başarıyla güncellendi.');
   }
 
-  Future<void> _confirmDeleteVehicle(
-      Vehicle vehicle,
-      ) async {
-    final shouldDelete =
-    await showDialog<bool>(
+  Future<void> _confirmDeleteVehicle(Vehicle vehicle) async {
+    final shouldDelete = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
-        final colorScheme =
-            Theme.of(dialogContext).colorScheme;
+        final colorScheme = Theme.of(dialogContext).colorScheme;
 
-        final textTheme =
-            Theme.of(dialogContext).textTheme;
+        final textTheme = Theme.of(dialogContext).textTheme;
 
         return AlertDialog(
           icon: Container(
             width: 58,
             height: 58,
             decoration: BoxDecoration(
-              color:
-              colorScheme.errorContainer,
-              borderRadius:
-              BorderRadius.circular(18),
+              color: colorScheme.errorContainer,
+              borderRadius: BorderRadius.circular(18),
             ),
             child: Icon(
               Icons.delete_outline_rounded,
-              color:
-              colorScheme.error,
+              color: colorScheme.error,
               size: 29,
             ),
           ),
@@ -133,77 +103,50 @@ class _VehicleListScreenState
           ),
 
           content: Column(
-            mainAxisSize:
-            MainAxisSize.min,
+            mainAxisSize: MainAxisSize.min,
             children: [
               Text(
                 '${vehicle.displayName} aktif araçlarınızdan kaldırılacak.',
-                textAlign:
-                TextAlign.center,
-                style:
-                textTheme.bodyLarge,
+                textAlign: TextAlign.center,
+                style: textTheme.bodyLarge,
               ),
 
-              const SizedBox(
-                height: 10,
-              ),
+              const SizedBox(height: 10),
 
               Text(
                 'Geçmiş analizleriniz korunmaya devam eder.',
-                textAlign:
-                TextAlign.center,
-                style:
-                textTheme.bodyMedium
-                    ?.copyWith(
-                  color:
-                  colorScheme
-                      .onSurfaceVariant,
+                textAlign: TextAlign.center,
+                style: textTheme.bodyMedium?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
                 ),
               ),
 
-              const SizedBox(
-                height: 14,
-              ),
+              const SizedBox(height: 14),
 
               Container(
                 width: double.infinity,
-                padding:
-                const EdgeInsets.all(12),
-                decoration:
-                BoxDecoration(
-                  color:
-                  colorScheme
-                      .surfaceContainerHighest
-                      .withValues(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: colorScheme.surfaceContainerHighest.withValues(
                     alpha: 0.45,
                   ),
-                  borderRadius:
-                  BorderRadius.circular(
-                    AppTheme.radiusMedium,
-                  ),
+                  borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
                 ),
                 child: Row(
                   children: [
                     Icon(
                       Icons.badge_outlined,
                       size: 18,
-                      color:
-                      colorScheme
-                          .onSurfaceVariant,
+                      color: colorScheme.onSurfaceVariant,
                     ),
 
-                    const SizedBox(
-                      width: 8,
-                    ),
+                    const SizedBox(width: 8),
 
                     Expanded(
                       child: Text(
                         vehicle.plate,
-                        style:
-                        textTheme.bodyMedium
-                            ?.copyWith(
-                          fontWeight:
-                          FontWeight.w800,
+                        style: textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w800,
                         ),
                       ),
                     ),
@@ -216,31 +159,20 @@ class _VehicleListScreenState
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.of(
-                  dialogContext,
-                ).pop(false);
+                Navigator.of(dialogContext).pop(false);
               },
-              child: const Text(
-                'Vazgeç',
-              ),
+              child: const Text('Vazgeç'),
             ),
 
             FilledButton(
-              style:
-              FilledButton.styleFrom(
-                backgroundColor:
-                colorScheme.error,
-                foregroundColor:
-                colorScheme.onError,
+              style: FilledButton.styleFrom(
+                backgroundColor: colorScheme.error,
+                foregroundColor: colorScheme.onError,
               ),
               onPressed: () {
-                Navigator.of(
-                  dialogContext,
-                ).pop(true);
+                Navigator.of(dialogContext).pop(true);
               },
-              child: const Text(
-                'Garajdan Kaldır',
-              ),
+              child: const Text('Garajdan Kaldır'),
             ),
           ],
         );
@@ -254,13 +186,9 @@ class _VehicleListScreenState
     await _deleteVehicle(vehicle);
   }
 
-  Future<void> _deleteVehicle(
-      Vehicle vehicle,
-      ) async {
+  Future<void> _deleteVehicle(Vehicle vehicle) async {
     try {
-      await _vehicleService.deleteVehicle(
-        vehicle.id,
-      );
+      await _vehicleService.deleteVehicle(vehicle.id);
 
       if (!mounted) {
         return;
@@ -268,64 +196,39 @@ class _VehicleListScreenState
 
       setState(_loadVehicles);
 
-      _showMessage(
-        '${vehicle.displayName} garajdan kaldırıldı.',
-      );
+      _showMessage('${vehicle.displayName} garajdan kaldırıldı.');
     } catch (exception) {
       if (!mounted) {
         return;
       }
 
-      final message =
-      switch (exception) {
-        ApiException() =>
-        exception.message,
-        FormatException() =>
-        exception.message,
-        _ =>
-        'Araç garajdan kaldırılamadı.',
+      final message = switch (exception) {
+        ApiException() => exception.message,
+        FormatException() => exception.message,
+        _ => 'Araç garajdan kaldırılamadı.',
       };
 
       _showMessage(message);
     }
   }
 
-  void _showMessage(
-      String message,
-      ) {
+  void _showMessage(String message) {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content:
-          Text(message),
-        ),
-      );
+      ..showSnackBar(SnackBar(content: Text(message)));
   }
 
-  String _formatMileage(
-      int mileage,
-      ) {
-    final value =
-    mileage.toString();
+  String _formatMileage(int mileage) {
+    final value = mileage.toString();
 
-    final buffer =
-    StringBuffer();
+    final buffer = StringBuffer();
 
-    for (
-    int index = 0;
-    index < value.length;
-    index++
-    ) {
-      final reversedIndex =
-          value.length - index;
+    for (int index = 0; index < value.length; index++) {
+      final reversedIndex = value.length - index;
 
-      buffer.write(
-        value[index],
-      );
+      buffer.write(value[index]);
 
-      if (reversedIndex > 1 &&
-          reversedIndex % 3 == 1) {
+      if (reversedIndex > 1 && reversedIndex % 3 == 1) {
         buffer.write('.');
       }
     }
@@ -334,185 +237,99 @@ class _VehicleListScreenState
   }
 
   @override
-  Widget build(
-      BuildContext context,
-      ) {
+  Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Araçlarım',
-        ),
-      ),
+      appBar: AppBar(title: const Text('Araçlarım')),
 
-      floatingActionButtonLocation:
-      FloatingActionButtonLocation.endFloat,
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
 
-      floatingActionButton:
-      Padding(
-        padding: const EdgeInsets.only(
-          bottom: 82,
-        ),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 82),
         child: FloatingActionButton.extended(
-          onPressed:
-          _openAddVehicleScreen,
-          icon: const Icon(
-            Icons.add_rounded,
-          ),
-          label: const Text(
-            'Araç Ekle',
-          ),
+          onPressed: _openAddVehicleScreen,
+          icon: const Icon(Icons.add_rounded),
+          label: const Text('Araç Ekle'),
         ),
       ),
 
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
-            constraints:
-            const BoxConstraints(
-              maxWidth:
-              AppTheme.maxContentWidth,
+            constraints: const BoxConstraints(
+              maxWidth: AppTheme.maxContentWidth,
             ),
 
-            child:
-            FutureBuilder<List<Vehicle>>(
-              future:
-              _vehiclesFuture,
+            child: FutureBuilder<List<Vehicle>>(
+              future: _vehiclesFuture,
 
-              builder:
-                  (
-                  context,
-                  snapshot,
-                  ) {
-                if (snapshot
-                    .connectionState ==
-                    ConnectionState.waiting) {
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
                   return const AppStateView.loading(
-                    title:
-                    'Araçlar yükleniyor',
-                    message:
-                    'Garajınızdaki araçlar hazırlanıyor.',
-                    bottomPadding:
-                    110,
+                    title: 'Araçlar yükleniyor',
+                    message: 'Garajınızdaki araçlar hazırlanıyor.',
+                    bottomPadding: 110,
                   );
                 }
 
                 if (snapshot.hasError) {
-                  final error =
-                      snapshot.error;
+                  final error = snapshot.error;
 
-                  final message =
-                  switch (error) {
-                    ApiException() =>
-                    error.message,
-                    FormatException() =>
-                    error.message,
-                    _ =>
-                    'Araçlar yüklenemedi.',
+                  final message = switch (error) {
+                    ApiException() => error.message,
+                    FormatException() => error.message,
+                    _ => 'Araçlar yüklenemedi.',
                   };
 
                   return AppStateView.error(
-                    title:
-                    'Araçlar yüklenemedi',
-                    message:
-                    message,
-                    bottomPadding:
-                    110,
-                    onActionPressed:
-                        () {
-                      setState(
-                        _loadVehicles,
-                      );
+                    title: 'Araçlar yüklenemedi',
+                    message: message,
+                    bottomPadding: 110,
+                    onActionPressed: () {
+                      setState(_loadVehicles);
                     },
                   );
                 }
 
-                final vehicles =
-                    snapshot.data ??
-                        const <Vehicle>[];
+                final vehicles = snapshot.data ?? const <Vehicle>[];
 
                 if (vehicles.isEmpty) {
                   return AppStateView.empty(
-                    icon:
-                    Icons
-                        .directions_car_outlined,
-                    title:
-                    'Garajınız henüz boş',
+                    icon: Icons.directions_car_outlined,
+                    title: 'Garajınız henüz boş',
                     message:
-                    'AI destekli hasar analizi başlatmak için önce aracınızı kaydedin.',
-                    actionLabel:
-                    'İlk Aracımı Ekle',
-                    actionIcon:
-                    Icons.add_rounded,
-                    bottomPadding:
-                    110,
-                    onActionPressed:
-                    _openAddVehicleScreen,
+                        'AI destekli hasar analizi başlatmak için önce aracınızı kaydedin.',
+                    actionLabel: 'İlk Aracımı Ekle',
+                    actionIcon: Icons.add_rounded,
+                    bottomPadding: 110,
+                    onActionPressed: _openAddVehicleScreen,
                   );
                 }
 
                 return RefreshIndicator(
-                  onRefresh:
-                  _refreshVehicles,
+                  onRefresh: _refreshVehicles,
 
-                  child:
-                  ListView.separated(
-                    physics:
-                    const AlwaysScrollableScrollPhysics(),
+                  child: ListView.separated(
+                    physics: const AlwaysScrollableScrollPhysics(),
 
-                    padding:
-                    const EdgeInsets.fromLTRB(
-                      20,
-                      16,
-                      20,
-                      120,
-                    ),
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 120),
 
-                    itemCount:
-                    vehicles.length + 1,
+                    itemCount: vehicles.length + 1,
 
-                    separatorBuilder:
-                        (
-                        context,
-                        index,
-                        ) =>
-                        SizedBox(
-                          height:
-                          index == 0
-                              ? 18
-                              : 14,
-                        ),
+                    separatorBuilder: (context, index) =>
+                        SizedBox(height: index == 0 ? 18 : 14),
 
-                    itemBuilder:
-                        (
-                        context,
-                        index,
-                        ) {
+                    itemBuilder: (context, index) {
                       if (index == 0) {
-                        return _VehicleHeader(
-                          vehicleCount:
-                          vehicles.length,
-                        );
+                        return _VehicleHeader(vehicleCount: vehicles.length);
                       }
 
-                      final vehicle =
-                      vehicles[
-                      index - 1];
+                      final vehicle = vehicles[index - 1];
 
                       return _VehicleCard(
-                        vehicle:
-                        vehicle,
-                        mileage:
-                        _formatMileage(
-                          vehicle.mileage,
-                        ),
-                        onEdit: () =>
-                            _openEditVehicleScreen(
-                              vehicle,
-                            ),
-                        onDelete: () =>
-                            _confirmDeleteVehicle(
-                              vehicle,
-                            ),
+                        vehicle: vehicle,
+                        mileage: _formatMileage(vehicle.mileage),
+                        onEdit: () => _openEditVehicleScreen(vehicle),
+                        onDelete: () => _confirmDeleteVehicle(vehicle),
                       );
                     },
                   ),
@@ -527,67 +344,42 @@ class _VehicleListScreenState
 }
 
 class _VehicleHeader extends StatelessWidget {
-  const _VehicleHeader({
-    required this.vehicleCount,
-  });
+  const _VehicleHeader({required this.vehicleCount});
 
   final int vehicleCount;
 
   @override
-  Widget build(
-      BuildContext context,
-      ) {
-    final colorScheme =
-        Theme.of(context).colorScheme;
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
 
-    final textTheme =
-        Theme.of(context).textTheme;
+    final textTheme = Theme.of(context).textTheme;
 
     return Column(
-      crossAxisAlignment:
-      CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Garajınız',
-          style:
-          textTheme.headlineSmall
-              ?.copyWith(
-            fontWeight:
-            FontWeight.w900,
-          ),
+          style: textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900),
         ),
 
-        const SizedBox(
-          height: 6,
-        ),
+        const SizedBox(height: 6),
 
         Text(
           'Kayıtlı araçlarınızı buradan '
-              'görüntüleyebilir, düzenleyebilir ve yönetebilirsiniz.',
-          style:
-          textTheme.bodyLarge
-              ?.copyWith(
-            color:
-            colorScheme
-                .onSurfaceVariant,
-            height:
-            1.45,
+          'görüntüleyebilir, düzenleyebilir ve yönetebilirsiniz.',
+          style: textTheme.bodyLarge?.copyWith(
+            color: colorScheme.onSurfaceVariant,
+            height: 1.45,
           ),
         ),
 
-        const SizedBox(
-          height: 20,
-        ),
+        const SizedBox(height: 20),
 
         AppStatusBadge(
-          icon:
-          Icons.garage_outlined,
-          label:
-          '$vehicleCount kayıtlı araç',
-          color:
-          colorScheme.primary,
-          backgroundColor:
-          colorScheme.primaryContainer,
+          icon: Icons.garage_outlined,
+          label: '$vehicleCount kayıtlı araç',
+          color: colorScheme.primary,
+          backgroundColor: colorScheme.primaryContainer,
         ),
       ],
     );
@@ -609,126 +401,85 @@ class _VehicleCard extends StatelessWidget {
   final VoidCallback onDelete;
 
   @override
-  Widget build(
-      BuildContext context,
-      ) {
-    final colorScheme =
-        Theme.of(context).colorScheme;
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
 
-    final textTheme =
-        Theme.of(context).textTheme;
+    final textTheme = Theme.of(context).textTheme;
 
     return AppCard(
-      padding:
-      const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(18),
 
       child: Row(
-        crossAxisAlignment:
-        CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const AppIconBox(
-            icon:
-            Icons
-                .directions_car_filled_rounded,
+            icon: Icons.directions_car_filled_rounded,
             size: 64,
             iconSize: 32,
             borderRadius: 20,
           ),
 
-          const SizedBox(
-            width: 16,
-          ),
+          const SizedBox(width: 16),
 
           Expanded(
             child: Column(
-              crossAxisAlignment:
-              CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
-                  crossAxisAlignment:
-                  CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
                       child: Text(
                         vehicle.displayName,
                         maxLines: 1,
-                        overflow:
-                        TextOverflow.ellipsis,
-                        style:
-                        textTheme.titleMedium
-                            ?.copyWith(
-                          fontWeight:
-                          FontWeight.w900,
+                        overflow: TextOverflow.ellipsis,
+                        style: textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w900,
                         ),
                       ),
                     ),
 
-                    const SizedBox(
-                      width: 8,
-                    ),
+                    const SizedBox(width: 8),
 
-                    _VehicleActionsMenu(
-                      onEdit:
-                      onEdit,
-                      onDelete:
-                      onDelete,
-                    ),
+                    _VehicleActionsMenu(onEdit: onEdit, onDelete: onDelete),
                   ],
                 ),
 
-                const SizedBox(
-                  height: 10,
-                ),
+                const SizedBox(height: 10),
 
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
                   children: [
                     _InfoBadge(
-                      icon:
-                      Icons.badge_outlined,
-                      label:
-                      vehicle.plate,
+                      icon: Icons.badge_outlined,
+                      label: vehicle.plate,
                     ),
 
                     _InfoBadge(
-                      icon:
-                      Icons
-                          .calendar_today_outlined,
-                      label:
-                      '${vehicle.modelYear}',
+                      icon: Icons.calendar_today_outlined,
+                      label: '${vehicle.modelYear}',
                     ),
                   ],
                 ),
 
-                const SizedBox(
-                  height: 12,
-                ),
+                const SizedBox(height: 12),
 
                 Row(
                   children: [
                     Icon(
                       Icons.speed_rounded,
                       size: 17,
-                      color:
-                      colorScheme
-                          .onSurfaceVariant,
+                      color: colorScheme.onSurfaceVariant,
                     ),
 
-                    const SizedBox(
-                      width: 6,
-                    ),
+                    const SizedBox(width: 6),
 
                     Text(
                       '$mileage km',
-                      style:
-                      textTheme.bodyMedium
-                          ?.copyWith(
-                        color:
-                        colorScheme
-                            .onSurfaceVariant,
-                        fontWeight:
-                        FontWeight.w600,
+                      style: textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
@@ -742,35 +493,21 @@ class _VehicleCard extends StatelessWidget {
   }
 }
 
-enum _VehicleAction {
-  edit,
-  delete,
-}
+enum _VehicleAction { edit, delete }
 
-class _VehicleActionsMenu
-    extends StatelessWidget {
-  const _VehicleActionsMenu({
-    required this.onEdit,
-    required this.onDelete,
-  });
+class _VehicleActionsMenu extends StatelessWidget {
+  const _VehicleActionsMenu({required this.onEdit, required this.onDelete});
 
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
   @override
-  Widget build(
-      BuildContext context,
-      ) {
-    final colorScheme =
-        Theme.of(context).colorScheme;
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
 
     return PopupMenuButton<_VehicleAction>(
-      tooltip:
-      'Araç işlemleri',
-      icon:
-      const Icon(
-        Icons.more_vert_rounded,
-      ),
+      tooltip: 'Araç işlemleri',
+      icon: const Icon(Icons.more_vert_rounded),
       onSelected: (action) {
         switch (action) {
           case _VehicleAction.edit:
@@ -783,44 +520,28 @@ class _VehicleActionsMenu
       },
       itemBuilder: (context) => [
         const PopupMenuItem(
-          value:
-          _VehicleAction.edit,
+          value: _VehicleAction.edit,
           child: Row(
             children: [
-              Icon(
-                Icons.edit_outlined,
-                size: 20,
-              ),
-              SizedBox(
-                width: 12,
-              ),
-              Text(
-                'Düzenle',
-              ),
+              Icon(Icons.edit_outlined, size: 20),
+              SizedBox(width: 12),
+              Text('Düzenle'),
             ],
           ),
         ),
         PopupMenuItem(
-          value:
-          _VehicleAction.delete,
+          value: _VehicleAction.delete,
           child: Row(
             children: [
               Icon(
                 Icons.delete_outline_rounded,
                 size: 20,
-                color:
-                colorScheme.error,
+                color: colorScheme.error,
               ),
-              const SizedBox(
-                width: 12,
-              ),
+              const SizedBox(width: 12),
               Text(
                 'Garajdan Kaldır',
-                style:
-                TextStyle(
-                  color:
-                  colorScheme.error,
-                ),
+                style: TextStyle(color: colorScheme.error),
               ),
             ],
           ),
@@ -831,69 +552,35 @@ class _VehicleActionsMenu
 }
 
 class _InfoBadge extends StatelessWidget {
-  const _InfoBadge({
-    required this.icon,
-    required this.label,
-  });
+  const _InfoBadge({required this.icon, required this.label});
 
   final IconData icon;
   final String label;
 
   @override
-  Widget build(
-      BuildContext context,
-      ) {
-    final colorScheme =
-        Theme.of(context).colorScheme;
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
 
-    final textTheme =
-        Theme.of(context).textTheme;
+    final textTheme = Theme.of(context).textTheme;
 
     return Container(
-      padding:
-      const EdgeInsets.symmetric(
-        horizontal: 10,
-        vertical: 6,
-      ),
-      decoration:
-      BoxDecoration(
-        color:
-        colorScheme
-            .surfaceContainerHighest
-            .withValues(
-          alpha: 0.55,
-        ),
-        borderRadius:
-        BorderRadius.circular(
-          AppTheme.radiusPill,
-        ),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.55),
+        borderRadius: BorderRadius.circular(AppTheme.radiusPill),
       ),
       child: Row(
-        mainAxisSize:
-        MainAxisSize.min,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            icon,
-            size: 14,
-            color:
-            colorScheme
-                .onSurfaceVariant,
-          ),
+          Icon(icon, size: 14, color: colorScheme.onSurfaceVariant),
 
-          const SizedBox(
-            width: 5,
-          ),
+          const SizedBox(width: 5),
 
           Text(
             label,
-            style:
-            textTheme.labelMedium
-                ?.copyWith(
-              color:
-              colorScheme
-                  .onSurfaceVariant,
-              fontWeight:
-              FontWeight.w700,
+            style: textTheme.labelMedium?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w700,
             ),
           ),
         ],

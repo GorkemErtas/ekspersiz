@@ -3,17 +3,13 @@ import 'package:flutter/material.dart';
 class AppMotion {
   AppMotion._();
 
-  static const Duration fast =
-  Duration(milliseconds: 120);
+  static const Duration fast = Duration(milliseconds: 120);
 
-  static const Duration medium =
-  Duration(milliseconds: 220);
+  static const Duration medium = Duration(milliseconds: 220);
 
-  static const Duration slow =
-  Duration(milliseconds: 420);
+  static const Duration slow = Duration(milliseconds: 420);
 
-  static const Curve standardCurve =
-      Curves.easeOutCubic;
+  static const Curve standardCurve = Curves.easeOutCubic;
 }
 
 class AppPressScale extends StatefulWidget {
@@ -21,10 +17,7 @@ class AppPressScale extends StatefulWidget {
     super.key,
     required this.child,
     this.onTap,
-    this.borderRadius =
-    const BorderRadius.all(
-      Radius.circular(24),
-    ),
+    this.borderRadius = const BorderRadius.all(Radius.circular(24)),
     this.pressedScale = 0.985,
   });
 
@@ -34,17 +27,14 @@ class AppPressScale extends StatefulWidget {
   final double pressedScale;
 
   @override
-  State<AppPressScale> createState() =>
-      _AppPressScaleState();
+  State<AppPressScale> createState() => _AppPressScaleState();
 }
 
-class _AppPressScaleState
-    extends State<AppPressScale> {
+class _AppPressScaleState extends State<AppPressScale> {
   bool _pressed = false;
 
   void _setPressed(bool value) {
-    if (widget.onTap == null ||
-        _pressed == value) {
+    if (widget.onTap == null || _pressed == value) {
       return;
     }
 
@@ -56,53 +46,30 @@ class _AppPressScaleState
   @override
   Widget build(BuildContext context) {
     return Listener(
-      onPointerDown:
-      widget.onTap == null
-          ? null
-          : (_) =>
-          _setPressed(true),
-      onPointerUp:
-      widget.onTap == null
-          ? null
-          : (_) =>
-          _setPressed(false),
-      onPointerCancel:
-      widget.onTap == null
-          ? null
-          : (_) =>
-          _setPressed(false),
+      onPointerDown: widget.onTap == null ? null : (_) => _setPressed(true),
+      onPointerUp: widget.onTap == null ? null : (_) => _setPressed(false),
+      onPointerCancel: widget.onTap == null ? null : (_) => _setPressed(false),
 
       child: AnimatedScale(
-        scale:
-        _pressed
-            ? widget.pressedScale
-            : 1,
+        scale: _pressed ? widget.pressedScale : 1,
 
-        duration:
-        AppMotion.fast,
+        duration: AppMotion.fast,
 
-        curve:
-        AppMotion.standardCurve,
+        curve: AppMotion.standardCurve,
 
         child: Material(
-          color:
-          Colors.transparent,
+          color: Colors.transparent,
 
-          borderRadius:
-          widget.borderRadius,
+          borderRadius: widget.borderRadius,
 
-          clipBehavior:
-          Clip.antiAlias,
+          clipBehavior: Clip.antiAlias,
 
           child: InkWell(
-            onTap:
-            widget.onTap,
+            onTap: widget.onTap,
 
-            borderRadius:
-            widget.borderRadius,
+            borderRadius: widget.borderRadius,
 
-            child:
-            widget.child,
+            child: widget.child,
           ),
         ),
       ),
@@ -115,11 +82,7 @@ class AppFadeSlideIn extends StatefulWidget {
     super.key,
     required this.child,
     this.delay = Duration.zero,
-    this.offset =
-    const Offset(
-      0,
-      0.035,
-    ),
+    this.offset = const Offset(0, 0.035),
   });
 
   final Widget child;
@@ -127,74 +90,42 @@ class AppFadeSlideIn extends StatefulWidget {
   final Offset offset;
 
   @override
-  State<AppFadeSlideIn> createState() =>
-      _AppFadeSlideInState();
+  State<AppFadeSlideIn> createState() => _AppFadeSlideInState();
 }
 
-class _AppFadeSlideInState
-    extends State<AppFadeSlideIn>
+class _AppFadeSlideInState extends State<AppFadeSlideIn>
     with SingleTickerProviderStateMixin {
-  late final AnimationController
-  _controller;
+  late final AnimationController _controller;
 
-  late final Animation<double>
-  _opacity;
+  late final Animation<double> _opacity;
 
-  late final Animation<Offset>
-  _slide;
+  late final Animation<Offset> _slide;
 
   @override
   void initState() {
     super.initState();
 
-    _controller =
-        AnimationController(
-          vsync:
-          this,
+    _controller = AnimationController(vsync: this, duration: AppMotion.slow);
 
-          duration:
-          AppMotion.slow,
-        );
+    final curved = CurvedAnimation(
+      parent: _controller,
 
-    final curved =
-    CurvedAnimation(
-      parent:
-      _controller,
-
-      curve:
-      AppMotion.standardCurve,
+      curve: AppMotion.standardCurve,
     );
 
-    _opacity =
-        Tween<double>(
-          begin:
-          0,
+    _opacity = Tween<double>(begin: 0, end: 1).animate(curved);
 
-          end:
-          1,
-        ).animate(
-          curved,
-        );
+    _slide = Tween<Offset>(
+      begin: widget.offset,
 
-    _slide =
-        Tween<Offset>(
-          begin:
-          widget.offset,
+      end: Offset.zero,
+    ).animate(curved);
 
-          end:
-          Offset.zero,
-        ).animate(
-          curved,
-        );
-
-    Future<void>.delayed(
-      widget.delay,
-          () {
-        if (mounted) {
-          _controller.forward();
-        }
-      },
-    );
+    Future<void>.delayed(widget.delay, () {
+      if (mounted) {
+        _controller.forward();
+      }
+    });
   }
 
   @override
@@ -207,16 +138,9 @@ class _AppFadeSlideInState
   @override
   Widget build(BuildContext context) {
     return FadeTransition(
-      opacity:
-      _opacity,
+      opacity: _opacity,
 
-      child: SlideTransition(
-        position:
-        _slide,
-
-        child:
-        widget.child,
-      ),
+      child: SlideTransition(position: _slide, child: widget.child),
     );
   }
 }

@@ -40,12 +40,8 @@ class AppIconBox extends StatelessWidget {
             ? backgroundColor ?? colorScheme.primaryContainer
             : null,
         gradient: gradient,
-        borderRadius: BorderRadius.circular(
-          borderRadius,
-        ),
-        boxShadow: showShadow
-            ? AppTheme.primaryShadow
-            : null,
+        borderRadius: BorderRadius.circular(borderRadius),
+        boxShadow: showShadow ? AppTheme.primaryShadow : null,
       ),
       child: Icon(
         icon,

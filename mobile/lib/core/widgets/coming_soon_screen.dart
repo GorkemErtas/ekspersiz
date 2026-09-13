@@ -1,11 +1,7 @@
 import 'package:flutter/material.dart';
 
 class ComingSoonScreen extends StatelessWidget {
-  const ComingSoonScreen({
-    super.key,
-    required this.title,
-    required this.icon,
-  });
+  const ComingSoonScreen({super.key, required this.title, required this.icon});
 
   final String title;
   final IconData icon;
@@ -15,9 +11,7 @@ class ComingSoonScreen extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(title),
-      ),
+      appBar: AppBar(title: Text(title)),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(32),
@@ -31,19 +25,12 @@ class ComingSoonScreen extends StatelessWidget {
                   color: colorScheme.primaryContainer,
                   borderRadius: BorderRadius.circular(24),
                 ),
-                child: Icon(
-                  icon,
-                  size: 40,
-                  color: colorScheme.primary,
-                ),
+                child: Icon(icon, size: 40, color: colorScheme.primary),
               ),
               const SizedBox(height: 24),
               Text(
                 title,
-                style: Theme.of(context)
-                    .textTheme
-                    .headlineSmall
-                    ?.copyWith(
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.w800,
                 ),
               ),
@@ -51,10 +38,7 @@ class ComingSoonScreen extends StatelessWidget {
               Text(
                 'Bu bölüm sonraki geliştirme adımında eklenecek.',
                 textAlign: TextAlign.center,
-                style: Theme.of(context)
-                    .textTheme
-                    .bodyLarge
-                    ?.copyWith(
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                   color: colorScheme.onSurfaceVariant,
                 ),
               ),

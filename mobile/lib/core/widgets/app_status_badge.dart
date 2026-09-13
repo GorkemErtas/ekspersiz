@@ -28,22 +28,14 @@ class AppStatusBadge extends StatelessWidget {
         vertical: compact ? 5 : 7,
       ),
       decoration: BoxDecoration(
-        color:
-        backgroundColor ??
-            color.withValues(alpha: 0.11),
-        borderRadius: BorderRadius.circular(
-          AppTheme.radiusPill,
-        ),
+        color: backgroundColor ?? color.withValues(alpha: 0.11),
+        borderRadius: BorderRadius.circular(AppTheme.radiusPill),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           if (icon != null) ...[
-            Icon(
-              icon,
-              size: compact ? 14 : 16,
-              color: color,
-            ),
+            Icon(icon, size: compact ? 14 : 16, color: color),
             const SizedBox(width: 5),
           ],
 

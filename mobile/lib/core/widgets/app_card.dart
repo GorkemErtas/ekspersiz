@@ -7,8 +7,7 @@ class AppCard extends StatelessWidget {
   const AppCard({
     super.key,
     required this.child,
-    this.padding =
-    const EdgeInsets.all(20),
+    this.padding = const EdgeInsets.all(20),
     this.onTap,
     this.backgroundColor,
     this.borderColor,
@@ -28,63 +27,32 @@ class AppCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme =
-        Theme.of(context)
-            .colorScheme;
+    final colorScheme = Theme.of(context).colorScheme;
 
-    final radius =
-    BorderRadius.circular(
-      AppTheme.radiusLarge,
-    );
+    final radius = BorderRadius.circular(AppTheme.radiusLarge);
 
-    final card =
-    Ink(
-      width:
-      double.infinity,
+    final card = Ink(
+      width: double.infinity,
 
-      padding:
-      padding,
+      padding: padding,
 
-      decoration:
-      BoxDecoration(
-        color:
-        backgroundColor ??
-            colorScheme.surface,
+      decoration: BoxDecoration(
+        color: backgroundColor ?? colorScheme.surface,
 
-        borderRadius:
-        radius,
+        borderRadius: radius,
 
-        border:
-        Border.all(
-          color:
-          borderColor ??
-              colorScheme
-                  .outlineVariant,
-        ),
+        border: Border.all(color: borderColor ?? colorScheme.outlineVariant),
 
-        boxShadow:
-        showShadow
-            ? AppTheme.softShadow
-            : null,
+        boxShadow: showShadow ? AppTheme.softShadow : null,
       ),
 
-      child:
-      child,
+      child: child,
     );
 
     if (onTap == null) {
       return card;
     }
 
-    return AppPressScale(
-      onTap:
-      onTap,
-
-      borderRadius:
-      radius,
-
-      child:
-      card,
-    );
+    return AppPressScale(onTap: onTap, borderRadius: radius, child: card);
   }
 }

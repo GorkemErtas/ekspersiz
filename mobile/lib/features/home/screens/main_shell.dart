@@ -57,10 +57,9 @@ class _MainShellState extends State<MainShell> {
   void initState() {
     super.initState();
 
-    _sessionSubscription =
-        SessionManager.unauthorizedStream.listen((_) {
-          _handleSessionExpired();
-        });
+    _sessionSubscription = SessionManager.unauthorizedStream.listen((_) {
+      _handleSessionExpired();
+    });
   }
 
   void _selectTab(int index) {
@@ -79,10 +78,8 @@ class _MainShellState extends State<MainShell> {
     }
 
     Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute<void>(
-        builder: (_) => const LoginScreen(),
-      ),
-          (route) => false,
+      MaterialPageRoute<void>(builder: (_) => const LoginScreen()),
+      (route) => false,
     );
   }
 
@@ -96,8 +93,7 @@ class _MainShellState extends State<MainShell> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final isDesktop =
-            constraints.maxWidth >= _desktopBreakpoint;
+        final isDesktop = constraints.maxWidth >= _desktopBreakpoint;
 
         if (isDesktop) {
           return _DesktopShell(
@@ -134,30 +130,17 @@ class _MobileShell extends StatelessWidget {
 
     return Scaffold(
       extendBody: true,
-      body: IndexedStack(
-        index: selectedIndex,
-        children: screens,
-      ),
+      body: IndexedStack(index: selectedIndex, children: screens),
       bottomNavigationBar: SafeArea(
         top: false,
-        minimum: const EdgeInsets.fromLTRB(
-          14,
-          0,
-          14,
-          10,
-        ),
+        minimum: const EdgeInsets.fromLTRB(14, 0, 14, 10),
         child: Container(
           height: 76,
-          padding: const EdgeInsets.symmetric(
-            horizontal: 7,
-            vertical: 5,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 5),
           decoration: BoxDecoration(
             color: colorScheme.surface,
             borderRadius: BorderRadius.circular(26),
-            border: Border.all(
-              color: colorScheme.outlineVariant,
-            ),
+            border: Border.all(color: colorScheme.outlineVariant),
             boxShadow: AppTheme.elevatedShadow,
           ),
           child: Row(
@@ -239,10 +222,7 @@ class _NavigationItem extends StatelessWidget {
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 220),
             curve: Curves.easeOutCubic,
-            padding: const EdgeInsets.symmetric(
-              horizontal: 4,
-              vertical: 5,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 5),
             decoration: BoxDecoration(
               color: selected
                   ? colorScheme.primaryContainer
@@ -273,9 +253,7 @@ class _NavigationItem extends StatelessWidget {
                     style: textTheme.labelSmall?.copyWith(
                       height: 1.0,
                       fontSize: 10.5,
-                      fontWeight: selected
-                          ? FontWeight.w900
-                          : FontWeight.w600,
+                      fontWeight: selected ? FontWeight.w900 : FontWeight.w600,
                       color: selected
                           ? colorScheme.primary
                           : colorScheme.onSurfaceVariant,
@@ -315,32 +293,22 @@ class _DesktopShell extends StatelessWidget {
               child: Container(
                 decoration: BoxDecoration(
                   color: colorScheme.surface,
-                  borderRadius: BorderRadius.circular(
-                    AppTheme.radiusLarge,
-                  ),
-                  border: Border.all(
-                    color: colorScheme.outlineVariant,
-                  ),
+                  borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+                  border: Border.all(color: colorScheme.outlineVariant),
                   boxShadow: AppTheme.softShadow,
                 ),
                 child: NavigationRail(
                   selectedIndex: selectedIndex,
-                  onDestinationSelected:
-                  onDestinationSelected,
-                  labelType:
-                  NavigationRailLabelType.all,
+                  onDestinationSelected: onDestinationSelected,
+                  labelType: NavigationRailLabelType.all,
                   groupAlignment: -0.72,
                   leading: Padding(
-                    padding: const EdgeInsets.only(
-                      top: 18,
-                      bottom: 30,
-                    ),
+                    padding: const EdgeInsets.only(top: 18, bottom: 30),
                     child: Container(
                       width: 54,
                       height: 54,
                       decoration: BoxDecoration(
-                        gradient:
-                        const LinearGradient(
+                        gradient: const LinearGradient(
                           colors: [
                             AppTheme.primaryColor,
                             AppTheme.secondaryColor,
@@ -348,10 +316,8 @@ class _DesktopShell extends StatelessWidget {
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
-                        borderRadius:
-                        BorderRadius.circular(18),
-                        boxShadow:
-                        AppTheme.primaryShadow,
+                        borderRadius: BorderRadius.circular(18),
+                        boxShadow: AppTheme.primaryShadow,
                       ),
                       child: const Icon(
                         Icons.car_crash_rounded,
@@ -362,39 +328,23 @@ class _DesktopShell extends StatelessWidget {
                   ),
                   destinations: const [
                     NavigationRailDestination(
-                      icon: Icon(
-                        Icons.home_outlined,
-                      ),
-                      selectedIcon: Icon(
-                        Icons.home_rounded,
-                      ),
+                      icon: Icon(Icons.home_outlined),
+                      selectedIcon: Icon(Icons.home_rounded),
                       label: Text('Ana Sayfa'),
                     ),
                     NavigationRailDestination(
-                      icon: Icon(
-                        Icons.directions_car_outlined,
-                      ),
-                      selectedIcon: Icon(
-                        Icons.directions_car_rounded,
-                      ),
+                      icon: Icon(Icons.directions_car_outlined),
+                      selectedIcon: Icon(Icons.directions_car_rounded),
                       label: Text('Araçlar'),
                     ),
                     NavigationRailDestination(
-                      icon: Icon(
-                        Icons.description_outlined,
-                      ),
-                      selectedIcon: Icon(
-                        Icons.description_rounded,
-                      ),
+                      icon: Icon(Icons.description_outlined),
+                      selectedIcon: Icon(Icons.description_rounded),
                       label: Text('Analizler'),
                     ),
                     NavigationRailDestination(
-                      icon: Icon(
-                        Icons.person_outline_rounded,
-                      ),
-                      selectedIcon: Icon(
-                        Icons.person_rounded,
-                      ),
+                      icon: Icon(Icons.person_outline_rounded),
+                      selectedIcon: Icon(Icons.person_rounded),
                       label: Text('Profil'),
                     ),
                   ],
@@ -403,10 +353,7 @@ class _DesktopShell extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: IndexedStack(
-              index: selectedIndex,
-              children: screens,
-            ),
+            child: IndexedStack(index: selectedIndex, children: screens),
           ),
         ],
       ),

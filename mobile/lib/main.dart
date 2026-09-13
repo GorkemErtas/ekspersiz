@@ -6,15 +6,11 @@ import 'features/auth/screens/splash_screen.dart';
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
-  runApp(
-    const VehicleInspectorApp(),
-  );
+  runApp(const VehicleInspectorApp());
 }
 
 class VehicleInspectorApp extends StatelessWidget {
-  const VehicleInspectorApp({
-    super.key,
-  });
+  const VehicleInspectorApp({super.key});
 
   @override
   Widget build(BuildContext context) {

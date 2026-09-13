@@ -11,69 +11,51 @@ import '../models/vehicle.dart';
 import '../services/vehicle_service.dart';
 
 class AddVehicleScreen extends StatefulWidget {
-  const AddVehicleScreen({
-    super.key,
-    this.vehicle,
-  });
+  const AddVehicleScreen({super.key, this.vehicle});
 
   final Vehicle? vehicle;
 
   bool get isEditing => vehicle != null;
 
   @override
-  State<AddVehicleScreen> createState() =>
-      _AddVehicleScreenState();
+  State<AddVehicleScreen> createState() => _AddVehicleScreenState();
 }
 
-class _AddVehicleScreenState
-    extends State<AddVehicleScreen> {
+class _AddVehicleScreenState extends State<AddVehicleScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  final _plateController =
-  TextEditingController();
+  final _plateController = TextEditingController();
 
-  final _brandController =
-  TextEditingController();
+  final _brandController = TextEditingController();
 
-  final _modelController =
-  TextEditingController();
+  final _modelController = TextEditingController();
 
-  final _modelYearController =
-  TextEditingController();
+  final _modelYearController = TextEditingController();
 
-  final _mileageController =
-  TextEditingController();
+  final _mileageController = TextEditingController();
 
-  final VehicleService _vehicleService =
-  const VehicleService();
+  final VehicleService _vehicleService = const VehicleService();
 
   bool _isLoading = false;
 
-  bool get _isEditing =>
-      widget.vehicle != null;
+  bool get _isEditing => widget.vehicle != null;
 
   @override
   void initState() {
     super.initState();
 
-    final vehicle =
-        widget.vehicle;
+    final vehicle = widget.vehicle;
 
     if (vehicle != null) {
-      _plateController.text =
-          vehicle.plate;
+      _plateController.text = vehicle.plate;
 
-      _brandController.text =
-          vehicle.brand;
+      _brandController.text = vehicle.brand;
 
-      _modelController.text =
-          vehicle.model;
+      _modelController.text = vehicle.model;
 
-      _modelYearController.text =
-          vehicle.modelYear.toString();
+      _modelYearController.text = vehicle.modelYear.toString();
 
-      _mileageController.text =
-          vehicle.mileage.toString();
+      _mileageController.text = vehicle.mileage.toString();
     }
   }
 
@@ -95,23 +77,15 @@ class _AddVehicleScreenState
 
     FocusScope.of(context).unfocus();
 
-    if (!(_formKey.currentState?.validate() ??
-        false)) {
+    if (!(_formKey.currentState?.validate() ?? false)) {
       return;
     }
 
-    final modelYear =
-    int.tryParse(
-      _modelYearController.text.trim(),
-    );
+    final modelYear = int.tryParse(_modelYearController.text.trim());
 
-    final mileage =
-    int.tryParse(
-      _mileageController.text.trim(),
-    );
+    final mileage = int.tryParse(_mileageController.text.trim());
 
-    if (modelYear == null ||
-        mileage == null) {
+    if (modelYear == null || mileage == null) {
       return;
     }
 
@@ -123,34 +97,21 @@ class _AddVehicleScreenState
       final Vehicle vehicle;
 
       if (_isEditing) {
-        vehicle =
-        await _vehicleService.updateVehicle(
-          vehicleId:
-          widget.vehicle!.id,
-          plate:
-          _plateController.text,
-          brand:
-          _brandController.text,
-          model:
-          _modelController.text,
-          modelYear:
-          modelYear,
-          mileage:
-          mileage,
+        vehicle = await _vehicleService.updateVehicle(
+          vehicleId: widget.vehicle!.id,
+          plate: _plateController.text,
+          brand: _brandController.text,
+          model: _modelController.text,
+          modelYear: modelYear,
+          mileage: mileage,
         );
       } else {
-        vehicle =
-        await _vehicleService.createVehicle(
-          plate:
-          _plateController.text,
-          brand:
-          _brandController.text,
-          model:
-          _modelController.text,
-          modelYear:
-          modelYear,
-          mileage:
-          mileage,
+        vehicle = await _vehicleService.createVehicle(
+          plate: _plateController.text,
+          brand: _brandController.text,
+          model: _modelController.text,
+          modelYear: modelYear,
+          mileage: mileage,
         );
       }
 
@@ -158,34 +119,21 @@ class _AddVehicleScreenState
         return;
       }
 
-      Navigator.of(context).pop<Vehicle>(
-        vehicle,
-      );
+      Navigator.of(context).pop<Vehicle>(vehicle);
     } catch (exception) {
       if (!mounted) {
         return;
       }
 
-      final message =
-      switch (exception) {
-        ApiException() =>
-        exception.message,
-        FormatException() =>
-        exception.message,
-        _ =>
-        _isEditing
-            ? 'Araç güncellenemedi.'
-            : 'Araç kaydedilemedi.',
+      final message = switch (exception) {
+        ApiException() => exception.message,
+        FormatException() => exception.message,
+        _ => _isEditing ? 'Araç güncellenemedi.' : 'Araç kaydedilemedi.',
       };
 
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
-        ..showSnackBar(
-          SnackBar(
-            content:
-            Text(message),
-          ),
-        );
+        ..showSnackBar(SnackBar(content: Text(message)));
     } finally {
       if (mounted) {
         setState(() {
@@ -195,14 +143,8 @@ class _AddVehicleScreenState
     }
   }
 
-  String? _validatePlate(
-      String? value,
-      ) {
-    final plate =
-    (value ?? '')
-        .trim()
-        .toUpperCase()
-        .replaceAll(
+  String? _validatePlate(String? value) {
+    final plate = (value ?? '').trim().toUpperCase().replaceAll(
       RegExp(r'[^0-9A-Z]'),
       '',
     );
@@ -211,10 +153,7 @@ class _AddVehicleScreenState
       return 'Plaka girin.';
     }
 
-    final pattern =
-    RegExp(
-      r'^[0-9]{2}[A-Z]{1,3}[0-9]{2,4}$',
-    );
+    final pattern = RegExp(r'^[0-9]{2}[A-Z]{1,3}[0-9]{2,4}$');
 
     if (!pattern.hasMatch(plate)) {
       return 'Geçerli bir plaka girin. Örnek: 35 ABC 123';
@@ -223,11 +162,8 @@ class _AddVehicleScreenState
     return null;
   }
 
-  String? _validateBrand(
-      String? value,
-      ) {
-    final brand =
-        value?.trim() ?? '';
+  String? _validateBrand(String? value) {
+    final brand = value?.trim() ?? '';
 
     if (brand.isEmpty) {
       return 'Marka girin.';
@@ -240,11 +176,8 @@ class _AddVehicleScreenState
     return null;
   }
 
-  String? _validateModel(
-      String? value,
-      ) {
-    final model =
-        value?.trim() ?? '';
+  String? _validateModel(String? value) {
+    final model = value?.trim() ?? '';
 
     if (model.isEmpty) {
       return 'Model girin.';
@@ -257,46 +190,32 @@ class _AddVehicleScreenState
     return null;
   }
 
-  String? _validateModelYear(
-      String? value,
-      ) {
-    final year =
-    int.tryParse(
-      value?.trim() ?? '',
-    );
+  String? _validateModelYear(String? value) {
+    final year = int.tryParse(value?.trim() ?? '');
 
     if (year == null) {
       return 'Geçerli bir model yılı girin.';
     }
 
-    final currentYear =
-        DateTime.now().year;
+    final currentYear = DateTime.now().year;
 
-    final maximumYear =
-        currentYear + 1;
+    final maximumYear = currentYear + 1;
 
-    if (year < 1950 ||
-        year > maximumYear) {
+    if (year < 1950 || year > maximumYear) {
       return 'Model yılı 1950-$maximumYear arasında olmalıdır.';
     }
 
     return null;
   }
 
-  String? _validateMileage(
-      String? value,
-      ) {
-    final mileage =
-    int.tryParse(
-      value?.trim() ?? '',
-    );
+  String? _validateMileage(String? value) {
+    final mileage = int.tryParse(value?.trim() ?? '');
 
     if (mileage == null) {
       return 'Geçerli kilometre girin.';
     }
 
-    if (mileage < 0 ||
-        mileage > 2000000) {
+    if (mileage < 0 || mileage > 2000000) {
       return 'Kilometre 0-2.000.000 arasında olmalıdır.';
     }
 
@@ -304,331 +223,191 @@ class _AddVehicleScreenState
   }
 
   @override
-  Widget build(
-      BuildContext context,
-      ) {
-    final colorScheme =
-        Theme.of(context).colorScheme;
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
 
-    final textTheme =
-        Theme.of(context).textTheme;
+    final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          _isEditing
-              ? 'Araç Düzenle'
-              : 'Araç Ekle',
-        ),
-      ),
+      appBar: AppBar(title: Text(_isEditing ? 'Araç Düzenle' : 'Araç Ekle')),
 
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
-            constraints:
-            const BoxConstraints(
-              maxWidth: 760,
-            ),
+            constraints: const BoxConstraints(maxWidth: 760),
 
             child: Form(
               key: _formKey,
 
               child: ListView(
-                padding:
-                const EdgeInsets.fromLTRB(
-                  20,
-                  16,
-                  20,
-                  36,
-                ),
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 36),
 
                 children: [
                   AppPageHeader(
-                    icon:
-                    Icons
-                        .directions_car_filled_rounded,
-                    title:
-                    _isEditing
+                    icon: Icons.directions_car_filled_rounded,
+                    title: _isEditing
                         ? 'Araç bilgilerini düzenleyin'
                         : 'Yeni aracınızı ekleyin',
-                    subtitle:
-                    _isEditing
+                    subtitle: _isEditing
                         ? 'Aracınıza ait marka, model, plaka, model yılı ve kilometre bilgilerini güncelleyebilirsiniz.'
                         : 'Araç bilgileri, hasar analizlerinin doğru araçla eşleştirilmesi için kullanılır.',
                   ),
 
-                  const SizedBox(
-                    height: 24,
-                  ),
+                  const SizedBox(height: 24),
 
                   AppCard(
-                    padding:
-                    const EdgeInsets.all(
-                      20,
-                    ),
+                    padding: const EdgeInsets.all(20),
 
                     child: Column(
-                      crossAxisAlignment:
-                      CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const AppSectionHeader(
-                          icon:
-                          Icons.badge_outlined,
-                          title:
-                          'Araç kimliği',
-                          subtitle:
-                          'Plaka ve temel araç bilgileri',
+                          icon: Icons.badge_outlined,
+                          title: 'Araç kimliği',
+                          subtitle: 'Plaka ve temel araç bilgileri',
                         ),
 
-                        const SizedBox(
-                          height: 22,
-                        ),
+                        const SizedBox(height: 22),
 
                         TextFormField(
-                          controller:
-                          _plateController,
-                          textCapitalization:
-                          TextCapitalization
-                              .characters,
-                          textInputAction:
-                          TextInputAction.next,
-                          autocorrect:
-                          false,
-                          enableSuggestions:
-                          false,
-                          decoration:
-                          const InputDecoration(
-                            labelText:
-                            'Plaka',
-                            hintText:
-                            '35 ABC 123',
-                            prefixIcon:
-                            Icon(
-                              Icons.badge_outlined,
-                            ),
+                          controller: _plateController,
+                          textCapitalization: TextCapitalization.characters,
+                          textInputAction: TextInputAction.next,
+                          autocorrect: false,
+                          enableSuggestions: false,
+                          decoration: const InputDecoration(
+                            labelText: 'Plaka',
+                            hintText: '35 ABC 123',
+                            prefixIcon: Icon(Icons.badge_outlined),
                           ),
-                          validator:
-                          _validatePlate,
+                          validator: _validatePlate,
                         ),
 
-                        const SizedBox(
-                          height: 16,
-                        ),
+                        const SizedBox(height: 16),
 
                         TextFormField(
-                          controller:
-                          _brandController,
-                          textCapitalization:
-                          TextCapitalization
-                              .words,
-                          textInputAction:
-                          TextInputAction.next,
-                          decoration:
-                          const InputDecoration(
-                            labelText:
-                            'Marka',
-                            hintText:
-                            'Honda',
-                            prefixIcon:
-                            Icon(
-                              Icons.factory_outlined,
-                            ),
+                          controller: _brandController,
+                          textCapitalization: TextCapitalization.words,
+                          textInputAction: TextInputAction.next,
+                          decoration: const InputDecoration(
+                            labelText: 'Marka',
+                            hintText: 'Honda',
+                            prefixIcon: Icon(Icons.factory_outlined),
                           ),
-                          validator:
-                          _validateBrand,
+                          validator: _validateBrand,
                         ),
 
-                        const SizedBox(
-                          height: 16,
-                        ),
+                        const SizedBox(height: 16),
 
                         TextFormField(
-                          controller:
-                          _modelController,
-                          textCapitalization:
-                          TextCapitalization
-                              .words,
-                          textInputAction:
-                          TextInputAction.next,
-                          decoration:
-                          const InputDecoration(
-                            labelText:
-                            'Model',
-                            hintText:
-                            'Civic',
-                            prefixIcon:
-                            Icon(
-                              Icons
-                                  .directions_car_outlined,
-                            ),
+                          controller: _modelController,
+                          textCapitalization: TextCapitalization.words,
+                          textInputAction: TextInputAction.next,
+                          decoration: const InputDecoration(
+                            labelText: 'Model',
+                            hintText: 'Civic',
+                            prefixIcon: Icon(Icons.directions_car_outlined),
                           ),
-                          validator:
-                          _validateModel,
+                          validator: _validateModel,
                         ),
                       ],
                     ),
                   ),
 
-                  const SizedBox(
-                    height: 16,
-                  ),
+                  const SizedBox(height: 16),
 
                   AppCard(
-                    padding:
-                    const EdgeInsets.all(
-                      20,
-                    ),
+                    padding: const EdgeInsets.all(20),
 
                     child: Column(
-                      crossAxisAlignment:
-                      CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const AppSectionHeader(
-                          icon:
-                          Icons.analytics_outlined,
-                          title:
-                          'Araç detayları',
-                          subtitle:
-                          'Model yılı ve güncel kilometre bilgisi',
+                          icon: Icons.analytics_outlined,
+                          title: 'Araç detayları',
+                          subtitle: 'Model yılı ve güncel kilometre bilgisi',
                         ),
 
-                        const SizedBox(
-                          height: 22,
-                        ),
+                        const SizedBox(height: 22),
 
                         LayoutBuilder(
-                          builder:
-                              (
-                              context,
-                              constraints,
-                              ) {
-                            final isWide =
-                                constraints.maxWidth >
-                                    520;
+                          builder: (context, constraints) {
+                            final isWide = constraints.maxWidth > 520;
 
                             if (!isWide) {
                               return Column(
                                 children: [
                                   TextFormField(
-                                    controller:
-                                    _modelYearController,
-                                    keyboardType:
-                                    TextInputType.number,
-                                    textInputAction:
-                                    TextInputAction.next,
-                                    decoration:
-                                    const InputDecoration(
-                                      labelText:
-                                      'Model Yılı',
-                                      hintText:
-                                      '2020',
-                                      prefixIcon:
-                                      Icon(
-                                        Icons
-                                            .calendar_today_outlined,
+                                    controller: _modelYearController,
+                                    keyboardType: TextInputType.number,
+                                    textInputAction: TextInputAction.next,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Model Yılı',
+                                      hintText: '2020',
+                                      prefixIcon: Icon(
+                                        Icons.calendar_today_outlined,
                                       ),
                                     ),
-                                    validator:
-                                    _validateModelYear,
+                                    validator: _validateModelYear,
                                   ),
 
-                                  const SizedBox(
-                                    height: 16,
-                                  ),
+                                  const SizedBox(height: 16),
 
                                   TextFormField(
-                                    controller:
-                                    _mileageController,
-                                    keyboardType:
-                                    TextInputType.number,
-                                    textInputAction:
-                                    TextInputAction.done,
-                                    onFieldSubmitted:
-                                        (_) {
+                                    controller: _mileageController,
+                                    keyboardType: TextInputType.number,
+                                    textInputAction: TextInputAction.done,
+                                    onFieldSubmitted: (_) {
                                       _saveVehicle();
                                     },
-                                    decoration:
-                                    const InputDecoration(
-                                      labelText:
-                                      'Kilometre',
-                                      hintText:
-                                      '145000',
-                                      suffixText:
-                                      'km',
-                                      prefixIcon:
-                                      Icon(
-                                        Icons.speed_outlined,
-                                      ),
+                                    decoration: const InputDecoration(
+                                      labelText: 'Kilometre',
+                                      hintText: '145000',
+                                      suffixText: 'km',
+                                      prefixIcon: Icon(Icons.speed_outlined),
                                     ),
-                                    validator:
-                                    _validateMileage,
+                                    validator: _validateMileage,
                                   ),
                                 ],
                               );
                             }
 
                             return Row(
-                              crossAxisAlignment:
-                              CrossAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Expanded(
-                                  child:
-                                  TextFormField(
-                                    controller:
-                                    _modelYearController,
-                                    keyboardType:
-                                    TextInputType.number,
-                                    textInputAction:
-                                    TextInputAction.next,
-                                    decoration:
-                                    const InputDecoration(
-                                      labelText:
-                                      'Model Yılı',
-                                      hintText:
-                                      '2020',
-                                      prefixIcon:
-                                      Icon(
-                                        Icons
-                                            .calendar_today_outlined,
+                                  child: TextFormField(
+                                    controller: _modelYearController,
+                                    keyboardType: TextInputType.number,
+                                    textInputAction: TextInputAction.next,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Model Yılı',
+                                      hintText: '2020',
+                                      prefixIcon: Icon(
+                                        Icons.calendar_today_outlined,
                                       ),
                                     ),
-                                    validator:
-                                    _validateModelYear,
+                                    validator: _validateModelYear,
                                   ),
                                 ),
 
-                                const SizedBox(
-                                  width: 14,
-                                ),
+                                const SizedBox(width: 14),
 
                                 Expanded(
-                                  child:
-                                  TextFormField(
-                                    controller:
-                                    _mileageController,
-                                    keyboardType:
-                                    TextInputType.number,
-                                    textInputAction:
-                                    TextInputAction.done,
-                                    onFieldSubmitted:
-                                        (_) {
+                                  child: TextFormField(
+                                    controller: _mileageController,
+                                    keyboardType: TextInputType.number,
+                                    textInputAction: TextInputAction.done,
+                                    onFieldSubmitted: (_) {
                                       _saveVehicle();
                                     },
-                                    decoration:
-                                    const InputDecoration(
-                                      labelText:
-                                      'Kilometre',
-                                      hintText:
-                                      '145000',
-                                      suffixText:
-                                      'km',
-                                      prefixIcon:
-                                      Icon(
-                                        Icons.speed_outlined,
-                                      ),
+                                    decoration: const InputDecoration(
+                                      labelText: 'Kilometre',
+                                      hintText: '145000',
+                                      suffixText: 'km',
+                                      prefixIcon: Icon(Icons.speed_outlined),
                                     ),
-                                    validator:
-                                    _validateMileage,
+                                    validator: _validateMileage,
                                   ),
                                 ),
                               ],
@@ -639,55 +418,36 @@ class _AddVehicleScreenState
                     ),
                   ),
 
-                  const SizedBox(
-                    height: 16,
-                  ),
+                  const SizedBox(height: 16),
 
                   Container(
-                    padding:
-                    const EdgeInsets.all(
-                      16,
-                    ),
-                    decoration:
-                    BoxDecoration(
-                      color:
-                      colorScheme
-                          .primaryContainer
-                          .withValues(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: colorScheme.primaryContainer.withValues(
                         alpha: 0.42,
                       ),
-                      borderRadius:
-                      BorderRadius.circular(
+                      borderRadius: BorderRadius.circular(
                         AppTheme.radiusMedium,
                       ),
                     ),
                     child: Row(
-                      crossAxisAlignment:
-                      CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Icon(
-                          Icons
-                              .info_outline_rounded,
-                          color:
-                          colorScheme.primary,
+                          Icons.info_outline_rounded,
+                          color: colorScheme.primary,
                           size: 21,
                         ),
 
-                        const SizedBox(
-                          width: 12,
-                        ),
+                        const SizedBox(width: 12),
 
                         Expanded(
                           child: Text(
                             _isEditing
                                 ? 'Yaptığınız değişiklikler mevcut analiz geçmişinizi silmez.'
                                 : 'Araç bilgilerinizi doğru girmeniz, analiz geçmişinizi araç bazında takip etmenizi kolaylaştırır.',
-                            style:
-                            textTheme.bodyMedium
-                                ?.copyWith(
-                              color:
-                              colorScheme
-                                  .onSurfaceVariant,
+                            style: textTheme.bodyMedium?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
                               height: 1.45,
                             ),
                           ),
@@ -696,23 +456,15 @@ class _AddVehicleScreenState
                     ),
                   ),
 
-                  const SizedBox(
-                    height: 26,
-                  ),
+                  const SizedBox(height: 26),
 
                   PrimaryButton(
-                    label:
-                    _isEditing
+                    label: _isEditing
                         ? 'Değişiklikleri Kaydet'
                         : 'Aracı Kaydet',
-                    icon:
-                    _isEditing
-                        ? Icons.save_rounded
-                        : Icons.check_rounded,
-                    isLoading:
-                    _isLoading,
-                    onPressed:
-                    _saveVehicle,
+                    icon: _isEditing ? Icons.save_rounded : Icons.check_rounded,
+                    isLoading: _isLoading,
+                    onPressed: _saveVehicle,
                   ),
                 ],
               ),

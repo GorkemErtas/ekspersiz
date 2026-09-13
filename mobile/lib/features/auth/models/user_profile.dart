@@ -13,16 +13,13 @@ class UserProfile {
   final String role;
   final String subscriptionPlan;
 
-  factory UserProfile.fromJson(
-      Map<String, dynamic> json,
-      ) {
+  factory UserProfile.fromJson(Map<String, dynamic> json) {
     return UserProfile(
       id: (json['id'] as num?)?.toInt() ?? 0,
       fullName: json['fullName'] as String? ?? '',
       email: json['email'] as String? ?? '',
       role: json['role'] as String? ?? 'USER',
-      subscriptionPlan:
-      json['subscriptionPlan'] as String? ?? 'FREE',
+      subscriptionPlan: json['subscriptionPlan'] as String? ?? 'FREE',
     );
   }
 }

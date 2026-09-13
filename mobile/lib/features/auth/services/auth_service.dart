@@ -5,9 +5,7 @@ import '../models/auth_response.dart';
 import '../models/user_profile.dart';
 
 class AuthService {
-  const AuthService({
-    this.apiClient = const ApiClient(),
-  });
+  const AuthService({this.apiClient = const ApiClient()});
 
   final ApiClient apiClient;
 
@@ -20,22 +18,15 @@ class AuthService {
         '/auth/login',
         includeAuth: false,
         clearTokenOnUnauthorized: false,
-        body: {
-          'email': email.trim().toLowerCase(),
-          'password': password,
-        },
+        body: {'email': email.trim().toLowerCase(), 'password': password},
       );
 
       if (response is! Map) {
-        throw const FormatException(
-          'Sunucudan geçersiz giriş yanıtı alındı.',
-        );
+        throw const FormatException('Sunucudan geçersiz giriş yanıtı alındı.');
       }
 
       final authResponse = AuthResponse.fromJson(
-        Map<String, dynamic>.from(
-          response,
-        ),
+        Map<String, dynamic>.from(response),
       );
 
       if (authResponse.accessToken.trim().isEmpty) {
@@ -44,9 +35,7 @@ class AuthService {
         );
       }
 
-      await TokenStorage.saveAccessToken(
-        authResponse.accessToken,
-      );
+      await TokenStorage.saveAccessToken(authResponse.accessToken);
 
       return authResponse;
     } on ApiException catch (exception) {
@@ -79,21 +68,13 @@ class AuthService {
   }
 
   Future<UserProfile> getCurrentUser() async {
-    final response = await apiClient.get(
-      '/auth/me',
-    );
+    final response = await apiClient.get('/auth/me');
 
     if (response is! Map) {
-      throw const FormatException(
-        'Kullanıcı bilgileri alınamadı.',
-      );
+      throw const FormatException('Kullanıcı bilgileri alınamadı.');
     }
 
-    return UserProfile.fromJson(
-      Map<String, dynamic>.from(
-        response,
-      ),
-    );
+    return UserProfile.fromJson(Map<String, dynamic>.from(response));
   }
 
   Future<void> logout() async {

@@ -23,14 +23,11 @@ class ProfileScreen extends StatefulWidget {
   final String subscriptionPlan;
 
   @override
-  State<ProfileScreen> createState() =>
-      _ProfileScreenState();
+  State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
-class _ProfileScreenState
-    extends State<ProfileScreen> {
-  final AuthService _authService =
-  const AuthService();
+class _ProfileScreenState extends State<ProfileScreen> {
+  final AuthService _authService = const AuthService();
 
   bool _isLoggingOut = false;
 
@@ -69,46 +66,34 @@ class _ProfileScreenState
   }
 
   Future<void> _logout() async {
-    final shouldLogout =
-    await showDialog<bool>(
+    final shouldLogout = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text(
-            'Çıkış yapılsın mı?',
-          ),
+          title: const Text('Çıkış yapılsın mı?'),
           content: const Text(
             'Hesabınızdan çıkış yapmak '
-                'istediğinize emin misiniz?',
+            'istediğinize emin misiniz?',
           ),
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.of(
-                  dialogContext,
-                ).pop(false);
+                Navigator.of(dialogContext).pop(false);
               },
-              child: const Text(
-                'İptal',
-              ),
+              child: const Text('İptal'),
             ),
             FilledButton(
               onPressed: () {
-                Navigator.of(
-                  dialogContext,
-                ).pop(true);
+                Navigator.of(dialogContext).pop(true);
               },
-              child: const Text(
-                'Çıkış Yap',
-              ),
+              child: const Text('Çıkış Yap'),
             ),
           ],
         );
       },
     );
 
-    if (shouldLogout != true ||
-        !mounted) {
+    if (shouldLogout != true || !mounted) {
       return;
     }
 
@@ -123,13 +108,9 @@ class _ProfileScreenState
         return;
       }
 
-      Navigator.of(context)
-          .pushAndRemoveUntil(
-        MaterialPageRoute<void>(
-          builder: (_) =>
-          const LoginScreen(),
-        ),
-            (route) => false,
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute<void>(builder: (_) => const LoginScreen()),
+        (route) => false,
       );
     } catch (_) {
       if (!mounted) {
@@ -144,11 +125,8 @@ class _ProfileScreenState
         ..hideCurrentSnackBar()
         ..showSnackBar(
           const SnackBar(
-            content: Text(
-              'Çıkış işlemi tamamlanamadı.',
-            ),
-            behavior:
-            SnackBarBehavior.floating,
+            content: Text('Çıkış işlemi tamamlanamadı.'),
+            behavior: SnackBarBehavior.floating,
           ),
         );
     }
@@ -157,12 +135,8 @@ class _ProfileScreenState
   String _initials() {
     final parts = widget.fullName
         .trim()
-        .split(
-      RegExp(r'\s+'),
-    )
-        .where(
-          (part) => part.isNotEmpty,
-    )
+        .split(RegExp(r'\s+'))
+        .where((part) => part.isNotEmpty)
         .toList();
 
     if (parts.isEmpty) {
@@ -170,276 +144,161 @@ class _ProfileScreenState
     }
 
     if (parts.length == 1) {
-      return parts.first
-          .substring(0, 1)
-          .toUpperCase();
+      return parts.first.substring(0, 1).toUpperCase();
     }
 
-    return (
-        parts.first.substring(0, 1) +
-            parts.last.substring(0, 1)
-    ).toUpperCase();
+    return (parts.first.substring(0, 1) + parts.last.substring(0, 1))
+        .toUpperCase();
   }
 
   @override
-  Widget build(
-      BuildContext context,
-      ) {
-    final colorScheme =
-        Theme.of(context).colorScheme;
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
 
-    final textTheme =
-        Theme.of(context).textTheme;
+    final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Profil',
-        ),
-      ),
+      appBar: AppBar(title: const Text('Profil')),
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
-            constraints:
-            const BoxConstraints(
-              maxWidth:
-              AppTheme.maxContentWidth,
+            constraints: const BoxConstraints(
+              maxWidth: AppTheme.maxContentWidth,
             ),
             child: ListView(
-              padding:
-              AppTheme.pagePadding,
+              padding: AppTheme.pagePadding,
               children: [
                 AppCard(
                   showShadow: false,
-                  padding:
-                  const EdgeInsets.all(
-                    24,
-                  ),
+                  padding: const EdgeInsets.all(24),
                   child: Column(
                     children: [
                       Container(
                         width: 96,
                         height: 96,
-                        decoration:
-                        BoxDecoration(
-                          gradient:
-                          const LinearGradient(
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
                             colors: [
-                              AppTheme
-                                  .primaryColor,
-                              AppTheme
-                                  .secondaryColor,
+                              AppTheme.primaryColor,
+                              AppTheme.secondaryColor,
                             ],
-                            begin:
-                            Alignment.topLeft,
-                            end:
-                            Alignment.bottomRight,
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
                           ),
-                          borderRadius:
-                          BorderRadius.circular(
-                            30,
-                          ),
+                          borderRadius: BorderRadius.circular(30),
                         ),
-                        alignment:
-                        Alignment.center,
+                        alignment: Alignment.center,
                         child: Text(
                           _initials(),
-                          style:
-                          textTheme
-                              .headlineMedium
-                              ?.copyWith(
-                            color:
-                            Colors.white,
-                            fontWeight:
-                            FontWeight.w900,
+                          style: textTheme.headlineMedium?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w900,
                           ),
                         ),
                       ),
-                      const SizedBox(
-                        height: 18,
-                      ),
+                      const SizedBox(height: 18),
                       Text(
                         widget.fullName,
-                        textAlign:
-                        TextAlign.center,
-                        style:
-                        textTheme
-                            .headlineSmall
-                            ?.copyWith(
-                          fontWeight:
-                          FontWeight.w900,
+                        textAlign: TextAlign.center,
+                        style: textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.w900,
                         ),
                       ),
-                      const SizedBox(
-                        height: 6,
-                      ),
+                      const SizedBox(height: 6),
                       Text(
                         widget.email,
-                        textAlign:
-                        TextAlign.center,
-                        style:
-                        textTheme
-                            .bodyLarge
-                            ?.copyWith(
-                          color:
-                          colorScheme
-                              .onSurfaceVariant,
+                        textAlign: TextAlign.center,
+                        style: textTheme.bodyLarge?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
                         ),
                       ),
-                      const SizedBox(
-                        height: 16,
-                      ),
+                      const SizedBox(height: 16),
                       Wrap(
                         spacing: 8,
                         runSpacing: 8,
-                        alignment:
-                        WrapAlignment.center,
+                        alignment: WrapAlignment.center,
                         children: [
                           AppStatusBadge(
-                            label:
-                            _roleLabel,
-                            color:
-                            colorScheme
-                                .primary,
-                            backgroundColor:
-                            colorScheme
-                                .primaryContainer,
-                            icon:
-                            Icons
-                                .verified_user_outlined,
+                            label: _roleLabel,
+                            color: colorScheme.primary,
+                            backgroundColor: colorScheme.primaryContainer,
+                            icon: Icons.verified_user_outlined,
                           ),
                           AppStatusBadge(
-                            label:
-                            _subscriptionPlanLabel,
-                            color:
-                            _subscriptionColor(),
-                            backgroundColor:
-                            _subscriptionBackgroundColor(),
-                            icon:
-                            Icons
-                                .workspace_premium_outlined,
+                            label: _subscriptionPlanLabel,
+                            color: _subscriptionColor(),
+                            backgroundColor: _subscriptionBackgroundColor(),
+                            icon: Icons.workspace_premium_outlined,
                           ),
                         ],
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(
-                  height: 20,
-                ),
+                const SizedBox(height: 20),
                 AppCard(
                   showShadow: false,
-                  padding:
-                  EdgeInsets.zero,
+                  padding: EdgeInsets.zero,
                   child: Column(
                     children: [
                       _ProfileItem(
-                        icon:
-                        Icons
-                            .person_outline_rounded,
-                        title:
-                        'Ad Soyad',
-                        value:
-                        widget.fullName,
+                        icon: Icons.person_outline_rounded,
+                        title: 'Ad Soyad',
+                        value: widget.fullName,
                       ),
-                      const Divider(
-                        height: 1,
-                        indent: 82,
-                      ),
+                      const Divider(height: 1, indent: 82),
                       _ProfileItem(
-                        icon:
-                        Icons
-                            .mail_outline_rounded,
-                        title:
-                        'E-posta',
-                        value:
-                        widget.email,
+                        icon: Icons.mail_outline_rounded,
+                        title: 'E-posta',
+                        value: widget.email,
                       ),
-                      const Divider(
-                        height: 1,
-                        indent: 82,
-                      ),
+                      const Divider(height: 1, indent: 82),
                       _ProfileItem(
-                        icon:
-                        Icons
-                            .verified_user_outlined,
-                        title:
-                        'Hesap Türü',
-                        value:
-                        _roleLabel,
+                        icon: Icons.verified_user_outlined,
+                        title: 'Hesap Türü',
+                        value: _roleLabel,
                       ),
-                      const Divider(
-                        height: 1,
-                        indent: 82,
-                      ),
+                      const Divider(height: 1, indent: 82),
                       _ProfileItem(
-                        icon:
-                        Icons
-                            .workspace_premium_outlined,
-                        title:
-                        'Abonelik Planı',
-                        value:
-                        _subscriptionPlanLabel,
+                        icon: Icons.workspace_premium_outlined,
+                        title: 'Abonelik Planı',
+                        value: _subscriptionPlanLabel,
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(
-                  height: 20,
-                ),
+                const SizedBox(height: 20),
                 AppCard(
                   showShadow: false,
-                  backgroundColor:
-                  colorScheme
-                      .surfaceContainerLow,
+                  backgroundColor: colorScheme.surfaceContainerLow,
                   child: Row(
-                    crossAxisAlignment:
-                    CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const AppIconBox(
-                        icon:
-                        Icons
-                            .info_outline_rounded,
+                        icon: Icons.info_outline_rounded,
                         size: 42,
                         iconSize: 21,
                         borderRadius: 14,
-                        backgroundColor:
-                        AppTheme.infoSoft,
-                        iconColor:
-                        AppTheme.infoColor,
+                        backgroundColor: AppTheme.infoSoft,
+                        iconColor: AppTheme.infoColor,
                       ),
-                      const SizedBox(
-                        width: 12,
-                      ),
+                      const SizedBox(width: 12),
                       Expanded(
                         child: Column(
-                          crossAxisAlignment:
-                          CrossAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               'Vehicle Inspector',
-                              style:
-                              textTheme
-                                  .titleSmall
-                                  ?.copyWith(
-                                fontWeight:
-                                FontWeight.w900,
+                              style: textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.w900,
                               ),
                             ),
-                            const SizedBox(
-                              height: 4,
-                            ),
+                            const SizedBox(height: 4),
                             Text(
                               'Araç hasarlarını yapay zekâ destekli görüntü analizi ile inceleyin.',
-                              style:
-                              textTheme
-                                  .bodySmall
-                                  ?.copyWith(
-                                color:
-                                colorScheme
-                                    .onSurfaceVariant,
-                                height:
-                                1.45,
+                              style: textTheme.bodySmall?.copyWith(
+                                color: colorScheme.onSurfaceVariant,
+                                height: 1.45,
                               ),
                             ),
                           ],
@@ -448,59 +307,30 @@ class _ProfileScreenState
                     ],
                   ),
                 ),
-                const SizedBox(
-                  height: 24,
-                ),
+                const SizedBox(height: 24),
                 SizedBox(
                   width: double.infinity,
-                  child:
-                  OutlinedButton.icon(
-                    onPressed:
-                    _isLoggingOut
-                        ? null
-                        : _logout,
-                    icon:
-                    _isLoggingOut
+                  child: OutlinedButton.icon(
+                    onPressed: _isLoggingOut ? null : _logout,
+                    icon: _isLoggingOut
                         ? SizedBox(
-                      width: 18,
-                      height: 18,
-                      child:
-                      CircularProgressIndicator(
-                        strokeWidth:
-                        2,
-                        color:
-                        colorScheme
-                            .error,
-                      ),
-                    )
-                        : const Icon(
-                      Icons
-                          .logout_rounded,
-                    ),
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: colorScheme.error,
+                            ),
+                          )
+                        : const Icon(Icons.logout_rounded),
                     label: Text(
-                      _isLoggingOut
-                          ? 'Çıkış yapılıyor...'
-                          : 'Çıkış Yap',
+                      _isLoggingOut ? 'Çıkış yapılıyor...' : 'Çıkış Yap',
                     ),
-                    style:
-                    OutlinedButton
-                        .styleFrom(
-                      foregroundColor:
-                      colorScheme.error,
-                      side:
-                      BorderSide(
-                        color:
-                        colorScheme
-                            .error
-                            .withValues(
-                          alpha: 0.55,
-                        ),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: colorScheme.error,
+                      side: BorderSide(
+                        color: colorScheme.error.withValues(alpha: 0.55),
                       ),
-                      minimumSize:
-                      const Size(
-                        double.infinity,
-                        52,
-                      ),
+                      minimumSize: const Size(double.infinity, 52),
                     ),
                   ),
                 ),
@@ -513,8 +343,7 @@ class _ProfileScreenState
   }
 }
 
-class _ProfileItem
-    extends StatelessWidget {
+class _ProfileItem extends StatelessWidget {
   const _ProfileItem({
     required this.icon,
     required this.title,
@@ -526,59 +355,33 @@ class _ProfileItem
   final String value;
 
   @override
-  Widget build(
-      BuildContext context,
-      ) {
-    final colorScheme =
-        Theme.of(context).colorScheme;
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
 
-    final textTheme =
-        Theme.of(context).textTheme;
+    final textTheme = Theme.of(context).textTheme;
 
     return Padding(
-      padding:
-      const EdgeInsets.symmetric(
-        horizontal: 18,
-        vertical: 16,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
       child: Row(
         children: [
-          AppIconBox(
-            icon: icon,
-            size: 46,
-            iconSize: 22,
-            borderRadius: 14,
-          ),
-          const SizedBox(
-            width: 14,
-          ),
+          AppIconBox(icon: icon, size: 46, iconSize: 22, borderRadius: 14),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
-              crossAxisAlignment:
-              CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   title,
-                  style:
-                  textTheme.bodySmall
-                      ?.copyWith(
-                    color:
-                    colorScheme
-                        .onSurfaceVariant,
-                    fontWeight:
-                    FontWeight.w600,
+                  style: textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(
-                  height: 4,
-                ),
+                const SizedBox(height: 4),
                 Text(
                   value,
-                  style:
-                  textTheme.bodyLarge
-                      ?.copyWith(
-                    fontWeight:
-                    FontWeight.w800,
+                  style: textTheme.bodyLarge?.copyWith(
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
               ],

@@ -5,22 +5,14 @@ class TokenStorage {
 
   static const String _accessTokenKey = 'access_token';
 
-  static const FlutterSecureStorage _storage =
-  FlutterSecureStorage();
+  static const FlutterSecureStorage _storage = FlutterSecureStorage();
 
-  static Future<void> saveAccessToken(
-      String accessToken,
-      ) async {
-    await _storage.write(
-      key: _accessTokenKey,
-      value: accessToken,
-    );
+  static Future<void> saveAccessToken(String accessToken) async {
+    await _storage.write(key: _accessTokenKey, value: accessToken);
   }
 
   static Future<String?> getAccessToken() async {
-    return _storage.read(
-      key: _accessTokenKey,
-    );
+    return _storage.read(key: _accessTokenKey);
   }
 
   static Future<bool> hasAccessToken() async {
@@ -30,9 +22,7 @@ class TokenStorage {
   }
 
   static Future<void> deleteAccessToken() async {
-    await _storage.delete(
-      key: _accessTokenKey,
-    );
+    await _storage.delete(key: _accessTokenKey);
   }
 
   static Future<void> clearAll() async {

@@ -12,23 +12,17 @@ import '../services/inspection_service.dart';
 import 'inspection_result_screen.dart';
 
 class AnalyzingScreen extends StatefulWidget {
-  const AnalyzingScreen({
-    super.key,
-    required this.inspection,
-  });
+  const AnalyzingScreen({super.key, required this.inspection});
 
   final DamageInspection inspection;
 
   @override
-  State<AnalyzingScreen> createState() =>
-      _AnalyzingScreenState();
+  State<AnalyzingScreen> createState() => _AnalyzingScreenState();
 }
 
-class _AnalyzingScreenState
-    extends State<AnalyzingScreen>
+class _AnalyzingScreenState extends State<AnalyzingScreen>
     with SingleTickerProviderStateMixin {
-  final InspectionService _inspectionService =
-  const InspectionService();
+  final InspectionService _inspectionService = const InspectionService();
 
   late final AnimationController _pulseController;
   late final Animation<double> _pulseAnimation;
@@ -42,28 +36,16 @@ class _AnalyzingScreenState
 
     _pulseController = AnimationController(
       vsync: this,
-      duration: const Duration(
-        milliseconds: 1400,
-      ),
+      duration: const Duration(milliseconds: 1400),
     );
 
-    _pulseAnimation = Tween<double>(
-      begin: 0.96,
-      end: 1.04,
-    ).animate(
-      CurvedAnimation(
-        parent: _pulseController,
-        curve: Curves.easeInOut,
-      ),
+    _pulseAnimation = Tween<double>(begin: 0.96, end: 1.04).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
 
-    _pulseController.repeat(
-      reverse: true,
-    );
+    _pulseController.repeat(reverse: true);
 
-    WidgetsBinding.instance.addPostFrameCallback(
-          (_) => _analyze(),
-    );
+    WidgetsBinding.instance.addPostFrameCallback((_) => _analyze());
   }
 
   @override
@@ -79,14 +61,11 @@ class _AnalyzingScreenState
     });
 
     if (!_pulseController.isAnimating) {
-      _pulseController.repeat(
-        reverse: true,
-      );
+      _pulseController.repeat(reverse: true);
     }
 
     try {
-      final analyzedInspection =
-      await _inspectionService.analyzeInspection(
+      final analyzedInspection = await _inspectionService.analyzeInspection(
         widget.inspection.id,
       );
 
@@ -102,8 +81,8 @@ class _AnalyzingScreenState
 
           _errorMessage =
               analyzedInspection.analysisMessage ??
-                  'Hasar analizi tamamlanamadı. '
-                      'Lütfen tekrar deneyin.';
+              'Hasar analizi tamamlanamadı. '
+                  'Lütfen tekrar deneyin.';
         });
 
         return;
@@ -112,9 +91,7 @@ class _AnalyzingScreenState
       Navigator.of(context).pushReplacement(
         MaterialPageRoute<void>(
           builder: (_) =>
-              InspectionResultScreen(
-                inspection: analyzedInspection,
-              ),
+              InspectionResultScreen(inspection: analyzedInspection),
         ),
       );
     } catch (exception) {
@@ -124,8 +101,7 @@ class _AnalyzingScreenState
 
       _pulseController.stop();
 
-      final message =
-      exception is ApiException
+      final message = exception is ApiException
           ? exception.message
           : 'Hasar analizi tamamlanamadı.';
 
@@ -137,9 +113,7 @@ class _AnalyzingScreenState
   }
 
   @override
-  Widget build(
-      BuildContext context,
-      ) {
+  Widget build(BuildContext context) {
     return PopScope(
       canPop: _hasError,
 
@@ -147,41 +121,24 @@ class _AnalyzingScreenState
         body: SafeArea(
           child: Center(
             child: ConstrainedBox(
-              constraints: const BoxConstraints(
-                maxWidth: 760,
-              ),
+              constraints: const BoxConstraints(maxWidth: 760),
 
               child: _hasError
                   ? AppStateView.error(
-                title:
-                'Analiz tamamlanamadı',
-                message:
-                _errorMessage ??
-                    'Beklenmeyen bir hata oluştu.',
-                actionLabel:
-                'Analizi Tekrar Dene',
-                actionIcon:
-                Icons.refresh_rounded,
-                onActionPressed:
-                _analyze,
-              )
+                      title: 'Analiz tamamlanamadı',
+                      message: _errorMessage ?? 'Beklenmeyen bir hata oluştu.',
+                      actionLabel: 'Analizi Tekrar Dene',
+                      actionIcon: Icons.refresh_rounded,
+                      onActionPressed: _analyze,
+                    )
                   : SingleChildScrollView(
-                padding:
-                const EdgeInsets.fromLTRB(
-                  20,
-                  32,
-                  20,
-                  36,
-                ),
+                      padding: const EdgeInsets.fromLTRB(20, 32, 20, 36),
 
-                child:
-                _AnalyzingContent(
-                  inspection:
-                  widget.inspection,
-                  pulseAnimation:
-                  _pulseAnimation,
-                ),
-              ),
+                      child: _AnalyzingContent(
+                        inspection: widget.inspection,
+                        pulseAnimation: _pulseAnimation,
+                      ),
+                    ),
             ),
           ),
         ),
@@ -190,8 +147,7 @@ class _AnalyzingScreenState
   }
 }
 
-class _AnalyzingContent
-    extends StatelessWidget {
+class _AnalyzingContent extends StatelessWidget {
   const _AnalyzingContent({
     required this.inspection,
     required this.pulseAnimation,
@@ -201,14 +157,10 @@ class _AnalyzingContent
   final Animation<double> pulseAnimation;
 
   @override
-  Widget build(
-      BuildContext context,
-      ) {
-    final colorScheme =
-        Theme.of(context).colorScheme;
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
 
-    final textTheme =
-        Theme.of(context).textTheme;
+    final textTheme = Theme.of(context).textTheme;
 
     return Column(
       children: [
@@ -223,19 +175,14 @@ class _AnalyzingContent
 
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [
-                  AppTheme.primaryColor,
-                  AppTheme.secondaryColor,
-                ],
+                colors: [AppTheme.primaryColor, AppTheme.secondaryColor],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
 
-              borderRadius:
-              BorderRadius.circular(34),
+              borderRadius: BorderRadius.circular(34),
 
-              boxShadow:
-              AppTheme.primaryShadow,
+              boxShadow: AppTheme.primaryShadow,
             ),
 
             child: Stack(
@@ -247,10 +194,7 @@ class _AnalyzingContent
 
                   decoration: BoxDecoration(
                     border: Border.all(
-                      color:
-                      Colors.white.withValues(
-                        alpha: 0.24,
-                      ),
+                      color: Colors.white.withValues(alpha: 0.24),
                     ),
                     shape: BoxShape.circle,
                   ),
@@ -269,18 +213,11 @@ class _AnalyzingContent
         const SizedBox(height: 28),
 
         Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 12,
-            vertical: 7,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
 
           decoration: BoxDecoration(
-            color:
-            colorScheme.primaryContainer,
-            borderRadius:
-            BorderRadius.circular(
-              AppTheme.radiusPill,
-            ),
+            color: colorScheme.primaryContainer,
+            borderRadius: BorderRadius.circular(AppTheme.radiusPill),
           ),
 
           child: Row(
@@ -289,11 +226,9 @@ class _AnalyzingContent
               SizedBox(
                 width: 14,
                 height: 14,
-                child:
-                CircularProgressIndicator(
+                child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color:
-                  colorScheme.primary,
+                  color: colorScheme.primary,
                 ),
               ),
 
@@ -301,12 +236,9 @@ class _AnalyzingContent
 
               Text(
                 'AI ANALİZİ DEVAM EDİYOR',
-                style:
-                textTheme.labelSmall?.copyWith(
-                  color:
-                  colorScheme.primary,
-                  fontWeight:
-                  FontWeight.w900,
+                style: textTheme.labelSmall?.copyWith(
+                  color: colorScheme.primary,
+                  fontWeight: FontWeight.w900,
                   letterSpacing: 0.4,
                 ),
               ),
@@ -319,23 +251,17 @@ class _AnalyzingContent
         Text(
           'Aracınız analiz ediliyor',
           textAlign: TextAlign.center,
-          style:
-          textTheme.headlineSmall?.copyWith(
-            fontWeight:
-            FontWeight.w900,
-          ),
+          style: textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900),
         ),
 
         const SizedBox(height: 10),
 
         Text(
           'Yapay zekâ görüntüyü inceliyor, '
-              'hasarlı bölgeleri ve etkilenen parçaları belirliyor.',
+          'hasarlı bölgeleri ve etkilenen parçaları belirliyor.',
           textAlign: TextAlign.center,
-          style:
-          textTheme.bodyLarge?.copyWith(
-            color:
-            colorScheme.onSurfaceVariant,
+          style: textTheme.bodyLarge?.copyWith(
+            color: colorScheme.onSurfaceVariant,
             height: 1.5,
           ),
         ),
@@ -344,17 +270,13 @@ class _AnalyzingContent
 
         AppCard(
           showShadow: false,
-          backgroundColor:
-          colorScheme.surfaceContainerLow,
-          padding:
-          const EdgeInsets.all(18),
+          backgroundColor: colorScheme.surfaceContainerLow,
+          padding: const EdgeInsets.all(18),
 
           child: Row(
             children: [
               const AppIconBox(
-                icon:
-                Icons
-                    .directions_car_filled_rounded,
+                icon: Icons.directions_car_filled_rounded,
                 size: 50,
                 iconSize: 25,
                 borderRadius: 16,
@@ -364,16 +286,12 @@ class _AnalyzingContent
 
               Expanded(
                 child: Column(
-                  crossAxisAlignment:
-                  CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       inspection.vehiclePlate,
-                      style:
-                      textTheme.titleMedium
-                          ?.copyWith(
-                        fontWeight:
-                        FontWeight.w900,
+                      style: textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w900,
                       ),
                     ),
 
@@ -382,26 +300,18 @@ class _AnalyzingContent
                     Row(
                       children: [
                         Icon(
-                          Icons
-                              .location_on_outlined,
+                          Icons.location_on_outlined,
                           size: 15,
-                          color:
-                          colorScheme
-                              .onSurfaceVariant,
+                          color: colorScheme.onSurfaceVariant,
                         ),
 
                         const SizedBox(width: 4),
 
                         Expanded(
                           child: Text(
-                            inspection
-                                .locationCity,
-                            style:
-                            textTheme.bodySmall
-                                ?.copyWith(
-                              color:
-                              colorScheme
-                                  .onSurfaceVariant,
+                            inspection.locationCity,
+                            style: textTheme.bodySmall?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
                             ),
                           ),
                         ),
@@ -417,54 +327,40 @@ class _AnalyzingContent
         const SizedBox(height: 16),
 
         AppCard(
-          padding:
-          const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(20),
 
           child: Column(
-            crossAxisAlignment:
-            CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const AppSectionHeader(
-                icon:
-                Icons.analytics_outlined,
-                title:
-                'Analiz süreci',
-                subtitle:
-                'AI modeli görüntüyü birkaç aşamada değerlendiriyor.',
+                icon: Icons.analytics_outlined,
+                title: 'Analiz süreci',
+                subtitle: 'AI modeli görüntüyü birkaç aşamada değerlendiriyor.',
               ),
 
               const SizedBox(height: 20),
 
               const _AnalysisStep(
-                icon:
-                Icons
-                    .image_search_outlined,
-                title:
-                'Görüntü inceleniyor',
+                icon: Icons.image_search_outlined,
+                title: 'Görüntü inceleniyor',
                 description:
-                'Araç ve hasarlı bölgeler görüntü üzerinde değerlendiriliyor.',
+                    'Araç ve hasarlı bölgeler görüntü üzerinde değerlendiriliyor.',
                 showLine: true,
               ),
 
               const _AnalysisStep(
-                icon:
-                Icons
-                    .car_crash_outlined,
-                title:
-                'Hasar tespiti',
+                icon: Icons.car_crash_outlined,
+                title: 'Hasar tespiti',
                 description:
-                'Hasar türleri ve etkilenen araç parçaları belirleniyor.',
+                    'Hasar türleri ve etkilenen araç parçaları belirleniyor.',
                 showLine: true,
               ),
 
               const _AnalysisStep(
-                icon:
-                Icons
-                    .description_outlined,
-                title:
-                'Sonuç hazırlanıyor',
+                icon: Icons.description_outlined,
+                title: 'Sonuç hazırlanıyor',
                 description:
-                'Hasar seviyesi ve onarım önerileri oluşturuluyor.',
+                    'Hasar seviyesi ve onarım önerileri oluşturuluyor.',
                 showLine: false,
               ),
             ],
@@ -474,33 +370,23 @@ class _AnalyzingContent
         const SizedBox(height: 18),
 
         Container(
-          padding:
-          const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(16),
 
           decoration: BoxDecoration(
-            color:
-            AppTheme.infoSoft,
-            borderRadius:
-            BorderRadius.circular(
-              AppTheme.radiusMedium,
-            ),
+            color: AppTheme.infoSoft,
+            borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
           ),
 
           child: Row(
-            crossAxisAlignment:
-            CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const AppIconBox(
-                icon:
-                Icons
-                    .hourglass_top_rounded,
+                icon: Icons.hourglass_top_rounded,
                 size: 38,
                 iconSize: 19,
                 borderRadius: 12,
-                backgroundColor:
-                Colors.white,
-                iconColor:
-                AppTheme.infoColor,
+                backgroundColor: Colors.white,
+                iconColor: AppTheme.infoColor,
               ),
 
               const SizedBox(width: 10),
@@ -508,14 +394,11 @@ class _AnalyzingContent
               Expanded(
                 child: Text(
                   'Analiz tamamlanana kadar bu ekranda kalın. '
-                      'İşlem tamamlandığında sonuç ekranı otomatik olarak açılacak.',
-                  style:
-                  textTheme.bodySmall?.copyWith(
-                    color:
-                    AppTheme.infoColor,
+                  'İşlem tamamlandığında sonuç ekranı otomatik olarak açılacak.',
+                  style: textTheme.bodySmall?.copyWith(
+                    color: AppTheme.infoColor,
                     height: 1.45,
-                    fontWeight:
-                    FontWeight.w600,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
@@ -527,8 +410,7 @@ class _AnalyzingContent
   }
 }
 
-class _AnalysisStep
-    extends StatelessWidget {
+class _AnalysisStep extends StatelessWidget {
   const _AnalysisStep({
     required this.icon,
     required this.title,
@@ -542,19 +424,14 @@ class _AnalysisStep
   final bool showLine;
 
   @override
-  Widget build(
-      BuildContext context,
-      ) {
-    final colorScheme =
-        Theme.of(context).colorScheme;
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
 
-    final textTheme =
-        Theme.of(context).textTheme;
+    final textTheme = Theme.of(context).textTheme;
 
     return IntrinsicHeight(
       child: Row(
-        crossAxisAlignment:
-        CrossAxisAlignment.stretch,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           SizedBox(
             width: 42,
@@ -572,17 +449,10 @@ class _AnalysisStep
                   Expanded(
                     child: Container(
                       width: 2,
-                      margin:
-                      const EdgeInsets.symmetric(
-                        vertical: 6,
-                      ),
-                      decoration:
-                      BoxDecoration(
-                        color:
-                        colorScheme
-                            .outlineVariant,
-                        borderRadius:
-                        BorderRadius.circular(
+                      margin: const EdgeInsets.symmetric(vertical: 6),
+                      decoration: BoxDecoration(
+                        color: colorScheme.outlineVariant,
+                        borderRadius: BorderRadius.circular(
                           AppTheme.radiusPill,
                         ),
                       ),
@@ -596,22 +466,15 @@ class _AnalysisStep
 
           Expanded(
             child: Padding(
-              padding: EdgeInsets.only(
-                bottom:
-                showLine ? 20 : 0,
-              ),
+              padding: EdgeInsets.only(bottom: showLine ? 20 : 0),
 
               child: Column(
-                crossAxisAlignment:
-                CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     title,
-                    style:
-                    textTheme.titleSmall
-                        ?.copyWith(
-                      fontWeight:
-                      FontWeight.w800,
+                    style: textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
 
@@ -619,12 +482,8 @@ class _AnalysisStep
 
                   Text(
                     description,
-                    style:
-                    textTheme.bodySmall
-                        ?.copyWith(
-                      color:
-                      colorScheme
-                          .onSurfaceVariant,
+                    style: textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
                       height: 1.4,
                     ),
                   ),

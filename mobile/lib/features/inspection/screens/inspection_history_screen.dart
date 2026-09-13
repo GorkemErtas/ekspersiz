@@ -11,22 +11,17 @@ import '../services/inspection_service.dart';
 import 'inspection_result_screen.dart';
 
 class InspectionHistoryScreen extends StatefulWidget {
-  const InspectionHistoryScreen({
-    super.key,
-  });
+  const InspectionHistoryScreen({super.key});
 
   @override
   State<InspectionHistoryScreen> createState() =>
       _InspectionHistoryScreenState();
 }
 
-class _InspectionHistoryScreenState
-    extends State<InspectionHistoryScreen> {
-  final InspectionService _inspectionService =
-  const InspectionService();
+class _InspectionHistoryScreenState extends State<InspectionHistoryScreen> {
+  final InspectionService _inspectionService = const InspectionService();
 
-  late Future<List<DamageInspection>>
-  _inspectionsFuture;
+  late Future<List<DamageInspection>> _inspectionsFuture;
 
   @override
   void initState() {
@@ -36,8 +31,7 @@ class _InspectionHistoryScreenState
   }
 
   void _loadInspections() {
-    _inspectionsFuture =
-        _inspectionService.getInspections();
+    _inspectionsFuture = _inspectionService.getInspections();
   }
 
   Future<void> _refreshInspections() async {
@@ -50,15 +44,10 @@ class _InspectionHistoryScreenState
     }
   }
 
-  Future<void> _openInspection(
-      DamageInspection inspection,
-      ) async {
+  Future<void> _openInspection(DamageInspection inspection) async {
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) =>
-            InspectionResultScreen(
-              inspection: inspection,
-            ),
+        builder: (_) => InspectionResultScreen(inspection: inspection),
       ),
     );
 
@@ -69,9 +58,7 @@ class _InspectionHistoryScreenState
     setState(_loadInspections);
   }
 
-  String _vehiclePartLabel(
-      String part,
-      ) {
+  String _vehiclePartLabel(String part) {
     return switch (part) {
       'UNKNOWN' => 'Bilinmeyen Parça',
       'FRONT_BUMPER' => 'Ön Tampon',
@@ -85,13 +72,11 @@ class _InspectionHistoryScreenState
       'WINDSHIELD' => 'Ön Cam',
       'REAR_WINDSHIELD' => 'Arka Cam',
       'FENDER' => 'Çamurluk',
-      'QUARTER_PANEL' =>
-      'Arka Çamurluk Paneli',
+      'QUARTER_PANEL' => 'Arka Çamurluk Paneli',
       'ROCKER_PANEL' => 'Marşpiyel',
       'GRILLE' => 'Ön Izgara',
       'HEADLIGHT' => 'Far',
-      'TAIL_LIGHT' =>
-      'Arka Stop Lambası',
+      'TAIL_LIGHT' => 'Arka Stop Lambası',
       'HOOD' => 'Kaput',
       'LICENSE_PLATE' => 'Plaka',
       'MIRROR' => 'Yan Ayna',
@@ -101,9 +86,7 @@ class _InspectionHistoryScreenState
     };
   }
 
-  String _severityLabel(
-      String? severity,
-      ) {
+  String _severityLabel(String? severity) {
     return switch (severity) {
       'NONE' => 'Görünür Hasar Yok',
       'MINOR' => 'Hafif Hasar',
@@ -113,286 +96,165 @@ class _InspectionHistoryScreenState
     };
   }
 
-  Color _severityColor(
-      String? severity,
-      ) {
+  Color _severityColor(String? severity) {
     return switch (severity) {
       'NONE' => AppTheme.severityNone,
       'MINOR' => AppTheme.severityMinor,
-      'MODERATE' =>
-      AppTheme.severityModerate,
+      'MODERATE' => AppTheme.severityModerate,
       'SEVERE' => AppTheme.severitySevere,
       _ => AppTheme.severityUnknown,
     };
   }
 
-  Color _severitySoftColor(
-      String? severity,
-      ) {
+  Color _severitySoftColor(String? severity) {
     return switch (severity) {
       'NONE' => AppTheme.successSoft,
       'MINOR' => AppTheme.warningSoft,
-      'MODERATE' =>
-      const Color(0xFFFFEDD5),
+      'MODERATE' => const Color(0xFFFFEDD5),
       'SEVERE' => AppTheme.dangerSoft,
       _ => const Color(0xFFF1F5F9),
     };
   }
 
-  IconData _severityIcon(
-      String? severity,
-      ) {
+  IconData _severityIcon(String? severity) {
     return switch (severity) {
       'NONE' => Icons.verified_outlined,
-      'MINOR' =>
-      Icons.info_outline_rounded,
-      'MODERATE' =>
-      Icons.warning_amber_rounded,
-      'SEVERE' =>
-      Icons.report_problem_outlined,
+      'MINOR' => Icons.info_outline_rounded,
+      'MODERATE' => Icons.warning_amber_rounded,
+      'SEVERE' => Icons.report_problem_outlined,
       _ => Icons.help_outline_rounded,
     };
   }
 
-  String _formatDate(
-      DateTime? date,
-      ) {
+  String _formatDate(DateTime? date) {
     if (date == null) {
       return '-';
     }
 
-    final day =
-    date.day
-        .toString()
-        .padLeft(2, '0');
+    final day = date.day.toString().padLeft(2, '0');
 
-    final month =
-    date.month
-        .toString()
-        .padLeft(2, '0');
+    final month = date.month.toString().padLeft(2, '0');
 
     return '$day.$month.${date.year}';
   }
 
   @override
-  Widget build(
-      BuildContext context,
-      ) {
+  Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Analizler',
-        ),
-      ),
+      appBar: AppBar(title: const Text('Analizler')),
 
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
-            constraints:
-            const BoxConstraints(
-              maxWidth:
-              AppTheme.maxContentWidth,
+            constraints: const BoxConstraints(
+              maxWidth: AppTheme.maxContentWidth,
             ),
 
-            child:
-            FutureBuilder<List<DamageInspection>>(
-              future:
-              _inspectionsFuture,
+            child: FutureBuilder<List<DamageInspection>>(
+              future: _inspectionsFuture,
 
-              builder:
-                  (
-                  context,
-                  snapshot,
-                  ) {
-                if (snapshot
-                    .connectionState ==
-                    ConnectionState.waiting) {
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
                   return const AppStateView.loading(
-                    title:
-                    'Analizler yükleniyor',
-                    message:
-                    'Tamamlanan hasar analizleriniz hazırlanıyor.',
+                    title: 'Analizler yükleniyor',
+                    message: 'Tamamlanan hasar analizleriniz hazırlanıyor.',
                     bottomPadding: 110,
                   );
                 }
 
                 if (snapshot.hasError) {
-                  final error =
-                      snapshot.error;
+                  final error = snapshot.error;
 
-                  final message =
-                  error is ApiException
+                  final message = error is ApiException
                       ? error.message
                       : 'Analiz geçmişi yüklenemedi.';
 
                   return AppStateView.error(
-                    title:
-                    'Analizler yüklenemedi',
-                    message:
-                    message,
-                    bottomPadding:
-                    110,
-                    onActionPressed:
-                        () {
-                      setState(
-                        _loadInspections,
-                      );
+                    title: 'Analizler yüklenemedi',
+                    message: message,
+                    bottomPadding: 110,
+                    onActionPressed: () {
+                      setState(_loadInspections);
                     },
                   );
                 }
 
                 final allInspections =
-                    snapshot.data ??
-                        const <
-                            DamageInspection>[];
+                    snapshot.data ?? const <DamageInspection>[];
 
                 final inspections =
-                allInspections
-                    .where(
-                      (
-                      inspection,
-                      ) =>
-                  inspection
-                      .status ==
-                      'COMPLETED',
-                )
-                    .toList()
-                  ..sort(
-                        (
-                        a,
-                        b,
-                        ) {
-                      final aDate =
-                          a.completedAt ??
-                              a.createdAt ??
-                              DateTime(
-                                1970,
-                              );
+                    allInspections
+                        .where((inspection) => inspection.status == 'COMPLETED')
+                        .toList()
+                      ..sort((a, b) {
+                        final aDate =
+                            a.completedAt ?? a.createdAt ?? DateTime(1970);
 
-                      final bDate =
-                          b.completedAt ??
-                              b.createdAt ??
-                              DateTime(
-                                1970,
-                              );
+                        final bDate =
+                            b.completedAt ?? b.createdAt ?? DateTime(1970);
 
-                      return bDate.compareTo(
-                        aDate,
-                      );
-                    },
-                  );
+                        return bDate.compareTo(aDate);
+                      });
 
                 if (inspections.isEmpty) {
                   return const AppStateView.empty(
-                    icon:
-                    Icons.analytics_outlined,
-                    title:
-                    'Henüz tamamlanan analiz yok',
+                    icon: Icons.analytics_outlined,
+                    title: 'Henüz tamamlanan analiz yok',
                     message:
-                    'AI destekli bir hasar analizi tamamladığınızda raporunuz burada görüntülenecek.',
-                    bottomPadding:
-                    110,
+                        'AI destekli bir hasar analizi tamamladığınızda raporunuz burada görüntülenecek.',
+                    bottomPadding: 110,
                   );
                 }
 
                 return RefreshIndicator(
-                  onRefresh:
-                  _refreshInspections,
+                  onRefresh: _refreshInspections,
 
-                  child:
-                  ListView.separated(
-                    physics:
-                    const AlwaysScrollableScrollPhysics(),
+                  child: ListView.separated(
+                    physics: const AlwaysScrollableScrollPhysics(),
 
-                    padding:
-                    const EdgeInsets.fromLTRB(
-                      20,
-                      16,
-                      20,
-                      120,
-                    ),
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 120),
 
-                    itemCount:
-                    inspections.length + 1,
+                    itemCount: inspections.length + 1,
 
-                    separatorBuilder:
-                        (
-                        context,
-                        index,
-                        ) =>
-                        SizedBox(
-                          height:
-                          index == 0
-                              ? 18
-                              : 14,
-                        ),
+                    separatorBuilder: (context, index) =>
+                        SizedBox(height: index == 0 ? 18 : 14),
 
-                    itemBuilder:
-                        (
-                        context,
-                        index,
-                        ) {
+                    itemBuilder: (context, index) {
                       if (index == 0) {
                         return _HistoryHeader(
-                          inspectionCount:
-                          inspections.length,
+                          inspectionCount: inspections.length,
                         );
                       }
 
-                      final inspection =
-                      inspections[
-                      index - 1];
+                      final inspection = inspections[index - 1];
 
                       return _InspectionHistoryCard(
-                        inspection:
-                        inspection,
+                        inspection: inspection,
 
-                        severityLabel:
-                        _severityLabel(
-                          inspection
-                              .damageSeverity,
+                        severityLabel: _severityLabel(
+                          inspection.damageSeverity,
                         ),
 
-                        severityColor:
-                        _severityColor(
-                          inspection
-                              .damageSeverity,
+                        severityColor: _severityColor(
+                          inspection.damageSeverity,
                         ),
 
-                        severitySoftColor:
-                        _severitySoftColor(
-                          inspection
-                              .damageSeverity,
+                        severitySoftColor: _severitySoftColor(
+                          inspection.damageSeverity,
                         ),
 
-                        severityIcon:
-                        _severityIcon(
-                          inspection
-                              .damageSeverity,
+                        severityIcon: _severityIcon(inspection.damageSeverity),
+
+                        date: _formatDate(
+                          inspection.completedAt ?? inspection.createdAt,
                         ),
 
-                        date:
-                        _formatDate(
-                          inspection
-                              .completedAt ??
-                              inspection
-                                  .createdAt,
-                        ),
-
-                        affectedParts:
-                        inspection
-                            .affectedParts
+                        affectedParts: inspection.affectedParts
                             .take(3)
-                            .map(
-                          _vehiclePartLabel,
-                        )
+                            .map(_vehiclePartLabel)
                             .toList(),
 
-                        onTap:
-                            () =>
-                            _openInspection(
-                              inspection,
-                            ),
+                        onTap: () => _openInspection(inspection),
                       );
                     },
                   ),
@@ -406,44 +268,31 @@ class _InspectionHistoryScreenState
   }
 }
 
-class _HistoryHeader
-    extends StatelessWidget {
-  const _HistoryHeader({
-    required this.inspectionCount,
-  });
+class _HistoryHeader extends StatelessWidget {
+  const _HistoryHeader({required this.inspectionCount});
 
   final int inspectionCount;
 
   @override
-  Widget build(
-      BuildContext context,
-      ) {
-    final colorScheme =
-        Theme.of(context).colorScheme;
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
 
-    final textTheme =
-        Theme.of(context).textTheme;
+    final textTheme = Theme.of(context).textTheme;
 
     return Column(
-      crossAxisAlignment:
-      CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Analiz geçmişiniz',
-          style:
-          textTheme.headlineSmall?.copyWith(
-            fontWeight: FontWeight.w900,
-          ),
+          style: textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900),
         ),
 
         const SizedBox(height: 7),
 
         Text(
           'Tamamlanan araç hasar analizlerinizi ve AI raporlarınızı inceleyin.',
-          style:
-          textTheme.bodyLarge?.copyWith(
-            color:
-            colorScheme.onSurfaceVariant,
+          style: textTheme.bodyLarge?.copyWith(
+            color: colorScheme.onSurfaceVariant,
             height: 1.45,
           ),
         ),
@@ -451,22 +300,17 @@ class _HistoryHeader
         const SizedBox(height: 18),
 
         AppStatusBadge(
-          icon:
-          Icons.history_rounded,
-          label:
-          '$inspectionCount tamamlanan analiz',
-          color:
-          colorScheme.primary,
-          backgroundColor:
-          colorScheme.primaryContainer,
+          icon: Icons.history_rounded,
+          label: '$inspectionCount tamamlanan analiz',
+          color: colorScheme.primary,
+          backgroundColor: colorScheme.primaryContainer,
         ),
       ],
     );
   }
 }
 
-class _InspectionHistoryCard
-    extends StatelessWidget {
+class _InspectionHistoryCard extends StatelessWidget {
   const _InspectionHistoryCard({
     required this.inspection,
     required this.severityLabel,
@@ -494,66 +338,43 @@ class _InspectionHistoryCard
   final VoidCallback onTap;
 
   @override
-  Widget build(
-      BuildContext context,
-      ) {
-    final colorScheme =
-        Theme.of(context).colorScheme;
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
 
-    final textTheme =
-        Theme.of(context).textTheme;
+    final textTheme = Theme.of(context).textTheme;
 
     return AppCard(
       onTap: onTap,
-      padding:
-      const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(18),
 
       child: Column(
-        crossAxisAlignment:
-        CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            crossAxisAlignment:
-            CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
                 width: 54,
                 height: 54,
-                decoration:
-                BoxDecoration(
-                  color:
-                  severitySoftColor,
-                  borderRadius:
-                  BorderRadius.circular(
-                    18,
-                  ),
+                decoration: BoxDecoration(
+                  color: severitySoftColor,
+                  borderRadius: BorderRadius.circular(18),
                 ),
-                child: Icon(
-                  severityIcon,
-                  color:
-                  severityColor,
-                  size: 27,
-                ),
+                child: Icon(severityIcon, color: severityColor, size: 27),
               ),
 
               const SizedBox(width: 14),
 
               Expanded(
                 child: Column(
-                  crossAxisAlignment:
-                  CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      inspection
-                          .vehiclePlate,
+                      inspection.vehiclePlate,
                       maxLines: 1,
-                      overflow:
-                      TextOverflow.ellipsis,
-                      style:
-                      textTheme.titleMedium
-                          ?.copyWith(
-                        fontWeight:
-                        FontWeight.w900,
+                      overflow: TextOverflow.ellipsis,
+                      style: textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w900,
                       ),
                     ),
 
@@ -562,32 +383,21 @@ class _InspectionHistoryCard
                     Row(
                       children: [
                         Icon(
-                          Icons
-                              .location_on_outlined,
+                          Icons.location_on_outlined,
                           size: 15,
-                          color:
-                          colorScheme
-                              .onSurfaceVariant,
+                          color: colorScheme.onSurfaceVariant,
                         ),
 
                         const SizedBox(width: 4),
 
                         Expanded(
                           child: Text(
-                            inspection
-                                .locationCity,
+                            inspection.locationCity,
                             maxLines: 1,
-                            overflow:
-                            TextOverflow
-                                .ellipsis,
-                            style:
-                            textTheme.bodySmall
-                                ?.copyWith(
-                              color:
-                              colorScheme
-                                  .onSurfaceVariant,
-                              fontWeight:
-                              FontWeight.w600,
+                            overflow: TextOverflow.ellipsis,
+                            style: textTheme.bodySmall?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ),
@@ -599,9 +409,7 @@ class _InspectionHistoryCard
 
               Icon(
                 Icons.chevron_right_rounded,
-                color:
-                colorScheme
-                    .onSurfaceVariant,
+                color: colorScheme.onSurfaceVariant,
               ),
             ],
           ),
@@ -611,38 +419,27 @@ class _InspectionHistoryCard
           Row(
             children: [
               AppStatusBadge(
-                label:
-                severityLabel,
-                color:
-                severityColor,
-                backgroundColor:
-                severitySoftColor,
+                label: severityLabel,
+                color: severityColor,
+                backgroundColor: severitySoftColor,
                 compact: true,
               ),
 
               const Spacer(),
 
               Icon(
-                Icons
-                    .calendar_today_outlined,
+                Icons.calendar_today_outlined,
                 size: 15,
-                color:
-                colorScheme
-                    .onSurfaceVariant,
+                color: colorScheme.onSurfaceVariant,
               ),
 
               const SizedBox(width: 5),
 
               Text(
                 date,
-                style:
-                textTheme.bodySmall
-                    ?.copyWith(
-                  color:
-                  colorScheme
-                      .onSurfaceVariant,
-                  fontWeight:
-                  FontWeight.w600,
+                style: textTheme.bodySmall?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],
@@ -651,44 +448,30 @@ class _InspectionHistoryCard
           if (affectedParts.isNotEmpty) ...[
             const SizedBox(height: 15),
 
-            Divider(
-              color:
-              colorScheme.outlineVariant,
-              height: 1,
-            ),
+            Divider(color: colorScheme.outlineVariant, height: 1),
 
             const SizedBox(height: 14),
 
             Row(
-              crossAxisAlignment:
-              CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Icon(
                   Icons.build_outlined,
                   size: 17,
-                  color:
-                  colorScheme.primary,
+                  color: colorScheme.primary,
                 ),
 
                 const SizedBox(width: 8),
 
                 Expanded(
                   child: Text(
-                    affectedParts.join(
-                      ' • ',
-                    ),
+                    affectedParts.join(' • '),
                     maxLines: 2,
-                    overflow:
-                    TextOverflow.ellipsis,
-                    style:
-                    textTheme.bodySmall
-                        ?.copyWith(
-                      color:
-                      colorScheme
-                          .onSurfaceVariant,
+                    overflow: TextOverflow.ellipsis,
+                    style: textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
                       height: 1.4,
-                      fontWeight:
-                      FontWeight.w600,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),

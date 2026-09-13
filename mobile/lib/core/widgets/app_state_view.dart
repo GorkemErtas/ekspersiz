@@ -22,13 +22,12 @@ class AppStateView extends StatelessWidget {
     this.title = 'Yükleniyor',
     this.message = 'Lütfen bekleyin...',
     this.bottomPadding = 32,
-  })  : icon =
-      Icons.hourglass_top_rounded,
-        actionLabel = null,
-        onActionPressed = null,
-        actionIcon = null,
-        isLoading = true,
-        isError = false;
+  }) : icon = Icons.hourglass_top_rounded,
+       actionLabel = null,
+       onActionPressed = null,
+       actionIcon = null,
+       isLoading = true,
+       isError = false;
 
   const AppStateView.empty({
     super.key,
@@ -39,24 +38,20 @@ class AppStateView extends StatelessWidget {
     this.onActionPressed,
     this.actionIcon,
     this.bottomPadding = 32,
-  })  : isLoading = false,
-        isError = false;
+  }) : isLoading = false,
+       isError = false;
 
   const AppStateView.error({
     super.key,
-    this.icon =
-        Icons.error_outline_rounded,
-    this.title =
-    'Bir sorun oluştu',
+    this.icon = Icons.error_outline_rounded,
+    this.title = 'Bir sorun oluştu',
     required this.message,
-    this.actionLabel =
-    'Tekrar Dene',
+    this.actionLabel = 'Tekrar Dene',
     this.onActionPressed,
-    this.actionIcon =
-        Icons.refresh_rounded,
+    this.actionIcon = Icons.refresh_rounded,
     this.bottomPadding = 32,
-  })  : isLoading = false,
-        isError = true;
+  }) : isLoading = false,
+       isError = true;
 
   final IconData icon;
 
@@ -75,203 +70,101 @@ class AppStateView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme =
-        Theme.of(context)
-            .colorScheme;
+    final colorScheme = Theme.of(context).colorScheme;
 
-    final textTheme =
-        Theme.of(context)
-            .textTheme;
+    final textTheme = Theme.of(context).textTheme;
 
-    final foregroundColor =
-    isError
-        ? colorScheme.error
-        : colorScheme.primary;
+    final foregroundColor = isError ? colorScheme.error : colorScheme.primary;
 
-    final backgroundColor =
-    isError
+    final backgroundColor = isError
         ? colorScheme.errorContainer
         : colorScheme.primaryContainer;
 
     return Center(
-      child:
-      SingleChildScrollView(
-        physics:
-        const AlwaysScrollableScrollPhysics(),
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
 
-        padding:
-        EdgeInsets.fromLTRB(
-          32,
-          32,
-          32,
-          bottomPadding,
-        ),
+        padding: EdgeInsets.fromLTRB(32, 32, 32, bottomPadding),
 
-        child:
-        ConstrainedBox(
-          constraints:
-          const BoxConstraints(
-            maxWidth:
-            440,
-          ),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 440),
 
-          child:
-          AppFadeSlideIn(
-            child:
-            Column(
-              mainAxisSize:
-              MainAxisSize.min,
+          child: AppFadeSlideIn(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
 
               children: [
                 TweenAnimationBuilder<double>(
-                  tween:
-                  Tween<double>(
-                    begin:
-                    0.94,
+                  tween: Tween<double>(begin: 0.94, end: 1),
 
-                    end:
-                    1,
-                  ),
+                  duration: const Duration(milliseconds: 360),
 
-                  duration:
-                  const Duration(
-                    milliseconds:
-                    360,
-                  ),
+                  curve: Curves.easeOutBack,
 
-                  curve:
-                  Curves.easeOutBack,
-
-                  builder:
-                      (
-                      context,
-                      scale,
-                      child,
-                      ) {
-                    return Transform.scale(
-                      scale:
-                      scale,
-
-                      child:
-                      child,
-                    );
+                  builder: (context, scale, child) {
+                    return Transform.scale(scale: scale, child: child);
                   },
 
-                  child:
-                  Container(
-                    width:
-                    92,
+                  child: Container(
+                    width: 92,
 
-                    height:
-                    92,
+                    height: 92,
 
-                    decoration:
-                    BoxDecoration(
-                      color:
-                      backgroundColor,
+                    decoration: BoxDecoration(
+                      color: backgroundColor,
 
-                      borderRadius:
-                      BorderRadius.circular(
-                        28,
-                      ),
+                      borderRadius: BorderRadius.circular(28),
 
-                      boxShadow:
-                      isError
-                          ? null
-                          : AppTheme.softShadow,
+                      boxShadow: isError ? null : AppTheme.softShadow,
                     ),
 
-                    child:
-                    isLoading
+                    child: isLoading
                         ? Padding(
-                      padding:
-                      const EdgeInsets.all(
-                        28,
-                      ),
+                            padding: const EdgeInsets.all(28),
 
-                      child:
-                      CircularProgressIndicator(
-                        strokeWidth:
-                        3,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 3,
 
-                        color:
-                        foregroundColor,
-                      ),
-                    )
-                        : Icon(
-                      icon,
-
-                      size:
-                      44,
-
-                      color:
-                      foregroundColor,
-                    ),
+                              color: foregroundColor,
+                            ),
+                          )
+                        : Icon(icon, size: 44, color: foregroundColor),
                   ),
                 ),
 
-                const SizedBox(
-                  height:
-                  24,
-                ),
+                const SizedBox(height: 24),
 
                 Text(
                   title,
 
-                  textAlign:
-                  TextAlign.center,
+                  textAlign: TextAlign.center,
 
-                  style:
-                  textTheme
-                      .headlineSmall
-                      ?.copyWith(
-                    fontWeight:
-                    FontWeight.w900,
+                  style: textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w900,
                   ),
                 ),
 
-                const SizedBox(
-                  height:
-                  9,
-                ),
+                const SizedBox(height: 9),
 
                 Text(
                   message,
 
-                  textAlign:
-                  TextAlign.center,
+                  textAlign: TextAlign.center,
 
-                  style:
-                  textTheme
-                      .bodyLarge
-                      ?.copyWith(
-                    color:
-                    colorScheme
-                        .onSurfaceVariant,
+                  style: textTheme.bodyLarge?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
 
-                    height:
-                    1.5,
+                    height: 1.5,
                   ),
                 ),
 
-                if (actionLabel !=
-                    null &&
-                    onActionPressed !=
-                        null) ...[
-                  const SizedBox(
-                    height:
-                    24,
-                  ),
+                if (actionLabel != null && onActionPressed != null) ...[
+                  const SizedBox(height: 24),
 
                   FilledButton.tonalIcon(
                     onPressed: onActionPressed,
-                    icon: Icon(
-                      actionIcon ??
-                          Icons.arrow_forward_rounded,
-                    ),
-                    label: Text(
-                      actionLabel!,
-                    ),
+                    icon: Icon(actionIcon ?? Icons.arrow_forward_rounded),
+                    label: Text(actionLabel!),
                   ),
                 ],
               ],
