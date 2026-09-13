@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../models/nearby_service.dart';
 import '../services/nearby_service_service.dart';
@@ -128,6 +130,99 @@ class _NearbyServicesScreenState extends State<NearbyServicesScreen> {
     );
   }
 
+  Future<void> _openDirections(NearbyService service) async {
+    try {
+      final locationServiceEnabled =
+          await Geolocator.isLocationServiceEnabled();
+
+      if (!locationServiceEnabled) {
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Yol tarifi için cihaz konumunu açmanız gerekiyor.',
+              ),
+            ),
+          );
+        return;
+      }
+
+      var permission = await Geolocator.checkPermission();
+
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+
+      if (permission == LocationPermission.denied) {
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            const SnackBar(
+              content: Text('Yol tarifi için konum izni gerekiyor.'),
+            ),
+          );
+        return;
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            SnackBar(
+              content: const Text(
+                'Konum izni kalıcı olarak kapatılmış. Ayarlardan izin vermelisiniz.',
+              ),
+              action: SnackBarAction(
+                label: 'Ayarlar',
+                onPressed: Geolocator.openAppSettings,
+              ),
+            ),
+          );
+        return;
+      }
+
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
+      );
+
+      final uri = Uri.https('www.google.com', '/maps/dir/', {
+        'api': '1',
+        'origin': '${position.latitude},${position.longitude}',
+        'destination': '${service.latitude},${service.longitude}',
+        'travelmode': 'driving',
+      });
+
+      final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+
+      if (!opened && mounted) {
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            const SnackBar(content: Text('Google Maps açılamadı.')),
+          );
+      }
+    } catch (_) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text('Konum alınamadı veya yol tarifi açılamadı.'),
+          ),
+        );
+    }
+  }
+
   String _formatDistance(double distanceKm) {
     if (distanceKm < 1) {
       final meters = (distanceKm * 1000).round();
@@ -196,7 +291,7 @@ class _NearbyServicesScreenState extends State<NearbyServicesScreen> {
               right: 0,
               bottom: 20,
               child: SizedBox(
-                height: 176,
+                height: 236,
                 child: ListView.separated(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   scrollDirection: Axis.horizontal,
@@ -211,6 +306,7 @@ class _NearbyServicesScreenState extends State<NearbyServicesScreen> {
                       distance: _formatDistance(service.distanceKm),
                       rating: _formatRating(service),
                       onTap: () => _focusService(service),
+                      onDirections: () => _openDirections(service),
                     );
                   },
                 ),
@@ -229,6 +325,7 @@ class _ServiceCard extends StatelessWidget {
     required this.distance,
     required this.rating,
     required this.onTap,
+    required this.onDirections,
   });
 
   final NearbyService service;
@@ -236,6 +333,7 @@ class _ServiceCard extends StatelessWidget {
   final String distance;
   final String rating;
   final VoidCallback onTap;
+  final VoidCallback onDirections;
 
   @override
   Widget build(BuildContext context) {
@@ -302,8 +400,19 @@ class _ServiceCard extends StatelessWidget {
                     const SizedBox(width: 4),
                     Text(distance),
                     const SizedBox(width: 16),
-                    Text(rating),
+                    Expanded(
+                      child: Text(rating, overflow: TextOverflow.ellipsis),
+                    ),
                   ],
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.tonalIcon(
+                    onPressed: onDirections,
+                    icon: const Icon(Icons.directions_rounded, size: 18),
+                    label: const Text('Yol Tarifi Al'),
+                  ),
                 ),
               ],
             ),
