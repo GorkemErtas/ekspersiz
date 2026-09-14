@@ -1,6 +1,5 @@
 package com.gorkem.vehicle_inspector.service;
 
-import com.gorkem.vehicle_inspector.entity.Role;
 import com.gorkem.vehicle_inspector.entity.SubscriptionPlan;
 import com.gorkem.vehicle_inspector.entity.User;
 import com.gorkem.vehicle_inspector.repository.DamageInspectionRepository;
@@ -66,9 +65,6 @@ public class SubscriptionService {
     public void validateInspectionLimit(
             User user
     ) {
-        if (user.getRole() == Role.ADMIN) {
-            return;
-        }
 
         SubscriptionPlan plan =
                 getEffectivePlan(user);
@@ -120,9 +116,6 @@ public class SubscriptionService {
     public void validateVehicleLimit(
             User user
     ) {
-        if (user.getRole() == Role.ADMIN) {
-            return;
-        }
 
         SubscriptionPlan plan =
                 getEffectivePlan(user);
