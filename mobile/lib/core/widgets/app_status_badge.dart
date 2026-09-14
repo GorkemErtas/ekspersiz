@@ -30,6 +30,7 @@ class AppStatusBadge extends StatelessWidget {
       decoration: BoxDecoration(
         color: backgroundColor ?? color.withValues(alpha: 0.11),
         borderRadius: BorderRadius.circular(AppTheme.radiusPill),
+        border: Border.all(color: color.withValues(alpha: 0.16)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

@@ -22,10 +22,21 @@ class ComingSoonScreen extends StatelessWidget {
                 width: 84,
                 height: 84,
                 decoration: BoxDecoration(
-                  color: colorScheme.primaryContainer,
+                  gradient: LinearGradient(
+                    colors: [colorScheme.primary, colorScheme.secondary],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
                   borderRadius: BorderRadius.circular(24),
+                  boxShadow: [
+                    BoxShadow(
+                      color: colorScheme.primary.withValues(alpha: 0.24),
+                      blurRadius: 28,
+                      offset: const Offset(0, 12),
+                    ),
+                  ],
                 ),
-                child: Icon(icon, size: 40, color: colorScheme.primary),
+                child: Icon(icon, size: 40, color: Colors.white),
               ),
               const SizedBox(height: 24),
               Text(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
+import 'app_motion.dart';
 
 class AuthShell extends StatelessWidget {
   const AuthShell({
@@ -21,44 +22,46 @@ class AuthShell extends StatelessWidget {
     return Scaffold(
       body: Stack(
         children: [
-          Positioned.fill(
+          const Positioned.fill(
             child: DecoratedBox(
               decoration: BoxDecoration(
-                color: Theme.of(context).scaffoldBackgroundColor,
+                gradient: RadialGradient(
+                  center: Alignment(0.72, -0.78),
+                  radius: 1.15,
+                  colors: [
+                    Color(0xFF24123B),
+                    Color(0xFF0B090E),
+                    Color(0xFF08070B),
+                  ],
+                  stops: [0, 0.52, 1],
+                ),
               ),
             ),
           ),
-
-          // Sol üst dekor
           Positioned(
             left: -110,
-            top: -100,
-            child: _BackgroundCircle(
-              size: 260,
-              color: AppTheme.primaryColor.withValues(alpha: 0.08),
+            top: -115,
+            child: _GlowOrb(
+              size: 300,
+              color: AppTheme.primaryColor.withValues(alpha: 0.16),
             ),
           ),
-
-          // Sağ üst dekor
           Positioned(
-            right: -80,
-            top: 80,
-            child: _BackgroundCircle(
-              size: 220,
-              color: AppTheme.secondaryColor.withValues(alpha: 0.07),
+            right: -105,
+            top: 70,
+            child: _GlowOrb(
+              size: 270,
+              color: AppTheme.secondaryColor.withValues(alpha: 0.10),
             ),
           ),
-
-          // Alt dekor
           Positioned(
-            left: -40,
-            bottom: -110,
-            child: _BackgroundCircle(
-              size: 240,
-              color: AppTheme.primaryColor.withValues(alpha: 0.045),
+            left: -70,
+            bottom: -150,
+            child: _GlowOrb(
+              size: 330,
+              color: AppTheme.primaryDark.withValues(alpha: 0.11),
             ),
           ),
-
           SafeArea(
             child: Center(
               child: SingleChildScrollView(
@@ -68,31 +71,33 @@ class AuthShell extends StatelessWidget {
                 ),
                 child: ConstrainedBox(
                   constraints: BoxConstraints(maxWidth: maxWidth),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (showBrand) ...[
-                        const _BrandHeader(),
-                        const SizedBox(height: 28),
-                      ],
-
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(24),
-                        decoration: BoxDecoration(
-                          color: colorScheme.surface,
-
-                          borderRadius: BorderRadius.circular(
-                            AppTheme.radiusXLarge,
+                  child: AppFadeSlideIn(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (showBrand) ...[
+                          const _BrandHeader(),
+                          const SizedBox(height: 28),
+                        ],
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            color: colorScheme.surface.withValues(alpha: 0.94),
+                            borderRadius: BorderRadius.circular(
+                              AppTheme.radiusXLarge,
+                            ),
+                            border: Border.all(
+                              color: AppTheme.primaryColor.withValues(
+                                alpha: 0.14,
+                              ),
+                            ),
+                            boxShadow: AppTheme.elevatedShadow,
                           ),
-
-                          border: Border.all(color: colorScheme.outlineVariant),
-
-                          boxShadow: AppTheme.elevatedShadow,
+                          child: child,
                         ),
-                        child: child,
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -110,42 +115,45 @@ class _BrandHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-
     final colorScheme = Theme.of(context).colorScheme;
 
     return Column(
       children: [
         Container(
-          width: 68,
-          height: 68,
+          width: 96,
+          height: 96,
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [AppTheme.primaryColor, AppTheme.secondaryColor],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(22),
+            borderRadius: BorderRadius.circular(28),
             boxShadow: AppTheme.primaryShadow,
           ),
-          child: const Icon(
-            Icons.car_crash_rounded,
-            size: 34,
-            color: Colors.white,
+          clipBehavior: Clip.antiAlias,
+          child: Image.asset(
+            'assets/images/ekspersiz_logo.png',
+            fit: BoxFit.cover,
+            cacheWidth: 256,
+            cacheHeight: 256,
+            errorBuilder: (context, error, stackTrace) {
+              debugPrint('LOGO ASSET ERROR: $error');
+
+              return const Center(
+                child: Icon(
+                  Icons.directions_car_filled_rounded,
+                  size: 48,
+                  color: Color(0xFF8B5CF6),
+                ),
+              );
+            },
           ),
         ),
-
         const SizedBox(height: 16),
-
         Text(
-          'Vehicle Inspector',
+          'EksperSiz',
           style: textTheme.headlineSmall?.copyWith(
             fontWeight: FontWeight.w900,
-            letterSpacing: -0.6,
+            letterSpacing: -0.7,
           ),
         ),
-
         const SizedBox(height: 6),
-
         Text(
           'AI destekli araç hasar analizi',
           textAlign: TextAlign.center,
@@ -158,8 +166,8 @@ class _BrandHeader extends StatelessWidget {
   }
 }
 
-class _BackgroundCircle extends StatelessWidget {
-  const _BackgroundCircle({required this.size, required this.color});
+class _GlowOrb extends StatelessWidget {
+  const _GlowOrb({required this.size, required this.color});
 
   final double size;
   final Color color;
@@ -170,7 +178,13 @@ class _BackgroundCircle extends StatelessWidget {
       child: Container(
         width: size,
         height: size,
-        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        decoration: BoxDecoration(
+          color: color,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(color: color, blurRadius: 100, spreadRadius: 18),
+          ],
+        ),
       ),
     );
   }

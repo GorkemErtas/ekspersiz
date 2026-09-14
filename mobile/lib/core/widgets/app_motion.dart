@@ -3,11 +3,11 @@ import 'package:flutter/material.dart';
 class AppMotion {
   AppMotion._();
 
-  static const Duration fast = Duration(milliseconds: 120);
+  static const Duration fast = Duration(milliseconds: 140);
 
-  static const Duration medium = Duration(milliseconds: 220);
+  static const Duration medium = Duration(milliseconds: 240);
 
-  static const Duration slow = Duration(milliseconds: 420);
+  static const Duration slow = Duration(milliseconds: 460);
 
   static const Curve standardCurve = Curves.easeOutCubic;
 }
@@ -18,7 +18,7 @@ class AppPressScale extends StatefulWidget {
     required this.child,
     this.onTap,
     this.borderRadius = const BorderRadius.all(Radius.circular(24)),
-    this.pressedScale = 0.985,
+    this.pressedScale = 0.975,
   });
 
   final Widget child;
@@ -82,7 +82,7 @@ class AppFadeSlideIn extends StatefulWidget {
     super.key,
     required this.child,
     this.delay = Duration.zero,
-    this.offset = const Offset(0, 0.035),
+    this.offset = const Offset(0, 0.025),
   });
 
   final Widget child;

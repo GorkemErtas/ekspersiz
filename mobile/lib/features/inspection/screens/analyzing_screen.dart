@@ -174,11 +174,7 @@ class _AnalyzingContent extends StatelessWidget {
             height: 112,
 
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [AppTheme.primaryColor, AppTheme.secondaryColor],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
+              gradient: AppTheme.brandGradient,
 
               borderRadius: BorderRadius.circular(34),
 
@@ -385,7 +381,7 @@ class _AnalyzingContent extends StatelessWidget {
                 size: 38,
                 iconSize: 19,
                 borderRadius: 12,
-                backgroundColor: Colors.white,
+                backgroundColor: AppTheme.surfaceColor,
                 iconColor: AppTheme.infoColor,
               ),
 

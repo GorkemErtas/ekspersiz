@@ -15,44 +15,39 @@ class AppCard extends StatelessWidget {
   });
 
   final Widget child;
-
   final EdgeInsetsGeometry padding;
-
   final VoidCallback? onTap;
-
   final Color? backgroundColor;
   final Color? borderColor;
-
   final bool showShadow;
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-
     final radius = BorderRadius.circular(AppTheme.radiusLarge);
 
     final card = Ink(
       width: double.infinity,
-
       padding: padding,
-
       decoration: BoxDecoration(
         color: backgroundColor ?? colorScheme.surface,
-
         borderRadius: radius,
-
-        border: Border.all(color: borderColor ?? colorScheme.outlineVariant),
-
+        border: Border.all(
+          color:
+              borderColor ?? colorScheme.outlineVariant.withValues(alpha: 0.9),
+        ),
         boxShadow: showShadow ? AppTheme.softShadow : null,
       ),
-
       child: child,
     );
 
-    if (onTap == null) {
-      return card;
-    }
+    if (onTap == null) return card;
 
-    return AppPressScale(onTap: onTap, borderRadius: radius, child: card);
+    return AppPressScale(
+      onTap: onTap,
+      borderRadius: radius,
+      pressedScale: 0.975,
+      child: card,
+    );
   }
 }
