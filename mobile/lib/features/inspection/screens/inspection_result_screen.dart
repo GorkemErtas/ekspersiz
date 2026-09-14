@@ -127,9 +127,9 @@ class _InspectionResultScreenState extends State<InspectionResultScreen> {
     return switch (severity) {
       'NONE' => AppTheme.successSoft,
       'MINOR' => AppTheme.warningSoft,
-      'MODERATE' => const Color(0xFFFFEDD5),
+      'MODERATE' => const Color(0xFF33200F),
       'SEVERE' => AppTheme.dangerSoft,
-      _ => const Color(0xFFF1F5F9),
+      _ => const Color(0xFF24202B),
     };
   }
 

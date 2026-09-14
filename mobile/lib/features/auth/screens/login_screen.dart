@@ -146,7 +146,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Vehicle Inspector',
+                        'EksperSiz',
                         style: textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.w900,
                         ),
