@@ -23,6 +23,20 @@ class NearbyServicesScreen extends StatefulWidget {
 }
 
 class _NearbyServicesScreenState extends State<NearbyServicesScreen> {
+  static const String _darkMapStyle = r'''[
+    {"elementType":"geometry","stylers":[{"color":"#0b090e"}]},
+    {"elementType":"labels.text.fill","stylers":[{"color":"#a9a0b5"}]},
+    {"elementType":"labels.text.stroke","stylers":[{"color":"#0b090e"}]},
+    {"featureType":"administrative","elementType":"geometry.stroke","stylers":[{"color":"#302a39"}]},
+    {"featureType":"poi","elementType":"geometry","stylers":[{"color":"#151119"}]},
+    {"featureType":"poi","elementType":"labels.text.fill","stylers":[{"color":"#9d91aa"}]},
+    {"featureType":"road","elementType":"geometry","stylers":[{"color":"#211c27"}]},
+    {"featureType":"road","elementType":"geometry.stroke","stylers":[{"color":"#131016"}]},
+    {"featureType":"road.highway","elementType":"geometry","stylers":[{"color":"#34254a"}]},
+    {"featureType":"transit","elementType":"geometry","stylers":[{"color":"#18131d"}]},
+    {"featureType":"water","elementType":"geometry","stylers":[{"color":"#08070b"}]},
+    {"featureType":"water","elementType":"labels.text.fill","stylers":[{"color":"#62586e"}]}
+  ]''';
   final NearbyServiceService _nearbyServiceService =
       const NearbyServiceService();
 
@@ -121,7 +135,9 @@ class _NearbyServicesScreenState extends State<NearbyServicesScreen> {
           markerId: MarkerId(service.placeId),
           position: LatLng(service.latitude, service.longitude),
           icon: BitmapDescriptor.defaultMarkerWithHue(
-            isSelected ? BitmapDescriptor.hueOrange : BitmapDescriptor.hueRed,
+            isSelected
+                ? BitmapDescriptor.hueMagenta
+                : BitmapDescriptor.hueViolet,
           ),
           zIndexInt: isSelected ? 10 : 1,
           alpha: isSelected ? 1 : 0.85,
@@ -145,8 +161,8 @@ class _NearbyServicesScreenState extends State<NearbyServicesScreen> {
         circleId: CircleId('selected-${service.placeId}'),
         center: LatLng(service.latitude, service.longitude),
         radius: 35,
-        fillColor: Colors.red.withValues(alpha: 0.16),
-        strokeColor: Colors.red.withValues(alpha: 0.70),
+        fillColor: const Color(0xFF8B5CF6).withValues(alpha: 0.16),
+        strokeColor: const Color(0xFFC084FC).withValues(alpha: 0.78),
         strokeWidth: 2,
         zIndex: 2,
       ),
@@ -314,6 +330,7 @@ class _NearbyServicesScreenState extends State<NearbyServicesScreen> {
             },
             onMapCreated: (GoogleMapController controller) {
               _mapController = controller;
+              controller.setMapStyle(_darkMapStyle);
             },
           ),
           if (_isLoading) const Positioned.fill(child: _LoadingOverlay()),

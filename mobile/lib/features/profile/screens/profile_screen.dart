@@ -62,7 +62,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return switch (widget.subscriptionPlan) {
       'PLUS' => AppTheme.infoSoft,
       'PRO' => AppTheme.warningSoft,
-      _ => const Color(0xFFF1F5F9),
+      _ => const Color(0xFF24202B),
     };
   }
 
@@ -196,14 +196,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         width: 96,
                         height: 96,
                         decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [
-                              AppTheme.primaryColor,
-                              AppTheme.secondaryColor,
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
+                          gradient: AppTheme.brandGradient,
                           borderRadius: BorderRadius.circular(30),
                         ),
                         alignment: Alignment.center,
@@ -215,20 +208,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 18),
+                      const SizedBox(height: 16),
                       Text(
                         widget.fullName,
                         textAlign: TextAlign.center,
                         style: textTheme.headlineSmall?.copyWith(
                           fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        widget.email,
-                        textAlign: TextAlign.center,
-                        style: textTheme.bodyLarge?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -318,7 +303,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Vehicle Inspector',
+                              'EksperSiz',
                               style: textTheme.titleSmall?.copyWith(
                                 fontWeight: FontWeight.w900,
                               ),
