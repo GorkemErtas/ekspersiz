@@ -41,7 +41,10 @@ public class JwtService {
                 .withIssuer(ISSUER)
                 .withSubject(user.getEmail())
                 .withClaim("userId", user.getId())
-                .withClaim("role", user.getRole().name())
+                .withClaim(
+                        "accountType",
+                        user.getAccountType().name()
+                )
                 .withIssuedAt(now)
                 .withExpiresAt(expiresAt)
                 .sign(algorithm);

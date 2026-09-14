@@ -7,8 +7,8 @@ import com.gorkem.vehicle_inspector.dto.request.ResendVerificationRequest;
 import com.gorkem.vehicle_inspector.dto.request.VerifyEmailRequest;
 import com.gorkem.vehicle_inspector.dto.response.AuthResponse;
 import com.gorkem.vehicle_inspector.dto.response.UserResponse;
-import com.gorkem.vehicle_inspector.entity.Role;
 import com.gorkem.vehicle_inspector.entity.User;
+import com.gorkem.vehicle_inspector.entity.AccountType;
 import com.gorkem.vehicle_inspector.exception.DuplicateResourceException;
 import com.gorkem.vehicle_inspector.exception.ResourceNotFoundException;
 import com.gorkem.vehicle_inspector.mapper.UserMapper;
@@ -56,7 +56,7 @@ public class AuthService {
                 request.getFullName().trim(),
                 normalizedEmail,
                 passwordEncoder.encode(request.getPassword()),
-                Role.USER
+                AccountType.INDIVIDUAL
         );
 
         User savedUser = userRepository.save(user);
@@ -100,7 +100,7 @@ public class AuthService {
                 user.getId(),
                 user.getFullName(),
                 user.getEmail(),
-                user.getRole(),
+                user.getAccountType(),
                 user.getSubscriptionPlan()
         );
     }

@@ -62,7 +62,7 @@ class _LoginScreenState extends State<LoginScreen> {
           builder: (_) => MainShell(
             fullName: authResponse.fullName,
             email: authResponse.email,
-            role: authResponse.role,
+            accountType: authResponse.accountType,
             subscriptionPlan: authResponse.subscriptionPlan,
           ),
         ),
