@@ -5,7 +5,6 @@ import 'features/auth/screens/splash_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-
   runApp(const VehicleInspectorApp());
 }
 
@@ -15,13 +14,11 @@ class VehicleInspectorApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Vehicle Inspector',
+      title: 'EksperSiz',
       debugShowCheckedModeBanner: false,
-
-      theme: AppTheme.lightTheme,
+      theme: AppTheme.darkTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.system,
-
+      themeMode: ThemeMode.dark,
       home: const SplashScreen(),
     );
   }

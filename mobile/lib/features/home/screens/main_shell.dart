@@ -36,26 +36,49 @@ class _MainShellState extends State<MainShell> {
 
   int _selectedIndex = 0;
 
-  late final List<Widget> _screens = [
-    HomeScreen(
-      fullName: widget.fullName,
-      onOpenVehicles: () => _selectTab(1),
-      onOpenInspections: () => _selectTab(2),
-      onOpenProfile: () => _selectTab(3),
-    ),
-    const VehicleListScreen(),
-    const InspectionHistoryScreen(),
-    ProfileScreen(
-      fullName: widget.fullName,
-      email: widget.email,
-      role: widget.role,
-      subscriptionPlan: widget.subscriptionPlan,
-    ),
-  ];
+  late final List<Widget?> _screenCache;
+
+  Widget _buildScreen(int index) {
+    final cached = _screenCache[index];
+    if (cached != null) {
+      return cached;
+    }
+
+    final screen = switch (index) {
+      0 => HomeScreen(
+        fullName: widget.fullName,
+        onOpenVehicles: () => _selectTab(1),
+        onOpenInspections: () => _selectTab(2),
+        onOpenProfile: () => _selectTab(3),
+      ),
+      1 => const VehicleListScreen(),
+      2 => const InspectionHistoryScreen(),
+      3 => ProfileScreen(
+        fullName: widget.fullName,
+        email: widget.email,
+        role: widget.role,
+        subscriptionPlan: widget.subscriptionPlan,
+      ),
+      _ => throw ArgumentError.value(index, 'index', 'Geçersiz sekme indeksi'),
+    };
+
+    _screenCache[index] = screen;
+    return screen;
+  }
+
+  List<Widget> get _screens => List<Widget>.generate(
+    4,
+    (index) => index == _selectedIndex || _screenCache[index] != null
+        ? _buildScreen(index)
+        : const SizedBox.shrink(),
+  );
 
   @override
   void initState() {
     super.initState();
+
+    _screenCache = List<Widget?>.filled(4, null);
+    _buildScreen(0);
 
     _sessionSubscription = SessionManager.unauthorizedStream.listen((_) {
       _handleSessionExpired();
@@ -130,7 +153,11 @@ class _MobileShell extends StatelessWidget {
 
     return Scaffold(
       extendBody: true,
-      body: IndexedStack(index: selectedIndex, children: screens),
+      body: Builder(
+        builder: (context) {
+          return screens[selectedIndex];
+        },
+      ),
       bottomNavigationBar: SafeArea(
         top: false,
         minimum: const EdgeInsets.fromLTRB(14, 0, 14, 10),
@@ -138,9 +165,11 @@ class _MobileShell extends StatelessWidget {
           height: 76,
           padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 5),
           decoration: BoxDecoration(
-            color: colorScheme.surface,
+            color: colorScheme.surface.withValues(alpha: 0.97),
             borderRadius: BorderRadius.circular(26),
-            border: Border.all(color: colorScheme.outlineVariant),
+            border: Border.all(
+              color: AppTheme.primaryColor.withValues(alpha: 0.18),
+            ),
             boxShadow: AppTheme.elevatedShadow,
           ),
           child: Row(
@@ -224,10 +253,23 @@ class _NavigationItem extends StatelessWidget {
             curve: Curves.easeOutCubic,
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 5),
             decoration: BoxDecoration(
-              color: selected
-                  ? colorScheme.primaryContainer
-                  : Colors.transparent,
+              gradient: selected ? AppTheme.deepBrandGradient : null,
+              color: selected ? null : Colors.transparent,
               borderRadius: BorderRadius.circular(20),
+              border: selected
+                  ? Border.all(
+                      color: AppTheme.secondaryColor.withValues(alpha: 0.16),
+                    )
+                  : null,
+              boxShadow: selected
+                  ? [
+                      BoxShadow(
+                        color: AppTheme.primaryColor.withValues(alpha: 0.16),
+                        blurRadius: 18,
+                        offset: const Offset(0, 6),
+                      ),
+                    ]
+                  : null,
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -240,7 +282,7 @@ class _NavigationItem extends StatelessWidget {
                     key: ValueKey(selected),
                     size: 22,
                     color: selected
-                        ? colorScheme.primary
+                        ? Colors.white
                         : colorScheme.onSurfaceVariant,
                   ),
                 ),
@@ -255,7 +297,7 @@ class _NavigationItem extends StatelessWidget {
                       fontSize: 10.5,
                       fontWeight: selected ? FontWeight.w900 : FontWeight.w600,
                       color: selected
-                          ? colorScheme.primary
+                          ? Colors.white
                           : colorScheme.onSurfaceVariant,
                     ),
                   ),
@@ -294,8 +336,10 @@ class _DesktopShell extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: colorScheme.surface,
                   borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
-                  border: Border.all(color: colorScheme.outlineVariant),
-                  boxShadow: AppTheme.softShadow,
+                  border: Border.all(
+                    color: AppTheme.primaryColor.withValues(alpha: 0.16),
+                  ),
+                  boxShadow: AppTheme.elevatedShadow,
                 ),
                 child: NavigationRail(
                   selectedIndex: selectedIndex,
@@ -308,14 +352,7 @@ class _DesktopShell extends StatelessWidget {
                       width: 54,
                       height: 54,
                       decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [
-                            AppTheme.primaryColor,
-                            AppTheme.secondaryColor,
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
+                        gradient: AppTheme.brandGradient,
                         borderRadius: BorderRadius.circular(18),
                         boxShadow: AppTheme.primaryShadow,
                       ),
@@ -353,7 +390,11 @@ class _DesktopShell extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: IndexedStack(index: selectedIndex, children: screens),
+            child: Builder(
+              builder: (context) {
+                return screens[selectedIndex];
+              },
+            ),
           ),
         ],
       ),
