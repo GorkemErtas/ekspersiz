@@ -41,10 +41,11 @@ public class User {
 
     @Enumerated(EnumType.STRING)
     @Column(
+            name = "account_type",
             nullable = false,
             length = 20
     )
-    private Role role;
+    private AccountType accountType;
 
     @Enumerated(EnumType.STRING)
     @Column(
@@ -89,12 +90,12 @@ public class User {
             String fullName,
             String email,
             String password,
-            Role role
+            AccountType accountType
     ) {
         this.fullName = fullName;
         this.email = email;
         this.password = password;
-        this.role = role;
+        this.accountType = accountType;
 
         this.subscriptionPlan =
                 SubscriptionPlan.FREE;
@@ -118,8 +119,8 @@ public class User {
         return password;
     }
 
-    public Role getRole() {
-        return role;
+    public AccountType getAccountType() {
+        return accountType;
     }
 
     public SubscriptionPlan getSubscriptionPlan() {
@@ -164,10 +165,10 @@ public class User {
         this.password = password;
     }
 
-    public void setRole(
-            Role role
+    public void setAccountType(
+            AccountType accountType
     ) {
-        this.role = role;
+        this.accountType = accountType;
     }
 
     public void setSubscriptionPlan(

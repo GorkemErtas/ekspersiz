@@ -1,6 +1,5 @@
 package com.gorkem.vehicle_inspector;
 
-import com.gorkem.vehicle_inspector.entity.Role;
 import com.gorkem.vehicle_inspector.entity.SubscriptionPlan;
 import com.gorkem.vehicle_inspector.entity.User;
 import com.gorkem.vehicle_inspector.repository.DamageInspectionRepository;
@@ -41,9 +40,6 @@ class SubscriptionServiceTest {
                         inspectionRepository,
                         vehicleRepository
                 );
-
-        when(user.getRole())
-                .thenReturn(Role.USER);
     }
 
     @Test
@@ -159,7 +155,7 @@ class SubscriptionServiceTest {
                 .thenReturn(SubscriptionPlan.FREE);
 
         when(
-                vehicleRepository.countByUserId(1L)
+                vehicleRepository.countByUserIdAndArchivedFalse(1L)
         ).thenReturn(1L);
 
         assertThrows(
@@ -184,8 +180,8 @@ class SubscriptionServiceTest {
                 );
 
         when(
-                vehicleRepository.countByUserId(1L)
-        ).thenReturn(5L);
+                vehicleRepository.countByUserIdAndArchivedFalse(1L)
+        ).thenReturn(1L);
 
         assertThrows(
                 IllegalStateException.class,
@@ -209,7 +205,7 @@ class SubscriptionServiceTest {
                 );
 
         when(
-                vehicleRepository.countByUserId(1L)
+                vehicleRepository.countByUserIdAndArchivedFalse(1L)
         ).thenReturn(1L);
 
         assertThrows(
