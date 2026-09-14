@@ -59,7 +59,7 @@ class _HomeScreenState extends State<HomeScreen> {
       final results = await Future.wait([
         _vehicleService.getVehicles(),
         _inspectionService.getInspections(),
-      ]);
+      ]).timeout(const Duration(seconds: 12));
 
       final vehicles = results[0] as List<Vehicle>;
       final inspections = results[1] as List<DamageInspection>;
@@ -104,7 +104,9 @@ class _HomeScreenState extends State<HomeScreen> {
             : null;
         _isLoading = false;
       });
-    } catch (_) {
+    } catch (error, stackTrace) {
+      debugPrint('HOME ERROR: $error');
+      debugPrintStack(stackTrace: stackTrace);
       if (!mounted) {
         return;
       }
@@ -359,7 +361,9 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
         );
-    } catch (_) {
+    } catch (error, stackTrace) {
+      debugPrint('HOME ERROR: $error');
+      debugPrintStack(stackTrace: stackTrace);
       if (!mounted) {
         return;
       }
@@ -501,9 +505,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).brightness == Brightness.light
-          ? const Color(0xFFF8F9FA)
-          : null,
+      backgroundColor: AppTheme.backgroundColor,
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -722,15 +724,7 @@ class _HeroAnalysisCard extends StatelessWidget {
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(24),
-          gradient: const LinearGradient(
-            colors: [
-              Color(0xFF153A6B),
-              AppTheme.primaryColor,
-              AppTheme.secondaryColor,
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
+          gradient: AppTheme.deepBrandGradient,
           boxShadow: AppTheme.primaryShadow,
         ),
         child: Stack(

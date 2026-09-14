@@ -188,7 +188,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Vehicle Inspector hesabını aktifleştir',
+                        'EksperSiz hesabını aktifleştir',
                         style: textTheme.bodySmall?.copyWith(
                           color: colorScheme.onSurfaceVariant,
                         ),
