@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 
 import '../../../core/network/api_exception.dart';
 import '../../../core/storage/token_storage.dart';
-import '../../../core/theme/app_theme.dart';
-import '../../../core/widgets/app_icon_box.dart';
 
 import '../services/auth_service.dart';
 import 'login_screen.dart';
@@ -23,23 +22,36 @@ class _SplashScreenState extends State<SplashScreen> {
   void initState() {
     super.initState();
 
-    _restoreSession();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _restoreSession();
+    });
   }
 
   Future<void> _restoreSession() async {
+    debugPrint('SPLASH: restore session started');
+
     final hasToken = await TokenStorage.hasAccessToken();
+
+    debugPrint('SPLASH: hasToken = $hasToken');
 
     if (!mounted) {
       return;
     }
 
     if (!hasToken) {
+      debugPrint('SPLASH: going to login');
       _goToLogin();
       return;
     }
 
     try {
-      final user = await _authService.getCurrentUser();
+      debugPrint('SPLASH: requesting current user');
+
+      final user = await _authService.getCurrentUser().timeout(
+        const Duration(seconds: 10),
+      );
+
+      debugPrint('SPLASH: current user loaded');
 
       if (!mounted) {
         return;
@@ -54,6 +66,16 @@ class _SplashScreenState extends State<SplashScreen> {
             subscriptionPlan: user.subscriptionPlan,
           ),
         ),
+      );
+    } on TimeoutException {
+      debugPrint('SPLASH: current user timeout');
+
+      if (!mounted) {
+        return;
+      }
+
+      _showSessionRestoreError(
+        'Sunucuya ulaşılamadı. Lütfen bağlantınızı kontrol edin.',
       );
     } on ApiException catch (exception) {
       if (exception.statusCode == 401 || exception.statusCode == 403) {
@@ -72,7 +94,10 @@ class _SplashScreenState extends State<SplashScreen> {
       }
 
       _showSessionRestoreError(exception.message);
-    } catch (_) {
+    } catch (exception, stackTrace) {
+      debugPrint('SPLASH ERROR: $exception');
+      debugPrintStack(stackTrace: stackTrace);
+
       if (!mounted) {
         return;
       }
@@ -144,24 +169,40 @@ class _SplashScreenState extends State<SplashScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const AppIconBox(
-                    icon: Icons.car_crash_rounded,
-                    size: 88,
-                    iconSize: 42,
-                    borderRadius: 28,
-                    iconColor: Colors.white,
-                    gradient: LinearGradient(
-                      colors: [AppTheme.primaryColor, AppTheme.secondaryColor],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(28),
+                    child: Image.asset(
+                      'assets/images/ekspersiz_logo.png',
+                      width: 112,
+                      height: 112,
+                      fit: BoxFit.cover,
+                      cacheWidth: 256,
+                      cacheHeight: 256,
+                      filterQuality: FilterQuality.medium,
+                      errorBuilder: (context, error, stackTrace) {
+                        debugPrint('LOGO ERROR: $error');
+
+                        return Container(
+                          width: 112,
+                          height: 112,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF17121F),
+                            borderRadius: BorderRadius.circular(28),
+                          ),
+                          child: const Icon(
+                            Icons.directions_car_filled_rounded,
+                            size: 52,
+                            color: Color(0xFF8B5CF6),
+                          ),
+                        );
+                      },
                     ),
-                    showShadow: true,
                   ),
 
                   const SizedBox(height: 26),
 
                   Text(
-                    'Vehicle Inspector',
+                    'EksperSiz',
                     textAlign: TextAlign.center,
                     style: textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.w900,

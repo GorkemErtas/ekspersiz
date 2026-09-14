@@ -68,9 +68,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       Navigator.of(context).pushReplacement(
         MaterialPageRoute<void>(
-          builder: (_) => EmailVerificationScreen(
-            email: email,
-          ),
+          builder: (_) => EmailVerificationScreen(email: email),
         ),
       );
     } catch (exception) {
@@ -200,7 +198,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                     children: [
                       Text(
-                        'Vehicle Inspector',
+                        'EksperSiz',
                         style: textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.w900,
                         ),
@@ -233,7 +231,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
             Text(
               'Araçlarını kaydet ve AI destekli '
-                  'hasar analizlerini tek yerden yönet.',
+              'hasar analizlerini tek yerden yönet.',
               style: textTheme.bodyMedium?.copyWith(
                 color: colorScheme.onSurfaceVariant,
                 height: 1.5,
@@ -302,10 +300,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   onPressed: _isLoading
                       ? null
                       : () {
-                    setState(() {
-                      _obscurePassword = !_obscurePassword;
-                    });
-                  },
+                          setState(() {
+                            _obscurePassword = !_obscurePassword;
+                          });
+                        },
 
                   icon: Icon(
                     _obscurePassword
@@ -345,10 +343,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   onPressed: _isLoading
                       ? null
                       : () {
-                    setState(() {
-                      _obscurePasswordConfirm = !_obscurePasswordConfirm;
-                    });
-                  },
+                          setState(() {
+                            _obscurePasswordConfirm = !_obscurePasswordConfirm;
+                          });
+                        },
 
                   icon: Icon(
                     _obscurePasswordConfirm
@@ -436,8 +434,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 onPressed: _isLoading
                     ? null
                     : () {
-                  Navigator.of(context).pop();
-                },
+                        Navigator.of(context).pop();
+                      },
 
                 icon: const Icon(Icons.login_rounded),
 
