@@ -14,13 +14,13 @@ class ProfileScreen extends StatefulWidget {
     super.key,
     required this.fullName,
     required this.email,
-    required this.role,
+    required this.accountType,
     required this.subscriptionPlan,
   });
 
   final String fullName;
   final String email;
-  final String role;
+  final String accountType;
   final String subscriptionPlan;
 
   @override
@@ -32,12 +32,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   bool _isLoggingOut = false;
 
-  String get _roleLabel {
-    return switch (widget.role) {
-      'ADMIN' => 'Yönetici',
-      'INSPECTOR' => 'Eksper',
-      'USER' => 'Kullanıcı',
-      _ => widget.role,
+  String get _accountTypeLabel {
+    return switch (widget.accountType) {
+      'INDIVIDUAL' => 'Bireysel',
+      'BUSINESS' => 'Kurumsal',
+      _ => widget.accountType,
     };
   }
 
@@ -223,7 +222,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         alignment: WrapAlignment.center,
                         children: [
                           AppStatusBadge(
-                            label: _roleLabel,
+                            label: _accountTypeLabel,
                             color: colorScheme.primary,
                             backgroundColor: colorScheme.primaryContainer,
                             icon: Icons.verified_user_outlined,
@@ -260,7 +259,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       _ProfileItem(
                         icon: Icons.verified_user_outlined,
                         title: 'Hesap Türü',
-                        value: _roleLabel,
+                        value: _accountTypeLabel,
                       ),
                       const Divider(height: 1, indent: 82),
                       _ProfileItem(

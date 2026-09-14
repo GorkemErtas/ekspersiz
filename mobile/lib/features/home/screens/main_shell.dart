@@ -16,13 +16,13 @@ class MainShell extends StatefulWidget {
     super.key,
     required this.fullName,
     required this.email,
-    required this.role,
+    required this.accountType,
     required this.subscriptionPlan,
   });
 
   final String fullName;
   final String email;
-  final String role;
+  final String accountType;
   final String subscriptionPlan;
 
   @override
@@ -56,7 +56,7 @@ class _MainShellState extends State<MainShell> {
       3 => ProfileScreen(
         fullName: widget.fullName,
         email: widget.email,
-        role: widget.role,
+        accountType: widget.accountType,
         subscriptionPlan: widget.subscriptionPlan,
       ),
       _ => throw ArgumentError.value(index, 'index', 'Geçersiz sekme indeksi'),

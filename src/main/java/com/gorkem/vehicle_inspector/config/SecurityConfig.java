@@ -104,11 +104,6 @@ public class SecurityConfig {
                                 )
                                 .permitAll()
 
-                                .requestMatchers(
-                                        "/api/v1/admin/**"
-                                )
-                                .hasRole("ADMIN")
-
                                 .anyRequest()
                                 .authenticated()
                 )
