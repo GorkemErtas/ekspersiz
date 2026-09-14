@@ -1,30 +1,43 @@
-# 🚗 Vehicle Inspector
+# 🚗 EksperSiz — Vehicle Inspector
 
-Vehicle Inspector is an AI-powered mobile vehicle damage inspection system developed with **Spring Boot**, **FastAPI**, **YOLO**, **Gemini**, **PostgreSQL**, and **Flutter**.
+EksperSiz is an AI-powered mobile vehicle damage inspection application built with **Flutter**, **Spring Boot**, **FastAPI**, **YOLO**, **Google Gemini**, **PostgreSQL**, **Google Maps**, and **Google Places**.
 
-The system analyzes vehicle images, detects visible damage, identifies affected vehicle parts, recommends repair actions, and generates a user-friendly AI inspection report with a city-aware estimated repair price range.
+The application analyzes vehicle images, detects visible damage, identifies affected vehicle parts, recommends repair actions, generates an AI-assisted inspection report, estimates a repair price range, and helps users discover nearby automotive repair services based on the inspection location.
 
 ---
 
 # ✨ Features
 
-- 🔐 JWT Authentication & Authorization
-- 🔄 Persistent Login & Automatic Session Restoration
-- 👤 User Registration, Profile & Secure Logout
-- 🚙 Vehicle Management
-- 📍 City-Based Inspection Context
-- 📷 Camera / Gallery Vehicle Image Upload
-- 🤖 YOLO-Based Damage Detection
-- 🧩 Multiple Affected Vehicle Part Detection
-- ⚠️ Damage Severity Classification
-- 🎯 Model Confidence Scoring
-- 🔧 Repair Action Recommendation
-- 🧠 Gemini-Powered Inspection Reports
-- 💰 City-Aware Repair Cost Estimation
-- 🔄 Retryable AI Report Generation
-- 📊 Inspection History
-- 🗄 PostgreSQL Database
-- 🌐 RESTful API
+* 🔐 JWT Authentication & Authorization
+* ✉️ Email Verification During Registration
+* 🔑 Password Change Support
+* 🔄 Persistent Login & Automatic Session Restoration
+* 👤 User Profile & Secure Logout
+* 🛡 Role-Based Access Control (`USER`, `ADMIN`)
+* 🚙 Vehicle Management
+* ⭐ Main Vehicle Selection
+* 🗃 Vehicle Archiving While Preserving Inspection History
+* 📍 GPS-Based Inspection Location
+* 🗺 Google Maps Integration
+* 📷 Camera / Gallery Vehicle Image Upload
+* 🤖 YOLO-Based Damage Detection
+* 🧩 Multiple Affected Vehicle Part Detection
+* ⚠️ Damage Severity Classification
+* 🎯 Model Confidence Scoring
+* 🔧 Repair Action Recommendation
+* 🧠 Gemini-Powered Inspection Reports
+* 💰 Location-Aware Repair Cost Estimation
+* 🔄 Retryable AI Report Generation Without Re-running YOLO
+* 🔎 Nearby Automotive Service Discovery
+* 🏷 Vehicle-Brand-Aware Service Recommendations
+* ⭐ Google Places Ratings & Distance Information
+* 🧭 Google Maps Directions to Selected Services
+* 📊 Inspection History
+* 💳 Subscription Plan Architecture (`FREE`, `PLUS`, `PRO`)
+* 📉 Daily Inspection Limits for Free Users
+* 🗄 PostgreSQL Persistence
+* 🌐 RESTful API
+* 🔒 Secure Mobile Token Storage
 
 ---
 
@@ -36,77 +49,91 @@ Flutter Mobile Application
             ▼
      Spring Boot REST API
             │
-     ┌──────┼───────────────┐
-     │      │               │
-     ▼      ▼               ▼
-PostgreSQL  FastAPI       Gemini API
-              │               │
-         YOLO Models      AI Report
-              │          + Price Range
-              ▼
-      Damage / Part Analysis
+     ┌──────┼───────────────┬────────────────┐
+     │      │               │                │
+     ▼      ▼               ▼                ▼
+PostgreSQL  FastAPI       Gemini API     Google Places
+              │               │                │
+         YOLO Models      AI Report       Nearby Services
+              │          + Price Range        │
+              ▼                               ▼
+      Damage / Part Analysis             Google Maps
 ```
 
-- **Flutter** provides the mobile application and complete end-to-end inspection experience.
-- **Spring Boot** handles authentication, vehicles, inspections, persistence, AI orchestration, and report lifecycle management.
-- **FastAPI** performs image analysis using YOLO models.
-- **YOLO** detects damage types and affected vehicle parts.
-- **Gemini** converts structured ML results into a user-friendly inspection report and estimates a repair price range based on vehicle, damage, and selected city context.
-- **PostgreSQL** stores users, vehicles, inspections, detections, repair recommendations, report status, and generated inspection reports.
+* **Flutter** provides the mobile application and complete end-to-end inspection experience.
+* **Spring Boot** acts as the orchestration layer for authentication, vehicles, inspections, subscriptions, persistence, AI requests, nearby service discovery, and report lifecycle management.
+* **FastAPI** performs computer-vision inference using YOLO models.
+* **YOLO** detects visible damage types and affected vehicle parts.
+* **Gemini** converts structured ML results into a user-friendly inspection report and estimates a repair price range based on vehicle and inspection context.
+* **Google Places** is used to discover nearby automotive repair services.
+* **Google Maps** visualizes service locations and opens driving directions from the user's current location.
+* **PostgreSQL** stores users, vehicles, inspections, detections, repair recommendations, report status, generated reports, roles, and subscription plan information.
 
 ---
 
 # 🛠 Tech Stack
 
-### Mobile
+## Mobile
 
-- Flutter
-- Dart
+* Flutter
+* Dart
+* Google Maps Flutter
+* Geolocator
+* Flutter Secure Storage
 
-### Backend
+## Backend
 
-- Java
-- Spring Boot
-- Spring Security
-- Spring Data JPA
-- JWT
-- Maven
+* Java 21
+* Spring Boot
+* Spring Security
+* Spring Data JPA
+* JWT
+* Spring Mail
+* Maven
 
-### AI & LLM
+## AI & LLM
 
-- Python
-- FastAPI
-- Ultralytics YOLO
-- PyTorch
-- Roboflow
-- Google Gemini API
+* Python
+* FastAPI
+* Ultralytics YOLO
+* PyTorch
+* Google Gemini API
 
-### Database
+## Maps & Location
 
-- PostgreSQL
+* Google Maps SDK
+* Google Places API
+* Device GPS / Geolocation
 
-### Tools
+## Database
 
-- IntelliJ IDEA
-- Android Studio
-- Visual Studio Code
-- Postman
-- Git
-- GitHub
+* PostgreSQL
+
+## Tools
+
+* IntelliJ IDEA
+* Android Studio
+* Visual Studio Code
+* Postman
+* Git
+* GitHub
 
 ---
 
 # 🔄 Inspection Workflow
 
 ```text
-User Login
+User Registration / Login
+     │
+     ▼
+Email Verification
      │
      ▼
 Create / Select Vehicle
      │
      ▼
 Create Inspection
-+ Select City
++ Capture GPS Location
      │
      ▼
 Upload Vehicle Image
@@ -127,16 +154,24 @@ Gemini Report Generation
      │
      ├── Human-Readable Damage Report
      ├── Repair Recommendation Explanation
-     └── City-Aware Estimated Price Range
+     └── Location-Aware Estimated Price Range
      │
      ▼
 Save Inspection Report
      │
      ▼
-Return Complete Inspection Result
+Display Complete Inspection Result
+     │
+     ▼
+Explore Nearby Automotive Services
+     │
+     ├── Google Places Search
+     ├── Rating / Distance Information
+     ├── Map Visualization
+     └── Google Maps Directions
 ```
 
-The ML inspection result and the Gemini report have separate statuses. If Gemini report generation temporarily fails, the completed ML analysis remains available and the report can be regenerated without running YOLO again.
+The ML inspection result and the Gemini report use separate statuses. If Gemini report generation temporarily fails, the completed ML analysis remains available and the report can be regenerated without running YOLO again.
 
 ---
 
@@ -176,7 +211,7 @@ The ML inspection result and the Gemini report have separate statuses. If Gemini
     "estimatedMinimumPrice": 27000.00,
     "estimatedMaximumPrice": 34000.00,
     "currency": "TRY",
-    "priceInformation": "Estimated repair cost based on the vehicle, detected damage, repair requirements, and selected city.",
+    "priceInformation": "Estimated repair cost based on the vehicle, detected damage, repair requirements, and inspection location.",
     "disclaimer": "The price range is an AI-generated market estimate and is not a final service quote."
   }
 }
@@ -186,34 +221,63 @@ The ML inspection result and the Gemini report have separate statuses. If Gemini
 
 # 🧠 AI Inspection Report & Price Estimation
 
-Repair prices are no longer managed through administrator-defined database records.
-
 After YOLO completes the vehicle damage analysis, Spring Boot sends structured inspection information to Gemini, including:
 
-- Vehicle brand and model
-- Model year
-- Mileage
-- Selected city
-- Damage severity
-- Detected damage types
-- Affected vehicle parts
-- Recommended repair actions
-- Part replacement requirements
-- Model confidence information
+* Vehicle brand and model
+* Model year
+* Mileage
+* Inspection location
+* Damage severity
+* Detected damage types
+* Affected vehicle parts
+* Recommended repair actions
+* Part replacement requirements
+* Model confidence information
 
 Gemini uses this context to generate:
 
-- A readable damage summary
-- Detailed damage description
-- Repair recommendation explanation
-- Estimated minimum repair price
-- Estimated maximum repair price
-- Price reasoning
-- A user-facing disclaimer
+* A readable damage summary
+* Detailed damage description
+* Repair recommendation explanation
+* Estimated minimum repair price
+* Estimated maximum repair price
+* Price reasoning
+* A user-facing disclaimer
 
-The current demo does **not** use live web-search pricing. The estimate is generated from the vehicle, damage, selected city, and general market context available to the language model.
+The current demo does **not** use live repair-shop pricing. Repair prices are AI-generated estimates based on the available vehicle, damage, repair, and location context and should not be treated as final quotations.
 
-To keep the estimate practical for the demo, the difference between the generated minimum and maximum price is limited to **10,000 TRY**.
+---
+
+# 📍 Nearby Service Discovery
+
+After an inspection is completed, users can explore nearby automotive services relevant to the vehicle and detected damage.
+
+The backend integrates with **Google Places API** and returns information such as:
+
+* Service name
+* Address
+* Latitude and longitude
+* Google rating
+* Number of user ratings
+* Primary place type
+* Distance from the inspection location
+* Google Maps information
+
+The Flutter application displays these services on a Google Map. Users can select a service, view its information, and open driving directions in Google Maps using their current device location.
+
+---
+
+# 💳 Subscription Architecture
+
+The application currently includes the following plan types:
+
+* **FREE**
+* **PLUS**
+* **PRO**
+
+The FREE plan uses a daily inspection limit, while the architecture supports expanded limits and premium capabilities for future paid plans.
+
+Payment processing is not enabled in the current demo release. The first public version is intended to operate without paid subscriptions, while the subscription structure is already represented in the backend and mobile application for future expansion.
 
 ---
 
@@ -234,7 +298,7 @@ Gemini Report
     └── Failure → ReportStatus.FAILED
 ```
 
-If Gemini fails because of a temporary API or quota issue, the inspection is not marked as failed.
+If Gemini fails because of a temporary API, connectivity, or quota issue, the inspection itself is not marked as failed.
 
 The existing ML result can be reused through:
 
@@ -248,24 +312,34 @@ This regenerates only the AI report and does not rerun the YOLO image analysis.
 
 # 🔒 Security
 
-- JWT Authentication
-- BCrypt Password Encryption
-- Stateless Authorization
-- Role-Based Access Control
-- Secure Mobile Token Storage
+* JWT Authentication
+* BCrypt Password Hashing
+* Stateless Authorization
+* Role-Based Access Control
+* Email Verification
+* Secure Mobile Token Storage
+* Authenticated Inspection Access
+* File Size and MIME-Type Validation
+* Image File Signature Validation
+* UUID-Based Stored File Names
+* Path Traversal Protection for Uploaded Files
+* Sensitive configuration values loaded through environment variables
 
 ---
 
 # 🚀 Future Improvements
 
-- 📄 PDF Damage Reports
-- 🎯 Larger and More Diverse Damage Detection Dataset
-- 🎯 Improved Vehicle-Part Classification
-- 📷 Image Quality / Retake Validation
-- 🌐 Optional Live Pricing / Search Grounding
-- 🐳 Docker Support
-- ☁️ Cloud Deployment
-- 🔔 Push Notifications
+* 📄 PDF Damage Reports
+* 🎯 Larger and More Diverse Damage Detection Dataset
+* 🎯 Improved Vehicle-Part Classification
+* 📷 Image Quality / Retake Validation
+* 🌐 Optional Live Repair Pricing / Search Grounding
+* 💳 Payment & Premium Subscription Integration
+* 🐳 Docker / Docker Compose Support
+* ☁️ Cloud Deployment
+* 🔔 Push Notifications
+* 🧪 Expanded Automated Test Coverage
+* ⚙️ CI/CD Pipeline
 
 ---
 
@@ -281,32 +355,43 @@ Software Engineer
 
 🚧 **Actively under development**
 
-### Completed
+## Completed
 
-- ✅ JWT Authentication & Authorization
-- ✅ User Registration & Login
-- ✅ Persistent Mobile Sessions
-- ✅ Automatic Session Restoration
-- ✅ User Profile & Logout
-- ✅ Vehicle Management
-- ✅ Inspection Management
-- ✅ AI Damage Detection
-- ✅ Multiple Affected Part Detection
-- ✅ Damage Severity Classification
-- ✅ Repair Recommendation
-- ✅ City Selection for Inspections
-- ✅ Gemini AI Report Generation
-- ✅ City-Aware Repair Price Estimation
-- ✅ Persistent Inspection Reports
-- ✅ AI Report Status Management
-- ✅ Retryable AI Report Generation
-- ✅ Flutter Mobile Application
-- ✅ Inspection Result Screen
-- ✅ Inspection History
-- ✅ End-to-End Mobile Inspection Flow
+* ✅ JWT Authentication & Authorization
+* ✅ User Registration & Login
+* ✅ Email Verification
+* ✅ Password Change
+* ✅ Persistent Mobile Sessions
+* ✅ Automatic Session Restoration
+* ✅ User Profile & Logout
+* ✅ Vehicle Management
+* ✅ Main Vehicle Selection
+* ✅ Vehicle Archiving
+* ✅ Inspection Management
+* ✅ GPS-Based Inspection Location
+* ✅ AI Damage Detection
+* ✅ Multiple Affected Part Detection
+* ✅ Damage Severity Classification
+* ✅ Repair Recommendation
+* ✅ Gemini AI Report Generation
+* ✅ Location-Aware Repair Price Estimation
+* ✅ Persistent Inspection Reports
+* ✅ AI Report Status Management
+* ✅ Retryable AI Report Generation
+* ✅ Google Maps Integration
+* ✅ Google Places Nearby Service Search
+* ✅ Vehicle-Brand-Aware Nearby Service Recommendations
+* ✅ Service Ratings & Distance Display
+* ✅ Google Maps Directions
+* ✅ Subscription Plan Architecture
+* ✅ Daily FREE Plan Inspection Limit
+* ✅ Flutter Mobile Application
+* ✅ Inspection Result Screen
+* ✅ Inspection History
+* ✅ End-to-End Mobile Inspection Flow
 
-### In Progress
+## In Progress
 
-- 🔄 ML Model Improvements
-- 🔄 Increase AI output accuracy
-- 🔄 PDF Report Generation
+* 🔄 ML Model Improvements
+* 🔄 Increase AI output accuracy
+* 🔄 Production deployment preparation

@@ -328,9 +328,10 @@ class _NearbyServicesScreenState extends State<NearbyServicesScreen> {
                 });
               }
             },
+            style: _darkMapStyle,
+
             onMapCreated: (GoogleMapController controller) {
               _mapController = controller;
-              controller.setMapStyle(_darkMapStyle);
             },
           ),
           if (_isLoading) const Positioned.fill(child: _LoadingOverlay()),
