@@ -1,7 +1,7 @@
 package com.gorkem.vehicle_inspector.dto.response;
 
-import com.gorkem.vehicle_inspector.entity.Role;
 import com.gorkem.vehicle_inspector.entity.SubscriptionPlan;
+import com.gorkem.vehicle_inspector.entity.AccountType;
 
 import java.time.LocalDateTime;
 
@@ -10,7 +10,7 @@ public class UserResponse {
     private final Long id;
     private final String fullName;
     private final String email;
-    private final Role role;
+    private final AccountType accountType;
 
     private final SubscriptionPlan subscriptionPlan;
 
@@ -22,7 +22,7 @@ public class UserResponse {
             Long id,
             String fullName,
             String email,
-            Role role,
+            AccountType accountType,
             SubscriptionPlan subscriptionPlan,
             LocalDateTime subscriptionStartedAt,
             LocalDateTime subscriptionExpiresAt
@@ -30,12 +30,10 @@ public class UserResponse {
         this.id = id;
         this.fullName = fullName;
         this.email = email;
-        this.role = role;
+        this.accountType = accountType;
         this.subscriptionPlan = subscriptionPlan;
-        this.subscriptionStartedAt =
-                subscriptionStartedAt;
-        this.subscriptionExpiresAt =
-                subscriptionExpiresAt;
+        this.subscriptionStartedAt = subscriptionStartedAt;
+        this.subscriptionExpiresAt = subscriptionExpiresAt;
     }
 
     public Long getId() {
@@ -50,8 +48,8 @@ public class UserResponse {
         return email;
     }
 
-    public Role getRole() {
-        return role;
+    public AccountType getAccountType() {
+        return accountType;
     }
 
     public SubscriptionPlan getSubscriptionPlan() {
