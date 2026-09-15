@@ -1,0 +1,80 @@
+package com.gorkem.vehicle_inspector.service;
+
+import com.gorkem.vehicle_inspector.entity.AccountType;
+import com.gorkem.vehicle_inspector.entity.BusinessAccount;
+import com.gorkem.vehicle_inspector.entity.BusinessMember;
+import com.gorkem.vehicle_inspector.entity.BusinessRole;
+import com.gorkem.vehicle_inspector.entity.User;
+import com.gorkem.vehicle_inspector.exception.ResourceNotFoundException;
+import com.gorkem.vehicle_inspector.repository.BusinessMemberRepository;
+import com.gorkem.vehicle_inspector.repository.UserRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+public class BusinessContextService {
+
+    private final UserRepository userRepository;
+    private final BusinessMemberRepository businessMemberRepository;
+
+    public BusinessContextService(
+            UserRepository userRepository,
+            BusinessMemberRepository businessMemberRepository
+    ) {
+        this.userRepository = userRepository;
+        this.businessMemberRepository = businessMemberRepository;
+    }
+
+    @Transactional(readOnly = true)
+    public User requireUser(String email) {
+        return userRepository.findByEmail(
+                        normalizeEmail(email)
+                )
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Kullanıcı bulunamadı."
+                        )
+                );
+    }
+
+    @Transactional(readOnly = true)
+    public BusinessMember requireMembership(User user) {
+        if (user.getAccountType() != AccountType.BUSINESS) {
+            throw new IllegalStateException(
+                    "Kullanıcı bir şirket hesabına bağlı değil."
+            );
+        }
+
+        return businessMemberRepository
+                .findByUserId(user.getId())
+                .orElseThrow(() ->
+                        new IllegalStateException(
+                                "Şirket üyeliği bulunamadı."
+                        )
+                );
+    }
+
+    @Transactional(readOnly = true)
+    public BusinessAccount requireBusinessAccount(User user) {
+        return requireMembership(user)
+                .getBusinessAccount();
+    }
+
+    @Transactional(readOnly = true)
+    public BusinessMember requireOwner(User user) {
+        BusinessMember membership =
+                requireMembership(user);
+
+        if (membership.getRole() != BusinessRole.OWNER) {
+            throw new IllegalStateException(
+                    "Bu işlem yalnızca şirket sahibi tarafından yapılabilir."
+            );
+        }
+
+        return membership;
+    }
+
+    private String normalizeEmail(String email) {
+        return email.trim().toLowerCase();
+    }
+}
