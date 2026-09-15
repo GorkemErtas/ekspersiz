@@ -5,6 +5,7 @@ import com.gorkem.vehicle_inspector.entity.User;
 import com.gorkem.vehicle_inspector.repository.DamageInspectionRepository;
 import com.gorkem.vehicle_inspector.repository.VehicleRepository;
 import com.gorkem.vehicle_inspector.service.SubscriptionService;
+import com.gorkem.vehicle_inspector.entity.BusinessAccount;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -212,6 +213,55 @@ class SubscriptionServiceTest {
                 IllegalStateException.class,
                 () -> subscriptionService
                         .validateVehicleLimit(user)
+        );
+    }
+
+    @Test
+    void businessShouldBeAllowedBeforeFiftyVehicles() {
+        BusinessAccount businessAccount =
+                new BusinessAccount("ABC Ekspertiz");
+
+        org.springframework.test.util.ReflectionTestUtils.setField(
+                businessAccount,
+                "id",
+                10L
+        );
+
+        when(
+                vehicleRepository
+                        .countByBusinessAccountIdAndArchivedFalse(10L)
+        ).thenReturn(49L);
+
+        assertDoesNotThrow(
+                () -> subscriptionService
+                        .validateBusinessVehicleLimit(
+                                businessAccount
+                        )
+        );
+    }
+
+    @Test
+    void businessShouldBeBlockedAtFiftyVehicles() {
+        BusinessAccount businessAccount =
+                new BusinessAccount("ABC Ekspertiz");
+
+        org.springframework.test.util.ReflectionTestUtils.setField(
+                businessAccount,
+                "id",
+                10L
+        );
+
+        when(
+                vehicleRepository
+                        .countByBusinessAccountIdAndArchivedFalse(10L)
+        ).thenReturn(50L);
+
+        assertThrows(
+                IllegalStateException.class,
+                () -> subscriptionService
+                        .validateBusinessVehicleLimit(
+                                businessAccount
+                        )
         );
     }
 }

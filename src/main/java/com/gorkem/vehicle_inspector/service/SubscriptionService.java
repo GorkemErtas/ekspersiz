@@ -2,6 +2,7 @@ package com.gorkem.vehicle_inspector.service;
 
 import com.gorkem.vehicle_inspector.entity.SubscriptionPlan;
 import com.gorkem.vehicle_inspector.entity.User;
+import com.gorkem.vehicle_inspector.entity.BusinessAccount;
 import com.gorkem.vehicle_inspector.repository.DamageInspectionRepository;
 import com.gorkem.vehicle_inspector.repository.VehicleRepository;
 import org.springframework.stereotype.Service;
@@ -17,6 +18,7 @@ public class SubscriptionService {
 
     private static final int FREE_VEHICLE_LIMIT = 1;
     private static final int PLUS_VEHICLE_LIMIT = 5;
+    private static final int BUSINESS_VEHICLE_LIMIT = 50;
 
     private final DamageInspectionRepository
             inspectionRepository;
@@ -155,6 +157,25 @@ public class SubscriptionService {
                             + plan
                             + ", araç limiti: "
                             + limit
+                            + "."
+            );
+        }
+    }
+
+    public void validateBusinessVehicleLimit(
+            BusinessAccount businessAccount
+    ) {
+        long vehicleCount =
+                vehicleRepository
+                        .countByBusinessAccountIdAndArchivedFalse(
+                                businessAccount.getId()
+                        );
+
+        if (vehicleCount >= BUSINESS_VEHICLE_LIMIT) {
+            throw new IllegalStateException(
+                    "Şirket araç limitine ulaştınız. "
+                            + "Business araç limiti: "
+                            + BUSINESS_VEHICLE_LIMIT
                             + "."
             );
         }

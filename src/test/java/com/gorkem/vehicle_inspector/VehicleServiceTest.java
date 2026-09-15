@@ -185,4 +185,114 @@ class VehicleServiceTest {
                 )
         );
     }
+
+    @Test
+    void personalUserShouldUsePersonalVehicleLimitWhenCreatingVehicle() {
+        User user = mock(User.class);
+
+        when(businessContextService.requireUser(
+                "user@example.com"
+        )).thenReturn(user);
+
+        when(businessContextService.isBusinessMember(user))
+                .thenReturn(false);
+
+        when(user.getId()).thenReturn(1L);
+
+        when(vehicleRepository.existsByPlate("35ABC123"))
+                .thenReturn(false);
+
+        when(vehicleRepository
+                .countByUserIdAndArchivedFalse(1L))
+                .thenReturn(0L);
+
+        when(vehicleRepository.save(any(Vehicle.class)))
+                .thenAnswer(invocation ->
+                        invocation.getArgument(0)
+                );
+
+        var request =
+                new com.gorkem.vehicle_inspector.dto.request.CreateVehicleRequest();
+
+        request.setPlate("35ABC123");
+        request.setBrand("BMW");
+        request.setModel("320i");
+        request.setModelYear(2022);
+        request.setMileage(30000);
+
+        service.createVehicle(
+                request,
+                "user@example.com"
+        );
+
+        verify(subscriptionService)
+                .validateVehicleLimit(user);
+
+        verify(
+                subscriptionService,
+                never()
+        ).validateBusinessVehicleLimit(
+                any(BusinessAccount.class)
+        );
+    }
+
+    @Test
+    void businessMemberShouldUseBusinessVehicleLimitWhenCreatingVehicle() {
+        User user = mock(User.class);
+
+        BusinessAccount businessAccount =
+                new BusinessAccount("ABC Ekspertiz");
+
+        ReflectionTestUtils.setField(
+                businessAccount,
+                "id",
+                10L
+        );
+
+        when(businessContextService.requireUser(
+                "member@example.com"
+        )).thenReturn(user);
+
+        when(businessContextService.isBusinessMember(user))
+                .thenReturn(true);
+
+        when(businessContextService.requireBusinessAccount(user))
+                .thenReturn(businessAccount);
+
+        when(vehicleRepository.existsByPlate("35ABC123"))
+                .thenReturn(false);
+
+        when(vehicleRepository
+                .countByBusinessAccountIdAndArchivedFalse(10L))
+                .thenReturn(20L);
+
+        when(vehicleRepository.save(any(Vehicle.class)))
+                .thenAnswer(invocation ->
+                        invocation.getArgument(0)
+                );
+
+        var request =
+                new com.gorkem.vehicle_inspector.dto.request.CreateVehicleRequest();
+
+        request.setPlate("35ABC123");
+        request.setBrand("BMW");
+        request.setModel("320i");
+        request.setModelYear(2022);
+        request.setMileage(30000);
+
+        service.createVehicle(
+                request,
+                "member@example.com"
+        );
+
+        verify(subscriptionService)
+                .validateBusinessVehicleLimit(
+                        businessAccount
+                );
+
+        verify(
+                subscriptionService,
+                never()
+        ).validateVehicleLimit(user);
+    }
 }

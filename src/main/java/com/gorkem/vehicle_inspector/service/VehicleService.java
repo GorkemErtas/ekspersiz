@@ -42,8 +42,6 @@ public class VehicleService {
                         authenticatedEmail
                 );
 
-        subscriptionService.validateVehicleLimit(user);
-
         String normalizedPlate =
                 normalizePlate(request.getPlate());
 
@@ -57,6 +55,10 @@ public class VehicleService {
         Vehicle vehicle;
 
         if (!businessContextService.isBusinessMember(user)) {
+
+            // Kişisel kullanım → kullanıcının kendi plan limiti
+            subscriptionService.validateVehicleLimit(user);
+
             vehicle = VehicleMapper.toEntity(
                     request,
                     user
@@ -69,10 +71,17 @@ public class VehicleService {
                             ) > 0;
 
             vehicle.setPrimaryVehicle(!hasActiveVehicle);
+
         } else {
+
+            // Business kullanımı → şirketin ortak limiti
             BusinessAccount businessAccount =
                     businessContextService
                             .requireBusinessAccount(user);
+
+            subscriptionService.validateBusinessVehicleLimit(
+                    businessAccount
+            );
 
             vehicle = VehicleMapper.toEntity(
                     request,
