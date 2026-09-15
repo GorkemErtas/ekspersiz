@@ -8,7 +8,8 @@ import com.gorkem.vehicle_inspector.entity.Vehicle;
 import com.gorkem.vehicle_inspector.exception.DuplicateResourceException;
 import com.gorkem.vehicle_inspector.exception.ResourceNotFoundException;
 import com.gorkem.vehicle_inspector.mapper.VehicleMapper;
-import com.gorkem.vehicle_inspector.repository.UserRepository;
+import com.gorkem.vehicle_inspector.entity.AccountType;
+import com.gorkem.vehicle_inspector.entity.BusinessAccount;
 import com.gorkem.vehicle_inspector.repository.VehicleRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,17 +20,17 @@ import java.util.List;
 public class VehicleService {
 
     private final VehicleRepository vehicleRepository;
-    private final UserRepository userRepository;
     private final SubscriptionService subscriptionService;
+    private final BusinessContextService businessContextService;
 
     public VehicleService(
             VehicleRepository vehicleRepository,
-            UserRepository userRepository,
-            SubscriptionService subscriptionService
+            SubscriptionService subscriptionService,
+            BusinessContextService businessContextService
     ) {
         this.vehicleRepository = vehicleRepository;
-        this.userRepository = userRepository;
         this.subscriptionService = subscriptionService;
+        this.businessContextService = businessContextService;
     }
 
     @Transactional
@@ -37,42 +38,109 @@ public class VehicleService {
             CreateVehicleRequest request,
             String authenticatedEmail
     ) {
-        User user = findUserByEmail(authenticatedEmail);
+        User user =
+                businessContextService.requireUser(
+                        authenticatedEmail
+                );
+
         subscriptionService.validateVehicleLimit(user);
 
-        String normalizedPlate = normalizePlate(request.getPlate());
+        String normalizedPlate =
+                normalizePlate(request.getPlate());
 
         if (vehicleRepository.existsByPlate(normalizedPlate)) {
             throw new DuplicateResourceException(
-                    "Bu plakaya ait araç zaten kayıtlı: " + normalizedPlate
+                    "Bu plakaya ait araç zaten kayıtlı: "
+                            + normalizedPlate
             );
         }
 
-        Vehicle vehicle = VehicleMapper.toEntity(request, user);
+        Vehicle vehicle;
 
-        boolean hasActiveVehicle =
-                vehicleRepository.countByUserIdAndArchivedFalse(user.getId()) > 0;
+        if (user.getAccountType() == AccountType.INDIVIDUAL) {
+            vehicle = VehicleMapper.toEntity(
+                    request,
+                    user
+            );
 
-        vehicle.setPrimaryVehicle(!hasActiveVehicle);
+            boolean hasActiveVehicle =
+                    vehicleRepository
+                            .countByUserIdAndArchivedFalse(
+                                    user.getId()
+                            ) > 0;
 
-        return VehicleMapper.toResponse(vehicleRepository.save(vehicle));
+            vehicle.setPrimaryVehicle(!hasActiveVehicle);
+        } else {
+            BusinessAccount businessAccount =
+                    businessContextService
+                            .requireBusinessAccount(user);
+
+            vehicle = VehicleMapper.toEntity(
+                    request,
+                    businessAccount
+            );
+
+            boolean hasActiveVehicle =
+                    vehicleRepository
+                            .countByBusinessAccountIdAndArchivedFalse(
+                                    businessAccount.getId()
+                            ) > 0;
+
+            vehicle.setPrimaryVehicle(!hasActiveVehicle);
+        }
+
+        return VehicleMapper.toResponse(
+                vehicleRepository.save(vehicle)
+        );
     }
 
     @Transactional(readOnly = true)
-    public List<VehicleResponse> getMyVehicles(String authenticatedEmail) {
-        User user = findUserByEmail(authenticatedEmail);
+    public List<VehicleResponse> getMyVehicles(
+            String authenticatedEmail
+    ) {
+        User user =
+                businessContextService.requireUser(
+                        authenticatedEmail
+                );
 
-        return vehicleRepository
-                .findAllByUserIdAndArchivedFalseOrderByIdDesc(user.getId())
-                .stream()
+        List<Vehicle> vehicles;
+
+        if (user.getAccountType() == AccountType.INDIVIDUAL) {
+            vehicles =
+                    vehicleRepository
+                            .findAllByUserIdAndArchivedFalseOrderByIdDesc(
+                                    user.getId()
+                            );
+        } else {
+            BusinessAccount businessAccount =
+                    businessContextService
+                            .requireBusinessAccount(user);
+
+            vehicles =
+                    vehicleRepository
+                            .findAllByBusinessAccountIdAndArchivedFalseOrderByIdDesc(
+                                    businessAccount.getId()
+                            );
+        }
+
+        return vehicles.stream()
                 .map(VehicleMapper::toResponse)
                 .toList();
     }
 
     @Transactional(readOnly = true)
-    public VehicleResponse getMyVehicleById(Long id, String authenticatedEmail) {
-        User user = findUserByEmail(authenticatedEmail);
-        return VehicleMapper.toResponse(findVehicleByIdAndUserId(id, user.getId()));
+    public VehicleResponse getMyVehicleById(
+            Long id,
+            String authenticatedEmail
+    ) {
+        User user =
+                businessContextService.requireUser(
+                        authenticatedEmail
+                );
+
+        return VehicleMapper.toResponse(
+                findAccessibleVehicle(id, user)
+        );
     }
 
     @Transactional
@@ -81,8 +149,13 @@ public class VehicleService {
             UpdateVehicleRequest request,
             String authenticatedEmail
     ) {
-        User user = findUserByEmail(authenticatedEmail);
-        Vehicle vehicle = findVehicleByIdAndUserId(id, user.getId());
+        User user =
+                businessContextService.requireUser(
+                        authenticatedEmail
+                );
+
+        Vehicle vehicle =
+                findAccessibleVehicle(id, user);
 
         String normalizedPlate = normalizePlate(request.getPlate());
 
@@ -97,61 +170,143 @@ public class VehicleService {
     }
 
     @Transactional
-    public VehicleResponse setPrimaryVehicle(Long id, String authenticatedEmail) {
-        User user = findUserByEmail(authenticatedEmail);
-        Vehicle selectedVehicle = findVehicleByIdAndUserId(id, user.getId());
+    public VehicleResponse setPrimaryVehicle(
+            Long id,
+            String authenticatedEmail
+    ) {
+        User user =
+                businessContextService.requireUser(
+                        authenticatedEmail
+                );
 
-        vehicleRepository
-                .findByUserIdAndPrimaryVehicleTrueAndArchivedFalse(user.getId())
-                .filter(current -> !current.getId().equals(selectedVehicle.getId()))
-                .ifPresent(current -> current.setPrimaryVehicle(false));
+        Vehicle selectedVehicle =
+                findAccessibleVehicle(id, user);
+
+        if (user.getAccountType() == AccountType.INDIVIDUAL) {
+            vehicleRepository
+                    .findByUserIdAndPrimaryVehicleTrueAndArchivedFalse(
+                            user.getId()
+                    )
+                    .filter(current ->
+                            !current.getId()
+                                    .equals(selectedVehicle.getId())
+                    )
+                    .ifPresent(current ->
+                            current.setPrimaryVehicle(false)
+                    );
+        } else {
+            BusinessAccount businessAccount =
+                    businessContextService
+                            .requireBusinessAccount(user);
+
+            vehicleRepository
+                    .findByBusinessAccountIdAndPrimaryVehicleTrueAndArchivedFalse(
+                            businessAccount.getId()
+                    )
+                    .filter(current ->
+                            !current.getId()
+                                    .equals(selectedVehicle.getId())
+                    )
+                    .ifPresent(current ->
+                            current.setPrimaryVehicle(false)
+                    );
+        }
 
         selectedVehicle.setPrimaryVehicle(true);
 
-        return VehicleMapper.toResponse(vehicleRepository.save(selectedVehicle));
+        return VehicleMapper.toResponse(
+                vehicleRepository.save(selectedVehicle)
+        );
     }
 
     @Transactional
-    public void deleteVehicle(Long id, String authenticatedEmail) {
-        User user = findUserByEmail(authenticatedEmail);
-        Vehicle vehicle = findVehicleByIdAndUserId(id, user.getId());
+    public void deleteVehicle(
+            Long id,
+            String authenticatedEmail
+    ) {
+        User user =
+                businessContextService.requireUser(
+                        authenticatedEmail
+                );
 
-        boolean wasPrimary = vehicle.isPrimaryVehicle();
+        Vehicle vehicle =
+                findAccessibleVehicle(id, user);
+
+        boolean wasPrimary =
+                vehicle.isPrimaryVehicle();
 
         vehicle.setPrimaryVehicle(false);
         vehicle.setArchived(true);
+
         vehicleRepository.save(vehicle);
 
-        if (wasPrimary) {
-            vehicleRepository
-                    .findAllByUserIdAndArchivedFalseOrderByIdDesc(user.getId())
-                    .stream()
-                    .findFirst()
-                    .ifPresent(nextVehicle -> {
-                        nextVehicle.setPrimaryVehicle(true);
-                        vehicleRepository.save(nextVehicle);
-                    });
+        if (!wasPrimary) {
+            return;
         }
+
+        List<Vehicle> remainingVehicles;
+
+        if (user.getAccountType() == AccountType.INDIVIDUAL) {
+            remainingVehicles =
+                    vehicleRepository
+                            .findAllByUserIdAndArchivedFalseOrderByIdDesc(
+                                    user.getId()
+                            );
+        } else {
+            BusinessAccount businessAccount =
+                    businessContextService
+                            .requireBusinessAccount(user);
+
+            remainingVehicles =
+                    vehicleRepository
+                            .findAllByBusinessAccountIdAndArchivedFalseOrderByIdDesc(
+                                    businessAccount.getId()
+                            );
+        }
+
+        remainingVehicles.stream()
+                .findFirst()
+                .ifPresent(nextVehicle -> {
+                    nextVehicle.setPrimaryVehicle(true);
+                    vehicleRepository.save(nextVehicle);
+                });
     }
 
-    private User findUserByEmail(String email) {
-        String normalizedEmail = email.trim().toLowerCase();
+    private Vehicle findAccessibleVehicle(
+            Long vehicleId,
+            User user
+    ) {
+        if (user.getAccountType() == AccountType.INDIVIDUAL) {
+            return vehicleRepository
+                    .findByIdAndUserIdAndArchivedFalse(
+                            vehicleId,
+                            user.getId()
+                    )
+                    .orElseThrow(() ->
+                            vehicleNotFound(vehicleId)
+                    );
+        }
 
-        return userRepository
-                .findByEmail(normalizedEmail)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("Kullanıcı bulunamadı.")
-                );
-    }
+        BusinessAccount businessAccount =
+                businessContextService
+                        .requireBusinessAccount(user);
 
-    private Vehicle findVehicleByIdAndUserId(Long vehicleId, Long userId) {
         return vehicleRepository
-                .findByIdAndUserIdAndArchivedFalse(vehicleId, userId)
+                .findByIdAndBusinessAccountIdAndArchivedFalse(
+                        vehicleId,
+                        businessAccount.getId()
+                )
                 .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Araç bulunamadı. ID: " + vehicleId
-                        )
+                        vehicleNotFound(vehicleId)
                 );
+    }
+
+    private ResourceNotFoundException vehicleNotFound(
+            Long vehicleId
+    ) {
+        return new ResourceNotFoundException(
+                "Araç bulunamadı. ID: " + vehicleId
+        );
     }
 
     private String normalizePlate(String plate) {
