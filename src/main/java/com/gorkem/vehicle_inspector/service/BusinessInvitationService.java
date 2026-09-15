@@ -6,6 +6,7 @@ import com.gorkem.vehicle_inspector.exception.ResourceNotFoundException;
 import com.gorkem.vehicle_inspector.repository.BusinessInvitationRepository;
 import com.gorkem.vehicle_inspector.repository.BusinessMemberRepository;
 import com.gorkem.vehicle_inspector.repository.UserRepository;
+import com.gorkem.vehicle_inspector.repository.VehicleRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -20,6 +21,7 @@ public class BusinessInvitationService {
     private final BusinessInvitationRepository businessInvitationRepository;
     private final VerificationCodeService verificationCodeService;
     private final JavaMailSender mailSender;
+    private final VehicleRepository vehicleRepository;
 
     @Value("${spring.mail.username}")
     private String mailFrom;
@@ -29,15 +31,15 @@ public class BusinessInvitationService {
             BusinessMemberRepository businessMemberRepository,
             BusinessInvitationRepository businessInvitationRepository,
             VerificationCodeService verificationCodeService,
-            JavaMailSender mailSender
+            JavaMailSender mailSender,
+            VehicleRepository vehicleRepository
     ) {
         this.userRepository = userRepository;
         this.businessMemberRepository = businessMemberRepository;
-        this.businessInvitationRepository =
-                businessInvitationRepository;
-        this.verificationCodeService =
-                verificationCodeService;
+        this.businessInvitationRepository = businessInvitationRepository;
+        this.verificationCodeService = verificationCodeService;
         this.mailSender = mailSender;
+        this.vehicleRepository = vehicleRepository;
     }
 
     @Transactional
@@ -120,6 +122,12 @@ public class BusinessInvitationService {
         if (businessMemberRepository.existsByUserId(user.getId())) {
             throw new IllegalStateException(
                     "Kullanıcı zaten bir şirkete bağlı."
+            );
+        }
+
+        if (vehicleRepository.existsByUserId(user.getId())) {
+            throw new IllegalStateException(
+                    "Mevcut kişisel araçları bulunan kullanıcılar henüz şirket hesabına katılamaz."
             );
         }
 

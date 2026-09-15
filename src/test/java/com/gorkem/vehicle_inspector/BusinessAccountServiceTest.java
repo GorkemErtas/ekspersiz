@@ -7,6 +7,7 @@ import com.gorkem.vehicle_inspector.repository.BusinessAccountRepository;
 import com.gorkem.vehicle_inspector.repository.BusinessMemberRepository;
 import com.gorkem.vehicle_inspector.repository.UserRepository;
 import com.gorkem.vehicle_inspector.service.BusinessAccountService;
+import com.gorkem.vehicle_inspector.repository.VehicleRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,6 +16,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -31,6 +33,9 @@ class BusinessAccountServiceTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private VehicleRepository vehicleRepository;
+
     private BusinessAccountService businessAccountService;
 
     @BeforeEach
@@ -38,7 +43,8 @@ class BusinessAccountServiceTest {
         businessAccountService = new BusinessAccountService(
                 businessAccountRepository,
                 businessMemberRepository,
-                userRepository
+                userRepository,
+                vehicleRepository
         );
     }
 
@@ -60,6 +66,9 @@ class BusinessAccountServiceTest {
                 .thenAnswer(invocation ->
                         invocation.getArgument(0)
                 );
+
+        when(vehicleRepository.findAllByUserId(user.getId()))
+                .thenReturn(List.of());
 
         CreateBusinessAccountRequest request =
                 new CreateBusinessAccountRequest(
@@ -186,5 +195,62 @@ class BusinessAccountServiceTest {
                 businessAccountRepository,
                 never()
         ).save(any());
+    }
+
+    @Test
+    void existingVehiclesShouldMoveToBusinessAccount() {
+        User user = mock(User.class);
+
+        when(user.getId()).thenReturn(1L);
+        when(user.getAccountType())
+                .thenReturn(AccountType.INDIVIDUAL);
+
+        when(userRepository.findByEmail("owner@example.com"))
+                .thenReturn(Optional.of(user));
+
+        when(businessMemberRepository.existsByUserId(1L))
+                .thenReturn(false);
+
+        Vehicle vehicle = new Vehicle(
+                "35ABC123",
+                "BMW",
+                "320i",
+                2022,
+                30000,
+                user
+        );
+
+        when(vehicleRepository.findAllByUserId(1L))
+                .thenReturn(List.of(vehicle));
+
+        when(businessAccountRepository.save(
+                any(BusinessAccount.class)
+        )).thenAnswer(invocation ->
+                invocation.getArgument(0)
+        );
+
+        CreateBusinessAccountRequest request =
+                new CreateBusinessAccountRequest(
+                        "ABC Ekspertiz"
+                );
+
+        businessAccountService.create(
+                "owner@example.com",
+                request
+        );
+
+        assertNull(vehicle.getUser());
+        assertNotNull(vehicle.getBusinessAccount());
+        assertEquals(
+                "ABC Ekspertiz",
+                vehicle.getBusinessAccount()
+                        .getCompanyName()
+        );
+
+        verify(vehicleRepository)
+                .findAllByUserId(1L);
+
+        verify(user)
+                .setAccountType(AccountType.BUSINESS);
     }
 }
