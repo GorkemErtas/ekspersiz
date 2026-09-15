@@ -6,7 +6,6 @@ import com.gorkem.vehicle_inspector.exception.ResourceNotFoundException;
 import com.gorkem.vehicle_inspector.repository.BusinessInvitationRepository;
 import com.gorkem.vehicle_inspector.repository.BusinessMemberRepository;
 import com.gorkem.vehicle_inspector.repository.UserRepository;
-import com.gorkem.vehicle_inspector.repository.VehicleRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -21,7 +20,6 @@ public class BusinessInvitationService {
     private final BusinessInvitationRepository businessInvitationRepository;
     private final VerificationCodeService verificationCodeService;
     private final JavaMailSender mailSender;
-    private final VehicleRepository vehicleRepository;
 
     @Value("${spring.mail.username}")
     private String mailFrom;
@@ -31,15 +29,13 @@ public class BusinessInvitationService {
             BusinessMemberRepository businessMemberRepository,
             BusinessInvitationRepository businessInvitationRepository,
             VerificationCodeService verificationCodeService,
-            JavaMailSender mailSender,
-            VehicleRepository vehicleRepository
+            JavaMailSender mailSender
     ) {
         this.userRepository = userRepository;
         this.businessMemberRepository = businessMemberRepository;
         this.businessInvitationRepository = businessInvitationRepository;
         this.verificationCodeService = verificationCodeService;
         this.mailSender = mailSender;
-        this.vehicleRepository = vehicleRepository;
     }
 
     @Transactional
@@ -125,12 +121,6 @@ public class BusinessInvitationService {
             );
         }
 
-        if (vehicleRepository.existsByUserId(user.getId())) {
-            throw new IllegalStateException(
-                    "Mevcut kişisel araçları bulunan kullanıcılar henüz şirket hesabına katılamaz."
-            );
-        }
-
         BusinessInvitation invitation =
                 businessInvitationRepository.findByUserId(user.getId())
                         .orElseThrow(() ->
@@ -164,12 +154,6 @@ public class BusinessInvitationService {
                 );
 
         businessMemberRepository.save(member);
-
-        new BusinessMember(
-                invitation.getBusinessAccount(),
-                user,
-                BusinessRole.MEMBER
-        );
 
         businessInvitationRepository.delete(invitation);
     }

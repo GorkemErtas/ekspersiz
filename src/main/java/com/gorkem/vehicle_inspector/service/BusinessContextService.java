@@ -1,6 +1,5 @@
 package com.gorkem.vehicle_inspector.service;
 
-import com.gorkem.vehicle_inspector.entity.AccountType;
 import com.gorkem.vehicle_inspector.entity.BusinessAccount;
 import com.gorkem.vehicle_inspector.entity.BusinessMember;
 import com.gorkem.vehicle_inspector.entity.BusinessRole;
@@ -10,6 +9,8 @@ import com.gorkem.vehicle_inspector.repository.BusinessMemberRepository;
 import com.gorkem.vehicle_inspector.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
 
 @Service
 public class BusinessContextService {
@@ -38,12 +39,23 @@ public class BusinessContextService {
     }
 
     @Transactional(readOnly = true)
-    public BusinessMember requireMembership(User user) {
+    public Optional<BusinessMember> findMembership(User user) {
         return businessMemberRepository
-                .findByUserId(user.getId())
+                .findByUserId(user.getId());
+    }
+
+    @Transactional(readOnly = true)
+    public boolean isBusinessMember(User user) {
+        return businessMemberRepository
+                .existsByUserId(user.getId());
+    }
+
+    @Transactional(readOnly = true)
+    public BusinessMember requireMembership(User user) {
+        return findMembership(user)
                 .orElseThrow(() ->
                         new IllegalStateException(
-                                "Şirket üyeliği bulunamadı."
+                                "Kullanıcı bir business workspace'e bağlı değil."
                         )
                 );
     }
@@ -61,7 +73,7 @@ public class BusinessContextService {
 
         if (membership.getRole() != BusinessRole.OWNER) {
             throw new IllegalStateException(
-                    "Bu işlem yalnızca şirket sahibi tarafından yapılabilir."
+                    "Bu işlem yalnızca business sahibi tarafından yapılabilir."
             );
         }
 

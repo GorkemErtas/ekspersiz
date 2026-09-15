@@ -7,7 +7,6 @@ import com.gorkem.vehicle_inspector.exception.ResourceNotFoundException;
 import com.gorkem.vehicle_inspector.repository.BusinessAccountRepository;
 import com.gorkem.vehicle_inspector.repository.BusinessMemberRepository;
 import com.gorkem.vehicle_inspector.repository.UserRepository;
-import com.gorkem.vehicle_inspector.repository.VehicleRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,21 +16,17 @@ public class BusinessAccountService {
     private final BusinessAccountRepository businessAccountRepository;
     private final BusinessMemberRepository businessMemberRepository;
     private final UserRepository userRepository;
-    private final VehicleRepository vehicleRepository;
 
     public BusinessAccountService(
             BusinessAccountRepository businessAccountRepository,
             BusinessMemberRepository businessMemberRepository,
-            UserRepository userRepository,
-            VehicleRepository vehicleRepository
+            UserRepository userRepository
     ) {
         this.businessAccountRepository = businessAccountRepository;
 
         this.businessMemberRepository = businessMemberRepository;
 
         this.userRepository = userRepository;
-
-        this.vehicleRepository = vehicleRepository;
     }
 
     @Transactional
@@ -70,14 +65,6 @@ public class BusinessAccountService {
         BusinessAccount savedBusinessAccount =
                 businessAccountRepository.save(businessAccount);
 
-        vehicleRepository
-                .findAllByUserId(user.getId())
-                .forEach(vehicle ->
-                        vehicle.assignToBusiness(
-                                savedBusinessAccount
-                        )
-                );
-
         BusinessMember owner =
                 new BusinessMember(
                         savedBusinessAccount,
@@ -86,8 +73,6 @@ public class BusinessAccountService {
                 );
 
         businessMemberRepository.save(owner);
-
-        userRepository.save(user);
 
         return toResponse(
                 savedBusinessAccount,

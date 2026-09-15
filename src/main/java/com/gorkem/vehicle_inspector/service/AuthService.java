@@ -8,7 +8,6 @@ import com.gorkem.vehicle_inspector.dto.request.VerifyEmailRequest;
 import com.gorkem.vehicle_inspector.dto.response.AuthResponse;
 import com.gorkem.vehicle_inspector.dto.response.UserResponse;
 import com.gorkem.vehicle_inspector.entity.User;
-import com.gorkem.vehicle_inspector.entity.AccountType;
 import com.gorkem.vehicle_inspector.exception.DuplicateResourceException;
 import com.gorkem.vehicle_inspector.exception.ResourceNotFoundException;
 import com.gorkem.vehicle_inspector.mapper.UserMapper;
@@ -99,7 +98,6 @@ public class AuthService {
                 user.getId(),
                 user.getFullName(),
                 user.getEmail(),
-                user.getAccountType(),
                 user.getSubscriptionPlan()
         );
     }

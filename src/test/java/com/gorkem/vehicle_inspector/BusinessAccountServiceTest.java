@@ -2,12 +2,15 @@ package com.gorkem.vehicle_inspector;
 
 import com.gorkem.vehicle_inspector.dto.request.CreateBusinessAccountRequest;
 import com.gorkem.vehicle_inspector.dto.response.BusinessAccountResponse;
-import com.gorkem.vehicle_inspector.entity.*;
+import com.gorkem.vehicle_inspector.entity.BusinessAccount;
+import com.gorkem.vehicle_inspector.entity.BusinessMember;
+import com.gorkem.vehicle_inspector.entity.BusinessRole;
+import com.gorkem.vehicle_inspector.entity.SubscriptionPlan;
+import com.gorkem.vehicle_inspector.entity.User;
 import com.gorkem.vehicle_inspector.repository.BusinessAccountRepository;
 import com.gorkem.vehicle_inspector.repository.BusinessMemberRepository;
 import com.gorkem.vehicle_inspector.repository.UserRepository;
 import com.gorkem.vehicle_inspector.service.BusinessAccountService;
-import com.gorkem.vehicle_inspector.repository.VehicleRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,7 +19,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -33,28 +35,25 @@ class BusinessAccountServiceTest {
     @Mock
     private UserRepository userRepository;
 
-    @Mock
-    private VehicleRepository vehicleRepository;
-
     private BusinessAccountService businessAccountService;
 
     @BeforeEach
     void setUp() {
-        businessAccountService = new BusinessAccountService(
-                businessAccountRepository,
-                businessMemberRepository,
-                userRepository,
-                vehicleRepository
-        );
+        businessAccountService =
+                new BusinessAccountService(
+                        businessAccountRepository,
+                        businessMemberRepository,
+                        userRepository
+                );
     }
 
     @Test
-    void individualUserShouldCreateBusinessAccountAsOwner() {
+    void businessPlanUserShouldCreateBusinessAccountAsOwner() {
         User user = mock(User.class);
 
         when(user.getId()).thenReturn(1L);
-        when(user.getAccountType())
-                .thenReturn(AccountType.INDIVIDUAL);
+        when(user.getSubscriptionPlan())
+                .thenReturn(SubscriptionPlan.BUSINESS);
 
         when(userRepository.findByEmail("test@example.com"))
                 .thenReturn(Optional.of(user));
@@ -62,13 +61,11 @@ class BusinessAccountServiceTest {
         when(businessMemberRepository.existsByUserId(1L))
                 .thenReturn(false);
 
-        when(businessAccountRepository.save(any(BusinessAccount.class)))
-                .thenAnswer(invocation ->
-                        invocation.getArgument(0)
-                );
-
-        when(vehicleRepository.findAllByUserId(user.getId()))
-                .thenReturn(List.of());
+        when(businessAccountRepository.save(
+                any(BusinessAccount.class)
+        )).thenAnswer(invocation ->
+                invocation.getArgument(0)
+        );
 
         CreateBusinessAccountRequest request =
                 new CreateBusinessAccountRequest(
@@ -96,11 +93,6 @@ class BusinessAccountServiceTest {
                 response.subscriptionPlan()
         );
 
-        verify(user)
-                .setAccountType(AccountType.BUSINESS);
-
-        verify(userRepository).save(user);
-
         ArgumentCaptor<BusinessMember> memberCaptor =
                 ArgumentCaptor.forClass(
                         BusinessMember.class
@@ -121,6 +113,16 @@ class BusinessAccountServiceTest {
                 BusinessRole.OWNER,
                 savedMember.getRole()
         );
+
+        assertEquals(
+                "ABC Ekspertiz",
+                savedMember
+                        .getBusinessAccount()
+                        .getCompanyName()
+        );
+
+        verify(userRepository, never())
+                .save(any(User.class));
     }
 
     @Test
@@ -157,20 +159,15 @@ class BusinessAccountServiceTest {
                 businessMemberRepository,
                 never()
         ).save(any());
-
-        verify(
-                userRepository,
-                never()
-        ).save(any());
     }
 
     @Test
-    void nonIndividualUserWithoutMembershipShouldNotCreateBusiness() {
+    void nonBusinessPlanUserShouldNotCreateBusinessAccount() {
         User user = mock(User.class);
 
         when(user.getId()).thenReturn(1L);
-        when(user.getAccountType())
-                .thenReturn(AccountType.BUSINESS);
+        when(user.getSubscriptionPlan())
+                .thenReturn(SubscriptionPlan.FREE);
 
         when(userRepository.findByEmail("test@example.com"))
                 .thenReturn(Optional.of(user));
@@ -195,33 +192,26 @@ class BusinessAccountServiceTest {
                 businessAccountRepository,
                 never()
         ).save(any());
+
+        verify(
+                businessMemberRepository,
+                never()
+        ).save(any());
     }
 
     @Test
-    void existingVehiclesShouldMoveToBusinessAccount() {
+    void companyNameShouldBeTrimmedWhenCreatingBusinessAccount() {
         User user = mock(User.class);
 
         when(user.getId()).thenReturn(1L);
-        when(user.getAccountType())
-                .thenReturn(AccountType.INDIVIDUAL);
+        when(user.getSubscriptionPlan())
+                .thenReturn(SubscriptionPlan.BUSINESS);
 
         when(userRepository.findByEmail("owner@example.com"))
                 .thenReturn(Optional.of(user));
 
         when(businessMemberRepository.existsByUserId(1L))
                 .thenReturn(false);
-
-        Vehicle vehicle = new Vehicle(
-                "35ABC123",
-                "BMW",
-                "320i",
-                2022,
-                30000,
-                user
-        );
-
-        when(vehicleRepository.findAllByUserId(1L))
-                .thenReturn(List.of(vehicle));
 
         when(businessAccountRepository.save(
                 any(BusinessAccount.class)
@@ -231,26 +221,18 @@ class BusinessAccountServiceTest {
 
         CreateBusinessAccountRequest request =
                 new CreateBusinessAccountRequest(
-                        "ABC Ekspertiz"
+                        "  ABC Ekspertiz  "
                 );
 
-        businessAccountService.create(
-                "owner@example.com",
-                request
-        );
+        BusinessAccountResponse response =
+                businessAccountService.create(
+                        "owner@example.com",
+                        request
+                );
 
-        assertNull(vehicle.getUser());
-        assertNotNull(vehicle.getBusinessAccount());
         assertEquals(
                 "ABC Ekspertiz",
-                vehicle.getBusinessAccount()
-                        .getCompanyName()
+                response.companyName()
         );
-
-        verify(vehicleRepository)
-                .findAllByUserId(1L);
-
-        verify(user)
-                .setAccountType(AccountType.BUSINESS);
     }
 }
