@@ -9,21 +9,17 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Value;
 
-import java.security.SecureRandom;
 import java.time.LocalDateTime;
 
 @Service
 public class EmailVerificationService {
 
-    private static final int VERIFICATION_CODE_BOUND = 1_000_000;
-    private static final int VERIFICATION_CODE_LENGTH = 6;
     private static final int VERIFICATION_CODE_EXPIRATION_MINUTES = 5;
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JavaMailSender mailSender;
-
-    private final SecureRandom secureRandom = new SecureRandom();
+    private final VerificationCodeService verificationCodeService;
 
     @Value("${spring.mail.username}")
     private String mailFrom;
@@ -31,19 +27,21 @@ public class EmailVerificationService {
     public EmailVerificationService(
             UserRepository userRepository,
             PasswordEncoder passwordEncoder,
-            JavaMailSender mailSender
+            JavaMailSender mailSender,
+            VerificationCodeService verificationCodeService
     ) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.mailSender = mailSender;
+        this.verificationCodeService = verificationCodeService;
     }
 
     @Transactional
     public void createAndSendVerificationCode(User user) {
-        String verificationCode = generateVerificationCode();
+        String verificationCode = verificationCodeService.generate();
 
         user.setEmailVerificationCode(
-                passwordEncoder.encode(verificationCode),
+                verificationCodeService.hash(verificationCode),
                 LocalDateTime.now()
                         .plusMinutes(
                                 VERIFICATION_CODE_EXPIRATION_MINUTES
@@ -56,15 +54,6 @@ public class EmailVerificationService {
                 user.getEmail(),
                 user.getFullName(),
                 verificationCode
-        );
-    }
-
-    private String generateVerificationCode() {
-        int value = secureRandom.nextInt(VERIFICATION_CODE_BOUND);
-
-        return String.format(
-                "%0" + VERIFICATION_CODE_LENGTH + "d",
-                value
         );
     }
 
