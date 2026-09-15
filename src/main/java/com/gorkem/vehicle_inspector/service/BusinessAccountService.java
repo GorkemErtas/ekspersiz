@@ -87,8 +87,7 @@ public class BusinessAccountService {
         return new BusinessAccountResponse(
                 businessAccount.getId(),
                 businessAccount.getCompanyName(),
-                member.getRole(),
-                businessAccount.getSubscriptionPlan()
+                member.getRole()
         );
     }
 

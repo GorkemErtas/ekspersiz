@@ -88,11 +88,6 @@ class BusinessAccountServiceTest {
                 response.role()
         );
 
-        assertEquals(
-                SubscriptionPlan.FREE,
-                response.subscriptionPlan()
-        );
-
         ArgumentCaptor<BusinessMember> memberCaptor =
                 ArgumentCaptor.forClass(
                         BusinessMember.class

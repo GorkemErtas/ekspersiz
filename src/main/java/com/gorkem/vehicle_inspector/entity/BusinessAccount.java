@@ -19,14 +19,6 @@ public class BusinessAccount {
     )
     private String companyName;
 
-    @Enumerated(EnumType.STRING)
-    @Column(
-            name = "subscription_plan",
-            nullable = false,
-            length = 20
-    )
-    private SubscriptionPlan subscriptionPlan;
-
     @Column(
             name = "created_at",
             nullable = false,
@@ -39,7 +31,6 @@ public class BusinessAccount {
 
     public BusinessAccount(String companyName) {
         this.companyName = companyName;
-        this.subscriptionPlan = SubscriptionPlan.FREE;
         this.createdAt = LocalDateTime.now();
     }
 
@@ -51,21 +42,11 @@ public class BusinessAccount {
         return companyName;
     }
 
-    public SubscriptionPlan getSubscriptionPlan() {
-        return subscriptionPlan;
-    }
-
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
 
     public void setCompanyName(String companyName) {
         this.companyName = companyName;
-    }
-
-    public void setSubscriptionPlan(
-            SubscriptionPlan subscriptionPlan
-    ) {
-        this.subscriptionPlan = subscriptionPlan;
     }
 }
