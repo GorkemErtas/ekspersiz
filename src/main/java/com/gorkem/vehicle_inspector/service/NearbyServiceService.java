@@ -8,11 +8,11 @@ import com.gorkem.vehicle_inspector.dto.response.NearbyServiceResponse;
 import com.gorkem.vehicle_inspector.entity.DamageInspection;
 import com.gorkem.vehicle_inspector.entity.User;
 import com.gorkem.vehicle_inspector.mapper.InspectionLlmMapper;
-import com.gorkem.vehicle_inspector.repository.DamageInspectionRepository;
-import com.gorkem.vehicle_inspector.repository.UserRepository;
 import com.gorkem.vehicle_inspector.service.report.GeminiNearbyServiceSearchService;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -29,10 +29,9 @@ public class NearbyServiceService {
     private static final int MAX_RESULTS =
             20;
 
-    private final UserRepository userRepository;
-
-    private final DamageInspectionRepository
-            damageInspectionRepository;
+    private final BusinessContextService businessContextService;
+    private final InspectionAccessService inspectionAccessService;
+    private final TransactionTemplate transactionTemplate;
 
     private final GeminiNearbyServiceSearchService
             geminiNearbyServiceSearchService;
@@ -41,16 +40,17 @@ public class NearbyServiceService {
             googlePlacesClient;
 
     public NearbyServiceService(
-            UserRepository userRepository,
-            DamageInspectionRepository damageInspectionRepository,
+            BusinessContextService businessContextService,
+            InspectionAccessService inspectionAccessService,
+            PlatformTransactionManager transactionManager,
             GeminiNearbyServiceSearchService
                     geminiNearbyServiceSearchService,
             GooglePlacesClient googlePlacesClient
     ) {
-        this.userRepository = userRepository;
-
-        this.damageInspectionRepository =
-                damageInspectionRepository;
+        this.businessContextService = businessContextService;
+        this.inspectionAccessService = inspectionAccessService;
+        this.transactionTemplate = new TransactionTemplate(transactionManager);
+        this.transactionTemplate.setReadOnly(true);
 
         this.geminiNearbyServiceSearchService =
                 geminiNearbyServiceSearchService;
@@ -69,41 +69,28 @@ public class NearbyServiceService {
             );
         }
 
-        User user =
-                findUserByEmail(
-                        userEmail
-                );
-
-        DamageInspection inspection =
-                findInspection(
-                        inspectionId,
-                        user.getId()
-                );
-
-        Double latitude =
-                inspection.getLocationLatitude();
-
-        Double longitude =
-                inspection.getLocationLongitude();
-
-        if (latitude == null
-                || longitude == null) {
-
-            throw new IllegalStateException(
-                    "İncelemeye ait konum bilgisi bulunamadı."
-            );
+        NearbySearchContext context = transactionTemplate.execute(status -> {
+            User user = businessContextService.requireUser(userEmail);
+            DamageInspection inspection = inspectionAccessService.requireInspection(inspectionId, user);
+            Double latitude = inspection.getLocationLatitude();
+            Double longitude = inspection.getLocationLongitude();
+            if (latitude == null || longitude == null) {
+                throw new IllegalStateException("İncelemeye ait konum bilgisi bulunamadı.");
+            }
+            return new NearbySearchContext(
+                    InspectionLlmMapper.toRequest(inspection), latitude, longitude);
+        });
+        if (context == null) {
+            throw new IllegalStateException("Servis araması başlatılamadı.");
         }
-
-        InspectionLlmRequest llmRequest =
-                InspectionLlmMapper.toRequest(
-                        inspection
-                );
+        double latitude = context.latitude();
+        double longitude = context.longitude();
 
         NearbyServiceSearchResult
                 searchResult =
                 geminiNearbyServiceSearchService
                         .generateSearchQueries(
-                                llmRequest
+                                context.request()
                         );
 
         Map<String, NearbyServiceResponse>
@@ -225,44 +212,11 @@ public class NearbyServiceService {
         );
     }
 
-    private User findUserByEmail(
-            String email
+    private record NearbySearchContext(
+            InspectionLlmRequest request,
+            double latitude,
+            double longitude
     ) {
-        if (email == null
-                || email.isBlank()) {
-
-            throw new IllegalArgumentException(
-                    "Kullanıcı e-posta bilgisi boş olamaz."
-            );
-        }
-
-        return userRepository
-                .findByEmail(
-                        email.trim()
-                )
-                .orElseThrow(
-                        () ->
-                                new IllegalStateException(
-                                        "Kullanıcı bulunamadı."
-                                )
-                );
-    }
-
-    private DamageInspection findInspection(
-            Long inspectionId,
-            Long userId
-    ) {
-        return damageInspectionRepository
-                .findByIdAndUserId(
-                        inspectionId,
-                        userId
-                )
-                .orElseThrow(
-                        () ->
-                                new IllegalStateException(
-                                        "İnceleme bulunamadı."
-                                )
-                );
     }
 
     private double calculateDistanceKm(

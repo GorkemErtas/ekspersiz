@@ -55,7 +55,7 @@ public class BusinessContextService {
         return findMembership(user)
                 .orElseThrow(() ->
                         new IllegalStateException(
-                                "Kullanıcı bir business workspace'e bağlı değil."
+                                "Kullanıcı bir şirkete bağlı değil."
                         )
                 );
     }

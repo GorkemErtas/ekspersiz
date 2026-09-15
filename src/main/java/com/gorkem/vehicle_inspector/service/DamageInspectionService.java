@@ -10,7 +10,7 @@ import com.gorkem.vehicle_inspector.mapper.DamageInspectionMapper;
 import com.gorkem.vehicle_inspector.mapper.InspectionLlmMapper;
 import com.gorkem.vehicle_inspector.mapper.InspectionReportMapper;
 import com.gorkem.vehicle_inspector.repository.DamageInspectionRepository;
-import com.gorkem.vehicle_inspector.repository.UserRepository;
+import com.gorkem.vehicle_inspector.repository.BusinessAccountRepository;
 import com.gorkem.vehicle_inspector.repository.VehicleRepository;
 import com.gorkem.vehicle_inspector.service.report.GeminiInspectionReportService;
 
@@ -29,6 +29,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.nio.file.Path;
 import java.time.LocalDateTime;
+import java.time.Clock;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
@@ -44,7 +45,10 @@ public class DamageInspectionService {
 
     private final DamageInspectionRepository inspectionRepository;
     private final VehicleRepository vehicleRepository;
-    private final UserRepository userRepository;
+    private final BusinessContextService businessContextService;
+    private final InspectionAccessService inspectionAccessService;
+    private final BusinessAccountRepository businessAccountRepository;
+    private final Clock clock;
     private final FileStorageService fileStorageService;
     private final AiAnalysisClient aiAnalysisClient;
     private final GeminiInspectionReportService
@@ -55,7 +59,10 @@ public class DamageInspectionService {
     public DamageInspectionService(
             DamageInspectionRepository inspectionRepository,
             VehicleRepository vehicleRepository,
-            UserRepository userRepository,
+            BusinessContextService businessContextService,
+            InspectionAccessService inspectionAccessService,
+            BusinessAccountRepository businessAccountRepository,
+            Clock clock,
             FileStorageService fileStorageService,
             AiAnalysisClient aiAnalysisClient,
             GeminiInspectionReportService geminiInspectionReportService,
@@ -68,8 +75,10 @@ public class DamageInspectionService {
         this.vehicleRepository =
                 vehicleRepository;
 
-        this.userRepository =
-                userRepository;
+        this.businessContextService = businessContextService;
+        this.inspectionAccessService = inspectionAccessService;
+        this.businessAccountRepository = businessAccountRepository;
+        this.clock = clock;
 
         this.fileStorageService =
                 fileStorageService;
@@ -112,14 +121,14 @@ public class DamageInspectionService {
             String authenticatedEmail
     ) {
         User user =
-                findUserByEmail(
+                businessContextService.requireUser(
                         authenticatedEmail
                 );
 
         Vehicle vehicle =
-                findVehicleByIdAndUserId(
+                findAccessibleVehicle(
                         vehicleId,
-                        user.getId()
+                        user
                 );
 
         if (city == null || city.isBlank()) {
@@ -187,15 +196,19 @@ public class DamageInspectionService {
             String authenticatedEmail
     ) {
         User user =
-                findUserByEmail(
+                businessContextService.requireUser(
                         authenticatedEmail
                 );
 
-        return inspectionRepository
-                .findAllByUserIdOrderByCreatedAtDesc(
-                        user.getId()
-                )
-                .stream()
+        List<DamageInspection> inspections = businessContextService.findMembership(user)
+                .map(member -> inspectionRepository
+                        .findAllByVehicleBusinessAccountIdOrderByCreatedAtDesc(
+                                member.getBusinessAccount().getId()))
+                .orElseGet(() -> inspectionRepository
+                        .findAllByVehicleUserIdAndVehicleBusinessAccountIsNullOrderByCreatedAtDesc(
+                                user.getId()));
+
+        return inspections.stream()
                 .map(this::buildResponse)
                 .toList();
     }
@@ -207,14 +220,14 @@ public class DamageInspectionService {
             String authenticatedEmail
     ) {
         User user =
-                findUserByEmail(
+                businessContextService.requireUser(
                         authenticatedEmail
                 );
 
         DamageInspection inspection =
-                findInspectionByIdAndUserId(
+                inspectionAccessService.requireInspection(
                         inspectionId,
-                        user.getId()
+                        user
                 );
 
         return buildResponse(
@@ -228,14 +241,14 @@ public class DamageInspectionService {
             String authenticatedEmail
     ) {
         User user =
-                findUserByEmail(
+                businessContextService.requireUser(
                         authenticatedEmail
                 );
 
         DamageInspection inspection =
-                findInspectionByIdAndUserId(
+                inspectionAccessService.requireInspection(
                         inspectionId,
-                        user.getId()
+                        user
                 );
 
         validateImageExists(
@@ -255,15 +268,22 @@ public class DamageInspectionService {
             String authenticatedEmail
     ) {
         User user =
-                findUserByEmail(
+                businessContextService.requireUser(
                         authenticatedEmail
                 );
 
         DamageInspection inspection =
-                findInspectionByIdAndUserId(
+                inspectionAccessService.requireInspectionForUpdate(
                         inspectionId,
-                        user.getId()
+                        user
                 );
+
+        validateNotProcessing(inspection);
+        if (inspection.getVehicle().getBusinessAccount() != null
+                && inspection.getAnalysisStartedAt() != null) {
+            throw new IllegalStateException(
+                    "Analizi başlamış şirket incelemesinin fotoğrafı değiştirilemez. Yeni bir inceleme oluşturun.");
+        }
 
         String previousImagePath =
                 inspection.getImagePath();
@@ -389,26 +409,22 @@ public class DamageInspectionService {
                         status -> {
 
                             User user =
-                                    findUserByEmail(
+                                    businessContextService.requireUser(
                                             authenticatedEmail
                                     );
 
-                            subscriptionService
-                                    .validateInspectionLimit(user);
-
                             DamageInspection inspection =
-                                    findInspectionByIdAndUserId(
+                                    inspectionAccessService.requireInspectionForUpdate(
                                             inspectionId,
-                                            user.getId()
+                                            user
                                     );
 
                             validateImageExists(
                                     inspection
                             );
 
-                            inspection.setAnalysisStartedAt(
-                                    LocalDateTime.now()
-                            );
+                            validateNotProcessing(inspection);
+                            validateAnalysisLimit(inspection, user);
 
                             inspection.setStatus(
                                     InspectionStatus.PROCESSING
@@ -428,7 +444,7 @@ public class DamageInspectionService {
 
                             return new AnalysisContext(
                                     inspection.getId(),
-                                    user.getId(),
+                                    user,
                                     inspection.getImagePath()
                             );
                         }
@@ -476,9 +492,9 @@ public class DamageInspectionService {
                 status -> {
 
                     DamageInspection inspection =
-                            findInspectionByIdAndUserId(
+                            inspectionAccessService.requireInspection(
                                     context.inspectionId(),
-                                    context.userId()
+                                    context.user()
                             );
 
                     inspection.clearDetections();
@@ -511,7 +527,7 @@ public class DamageInspectionService {
                     );
 
                     inspection.setCompletedAt(
-                            LocalDateTime.now()
+                            LocalDateTime.now(clock)
                     );
 
                     inspection.setReportStatus(
@@ -537,9 +553,9 @@ public class DamageInspectionService {
                         status -> {
 
                             DamageInspection inspection =
-                                    findInspectionByIdAndUserId(
+                                    inspectionAccessService.requireInspection(
                                             context.inspectionId(),
-                                            context.userId()
+                                            context.user()
                                     );
 
                             return buildResponse(
@@ -565,9 +581,9 @@ public class DamageInspectionService {
                         status -> {
 
                             DamageInspection inspection =
-                                    findInspectionByIdAndUserId(
+                                    inspectionAccessService.requireInspection(
                                             context.inspectionId(),
-                                            context.userId()
+                                            context.user()
                                     );
 
                             return InspectionLlmMapper
@@ -581,7 +597,7 @@ public class DamageInspectionService {
 
             markReportAsFailed(
                     context.inspectionId(),
-                    context.userId()
+                    context.user()
             );
 
             return;
@@ -596,7 +612,7 @@ public class DamageInspectionService {
 
             saveGeneratedReport(
                     context.inspectionId(),
-                    context.userId(),
+                    context.user(),
                     result
             );
 
@@ -610,14 +626,14 @@ public class DamageInspectionService {
 
             markReportAsFailed(
                     context.inspectionId(),
-                    context.userId()
+                    context.user()
             );
         }
     }
 
     private void saveGeneratedReport(
             Long inspectionId,
-            Long userId,
+            User user,
             LlmInspectionReportResult result
     ) {
         if (result == null) {
@@ -630,9 +646,9 @@ public class DamageInspectionService {
                 status -> {
 
                     DamageInspection inspection =
-                            findInspectionByIdAndUserId(
+                            inspectionAccessService.requireInspection(
                                     inspectionId,
-                                    userId
+                                    user
                             );
 
                     InspectionReport generatedReport =
@@ -683,15 +699,15 @@ public class DamageInspectionService {
 
     private void markReportAsFailed(
             Long inspectionId,
-            Long userId
+            User user
     ) {
         transactionTemplate.executeWithoutResult(
                 status -> {
 
                     DamageInspection inspection =
-                            findInspectionByIdAndUserId(
+                            inspectionAccessService.requireInspection(
                                     inspectionId,
-                                    userId
+                                    user
                             );
 
                     inspection.setReportStatus(
@@ -724,9 +740,9 @@ public class DamageInspectionService {
                         status -> {
 
                             DamageInspection inspection =
-                                    findInspectionByIdAndUserId(
+                                    inspectionAccessService.requireInspection(
                                             context.inspectionId(),
-                                            context.userId()
+                                            context.user()
                                     );
 
                             inspection.setStatus(
@@ -795,15 +811,17 @@ public class DamageInspectionService {
                         status -> {
 
                             User user =
-                                    findUserByEmail(
+                                    businessContextService.requireUser(
                                             authenticatedEmail
                                     );
 
                             DamageInspection inspection =
-                                    findInspectionByIdAndUserId(
+                                    inspectionAccessService.requireInspectionForUpdate(
                                             inspectionId,
-                                            user.getId()
+                                            user
                                     );
+
+                            validateNotProcessing(inspection);
 
                             if (inspection.getStatus()
                                     != InspectionStatus.COMPLETED) {
@@ -843,7 +861,7 @@ public class DamageInspectionService {
 
                             return new ReportGenerationContext(
                                     inspection.getId(),
-                                    user.getId(),
+                                    user,
                                     request
                             );
                         }
@@ -864,7 +882,7 @@ public class DamageInspectionService {
 
             saveGeneratedReport(
                     context.inspectionId(),
-                    context.userId(),
+                    context.user(),
                     result
             );
 
@@ -878,7 +896,7 @@ public class DamageInspectionService {
 
             markReportAsFailed(
                     context.inspectionId(),
-                    context.userId()
+                    context.user()
             );
         }
 
@@ -887,9 +905,9 @@ public class DamageInspectionService {
                         status -> {
 
                             DamageInspection inspection =
-                                    findInspectionByIdAndUserId(
+                                    inspectionAccessService.requireInspection(
                                             context.inspectionId(),
-                                            context.userId()
+                                            context.user()
                                     );
 
                             return buildResponse(
@@ -1023,58 +1041,48 @@ public class DamageInspectionService {
         }
     }
 
-    private User findUserByEmail(
-            String email
-    ) {
-        return userRepository
-                .findByEmail(
-                        email.trim()
-                                .toLowerCase()
-                )
-                .orElseThrow(
-                        () ->
-                                new ResourceNotFoundException(
-                                        "Kullanıcı bulunamadı."
-                                )
-                );
+    private Vehicle findAccessibleVehicle(Long vehicleId, User user) {
+        return businessContextService.findMembership(user)
+                .map(member -> vehicleRepository.findByIdAndBusinessAccountIdAndArchivedFalse(
+                        vehicleId, member.getBusinessAccount().getId()))
+                .orElseGet(() -> vehicleRepository.findByIdAndUserIdAndArchivedFalse(
+                        vehicleId, user.getId()))
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Araç bulunamadı. ID: " + vehicleId));
     }
 
-    private DamageInspection
-    findInspectionByIdAndUserId(
-            Long inspectionId,
-            Long userId
-    ) {
-        return inspectionRepository
-                .findByIdAndUserId(
-                        inspectionId,
-                        userId
-                )
-                .orElseThrow(
-                        () ->
-                                new ResourceNotFoundException(
-                                        "Hasar incelemesi "
-                                                + "bulunamadı. ID: "
-                                                + inspectionId
-                                )
-                );
+    private void validateNotProcessing(DamageInspection inspection) {
+        if (inspection.getStatus() == InspectionStatus.PROCESSING
+                || inspection.getReportStatus() == ReportStatus.PROCESSING) {
+            throw new IllegalStateException("İnceleme şu anda işleniyor. Lütfen tamamlanmasını bekleyin.");
+        }
     }
 
-    private Vehicle findVehicleByIdAndUserId(
-            Long vehicleId,
-            Long userId
-    ) {
-        return vehicleRepository
-                .findByIdAndUserIdAndArchivedFalse(
-                        vehicleId,
-                        userId
-                )
-                .orElseThrow(
-                        () ->
-                                new ResourceNotFoundException(
-                                        "Araç bulunamadı. ID: "
-                                                + vehicleId
-                                )
-                );
+    private void validateAnalysisLimit(DamageInspection inspection, User user) {
+        BusinessAccount businessAccount = inspection.getVehicle().getBusinessAccount();
+        if (businessAccount == null) {
+            subscriptionService.validateInspectionLimit(user);
+            inspection.setAnalysisStartedAt(LocalDateTime.now(clock));
+            return;
+        }
+
+        if (inspection.getStatus() == InspectionStatus.COMPLETED) {
+            throw new IllegalStateException(
+                    "Bu inceleme tamamlandı. Yeni fotoğraf analizi için yeni bir inceleme oluşturun.");
+        }
+
+        // Serialize count and reservation across every member of the company.
+        businessAccountRepository.findByIdForUpdate(businessAccount.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Şirket bulunamadı."));
+        LocalDateTime startedAt = LocalDateTime.now(clock);
+        LocalDateTime previousStart = inspection.getAnalysisStartedAt();
+        boolean alreadyCountedToday = previousStart != null
+                && previousStart.toLocalDate().equals(startedAt.toLocalDate());
+
+        if (!alreadyCountedToday) {
+            subscriptionService.validateBusinessInspectionLimit(businessAccount, startedAt);
+            inspection.setAnalysisStartedAt(startedAt);
+        }
     }
 
     private String normalizeCity(
@@ -1095,14 +1103,14 @@ public class DamageInspectionService {
 
     private record AnalysisContext(
             Long inspectionId,
-            Long userId,
+            User user,
             String imagePath
     ) {
     }
 
     private record ReportGenerationContext(
             Long inspectionId,
-            Long userId,
+            User user,
             InspectionLlmRequest request
     ) {
     }
