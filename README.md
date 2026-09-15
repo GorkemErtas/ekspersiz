@@ -13,7 +13,7 @@ The application analyzes vehicle images, detects visible damage, identifies affe
 * 🔑 Password Change Support
 * 🔄 Persistent Login & Automatic Session Restoration
 * 👤 User Profile & Secure Logout
-* 🛡 Role-Based Access Control (`USER`, `ADMIN`)
+* 🛡 Business Membership Permissions (`OWNER`, `MEMBER`)
 * 🚙 Vehicle Management
 * ⭐ Main Vehicle Selection
 * 🗃 Vehicle Archiving While Preserving Inspection History
@@ -33,8 +33,9 @@ The application analyzes vehicle images, detects visible damage, identifies affe
 * ⭐ Google Places Ratings & Distance Information
 * 🧭 Google Maps Directions to Selected Services
 * 📊 Inspection History
-* 💳 Subscription Plan Architecture (`FREE`, `PLUS`, `PRO`)
-* 📉 Daily Inspection Limits for Free Users
+* 💳 Subscription Plans (`FREE`, `PLUS`, `PRO`, `BUSINESS`)
+* 🏢 Business Accounts, Member Invitations, and Shared Vehicles
+* 📉 Daily Inspection Limits for FREE and PLUS Plans
 * 🗄 PostgreSQL Persistence
 * 🌐 RESTful API
 * 🔒 Secure Mobile Token Storage
@@ -67,7 +68,7 @@ PostgreSQL  FastAPI       Gemini API     Google Places
 * **Gemini** converts structured ML results into a user-friendly inspection report and estimates a repair price range based on vehicle and inspection context.
 * **Google Places** is used to discover nearby automotive repair services.
 * **Google Maps** visualizes service locations and opens driving directions from the user's current location.
-* **PostgreSQL** stores users, vehicles, inspections, detections, repair recommendations, report status, generated reports, roles, and subscription plan information.
+* **PostgreSQL** stores users, business accounts, memberships, invitations, vehicles, inspections, detections, repair recommendations, report status, generated reports, and user subscription information.
 
 ---
 
@@ -274,8 +275,27 @@ The application currently includes the following plan types:
 * **FREE**
 * **PLUS**
 * **PRO**
+* **BUSINESS**
 
-The FREE plan uses a daily inspection limit, while the architecture supports expanded limits and premium capabilities for future paid plans.
+Subscription plans belong to `User`. Current personal limits are:
+
+| Plan | Active vehicles | Daily analyses |
+| --- | --- | --- |
+| FREE | 1 | 3 |
+| PLUS | 5 | 15 |
+| PRO | Unlimited | Unlimited |
+
+Daily usage currently counts inspections with `analysisStartedAt` within the server's current calendar day. Pending inspections that have not started analysis do not count. This is a count of inspection records, not a history of every analysis attempt.
+
+### Business membership
+
+There is one user identity: `User`. `BusinessAccount` stores shared company data, and `BusinessMember` connects a user to a company with an `OWNER` or `MEMBER` role. A user can belong to at most one company for the MVP.
+
+A user with the BUSINESS subscription can create a company and becomes its OWNER. Invited members can retain their personal FREE, PLUS, or PRO subscription. Subscription plans are stored only on users.
+
+Vehicle access follows membership automatically: users without membership use personal vehicles; members use their company's shared vehicles. A vehicle belongs to either a user or a company. Each company has a shared limit of **50 active vehicles**, regardless of its member count.
+
+Company-scoped inspection access and the shared **100 daily inspections** limit are planned; inspection endpoints currently still use creator-user access and personal quota validation. The BUSINESS plan does not currently have a personal quota fallback before company membership is established.
 
 Payment processing is not enabled in the current demo release. The first public version is intended to operate without paid subscriptions, while the subscription structure is already represented in the backend and mobile application for future expansion.
 
@@ -315,7 +335,7 @@ This regenerates only the AI report and does not rerun the YOLO image analysis.
 * JWT Authentication
 * BCrypt Password Hashing
 * Stateless Authorization
-* Role-Based Access Control
+* Business Membership Role Checks (`OWNER`, `MEMBER`)
 * Email Verification
 * Secure Mobile Token Storage
 * Authenticated Inspection Access
@@ -384,7 +404,9 @@ Software Engineer
 * ✅ Service Ratings & Distance Display
 * ✅ Google Maps Directions
 * ✅ Subscription Plan Architecture
-* ✅ Daily FREE Plan Inspection Limit
+* ✅ Daily FREE and PLUS Plan Inspection Limits
+* ✅ Business Accounts and Member Invitations
+* ✅ Shared Business Vehicles and Company Vehicle Limit
 * ✅ Flutter Mobile Application
 * ✅ Inspection Result Screen
 * ✅ Inspection History
