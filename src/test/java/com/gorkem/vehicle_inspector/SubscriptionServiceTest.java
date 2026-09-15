@@ -181,7 +181,7 @@ class SubscriptionServiceTest {
 
         when(
                 vehicleRepository.countByUserIdAndArchivedFalse(1L)
-        ).thenReturn(1L);
+        ).thenReturn(5L);
 
         assertThrows(
                 IllegalStateException.class,
