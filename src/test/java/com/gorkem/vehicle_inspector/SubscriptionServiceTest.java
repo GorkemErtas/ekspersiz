@@ -13,6 +13,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneId;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -39,7 +44,8 @@ class SubscriptionServiceTest {
         subscriptionService =
                 new SubscriptionService(
                         inspectionRepository,
-                        vehicleRepository
+                        vehicleRepository,
+                        Clock.systemDefaultZone()
                 );
     }
 
@@ -53,7 +59,7 @@ class SubscriptionServiceTest {
 
         when(
                 inspectionRepository
-                        .countByUserIdAndAnalysisStartedAtGreaterThanEqualAndAnalysisStartedAtLessThan(
+                        .countPersonalAnalysesBetween(
                                 eq(1L),
                                 any(LocalDateTime.class),
                                 any(LocalDateTime.class)
@@ -83,7 +89,7 @@ class SubscriptionServiceTest {
 
         when(
                 inspectionRepository
-                        .countByUserIdAndAnalysisStartedAtGreaterThanEqualAndAnalysisStartedAtLessThan(
+                        .countPersonalAnalysesBetween(
                                 eq(1L),
                                 any(LocalDateTime.class),
                                 any(LocalDateTime.class)
@@ -112,7 +118,7 @@ class SubscriptionServiceTest {
 
         when(
                 inspectionRepository
-                        .countByUserIdAndAnalysisStartedAtGreaterThanEqualAndAnalysisStartedAtLessThan(
+                        .countPersonalAnalysesBetween(
                                 eq(1L),
                                 any(LocalDateTime.class),
                                 any(LocalDateTime.class)
@@ -263,5 +269,36 @@ class SubscriptionServiceTest {
                                 businessAccount
                         )
         );
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {0, 99})
+    void businessShouldAllowBeforeDailyLimit(long used) {
+        BusinessAccount business = mock(BusinessAccount.class);
+        when(business.getId()).thenReturn(10L);
+        Clock clock = Clock.fixed(Instant.parse("2026-09-15T21:00:00Z"), ZoneId.of("Europe/Istanbul"));
+        SubscriptionService service = new SubscriptionService(inspectionRepository, vehicleRepository, clock);
+        LocalDateTime start = LocalDateTime.of(2026, 9, 16, 0, 0);
+        when(inspectionRepository.countBusinessAnalysesBetween(10L, start, start.plusDays(1)))
+                .thenReturn(used);
+
+        assertDoesNotThrow(() -> service.validateBusinessInspectionLimit(business));
+
+        verify(inspectionRepository).countBusinessAnalysesBetween(10L, start, start.plusDays(1));
+        verifyNoMoreInteractions(inspectionRepository);
+        verifyNoInteractions(user, vehicleRepository);
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {100, 101})
+    void businessShouldRejectAtOrAboveDailyLimit(long used) {
+        BusinessAccount business = mock(BusinessAccount.class);
+        when(business.getId()).thenReturn(10L);
+        when(inspectionRepository.countBusinessAnalysesBetween(eq(10L), any(), any()))
+                .thenReturn(used);
+
+        assertThrows(IllegalStateException.class,
+                () -> subscriptionService.validateBusinessInspectionLimit(business));
+        verifyNoInteractions(user, vehicleRepository);
     }
 }

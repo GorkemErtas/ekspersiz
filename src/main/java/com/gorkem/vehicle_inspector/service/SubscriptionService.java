@@ -9,12 +9,14 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.Clock;
 
 @Service
 public class SubscriptionService {
 
     private static final int FREE_DAILY_INSPECTION_LIMIT = 3;
     private static final int PLUS_DAILY_INSPECTION_LIMIT = 15;
+    private static final int BUSINESS_DAILY_INSPECTION_LIMIT = 100;
 
     private static final int FREE_VEHICLE_LIMIT = 1;
     private static final int PLUS_VEHICLE_LIMIT = 5;
@@ -25,16 +27,19 @@ public class SubscriptionService {
 
     private final VehicleRepository
             vehicleRepository;
+    private final Clock clock;
 
     public SubscriptionService(
             DamageInspectionRepository inspectionRepository,
-            VehicleRepository vehicleRepository
+            VehicleRepository vehicleRepository,
+            Clock clock
     ) {
         this.inspectionRepository =
                 inspectionRepository;
 
         this.vehicleRepository =
                 vehicleRepository;
+        this.clock = clock;
     }
 
     public SubscriptionPlan getEffectivePlan(
@@ -55,7 +60,7 @@ public class SubscriptionService {
 
         if (expiresAt != null
                 && !expiresAt.isAfter(
-                LocalDateTime.now()
+                LocalDateTime.now(clock)
         )) {
 
             return SubscriptionPlan.FREE;
@@ -85,12 +90,12 @@ public class SubscriptionService {
                             Integer.MAX_VALUE;
                     case BUSINESS ->
                             throw new IllegalStateException(
-                                    "Business analiz limiti workspace üzerinden hesaplanmalıdır."
+                                    "Business analiz limiti şirket hesabı üzerinden hesaplanmalıdır."
                             );
                 };
 
         LocalDate today =
-                LocalDate.now();
+                LocalDate.now(clock);
 
         LocalDateTime start =
                 today.atStartOfDay();
@@ -101,7 +106,7 @@ public class SubscriptionService {
 
         long used =
                 inspectionRepository
-                        .countByUserIdAndAnalysisStartedAtGreaterThanEqualAndAnalysisStartedAtLessThan(
+                        .countPersonalAnalysesBetween(
                                 user.getId(),
                                 start,
                                 end
@@ -115,6 +120,28 @@ public class SubscriptionService {
                             + ", günlük limit: "
                             + limit
                             + "."
+            );
+        }
+    }
+
+    public void validateBusinessInspectionLimit(BusinessAccount businessAccount) {
+        validateBusinessInspectionLimit(businessAccount, LocalDateTime.now(clock));
+    }
+
+    public void validateBusinessInspectionLimit(
+            BusinessAccount businessAccount,
+            LocalDateTime analysisStartedAt
+    ) {
+        LocalDate today = analysisStartedAt.toLocalDate();
+        long used = inspectionRepository.countBusinessAnalysesBetween(
+                businessAccount.getId(),
+                today.atStartOfDay(),
+                today.plusDays(1).atStartOfDay()
+        );
+        if (used >= BUSINESS_DAILY_INSPECTION_LIMIT) {
+            throw new IllegalStateException(
+                    "Şirketin günlük analiz limitine ulaşıldı. Günlük ortak limit: "
+                            + BUSINESS_DAILY_INSPECTION_LIMIT + "."
             );
         }
     }
@@ -140,7 +167,7 @@ public class SubscriptionService {
                             Integer.MAX_VALUE;
                     case BUSINESS ->
                             throw new IllegalStateException(
-                                    "Business araç limiti workspace üzerinden hesaplanmalıdır."
+                                    "Business araç limiti şirket hesabı üzerinden hesaplanmalıdır."
                             );
                 };
 

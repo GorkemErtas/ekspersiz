@@ -61,7 +61,7 @@ class BusinessInvitationServiceTest {
     }
 
     @Test
-    void ownerShouldInviteIndividualUser() {
+    void ownerShouldInviteUserWithoutBusinessMembership() {
         User owner = mock(User.class);
         User invitedUser = mock(User.class);
         BusinessAccount businessAccount =
