@@ -165,8 +165,11 @@ public class BusinessInvitationService {
 
         businessMemberRepository.save(member);
 
-        user.setAccountType(AccountType.BUSINESS);
-        userRepository.save(user);
+        new BusinessMember(
+                invitation.getBusinessAccount(),
+                user,
+                BusinessRole.MEMBER
+        );
 
         businessInvitationRepository.delete(invitation);
     }

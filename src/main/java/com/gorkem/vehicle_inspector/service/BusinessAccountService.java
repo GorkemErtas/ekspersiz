@@ -54,9 +54,11 @@ public class BusinessAccountService {
             );
         }
 
-        if (user.getAccountType() != AccountType.INDIVIDUAL) {
+        if (user.getSubscriptionPlan()
+                != SubscriptionPlan.BUSINESS) {
+
             throw new IllegalStateException(
-                    "Yalnızca bireysel kullanıcılar şirket hesabı oluşturabilir."
+                    "Şirket ortamı oluşturmak için Business planı gereklidir."
             );
         }
 
@@ -85,7 +87,6 @@ public class BusinessAccountService {
 
         businessMemberRepository.save(owner);
 
-        user.setAccountType(AccountType.BUSINESS);
         userRepository.save(user);
 
         return toResponse(

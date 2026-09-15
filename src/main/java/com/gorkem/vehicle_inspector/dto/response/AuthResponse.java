@@ -11,7 +11,6 @@ public class AuthResponse {
     private final Long userId;
     private final String fullName;
     private final String email;
-    private final AccountType accountType;
     private final SubscriptionPlan subscriptionPlan;
 
     public AuthResponse(
@@ -21,7 +20,6 @@ public class AuthResponse {
             Long userId,
             String fullName,
             String email,
-            AccountType accountType,
             SubscriptionPlan subscriptionPlan
     ) {
         this.accessToken = accessToken;
@@ -30,7 +28,6 @@ public class AuthResponse {
         this.userId = userId;
         this.fullName = fullName;
         this.email = email;
-        this.accountType = accountType;
         this.subscriptionPlan =
                 subscriptionPlan;
     }
@@ -57,10 +54,6 @@ public class AuthResponse {
 
     public String getEmail() {
         return email;
-    }
-
-    public AccountType getAccountType() {
-        return accountType;
     }
 
     public SubscriptionPlan getSubscriptionPlan() {

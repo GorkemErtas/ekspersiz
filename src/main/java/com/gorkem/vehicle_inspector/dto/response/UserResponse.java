@@ -10,7 +10,6 @@ public class UserResponse {
     private final Long id;
     private final String fullName;
     private final String email;
-    private final AccountType accountType;
 
     private final SubscriptionPlan subscriptionPlan;
 
@@ -22,7 +21,6 @@ public class UserResponse {
             Long id,
             String fullName,
             String email,
-            AccountType accountType,
             SubscriptionPlan subscriptionPlan,
             LocalDateTime subscriptionStartedAt,
             LocalDateTime subscriptionExpiresAt
@@ -30,7 +28,6 @@ public class UserResponse {
         this.id = id;
         this.fullName = fullName;
         this.email = email;
-        this.accountType = accountType;
         this.subscriptionPlan = subscriptionPlan;
         this.subscriptionStartedAt = subscriptionStartedAt;
         this.subscriptionExpiresAt = subscriptionExpiresAt;
@@ -46,10 +43,6 @@ public class UserResponse {
 
     public String getEmail() {
         return email;
-    }
-
-    public AccountType getAccountType() {
-        return accountType;
     }
 
     public SubscriptionPlan getSubscriptionPlan() {

@@ -41,14 +41,6 @@ public class User {
 
     @Enumerated(EnumType.STRING)
     @Column(
-            name = "account_type",
-            nullable = false,
-            length = 20
-    )
-    private AccountType accountType;
-
-    @Enumerated(EnumType.STRING)
-    @Column(
             name = "subscription_plan",
             nullable = false,
             length = 20
@@ -89,17 +81,12 @@ public class User {
     public User(
             String fullName,
             String email,
-            String password,
-            AccountType accountType
+            String password
     ) {
         this.fullName = fullName;
         this.email = email;
         this.password = password;
-        this.accountType = accountType;
-
-        this.subscriptionPlan =
-                SubscriptionPlan.FREE;
-
+        this.subscriptionPlan = SubscriptionPlan.FREE;
         this.emailVerified = false;
     }
 
@@ -117,10 +104,6 @@ public class User {
 
     public String getPassword() {
         return password;
-    }
-
-    public AccountType getAccountType() {
-        return accountType;
     }
 
     public SubscriptionPlan getSubscriptionPlan() {
@@ -163,12 +146,6 @@ public class User {
             String password
     ) {
         this.password = password;
-    }
-
-    public void setAccountType(
-            AccountType accountType
-    ) {
-        this.accountType = accountType;
     }
 
     public void setSubscriptionPlan(

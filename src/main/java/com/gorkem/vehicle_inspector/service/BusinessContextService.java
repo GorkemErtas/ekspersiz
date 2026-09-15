@@ -39,12 +39,6 @@ public class BusinessContextService {
 
     @Transactional(readOnly = true)
     public BusinessMember requireMembership(User user) {
-        if (user.getAccountType() != AccountType.BUSINESS) {
-            throw new IllegalStateException(
-                    "Kullanıcı bir şirket hesabına bağlı değil."
-            );
-        }
-
         return businessMemberRepository
                 .findByUserId(user.getId())
                 .orElseThrow(() ->
