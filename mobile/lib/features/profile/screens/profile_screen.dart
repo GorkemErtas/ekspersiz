@@ -14,13 +14,11 @@ class ProfileScreen extends StatefulWidget {
     super.key,
     required this.fullName,
     required this.email,
-    required this.accountType,
     required this.subscriptionPlan,
   });
 
   final String fullName;
   final String email;
-  final String accountType;
   final String subscriptionPlan;
 
   @override
@@ -32,19 +30,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   bool _isLoggingOut = false;
 
-  String get _accountTypeLabel {
-    return switch (widget.accountType) {
-      'INDIVIDUAL' => 'Bireysel',
-      'BUSINESS' => 'Kurumsal',
-      _ => widget.accountType,
-    };
-  }
-
   String get _subscriptionPlanLabel {
     return switch (widget.subscriptionPlan) {
       'FREE' => 'Free',
       'PLUS' => 'Plus',
       'PRO' => 'Pro',
+      'BUSINESS' => 'Business',
       _ => widget.subscriptionPlan,
     };
   }
@@ -216,24 +207,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        alignment: WrapAlignment.center,
-                        children: [
-                          AppStatusBadge(
-                            label: _accountTypeLabel,
-                            color: colorScheme.primary,
-                            backgroundColor: colorScheme.primaryContainer,
-                            icon: Icons.verified_user_outlined,
-                          ),
-                          AppStatusBadge(
-                            label: _subscriptionPlanLabel,
-                            color: _subscriptionColor(),
-                            backgroundColor: _subscriptionBackgroundColor(),
-                            icon: Icons.workspace_premium_outlined,
-                          ),
-                        ],
+                      AppStatusBadge(
+                        label: _subscriptionPlanLabel,
+                        color: _subscriptionColor(),
+                        backgroundColor: _subscriptionBackgroundColor(),
+                        icon: Icons.workspace_premium_outlined,
                       ),
                     ],
                   ),
@@ -254,12 +232,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         icon: Icons.mail_outline_rounded,
                         title: 'E-posta',
                         value: widget.email,
-                      ),
-                      const Divider(height: 1, indent: 82),
-                      _ProfileItem(
-                        icon: Icons.verified_user_outlined,
-                        title: 'Hesap Türü',
-                        value: _accountTypeLabel,
                       ),
                       const Divider(height: 1, indent: 82),
                       _ProfileItem(

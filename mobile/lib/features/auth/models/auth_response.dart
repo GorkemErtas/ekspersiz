@@ -6,7 +6,6 @@ class AuthResponse {
     required this.userId,
     required this.fullName,
     required this.email,
-    required this.accountType,
     required this.subscriptionPlan,
   });
 
@@ -16,7 +15,6 @@ class AuthResponse {
   final int userId;
   final String fullName;
   final String email;
-  final String accountType;
   final String subscriptionPlan;
 
   factory AuthResponse.fromJson(Map<String, dynamic> json) {
@@ -27,7 +25,6 @@ class AuthResponse {
       userId: (json['userId'] as num?)?.toInt() ?? 0,
       fullName: json['fullName'] as String? ?? '',
       email: json['email'] as String? ?? '',
-      accountType: json['accountType'] as String? ?? 'INDIVIDUAL',
       subscriptionPlan: json['subscriptionPlan'] as String? ?? 'FREE',
     );
   }

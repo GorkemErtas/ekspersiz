@@ -62,7 +62,6 @@ class _SplashScreenState extends State<SplashScreen> {
           builder: (_) => MainShell(
             fullName: user.fullName,
             email: user.email,
-            accountType: user.accountType,
             subscriptionPlan: user.subscriptionPlan,
           ),
         ),
