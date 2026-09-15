@@ -31,15 +31,23 @@ public class Vehicle {
     @Column(name = "primary_vehicle", nullable = false)
     private boolean primaryVehicle = false;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(
             name = "user_id",
-            nullable = false,
             foreignKey = @ForeignKey(
                     name = "fk_vehicle_user"
             )
     )
     private User user;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "business_account_id",
+            foreignKey = @ForeignKey(
+                    name = "fk_vehicle_business_account"
+            )
+    )
+    private BusinessAccount businessAccount;
 
     protected Vehicle() {
     }
@@ -58,6 +66,25 @@ public class Vehicle {
         this.modelYear = modelYear;
         this.mileage = mileage;
         this.user = user;
+        this.archived = false;
+        this.primaryVehicle = false;
+    }
+
+    public Vehicle(
+            String plate,
+            String brand,
+            String model,
+            Integer modelYear,
+            Integer mileage,
+            BusinessAccount businessAccount
+    ) {
+        this.plate = plate;
+        this.brand = brand;
+        this.model = model;
+        this.modelYear = modelYear;
+        this.mileage = mileage;
+        this.user = null;
+        this.businessAccount = businessAccount;
         this.archived = false;
         this.primaryVehicle = false;
     }
@@ -90,6 +117,22 @@ public class Vehicle {
         return user;
     }
 
+    public BusinessAccount getBusinessAccount() {
+        return businessAccount;
+    }
+
+    public void assignToUser(User user) {
+        this.user = user;
+        this.businessAccount = null;
+    }
+
+    public void assignToBusiness(
+            BusinessAccount businessAccount
+    ) {
+        this.user = null;
+        this.businessAccount = businessAccount;
+    }
+
     public void setPlate(String plate) {
         this.plate = plate;
     }
@@ -108,10 +151,6 @@ public class Vehicle {
 
     public void setMileage(Integer mileage) {
         this.mileage = mileage;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
     }
 
     public boolean isArchived() {

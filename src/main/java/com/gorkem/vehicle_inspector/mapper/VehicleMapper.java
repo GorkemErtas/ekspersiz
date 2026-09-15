@@ -5,6 +5,7 @@ import com.gorkem.vehicle_inspector.dto.request.UpdateVehicleRequest;
 import com.gorkem.vehicle_inspector.dto.response.VehicleResponse;
 import com.gorkem.vehicle_inspector.entity.User;
 import com.gorkem.vehicle_inspector.entity.Vehicle;
+import com.gorkem.vehicle_inspector.entity.BusinessAccount;
 
 public final class VehicleMapper {
 
@@ -19,6 +20,20 @@ public final class VehicleMapper {
                 request.getModelYear(),
                 request.getMileage(),
                 user
+        );
+    }
+
+    public static Vehicle toEntity(
+            CreateVehicleRequest request,
+            BusinessAccount businessAccount
+    ) {
+        return new Vehicle(
+                request.getPlate().trim().toUpperCase(),
+                request.getBrand().trim(),
+                request.getModel().trim(),
+                request.getModelYear(),
+                request.getMileage(),
+                businessAccount
         );
     }
 
