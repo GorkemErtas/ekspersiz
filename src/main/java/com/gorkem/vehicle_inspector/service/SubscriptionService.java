@@ -81,6 +81,10 @@ public class SubscriptionService {
                             PLUS_DAILY_INSPECTION_LIMIT;
                     case PRO ->
                             Integer.MAX_VALUE;
+                    case BUSINESS ->
+                            throw new IllegalStateException(
+                                    "Business analiz limiti workspace üzerinden hesaplanmalıdır."
+                            );
                 };
 
         LocalDate today =
@@ -132,6 +136,10 @@ public class SubscriptionService {
                             PLUS_VEHICLE_LIMIT;
                     case PRO ->
                             Integer.MAX_VALUE;
+                    case BUSINESS ->
+                            throw new IllegalStateException(
+                                    "Business araç limiti workspace üzerinden hesaplanmalıdır."
+                            );
                 };
 
         long vehicleCount =

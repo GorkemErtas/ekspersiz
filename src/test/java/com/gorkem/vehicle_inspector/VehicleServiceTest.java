@@ -1,7 +1,9 @@
 package com.gorkem.vehicle_inspector;
 
 import com.gorkem.vehicle_inspector.dto.response.VehicleResponse;
-import com.gorkem.vehicle_inspector.entity.*;
+import com.gorkem.vehicle_inspector.entity.BusinessAccount;
+import com.gorkem.vehicle_inspector.entity.User;
+import com.gorkem.vehicle_inspector.entity.Vehicle;
 import com.gorkem.vehicle_inspector.exception.ResourceNotFoundException;
 import com.gorkem.vehicle_inspector.repository.VehicleRepository;
 import com.gorkem.vehicle_inspector.service.BusinessContextService;
@@ -44,16 +46,17 @@ class VehicleServiceTest {
     }
 
     @Test
-    void individualUserShouldSeeOwnVehicles() {
+    void personalUserShouldSeeOwnVehicles() {
         User user = mock(User.class);
 
         when(user.getId()).thenReturn(1L);
-        when(user.getAccountType())
-                .thenReturn(AccountType.INDIVIDUAL);
 
         when(businessContextService.requireUser(
                 "user@example.com"
         )).thenReturn(user);
+
+        when(businessContextService.isBusinessMember(user))
+                .thenReturn(false);
 
         Vehicle vehicle = new Vehicle(
                 "35ABC123",
@@ -90,9 +93,6 @@ class VehicleServiceTest {
     void businessMemberShouldSeeBusinessVehicles() {
         User user = mock(User.class);
 
-        when(user.getAccountType())
-                .thenReturn(AccountType.BUSINESS);
-
         BusinessAccount businessAccount =
                 new BusinessAccount("ABC Ekspertiz");
 
@@ -105,6 +105,9 @@ class VehicleServiceTest {
         when(businessContextService.requireUser(
                 "member@example.com"
         )).thenReturn(user);
+
+        when(businessContextService.isBusinessMember(user))
+                .thenReturn(true);
 
         when(businessContextService.requireBusinessAccount(user))
                 .thenReturn(businessAccount);
@@ -145,11 +148,8 @@ class VehicleServiceTest {
     }
 
     @Test
-    void businessUserShouldNotAccessVehicleOutsideBusiness() {
+    void businessMemberShouldNotAccessVehicleOutsideBusiness() {
         User user = mock(User.class);
-
-        when(user.getAccountType())
-                .thenReturn(AccountType.BUSINESS);
 
         BusinessAccount businessAccount =
                 new BusinessAccount("ABC Ekspertiz");
@@ -163,6 +163,9 @@ class VehicleServiceTest {
         when(businessContextService.requireUser(
                 "member@example.com"
         )).thenReturn(user);
+
+        when(businessContextService.isBusinessMember(user))
+                .thenReturn(true);
 
         when(businessContextService.requireBusinessAccount(user))
                 .thenReturn(businessAccount);

@@ -1,7 +1,6 @@
 package com.gorkem.vehicle_inspector.dto.response;
 
 import com.gorkem.vehicle_inspector.entity.SubscriptionPlan;
-import com.gorkem.vehicle_inspector.entity.AccountType;
 
 import java.time.LocalDateTime;
 

@@ -15,7 +15,6 @@ public final class UserMapper {
                 user.getId(),
                 user.getFullName(),
                 user.getEmail(),
-                user.getAccountType(),
                 user.getSubscriptionPlan(),
                 user.getSubscriptionStartedAt(),
                 user.getSubscriptionExpiresAt()

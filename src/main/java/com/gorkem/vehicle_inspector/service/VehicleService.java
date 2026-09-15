@@ -8,7 +8,6 @@ import com.gorkem.vehicle_inspector.entity.Vehicle;
 import com.gorkem.vehicle_inspector.exception.DuplicateResourceException;
 import com.gorkem.vehicle_inspector.exception.ResourceNotFoundException;
 import com.gorkem.vehicle_inspector.mapper.VehicleMapper;
-import com.gorkem.vehicle_inspector.entity.AccountType;
 import com.gorkem.vehicle_inspector.entity.BusinessAccount;
 import com.gorkem.vehicle_inspector.repository.VehicleRepository;
 import org.springframework.stereotype.Service;
@@ -57,7 +56,7 @@ public class VehicleService {
 
         Vehicle vehicle;
 
-        if (user.getAccountType() == AccountType.INDIVIDUAL) {
+        if (!businessContextService.isBusinessMember(user)) {
             vehicle = VehicleMapper.toEntity(
                     request,
                     user
@@ -105,7 +104,7 @@ public class VehicleService {
 
         List<Vehicle> vehicles;
 
-        if (user.getAccountType() == AccountType.INDIVIDUAL) {
+        if (!businessContextService.isBusinessMember(user)) {
             vehicles =
                     vehicleRepository
                             .findAllByUserIdAndArchivedFalseOrderByIdDesc(
@@ -182,7 +181,7 @@ public class VehicleService {
         Vehicle selectedVehicle =
                 findAccessibleVehicle(id, user);
 
-        if (user.getAccountType() == AccountType.INDIVIDUAL) {
+        if (!businessContextService.isBusinessMember(user)) {
             vehicleRepository
                     .findByUserIdAndPrimaryVehicleTrueAndArchivedFalse(
                             user.getId()
@@ -246,7 +245,7 @@ public class VehicleService {
 
         List<Vehicle> remainingVehicles;
 
-        if (user.getAccountType() == AccountType.INDIVIDUAL) {
+        if (!businessContextService.isBusinessMember(user)) {
             remainingVehicles =
                     vehicleRepository
                             .findAllByUserIdAndArchivedFalseOrderByIdDesc(
@@ -276,7 +275,7 @@ public class VehicleService {
             Long vehicleId,
             User user
     ) {
-        if (user.getAccountType() == AccountType.INDIVIDUAL) {
+        if (!businessContextService.isBusinessMember(user)) {
             return vehicleRepository
                     .findByIdAndUserIdAndArchivedFalse(
                             vehicleId,

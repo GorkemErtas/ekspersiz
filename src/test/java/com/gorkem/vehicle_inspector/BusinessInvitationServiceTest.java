@@ -7,7 +7,6 @@ import com.gorkem.vehicle_inspector.repository.BusinessMemberRepository;
 import com.gorkem.vehicle_inspector.repository.UserRepository;
 import com.gorkem.vehicle_inspector.service.BusinessInvitationService;
 import com.gorkem.vehicle_inspector.service.VerificationCodeService;
-import com.gorkem.vehicle_inspector.repository.VehicleRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,6 +14,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.mockito.ArgumentCaptor;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -41,9 +41,6 @@ class BusinessInvitationServiceTest {
     @Mock
     private JavaMailSender mailSender;
 
-    @Mock
-    private VehicleRepository vehicleRepository;
-
     private BusinessInvitationService service;
 
     @BeforeEach
@@ -53,8 +50,7 @@ class BusinessInvitationServiceTest {
                 businessMemberRepository,
                 businessInvitationRepository,
                 verificationCodeService,
-                mailSender,
-                vehicleRepository
+                mailSender
         );
 
         ReflectionTestUtils.setField(
@@ -200,22 +196,31 @@ class BusinessInvitationServiceTest {
                 "hashed-code"
         )).thenReturn(true);
 
-        when(vehicleRepository.existsByUserId(2L))
-                .thenReturn(false);
-
         service.accept(
                 "worker@example.com",
                 "123456"
         );
 
+        ArgumentCaptor<BusinessMember> memberCaptor =
+                ArgumentCaptor.forClass(
+                        BusinessMember.class
+                );
+
         verify(businessMemberRepository)
-                .save(any(BusinessMember.class));
+                .save(memberCaptor.capture());
 
-        verify(user)
-                .setAccountType(AccountType.BUSINESS);
+        BusinessMember savedMember =
+                memberCaptor.getValue();
 
-        verify(userRepository)
-                .save(user);
+        assertSame(user, savedMember.getUser());
+        assertSame(
+                businessAccount,
+                savedMember.getBusinessAccount()
+        );
+        assertEquals(
+                BusinessRole.MEMBER,
+                savedMember.getRole()
+        );
 
         verify(businessInvitationRepository)
                 .delete(invitation);
@@ -321,38 +326,5 @@ class BusinessInvitationServiceTest {
                 businessMemberRepository,
                 never()
         ).save(any());
-    }
-
-    @Test
-    void userWithPersonalVehiclesShouldNotAcceptInvitation() {
-        User user = mock(User.class);
-
-        when(user.getId()).thenReturn(2L);
-
-        when(userRepository.findByEmail("worker@example.com"))
-                .thenReturn(Optional.of(user));
-
-        when(businessMemberRepository.existsByUserId(2L))
-                .thenReturn(false);
-
-        when(vehicleRepository.existsByUserId(2L))
-                .thenReturn(true);
-
-        assertThrows(
-                IllegalStateException.class,
-                () -> service.accept(
-                        "worker@example.com",
-                        "123456"
-                )
-        );
-
-        verify(businessMemberRepository, never())
-                .save(any());
-
-        verify(userRepository, never())
-                .save(user);
-
-        verify(businessInvitationRepository, never())
-                .delete(any());
     }
 }
