@@ -11,6 +11,7 @@ import '../../auth/models/business_account.dart';
 import '../models/vehicle.dart';
 import '../services/vehicle_service.dart';
 import 'add_vehicle_screen.dart';
+import 'vehicle_detail_screen.dart';
 
 class VehicleListScreen extends StatefulWidget {
   const VehicleListScreen({super.key, this.businessAccount});
@@ -81,6 +82,18 @@ class _VehicleListScreenState extends State<VehicleListScreen> {
     setState(_loadVehicles);
 
     _showMessage('${updatedVehicle.displayName} başarıyla güncellendi.');
+  }
+
+  Future<void> _openVehicleDetail(Vehicle vehicle) async {
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (_) => VehicleDetailScreen(
+          vehicle: vehicle,
+          businessAccount: widget.businessAccount,
+        ),
+      ),
+    );
+    if (mounted) setState(_loadVehicles);
   }
 
   Future<void> _confirmDeleteVehicle(Vehicle vehicle) async {
@@ -353,6 +366,7 @@ class _VehicleListScreenState extends State<VehicleListScreen> {
                       return _VehicleCard(
                         vehicle: vehicle,
                         mileage: _formatMileage(vehicle.mileage),
+                        onTap: () => _openVehicleDetail(vehicle),
                         onEdit: () => _openEditVehicleScreen(vehicle),
                         onDelete: () => _confirmDeleteVehicle(vehicle),
                       );
@@ -420,12 +434,14 @@ class _VehicleCard extends StatelessWidget {
   const _VehicleCard({
     required this.vehicle,
     required this.mileage,
+    required this.onTap,
     required this.onEdit,
     required this.onDelete,
   });
 
   final Vehicle vehicle;
   final String mileage;
+  final VoidCallback onTap;
 
   final VoidCallback onEdit;
   final VoidCallback onDelete;
@@ -437,6 +453,7 @@ class _VehicleCard extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
 
     return AppCard(
+      onTap: onTap,
       padding: const EdgeInsets.all(18),
 
       child: Row(

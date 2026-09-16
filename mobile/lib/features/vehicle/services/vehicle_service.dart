@@ -38,6 +38,7 @@ class VehicleService {
     required String model,
     required int modelYear,
     required int mileage,
+    Map<String, dynamic>? tracking,
   }) async {
     final response = await apiClient.post(
       '/vehicles',
@@ -47,6 +48,7 @@ class VehicleService {
         'model': model.trim(),
         'modelYear': modelYear,
         'mileage': mileage,
+        'tracking': ?tracking,
       },
     );
 
@@ -64,6 +66,7 @@ class VehicleService {
     required String model,
     required int modelYear,
     required int mileage,
+    String? notes,
   }) async {
     final response = await apiClient.put(
       '/vehicles/$vehicleId',
@@ -76,6 +79,7 @@ class VehicleService {
         'model': model.trim(),
         'modelYear': modelYear,
         'mileage': mileage,
+        'notes': notes,
       },
     );
 
