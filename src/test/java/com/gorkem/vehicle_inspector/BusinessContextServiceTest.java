@@ -179,6 +179,8 @@ class BusinessContextServiceTest {
         User user = mock(User.class);
 
         when(user.getId()).thenReturn(1L);
+        when(user.getSubscriptionPlan())
+                .thenReturn(com.gorkem.vehicle_inspector.entity.SubscriptionPlan.BUSINESS);
 
         BusinessMember membership =
                 new BusinessMember(
@@ -208,6 +210,28 @@ class BusinessContextServiceTest {
                         user,
                         BusinessRole.MEMBER
                 );
+
+        when(businessMemberRepository.findByUserId(1L))
+                .thenReturn(Optional.of(membership));
+
+        assertThrows(
+                IllegalStateException.class,
+                () -> service.requireOwner(user)
+        );
+    }
+
+    @Test
+    void ownerWithoutBusinessPlanShouldFailOwnerCheck() {
+        User user = mock(User.class);
+        when(user.getId()).thenReturn(1L);
+        when(user.getSubscriptionPlan())
+                .thenReturn(com.gorkem.vehicle_inspector.entity.SubscriptionPlan.PRO);
+
+        BusinessMember membership = new BusinessMember(
+                new BusinessAccount("ABC Ekspertiz"),
+                user,
+                BusinessRole.OWNER
+        );
 
         when(businessMemberRepository.findByUserId(1L))
                 .thenReturn(Optional.of(membership));

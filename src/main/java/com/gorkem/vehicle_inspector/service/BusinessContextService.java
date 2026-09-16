@@ -3,6 +3,7 @@ package com.gorkem.vehicle_inspector.service;
 import com.gorkem.vehicle_inspector.entity.BusinessAccount;
 import com.gorkem.vehicle_inspector.entity.BusinessMember;
 import com.gorkem.vehicle_inspector.entity.BusinessRole;
+import com.gorkem.vehicle_inspector.entity.SubscriptionPlan;
 import com.gorkem.vehicle_inspector.entity.User;
 import com.gorkem.vehicle_inspector.exception.ResourceNotFoundException;
 import com.gorkem.vehicle_inspector.repository.BusinessMemberRepository;
@@ -74,6 +75,12 @@ public class BusinessContextService {
         if (membership.getRole() != BusinessRole.OWNER) {
             throw new IllegalStateException(
                     "Bu işlem yalnızca business sahibi tarafından yapılabilir."
+            );
+        }
+
+        if (user.getSubscriptionPlan() != SubscriptionPlan.BUSINESS) {
+            throw new IllegalStateException(
+                    "Şirket işlemleri için Business planı gereklidir."
             );
         }
 
