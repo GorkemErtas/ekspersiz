@@ -12,6 +12,7 @@ import com.gorkem.vehicle_inspector.mapper.InspectionReportMapper;
 import com.gorkem.vehicle_inspector.repository.DamageInspectionRepository;
 import com.gorkem.vehicle_inspector.repository.BusinessAccountRepository;
 import com.gorkem.vehicle_inspector.repository.VehicleRepository;
+import com.gorkem.vehicle_inspector.repository.UserRepository;
 import com.gorkem.vehicle_inspector.service.report.GeminiInspectionReportService;
 
 import org.slf4j.Logger;
@@ -48,6 +49,7 @@ public class DamageInspectionService {
     private final BusinessContextService businessContextService;
     private final InspectionAccessService inspectionAccessService;
     private final BusinessAccountRepository businessAccountRepository;
+    private final UserRepository userRepository;
     private final Clock clock;
     private final FileStorageService fileStorageService;
     private final AiAnalysisClient aiAnalysisClient;
@@ -62,6 +64,7 @@ public class DamageInspectionService {
             BusinessContextService businessContextService,
             InspectionAccessService inspectionAccessService,
             BusinessAccountRepository businessAccountRepository,
+            UserRepository userRepository,
             Clock clock,
             FileStorageService fileStorageService,
             AiAnalysisClient aiAnalysisClient,
@@ -78,6 +81,7 @@ public class DamageInspectionService {
         this.businessContextService = businessContextService;
         this.inspectionAccessService = inspectionAccessService;
         this.businessAccountRepository = businessAccountRepository;
+        this.userRepository = userRepository;
         this.clock = clock;
 
         this.fileStorageService =
@@ -279,10 +283,9 @@ public class DamageInspectionService {
                 );
 
         validateNotProcessing(inspection);
-        if (inspection.getVehicle().getBusinessAccount() != null
-                && inspection.getAnalysisStartedAt() != null) {
+        if (inspection.getAnalysisStartedAt() != null) {
             throw new IllegalStateException(
-                    "Analizi başlamış şirket incelemesinin fotoğrafı değiştirilemez. Yeni bir inceleme oluşturun.");
+                    "Analizi başlamış incelemenin fotoğrafı değiştirilemez. Yeni bir inceleme oluşturun.");
         }
 
         String previousImagePath =
@@ -1042,16 +1045,18 @@ public class DamageInspectionService {
     }
 
     private Vehicle findAccessibleVehicle(Long vehicleId, User user) {
-        return businessContextService.findMembership(user)
-                .map(member -> businessContextService.requireBusinessAccount(user))
-                .map(businessAccount ->
-                        vehicleRepository.findByIdAndBusinessAccountIdAndArchivedFalse(
-                                vehicleId,
-                                businessAccount.getId()
-                        )
-                )
-                .orElseGet(() -> vehicleRepository.findByIdAndUserIdAndArchivedFalse(
-                        vehicleId, user.getId()))
+        if (businessContextService.findMembership(user).isPresent()) {
+            BusinessAccount businessAccount =
+                    businessContextService.requireBusinessAccount(user);
+            return vehicleRepository.findByIdAndBusinessAccountIdAndArchivedFalse(
+                            vehicleId,
+                            businessAccount.getId()
+                    )
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "Araç bulunamadı. ID: " + vehicleId));
+        }
+
+        return vehicleRepository.findByIdAndUserIdAndArchivedFalse(vehicleId, user.getId())
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Araç bulunamadı. ID: " + vehicleId));
     }
@@ -1064,10 +1069,27 @@ public class DamageInspectionService {
     }
 
     private void validateAnalysisLimit(DamageInspection inspection, User user) {
+        if (inspection.getStatus() == InspectionStatus.COMPLETED) {
+            throw new IllegalStateException(
+                    "Bu inceleme tamamlandı. Yeni fotoğraf analizi için yeni bir inceleme oluşturun.");
+        }
+
+        LocalDateTime startedAt = LocalDateTime.now(clock);
+        LocalDateTime previousStart = inspection.getAnalysisStartedAt();
+        boolean alreadyCountedThisMonth = previousStart != null
+                && previousStart.getYear() == startedAt.getYear()
+                && previousStart.getMonth() == startedAt.getMonth();
+
+        if (alreadyCountedThisMonth) {
+            return;
+        }
+
         BusinessAccount businessAccount = inspection.getVehicle().getBusinessAccount();
         if (businessAccount == null) {
-            subscriptionService.validateInspectionLimit(user);
-            inspection.setAnalysisStartedAt(LocalDateTime.now(clock));
+            User lockedUser = userRepository.findByIdForUpdate(user.getId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Kullanıcı bulunamadı."));
+            subscriptionService.validatePersonalMonthlyAnalysisLimit(lockedUser, startedAt);
+            inspection.setAnalysisStartedAt(startedAt);
             return;
         }
 
@@ -1078,23 +1100,11 @@ public class DamageInspectionService {
             throw new ResourceNotFoundException("Şirket aracı bulunamadı.");
         }
 
-        if (inspection.getStatus() == InspectionStatus.COMPLETED) {
-            throw new IllegalStateException(
-                    "Bu inceleme tamamlandı. Yeni fotoğraf analizi için yeni bir inceleme oluşturun.");
-        }
-
         // Serialize count and reservation across every member of the company.
         businessAccountRepository.findByIdForUpdate(businessAccount.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Şirket bulunamadı."));
-        LocalDateTime startedAt = LocalDateTime.now(clock);
-        LocalDateTime previousStart = inspection.getAnalysisStartedAt();
-        boolean alreadyCountedToday = previousStart != null
-                && previousStart.toLocalDate().equals(startedAt.toLocalDate());
-
-        if (!alreadyCountedToday) {
-            subscriptionService.validateBusinessInspectionLimit(businessAccount, startedAt);
-            inspection.setAnalysisStartedAt(startedAt);
-        }
+        subscriptionService.validateBusinessMonthlyAnalysisLimit(businessAccount, startedAt);
+        inspection.setAnalysisStartedAt(startedAt);
     }
 
     private String normalizeCity(

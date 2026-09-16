@@ -268,7 +268,7 @@ class InspectionPersistenceTest {
                 assertTrue(releaseFirst.await(10, TimeUnit.SECONDS));
             }
             return null;
-        }).when(subscriptions).validateBusinessInspectionLimit(any(), any());
+        }).when(subscriptions).validateBusinessMonthlyAnalysisLimit(any(), any());
 
         ExecutorService executor = Executors.newFixedThreadPool(2);
         try {

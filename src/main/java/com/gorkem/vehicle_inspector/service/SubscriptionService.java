@@ -7,19 +7,20 @@ import com.gorkem.vehicle_inspector.repository.DamageInspectionRepository;
 import com.gorkem.vehicle_inspector.repository.VehicleRepository;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Clock;
 
 @Service
 public class SubscriptionService {
 
-    private static final int FREE_DAILY_INSPECTION_LIMIT = 3;
-    private static final int PLUS_DAILY_INSPECTION_LIMIT = 15;
-    private static final int BUSINESS_DAILY_INSPECTION_LIMIT = 100;
+    private static final int FREE_MONTHLY_ANALYSIS_LIMIT = 1;
+    private static final int PLUS_MONTHLY_ANALYSIS_LIMIT = 5;
+    private static final int PRO_MONTHLY_ANALYSIS_LIMIT = 20;
+    private static final int BUSINESS_MONTHLY_ANALYSIS_LIMIT = 100;
 
     private static final int FREE_VEHICLE_LIMIT = 1;
-    private static final int PLUS_VEHICLE_LIMIT = 5;
+    private static final int PLUS_VEHICLE_LIMIT = 3;
+    private static final int PRO_VEHICLE_LIMIT = 10;
     private static final int BUSINESS_VEHICLE_LIMIT = 50;
 
     private final DamageInspectionRepository
@@ -69,40 +70,34 @@ public class SubscriptionService {
         return user.getSubscriptionPlan();
     }
 
-    public void validateInspectionLimit(
-            User user
+    public void validatePersonalMonthlyAnalysisLimit(
+            User user,
+            LocalDateTime analysisStartedAt
     ) {
 
         SubscriptionPlan plan =
                 getEffectivePlan(user);
 
-        if (plan == SubscriptionPlan.PRO) {
-            return;
-        }
-
         int limit =
                 switch (plan) {
                     case FREE ->
-                            FREE_DAILY_INSPECTION_LIMIT;
+                            FREE_MONTHLY_ANALYSIS_LIMIT;
                     case PLUS ->
-                            PLUS_DAILY_INSPECTION_LIMIT;
+                            PLUS_MONTHLY_ANALYSIS_LIMIT;
                     case PRO ->
-                            Integer.MAX_VALUE;
+                            PRO_MONTHLY_ANALYSIS_LIMIT;
                     case BUSINESS ->
                             throw new IllegalStateException(
                                     "Business analiz limiti şirket hesabı üzerinden hesaplanmalıdır."
                             );
                 };
 
-        LocalDate today =
-                LocalDate.now(clock);
+        LocalDateTime start = analysisStartedAt
+                .toLocalDate()
+                .withDayOfMonth(1)
+                .atStartOfDay();
 
-        LocalDateTime start =
-                today.atStartOfDay();
-
-        LocalDateTime end =
-                today.plusDays(1)
-                        .atStartOfDay();
+        LocalDateTime end = start.plusMonths(1);
 
         long used =
                 inspectionRepository
@@ -114,34 +109,34 @@ public class SubscriptionService {
 
         if (used >= limit) {
             throw new IllegalStateException(
-                    "Günlük analiz limitinize ulaştınız. "
+                    "Aylık analiz limitinize ulaştınız. "
                             + "Mevcut plan: "
                             + plan
-                            + ", günlük limit: "
+                            + ", aylık limit: "
                             + limit
                             + "."
             );
         }
     }
 
-    public void validateBusinessInspectionLimit(BusinessAccount businessAccount) {
-        validateBusinessInspectionLimit(businessAccount, LocalDateTime.now(clock));
-    }
-
-    public void validateBusinessInspectionLimit(
+    public void validateBusinessMonthlyAnalysisLimit(
             BusinessAccount businessAccount,
             LocalDateTime analysisStartedAt
     ) {
-        LocalDate today = analysisStartedAt.toLocalDate();
+        LocalDateTime start = analysisStartedAt
+                .toLocalDate()
+                .withDayOfMonth(1)
+                .atStartOfDay();
+
         long used = inspectionRepository.countBusinessAnalysesBetween(
                 businessAccount.getId(),
-                today.atStartOfDay(),
-                today.plusDays(1).atStartOfDay()
+                start,
+                start.plusMonths(1)
         );
-        if (used >= BUSINESS_DAILY_INSPECTION_LIMIT) {
+        if (used >= BUSINESS_MONTHLY_ANALYSIS_LIMIT) {
             throw new IllegalStateException(
-                    "Şirketin günlük analiz limitine ulaşıldı. Günlük ortak limit: "
-                            + BUSINESS_DAILY_INSPECTION_LIMIT + "."
+                    "Şirketin aylık analiz limitine ulaşıldı. Aylık ortak limit: "
+                            + BUSINESS_MONTHLY_ANALYSIS_LIMIT + "."
             );
         }
     }
@@ -153,10 +148,6 @@ public class SubscriptionService {
         SubscriptionPlan plan =
                 getEffectivePlan(user);
 
-        if (plan == SubscriptionPlan.PRO) {
-            return;
-        }
-
         int limit =
                 switch (plan) {
                     case FREE ->
@@ -164,7 +155,7 @@ public class SubscriptionService {
                     case PLUS ->
                             PLUS_VEHICLE_LIMIT;
                     case PRO ->
-                            Integer.MAX_VALUE;
+                            PRO_VEHICLE_LIMIT;
                     case BUSINESS ->
                             throw new IllegalStateException(
                                     "Business araç limiti şirket hesabı üzerinden hesaplanmalıdır."
