@@ -17,6 +17,9 @@ The application analyzes vehicle images, detects visible damage, identifies affe
 * 🚙 Vehicle Management
 * ⭐ Main Vehicle Selection
 * 🗃 Vehicle Archiving While Preserving Inspection History
+* 🔧 Vehicle Maintenance Records and Optional Cost Tracking
+* 🔔 Date- and Mileage-Based Vehicle Reminders
+* 📋 Vehicle Condition Overview and Unified History Timeline
 * 📍 GPS-Based Inspection Location
 * 🗺 Google Maps Integration
 * 📷 Camera / Gallery Vehicle Image Upload
@@ -35,7 +38,7 @@ The application analyzes vehicle images, detects visible damage, identifies affe
 * 📊 Inspection History
 * 💳 Subscription Plans (`FREE`, `PLUS`, `PRO`, `BUSINESS`)
 * 🏢 Business Accounts, Employee Invitations, Employee Management, and Shared Vehicles
-* 📉 Shared Daily Inspection Limits for Personal and Business Usage
+* 📉 Shared Monthly Inspection Limits for Personal and Business Usage
 * 🗄 PostgreSQL Persistence
 * 🌐 RESTful API
 * 🔒 Secure Mobile Token Storage
@@ -272,6 +275,22 @@ The Flutter application displays these services on a Google Map. Users can selec
 
 ---
 
+# 🔧 Vehicle Companion
+
+Each active vehicle has a detail screen for its maintenance records, reminders, current overview, and history. Maintenance entries store the maintenance type, date, mileage, optional cost and note, and optional next recommended date or mileage. Reminders can use a date, mileage, or both and are calculated as `OVERDUE`, `DUE_SOON`, `UPCOMING`, or `COMPLETED` from the current date and vehicle mileage.
+
+The overview combines the latest maintenance, active reminders, and latest completed AI damage inspection. Its condition label is a practical summary of stored data and is not a mechanical inspection. The history timeline combines vehicle creation, mileage updates, maintenance, and completed AI inspections without duplicating inspection records.
+
+Tracking fields are optional during vehicle creation. Users can create a vehicle with only its core details and add maintenance or reminders later. Company members automatically read and update the same vehicle records through their shared `BusinessAccount`; the creator user is retained for audit information.
+
+Archived vehicles remain available to history and maintenance/reminder reads, while new changes require an active vehicle.
+
+### Database update
+
+Local development currently uses `spring.jpa.hibernate.ddl-auto=update`. For an existing PostgreSQL production database, review and apply [`database/migrations/V1__vehicle_tracking.sql`](database/migrations/V1__vehicle_tracking.sql) before deploying this feature. The script only adds the new vehicle fields, tracking tables, constraints, and indexes; it does not delete existing data.
+
+---
+
 # 💳 Subscription Architecture
 
 The application currently includes the following plan types:
@@ -283,13 +302,13 @@ The application currently includes the following plan types:
 
 Subscription plans belong to `User`. Current personal limits are:
 
-| Plan | Active vehicles | Daily analyses |
+| Plan | Active vehicles | Monthly AI analyses |
 | --- | --- | --- |
-| FREE | 1 | 3 |
-| PLUS | 5 | 15 |
-| PRO | Unlimited | Unlimited |
+| FREE | 1 | 1 |
+| PLUS | 3 | 5 |
+| PRO | 10 | 20 |
 
-Daily usage currently counts inspections with `analysisStartedAt` within the server's current calendar day. Pending inspections that have not started analysis do not count. This is a count of inspection records, not a history of every analysis attempt.
+Monthly usage counts inspections with `analysisStartedAt` inside the server's current calendar month. Pending inspections that have not started analysis do not count. Retrying the same inspection in its reserved month does not consume another slot, while a retry from an earlier month requires capacity in the current month. A completed inspection cannot be analyzed again.
 
 ### Business membership
 
@@ -299,7 +318,7 @@ A user with the BUSINESS subscription can create a company and becomes its OWNER
 
 Vehicle access follows membership automatically: users without membership use personal vehicles; members use their company's shared vehicles. A vehicle belongs to either a user or a company. Each company has a shared limit of **50 active vehicles**, regardless of its member count.
 
-Company inspection history and access are scoped through the inspection vehicle's `BusinessAccount`. `DamageInspection.user` records the member who created the inspection for audit purposes. Each company shares a limit of **100 analyses per server calendar day**, regardless of its member count. Report regeneration does not consume another analysis slot.
+Company inspection history and access are scoped through the inspection vehicle's `BusinessAccount`. `DamageInspection.user` records the member who created the inspection for audit purposes. Each company shares a limit of **100 analyses per server calendar month**, regardless of its member count. Report regeneration does not consume another analysis slot.
 
 The mobile application receives this membership context through login and session restoration responses. Members automatically see the shared company vehicles and inspections; there is no personal/company workspace switch. Only BUSINESS subscribers receive company-management controls and can create a company. Owners can invite registered users, list employees by name and email, and remove employee memberships. Users without a company can accept an invitation through the separate company-invitation action, including invited FREE, PLUS, and PRO users. Regular company members do not receive company-management controls. The BUSINESS plan does not have a personal quota fallback before company membership is established.
 
@@ -449,12 +468,15 @@ Software Engineer
 * ✅ Service Ratings & Distance Display
 * ✅ Google Maps Directions
 * ✅ Subscription Plan Architecture
-* ✅ Daily FREE and PLUS Plan Inspection Limits
+* ✅ Monthly FREE, PLUS, and PRO Plan Inspection Limits
 * ✅ Business Accounts and Member Invitations
 * ✅ Shared Business Vehicles and Company Vehicle Limit
-* ✅ Company-Scoped Inspection Access and Shared Daily Inspection Limit
+* ✅ Company-Scoped Inspection Access and Shared Monthly Inspection Limit
 * ✅ Mobile Company Creation and Invitation Flow
 * ✅ Owner Employee List and Membership Removal
+* ✅ Vehicle Maintenance Records and Optional Cost Tracking
+* ✅ Date- and Mileage-Based Reminders
+* ✅ Vehicle Condition Overview and Unified History Timeline
 * ✅ Flutter Mobile Application
 * ✅ Inspection Result Screen
 * ✅ Inspection History
