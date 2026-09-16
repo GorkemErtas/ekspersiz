@@ -6,8 +6,10 @@ import '../../../core/widgets/app_icon_box.dart';
 import '../../../core/widgets/app_status_badge.dart';
 
 import '../../auth/screens/change_password_screen.dart';
+import '../../auth/models/business_account.dart';
 import '../../auth/screens/login_screen.dart';
 import '../../auth/services/auth_service.dart';
+import '../../business/screens/business_management_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({
@@ -15,11 +17,15 @@ class ProfileScreen extends StatefulWidget {
     required this.fullName,
     required this.email,
     required this.subscriptionPlan,
+    this.businessAccount,
+    this.onBusinessAccountChanged,
   });
 
   final String fullName;
   final String email;
   final String subscriptionPlan;
+  final BusinessAccount? businessAccount;
+  final ValueChanged<BusinessAccount>? onBusinessAccountChanged;
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -73,6 +79,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
           behavior: SnackBarBehavior.floating,
         ),
       );
+  }
+
+  Future<void> _openBusinessManagement() async {
+    final businessAccount = await Navigator.of(context).push<BusinessAccount>(
+      MaterialPageRoute<BusinessAccount>(
+        builder: (_) => BusinessManagementScreen(
+          subscriptionPlan: widget.subscriptionPlan,
+          businessAccount: widget.businessAccount,
+        ),
+      ),
+    );
+
+    if (businessAccount != null && mounted) {
+      widget.onBusinessAccountChanged?.call(businessAccount);
+    }
   }
 
   Future<void> _logout() async {
@@ -165,6 +186,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final canManageBusiness =
+        widget.subscriptionPlan == 'BUSINESS' &&
+        (widget.businessAccount == null || widget.businessAccount!.isOwner);
+    final canAcceptBusinessInvitation =
+        widget.subscriptionPlan != 'BUSINESS' && widget.businessAccount == null;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Profil')),
@@ -207,11 +233,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      AppStatusBadge(
-                        label: _subscriptionPlanLabel,
-                        color: _subscriptionColor(),
-                        backgroundColor: _subscriptionBackgroundColor(),
-                        icon: Icons.workspace_premium_outlined,
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        alignment: WrapAlignment.center,
+                        children: [
+                          AppStatusBadge(
+                            label: _subscriptionPlanLabel,
+                            color: _subscriptionColor(),
+                            backgroundColor: _subscriptionBackgroundColor(),
+                            icon: Icons.workspace_premium_outlined,
+                          ),
+                          if (widget.businessAccount != null)
+                            AppStatusBadge(
+                              label: widget.businessAccount!.roleLabel,
+                              color: colorScheme.primary,
+                              backgroundColor: colorScheme.primaryContainer,
+                              icon: Icons.business_rounded,
+                            ),
+                        ],
                       ),
                     ],
                   ),
@@ -239,6 +279,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         title: 'Abonelik Planı',
                         value: _subscriptionPlanLabel,
                       ),
+                      if (widget.businessAccount != null) ...[
+                        const Divider(height: 1, indent: 82),
+                        _ProfileItem(
+                          icon: Icons.business_rounded,
+                          title: 'Şirket',
+                          value: widget.businessAccount!.companyName,
+                        ),
+                        const Divider(height: 1, indent: 82),
+                        _ProfileItem(
+                          icon: Icons.admin_panel_settings_outlined,
+                          title: 'Şirket Rolü',
+                          value: widget.businessAccount!.roleLabel,
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -246,11 +300,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 AppCard(
                   showShadow: false,
                   padding: EdgeInsets.zero,
-                  child: _ActionProfileItem(
-                    icon: Icons.lock_reset_rounded,
-                    title: 'Şifre Değiştir',
-                    subtitle: 'Hesap şifrenizi güvenli şekilde güncelleyin.',
-                    onTap: _openChangePassword,
+                  child: Column(
+                    children: [
+                      if (canManageBusiness) ...[
+                        _ActionProfileItem(
+                          icon: Icons.business_center_outlined,
+                          title: 'Şirket İşlemleri',
+                          subtitle: widget.businessAccount == null
+                              ? 'Şirket oluşturun veya bir şirket davetini kabul edin.'
+                              : 'Çalışanları görüntüleyin, davet edin ve yönetin.',
+                          onTap: _openBusinessManagement,
+                        ),
+                        const Divider(height: 1, indent: 82),
+                      ],
+                      if (canAcceptBusinessInvitation) ...[
+                        _ActionProfileItem(
+                          icon: Icons.mark_email_read_outlined,
+                          title: 'Şirket Daveti',
+                          subtitle:
+                              'E-postanıza gönderilen şirket davetini kabul edin.',
+                          onTap: _openBusinessManagement,
+                        ),
+                        const Divider(height: 1, indent: 82),
+                      ],
+                      _ActionProfileItem(
+                        icon: Icons.lock_reset_rounded,
+                        title: 'Şifre Değiştir',
+                        subtitle:
+                            'Hesap şifrenizi güvenli şekilde güncelleyin.',
+                        onTap: _openChangePassword,
+                      ),
+                    ],
                   ),
                 ),
                 const SizedBox(height: 20),

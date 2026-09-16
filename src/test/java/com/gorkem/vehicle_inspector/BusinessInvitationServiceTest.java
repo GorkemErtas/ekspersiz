@@ -75,6 +75,8 @@ class BusinessInvitationServiceTest {
                 );
 
         when(owner.getId()).thenReturn(1L);
+        when(owner.getSubscriptionPlan())
+                .thenReturn(SubscriptionPlan.BUSINESS);
 
         when(invitedUser.getId()).thenReturn(2L);
         when(invitedUser.getEmail())
@@ -116,6 +118,37 @@ class BusinessInvitationServiceTest {
         verify(mailSender).send(any(
                 org.springframework.mail.SimpleMailMessage.class
         ));
+    }
+
+    @Test
+    void ownerWithoutBusinessPlanShouldNotInviteUser() {
+        User owner = mock(User.class);
+        BusinessAccount businessAccount =
+                new BusinessAccount("ABC Ekspertiz");
+        BusinessMember ownerMembership =
+                new BusinessMember(
+                        businessAccount,
+                        owner,
+                        BusinessRole.OWNER
+                );
+
+        when(owner.getId()).thenReturn(1L);
+        when(owner.getSubscriptionPlan()).thenReturn(SubscriptionPlan.PRO);
+        when(userRepository.findByEmail("owner@example.com"))
+                .thenReturn(Optional.of(owner));
+        when(businessMemberRepository.findByUserId(1L))
+                .thenReturn(Optional.of(ownerMembership));
+
+        CreateBusinessInvitationRequest request =
+                new CreateBusinessInvitationRequest("worker@example.com");
+
+        assertThrows(
+                IllegalStateException.class,
+                () -> service.invite("owner@example.com", request)
+        );
+
+        verify(businessInvitationRepository, never()).save(any());
+        verifyNoInteractions(mailSender);
     }
 
     @Test

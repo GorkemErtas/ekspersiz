@@ -6,13 +6,16 @@ import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/app_icon_box.dart';
 import '../../../core/widgets/app_state_view.dart';
 import '../../../core/widgets/app_status_badge.dart';
+import '../../auth/models/business_account.dart';
 
 import '../models/vehicle.dart';
 import '../services/vehicle_service.dart';
 import 'add_vehicle_screen.dart';
 
 class VehicleListScreen extends StatefulWidget {
-  const VehicleListScreen({super.key});
+  const VehicleListScreen({super.key, this.businessAccount});
+
+  final BusinessAccount? businessAccount;
 
   @override
   State<VehicleListScreen> createState() => _VehicleListScreenState();
@@ -46,7 +49,10 @@ class _VehicleListScreenState extends State<VehicleListScreen> {
 
   Future<void> _openAddVehicleScreen() async {
     final createdVehicle = await Navigator.of(context).push<Vehicle>(
-      MaterialPageRoute<Vehicle>(builder: (_) => const AddVehicleScreen()),
+      MaterialPageRoute<Vehicle>(
+        builder: (_) =>
+            AddVehicleScreen(businessAccount: widget.businessAccount),
+      ),
     );
 
     if (!mounted || createdVehicle == null) {
@@ -61,7 +67,10 @@ class _VehicleListScreenState extends State<VehicleListScreen> {
   Future<void> _openEditVehicleScreen(Vehicle vehicle) async {
     final updatedVehicle = await Navigator.of(context).push<Vehicle>(
       MaterialPageRoute<Vehicle>(
-        builder: (_) => AddVehicleScreen(vehicle: vehicle),
+        builder: (_) => AddVehicleScreen(
+          vehicle: vehicle,
+          businessAccount: widget.businessAccount,
+        ),
       ),
     );
 
@@ -106,7 +115,9 @@ class _VehicleListScreenState extends State<VehicleListScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                '${vehicle.displayName} aktif araçlarınızdan kaldırılacak.',
+                widget.businessAccount == null
+                    ? '${vehicle.displayName} aktif araçlarınızdan kaldırılacak.'
+                    : '${vehicle.displayName} şirketin aktif araçlarından kaldırılacak.',
                 textAlign: TextAlign.center,
                 style: textTheme.bodyLarge,
               ),
@@ -114,7 +125,9 @@ class _VehicleListScreenState extends State<VehicleListScreen> {
               const SizedBox(height: 10),
 
               Text(
-                'Geçmiş analizleriniz korunmaya devam eder.',
+                widget.businessAccount == null
+                    ? 'Geçmiş analizleriniz korunmaya devam eder.'
+                    : 'Şirketin geçmiş analizleri korunmaya devam eder.',
                 textAlign: TextAlign.center,
                 style: textTheme.bodyMedium?.copyWith(
                   color: colorScheme.onSurfaceVariant,
@@ -239,7 +252,11 @@ class _VehicleListScreenState extends State<VehicleListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Araçlarım')),
+      appBar: AppBar(
+        title: Text(
+          widget.businessAccount == null ? 'Araçlarım' : 'Şirket Araçları',
+        ),
+      ),
 
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
 
@@ -295,10 +312,15 @@ class _VehicleListScreenState extends State<VehicleListScreen> {
                 if (vehicles.isEmpty) {
                   return AppStateView.empty(
                     icon: Icons.directions_car_outlined,
-                    title: 'Garajınız henüz boş',
-                    message:
-                        'AI destekli hasar analizi başlatmak için önce aracınızı kaydedin.',
-                    actionLabel: 'İlk Aracımı Ekle',
+                    title: widget.businessAccount == null
+                        ? 'Garajınız henüz boş'
+                        : 'Şirket filosu henüz boş',
+                    message: widget.businessAccount == null
+                        ? 'AI destekli hasar analizi başlatmak için önce aracınızı kaydedin.'
+                        : 'Ortak analizlere başlamak için şirketin ilk aracını ekleyin.',
+                    actionLabel: widget.businessAccount == null
+                        ? 'İlk Aracımı Ekle'
+                        : 'İlk Şirket Aracını Ekle',
                     actionIcon: Icons.add_rounded,
                     bottomPadding: 110,
                     onActionPressed: _openAddVehicleScreen,
@@ -320,7 +342,10 @@ class _VehicleListScreenState extends State<VehicleListScreen> {
 
                     itemBuilder: (context, index) {
                       if (index == 0) {
-                        return _VehicleHeader(vehicleCount: vehicles.length);
+                        return _VehicleHeader(
+                          vehicleCount: vehicles.length,
+                          businessAccount: widget.businessAccount,
+                        );
                       }
 
                       final vehicle = vehicles[index - 1];
@@ -344,9 +369,13 @@ class _VehicleListScreenState extends State<VehicleListScreen> {
 }
 
 class _VehicleHeader extends StatelessWidget {
-  const _VehicleHeader({required this.vehicleCount});
+  const _VehicleHeader({
+    required this.vehicleCount,
+    required this.businessAccount,
+  });
 
   final int vehicleCount;
+  final BusinessAccount? businessAccount;
 
   @override
   Widget build(BuildContext context) {
@@ -358,15 +387,16 @@ class _VehicleHeader extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Garajınız',
+          businessAccount == null ? 'Garajınız' : businessAccount!.companyName,
           style: textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900),
         ),
 
         const SizedBox(height: 6),
 
         Text(
-          'Kayıtlı araçlarınızı buradan '
-          'görüntüleyebilir, düzenleyebilir ve yönetebilirsiniz.',
+          businessAccount == null
+              ? 'Kayıtlı araçlarınızı buradan görüntüleyebilir, düzenleyebilir ve yönetebilirsiniz.'
+              : 'Şirket üyelerinin ortak kullandığı araçları buradan yönetebilirsiniz. Aktif araç sınırı şirket genelinde 50’dir.',
           style: textTheme.bodyLarge?.copyWith(
             color: colorScheme.onSurfaceVariant,
             height: 1.45,

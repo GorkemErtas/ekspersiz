@@ -6,14 +6,16 @@ import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/app_page_header.dart';
 import '../../../core/widgets/app_section_header.dart';
 import '../../../core/widgets/primary_button.dart';
+import '../../auth/models/business_account.dart';
 
 import '../models/vehicle.dart';
 import '../services/vehicle_service.dart';
 
 class AddVehicleScreen extends StatefulWidget {
-  const AddVehicleScreen({super.key, this.vehicle});
+  const AddVehicleScreen({super.key, this.vehicle, this.businessAccount});
 
   final Vehicle? vehicle;
+  final BusinessAccount? businessAccount;
 
   bool get isEditing => vehicle != null;
 
@@ -229,7 +231,15 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
-      appBar: AppBar(title: Text(_isEditing ? 'Araç Düzenle' : 'Araç Ekle')),
+      appBar: AppBar(
+        title: Text(
+          _isEditing
+              ? 'Araç Düzenle'
+              : widget.businessAccount == null
+              ? 'Araç Ekle'
+              : 'Şirket Aracı Ekle',
+        ),
+      ),
 
       body: SafeArea(
         child: Center(
@@ -247,10 +257,14 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                     icon: Icons.directions_car_filled_rounded,
                     title: _isEditing
                         ? 'Araç bilgilerini düzenleyin'
-                        : 'Yeni aracınızı ekleyin',
+                        : widget.businessAccount == null
+                        ? 'Yeni aracınızı ekleyin'
+                        : 'Şirket filosuna araç ekleyin',
                     subtitle: _isEditing
                         ? 'Aracınıza ait marka, model, plaka, model yılı ve kilometre bilgilerini güncelleyebilirsiniz.'
-                        : 'Araç bilgileri, hasar analizlerinin doğru araçla eşleştirilmesi için kullanılır.',
+                        : widget.businessAccount == null
+                        ? 'Araç bilgileri, hasar analizlerinin doğru araçla eşleştirilmesi için kullanılır.'
+                        : '${widget.businessAccount!.companyName} araçları bütün şirket üyeleriyle paylaşılır.',
                   ),
 
                   const SizedBox(height: 24),
@@ -445,7 +459,9 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                           child: Text(
                             _isEditing
                                 ? 'Yaptığınız değişiklikler mevcut analiz geçmişinizi silmez.'
-                                : 'Araç bilgilerinizi doğru girmeniz, analiz geçmişinizi araç bazında takip etmenizi kolaylaştırır.',
+                                : widget.businessAccount == null
+                                ? 'Araç bilgilerinizi doğru girmeniz, analiz geçmişinizi araç bazında takip etmenizi kolaylaştırır.'
+                                : 'Aktif araç sınırı şirket genelinde 50’dir ve tüm üyeler aynı filoyu kullanır.',
                             style: textTheme.bodyMedium?.copyWith(
                               color: colorScheme.onSurfaceVariant,
                               height: 1.45,
