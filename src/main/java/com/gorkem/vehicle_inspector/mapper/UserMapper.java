@@ -3,6 +3,7 @@ package com.gorkem.vehicle_inspector.mapper;
 import com.gorkem.vehicle_inspector.dto.response.UserResponse;
 import com.gorkem.vehicle_inspector.dto.response.BusinessAccountResponse;
 import com.gorkem.vehicle_inspector.entity.User;
+import com.gorkem.vehicle_inspector.entity.SubscriptionPlan;
 
 public final class UserMapper {
 
@@ -19,11 +20,23 @@ public final class UserMapper {
             User user,
             BusinessAccountResponse businessAccount
     ) {
+        return toResponse(
+                user,
+                user.getSubscriptionPlan(),
+                businessAccount
+        );
+    }
+
+    public static UserResponse toResponse(
+            User user,
+            SubscriptionPlan effectivePlan,
+            BusinessAccountResponse businessAccount
+    ) {
         return new UserResponse(
                 user.getId(),
                 user.getFullName(),
                 user.getEmail(),
-                user.getSubscriptionPlan(),
+                effectivePlan,
                 user.getSubscriptionStartedAt(),
                 user.getSubscriptionExpiresAt(),
                 businessAccount

@@ -30,5 +30,11 @@ public interface BusinessMemberRepository
             Long businessAccountId
     );
 
+    @EntityGraph(attributePaths = "user")
+    Optional<BusinessMember> findByBusinessAccountIdAndRole(
+            Long businessAccountId,
+            BusinessRole role
+    );
+
     boolean existsByUserId(Long userId);
 }
