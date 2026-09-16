@@ -68,7 +68,7 @@ PostgreSQL  FastAPI       Gemini API     Google Places
 * **Gemini** converts structured ML results into a user-friendly inspection report and estimates a repair price range based on vehicle and inspection context.
 * **Google Places** is used to discover nearby automotive repair services.
 * **Google Maps** visualizes service locations and opens driving directions from the user's current location.
-* **PostgreSQL** stores pending registrations, verified users, business accounts, memberships, invitations, vehicles, inspections, detections, repair recommendations, report status, generated reports, and user subscription information.
+* **PostgreSQL** stores pending registrations, verified users, business accounts, memberships, invitations, vehicles, inspections, detections, repair recommendations, report status, generated reports, subscription state, and processed billing webhook events.
 
 ---
 
@@ -81,6 +81,7 @@ PostgreSQL  FastAPI       Gemini API     Google Places
 * Google Maps Flutter
 * Geolocator
 * Flutter Secure Storage
+* RevenueCat Flutter SDK
 
 ## Backend
 
@@ -306,7 +307,43 @@ The mobile application receives this membership context through login and sessio
 
 Submitting the registration form creates or replaces a short-lived pending registration and sends a verification code. It does not create a `User` row. A successful email verification creates the user as verified and removes the pending registration. Reopening registration with the same unverified email is therefore allowed, while an email that already belongs to a verified user cannot be registered again.
 
-Payment processing is not enabled in the current demo release. The first public version is intended to operate without paid subscriptions, while the subscription structure is already represented in the backend and mobile application for future expansion.
+Paid plans use native Apple App Store and Google Play subscriptions through RevenueCat. The mobile application never sends a plan choice that the backend trusts. After a purchase or restore, Spring Boot reads the customer's verified RevenueCat subscription and updates the plan stored on `User`. RevenueCat webhooks keep renewals, cancellations, billing issues, refunds, product changes, and expirations synchronized. A cancellation retains access through the paid period; a refund or expiration returns the user to `FREE`.
+
+The suggested monthly launch prices are shown below. The store console remains the source of truth for the actual localized price displayed at checkout.
+
+| Plan | Suggested monthly price | Store product ID | RevenueCat package ID |
+| --- | ---: | --- | --- |
+| PLUS | ₺149.99 | `eksper_plus_monthly` | `plus_monthly` |
+| PRO | ₺349.99 | `eksper_pro_monthly` | `pro_monthly` |
+| BUSINESS | ₺1,499.99 | `eksper_business_monthly` | `business_monthly` |
+
+### Payment configuration
+
+1. Register the Android application ID and iOS bundle ID `com.gorkem.ekspersiz` in Google Play Console and App Store Connect. Update any Google Maps key restrictions to use these production identifiers.
+2. Create the three auto-renewing monthly products above. Keep them in the same subscription group so customers can change tiers.
+3. Connect both store applications to RevenueCat. Create one current Offering with the three custom package IDs shown above and attach each package to its matching store product.
+4. Configure a RevenueCat webhook for `POST /api/v1/billing/revenuecat/webhook`. Set a private Authorization header and enable HMAC signing.
+5. Supply the backend secrets as environment variables:
+
+```text
+REVENUECAT_SECRET_API_KEY=<RevenueCat secret API key>
+REVENUECAT_WEBHOOK_AUTHORIZATION=Bearer <long random webhook token>
+REVENUECAT_WEBHOOK_SIGNING_SECRET=<RevenueCat webhook HMAC secret>
+```
+
+6. Supply only RevenueCat's public, app-specific SDK keys to Flutter:
+
+```bash
+flutter run \
+  --dart-define=REVENUECAT_ANDROID_PUBLIC_KEY=<public Android key> \
+  --dart-define=REVENUECAT_IOS_PUBLIC_KEY=<public iOS key>
+```
+
+7. Configure production signing before uploading store builds. Android reads the standard ignored `mobile/android/key.properties` file with `storeFile`, `storePassword`, `keyAlias`, and `keyPassword`; configure the matching Apple signing team and provisioning profile in Xcode.
+
+The secret RevenueCat API key and webhook secrets belong only on the Spring Boot server. The mobile app receives a random billing customer ID from the authenticated backend and uses it as the RevenueCat App User ID. Store purchase prices are loaded from RevenueCat, StoreKit, or Google Play at runtime; the TRY values in the API are display fallbacks for builds without store configuration.
+
+The authenticated billing API is available at `GET /api/v1/billing` and `POST /api/v1/billing/sync`. The sync endpoint re-fetches the provider state instead of accepting subscription claims from the device. Webhook event IDs are persisted to make retry delivery idempotent, and webhook HMAC signatures are checked against the raw request body with a five-minute replay tolerance.
 
 ---
 
@@ -363,7 +400,6 @@ This regenerates only the AI report and does not rerun the YOLO image analysis.
 * 🎯 Improved Vehicle-Part Classification
 * 📷 Image Quality / Retake Validation
 * 🌐 Optional Live Repair Pricing / Search Grounding
-* 💳 Payment & Premium Subscription Integration
 * 🐳 Docker / Docker Compose Support
 * ☁️ Cloud Deployment
 * 🔔 Push Notifications
@@ -423,6 +459,9 @@ Software Engineer
 * ✅ Inspection Result Screen
 * ✅ Inspection History
 * ✅ End-to-End Mobile Inspection Flow
+* ✅ Apple App Store / Google Play Subscription Purchase Flow
+* ✅ RevenueCat Server-Side Subscription Verification and Webhooks
+* ✅ Subscription Restore and Store Management Flow
 
 ## In Progress
 
