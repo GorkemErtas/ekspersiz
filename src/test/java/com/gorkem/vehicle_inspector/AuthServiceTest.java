@@ -13,6 +13,7 @@ import com.gorkem.vehicle_inspector.security.JwtService;
 import com.gorkem.vehicle_inspector.service.AuthService;
 import com.gorkem.vehicle_inspector.service.BusinessContextService;
 import com.gorkem.vehicle_inspector.service.RegistrationService;
+import com.gorkem.vehicle_inspector.service.SubscriptionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,6 +27,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.lenient;
 
 @ExtendWith(MockitoExtension.class)
 class AuthServiceTest {
@@ -48,6 +50,9 @@ class AuthServiceTest {
     @Mock
     private BusinessContextService businessContextService;
 
+    @Mock
+    private SubscriptionService subscriptionService;
+
     private AuthService authService;
 
     @BeforeEach
@@ -58,8 +63,14 @@ class AuthServiceTest {
                 authenticationManager,
                 jwtService,
                 registrationService,
-                businessContextService
+                businessContextService,
+                subscriptionService
         );
+
+        lenient().when(subscriptionService.getEffectivePlan(any(User.class)))
+                .thenAnswer(invocation ->
+                        ((User) invocation.getArgument(0)).getSubscriptionPlan()
+                );
     }
 
     @Test

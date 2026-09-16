@@ -20,6 +20,7 @@ public class BusinessInvitationService {
     private final BusinessInvitationRepository businessInvitationRepository;
     private final VerificationCodeService verificationCodeService;
     private final JavaMailSender mailSender;
+    private final SubscriptionService subscriptionService;
 
     @Value("${spring.mail.username}")
     private String mailFrom;
@@ -29,13 +30,15 @@ public class BusinessInvitationService {
             BusinessMemberRepository businessMemberRepository,
             BusinessInvitationRepository businessInvitationRepository,
             VerificationCodeService verificationCodeService,
-            JavaMailSender mailSender
+            JavaMailSender mailSender,
+            SubscriptionService subscriptionService
     ) {
         this.userRepository = userRepository;
         this.businessMemberRepository = businessMemberRepository;
         this.businessInvitationRepository = businessInvitationRepository;
         this.verificationCodeService = verificationCodeService;
         this.mailSender = mailSender;
+        this.subscriptionService = subscriptionService;
     }
 
     @Transactional
@@ -59,7 +62,8 @@ public class BusinessInvitationService {
             );
         }
 
-        if (owner.getSubscriptionPlan() != SubscriptionPlan.BUSINESS) {
+        if (subscriptionService.getEffectivePlan(owner)
+                != SubscriptionPlan.BUSINESS) {
             throw new IllegalStateException(
                     "Şirket işlemleri için Business planı gereklidir."
             );

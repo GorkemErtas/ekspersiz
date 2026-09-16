@@ -27,6 +27,7 @@ public class AuthService {
     private final JwtService jwtService;
     private final RegistrationService registrationService;
     private final BusinessContextService businessContextService;
+    private final SubscriptionService subscriptionService;
 
     public AuthService(
             UserRepository userRepository,
@@ -34,7 +35,8 @@ public class AuthService {
             AuthenticationManager authenticationManager,
             JwtService jwtService,
             RegistrationService registrationService,
-            BusinessContextService businessContextService
+            BusinessContextService businessContextService,
+            SubscriptionService subscriptionService
     ) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
@@ -42,6 +44,7 @@ public class AuthService {
         this.jwtService = jwtService;
         this.registrationService = registrationService;
         this.businessContextService = businessContextService;
+        this.subscriptionService = subscriptionService;
     }
 
     public void register(RegisterRequest request) {
@@ -80,7 +83,7 @@ public class AuthService {
                 user.getId(),
                 user.getFullName(),
                 user.getEmail(),
-                user.getSubscriptionPlan(),
+                subscriptionService.getEffectivePlan(user),
                 getBusinessAccount(user)
         );
     }
@@ -151,7 +154,11 @@ public class AuthService {
                         )
                 );
 
-        return UserMapper.toResponse(user, getBusinessAccount(user));
+        return UserMapper.toResponse(
+                user,
+                subscriptionService.getEffectivePlan(user),
+                getBusinessAccount(user)
+        );
     }
 
     private BusinessAccountResponse getBusinessAccount(User user) {

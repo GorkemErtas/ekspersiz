@@ -18,13 +18,16 @@ public class BusinessContextService {
 
     private final UserRepository userRepository;
     private final BusinessMemberRepository businessMemberRepository;
+    private final SubscriptionService subscriptionService;
 
     public BusinessContextService(
             UserRepository userRepository,
-            BusinessMemberRepository businessMemberRepository
+            BusinessMemberRepository businessMemberRepository,
+            SubscriptionService subscriptionService
     ) {
         this.userRepository = userRepository;
         this.businessMemberRepository = businessMemberRepository;
+        this.subscriptionService = subscriptionService;
     }
 
     @Transactional(readOnly = true)
@@ -63,8 +66,26 @@ public class BusinessContextService {
 
     @Transactional(readOnly = true)
     public BusinessAccount requireBusinessAccount(User user) {
-        return requireMembership(user)
+        BusinessAccount businessAccount = requireMembership(user)
                 .getBusinessAccount();
+
+        BusinessMember owner = businessMemberRepository
+                .findByBusinessAccountIdAndRole(
+                        businessAccount.getId(),
+                        BusinessRole.OWNER
+                )
+                .orElseThrow(() -> new IllegalStateException(
+                        "Şirket sahibi bulunamadı."
+                ));
+
+        if (subscriptionService.getEffectivePlan(owner.getUser())
+                != SubscriptionPlan.BUSINESS) {
+            throw new IllegalStateException(
+                    "Şirket aboneliği aktif değil."
+            );
+        }
+
+        return businessAccount;
     }
 
     @Transactional(readOnly = true)
@@ -78,7 +99,8 @@ public class BusinessContextService {
             );
         }
 
-        if (user.getSubscriptionPlan() != SubscriptionPlan.BUSINESS) {
+        if (subscriptionService.getEffectivePlan(user)
+                != SubscriptionPlan.BUSINESS) {
             throw new IllegalStateException(
                     "Şirket işlemleri için Business planı gereklidir."
             );

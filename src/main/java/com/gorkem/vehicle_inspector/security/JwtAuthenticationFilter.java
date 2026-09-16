@@ -16,6 +16,8 @@ import java.io.IOException;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private static final String BEARER_PREFIX = "Bearer ";
+    private static final String REVENUECAT_WEBHOOK_PATH =
+            "/api/v1/billing/revenuecat/webhook";
 
     private final JwtService jwtService;
     private final CustomUserDetailsService userDetailsService;
@@ -26,6 +28,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     ) {
         this.jwtService = jwtService;
         this.userDetailsService = userDetailsService;
+    }
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        return REVENUECAT_WEBHOOK_PATH.equals(request.getServletPath());
     }
 
     @Override

@@ -16,17 +16,20 @@ public class BusinessAccountService {
     private final BusinessAccountRepository businessAccountRepository;
     private final BusinessMemberRepository businessMemberRepository;
     private final UserRepository userRepository;
+    private final SubscriptionService subscriptionService;
 
     public BusinessAccountService(
             BusinessAccountRepository businessAccountRepository,
             BusinessMemberRepository businessMemberRepository,
-            UserRepository userRepository
+            UserRepository userRepository,
+            SubscriptionService subscriptionService
     ) {
         this.businessAccountRepository = businessAccountRepository;
 
         this.businessMemberRepository = businessMemberRepository;
 
         this.userRepository = userRepository;
+        this.subscriptionService = subscriptionService;
     }
 
     @Transactional
@@ -49,7 +52,7 @@ public class BusinessAccountService {
             );
         }
 
-        if (user.getSubscriptionPlan()
+        if (subscriptionService.getEffectivePlan(user)
                 != SubscriptionPlan.BUSINESS) {
 
             throw new IllegalStateException(

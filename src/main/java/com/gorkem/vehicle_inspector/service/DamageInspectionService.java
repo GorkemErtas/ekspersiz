@@ -1043,8 +1043,13 @@ public class DamageInspectionService {
 
     private Vehicle findAccessibleVehicle(Long vehicleId, User user) {
         return businessContextService.findMembership(user)
-                .map(member -> vehicleRepository.findByIdAndBusinessAccountIdAndArchivedFalse(
-                        vehicleId, member.getBusinessAccount().getId()))
+                .map(member -> businessContextService.requireBusinessAccount(user))
+                .map(businessAccount ->
+                        vehicleRepository.findByIdAndBusinessAccountIdAndArchivedFalse(
+                                vehicleId,
+                                businessAccount.getId()
+                        )
+                )
                 .orElseGet(() -> vehicleRepository.findByIdAndUserIdAndArchivedFalse(
                         vehicleId, user.getId()))
                 .orElseThrow(() -> new ResourceNotFoundException(
@@ -1064,6 +1069,13 @@ public class DamageInspectionService {
             subscriptionService.validateInspectionLimit(user);
             inspection.setAnalysisStartedAt(LocalDateTime.now(clock));
             return;
+        }
+
+        BusinessAccount activeBusinessAccount =
+                businessContextService.requireBusinessAccount(user);
+
+        if (!activeBusinessAccount.getId().equals(businessAccount.getId())) {
+            throw new ResourceNotFoundException("Şirket aracı bulunamadı.");
         }
 
         if (inspection.getStatus() == InspectionStatus.COMPLETED) {

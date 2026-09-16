@@ -11,6 +11,7 @@ import com.gorkem.vehicle_inspector.repository.BusinessAccountRepository;
 import com.gorkem.vehicle_inspector.repository.BusinessMemberRepository;
 import com.gorkem.vehicle_inspector.repository.UserRepository;
 import com.gorkem.vehicle_inspector.service.BusinessAccountService;
+import com.gorkem.vehicle_inspector.service.SubscriptionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -35,6 +36,9 @@ class BusinessAccountServiceTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private SubscriptionService subscriptionService;
+
     private BusinessAccountService businessAccountService;
 
     @BeforeEach
@@ -43,7 +47,13 @@ class BusinessAccountServiceTest {
                 new BusinessAccountService(
                         businessAccountRepository,
                         businessMemberRepository,
-                        userRepository
+                        userRepository,
+                        subscriptionService
+                );
+
+        lenient().when(subscriptionService.getEffectivePlan(any(User.class)))
+                .thenAnswer(invocation ->
+                        ((User) invocation.getArgument(0)).getSubscriptionPlan()
                 );
     }
 
