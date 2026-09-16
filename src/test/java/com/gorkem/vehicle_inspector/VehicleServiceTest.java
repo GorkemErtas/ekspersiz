@@ -6,9 +6,11 @@ import com.gorkem.vehicle_inspector.entity.User;
 import com.gorkem.vehicle_inspector.entity.Vehicle;
 import com.gorkem.vehicle_inspector.exception.ResourceNotFoundException;
 import com.gorkem.vehicle_inspector.repository.VehicleRepository;
+import com.gorkem.vehicle_inspector.repository.VehicleMileageRecordRepository;
 import com.gorkem.vehicle_inspector.service.BusinessContextService;
 import com.gorkem.vehicle_inspector.service.SubscriptionService;
 import com.gorkem.vehicle_inspector.service.VehicleService;
+import com.gorkem.vehicle_inspector.service.VehicleTrackingInitializer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,6 +35,8 @@ class VehicleServiceTest {
 
     @Mock
     private BusinessContextService businessContextService;
+    @Mock private VehicleTrackingInitializer trackingInitializer;
+    @Mock private VehicleMileageRecordRepository mileageRecords;
 
     private VehicleService service;
 
@@ -41,7 +45,10 @@ class VehicleServiceTest {
         service = new VehicleService(
                 vehicleRepository,
                 subscriptionService,
-                businessContextService
+                businessContextService,
+                trackingInitializer,
+                mileageRecords,
+                java.time.Clock.systemDefaultZone()
         );
     }
 

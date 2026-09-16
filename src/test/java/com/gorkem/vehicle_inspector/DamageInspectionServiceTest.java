@@ -40,6 +40,7 @@ class DamageInspectionServiceTest {
     @Mock private DamageInspectionRepository inspections;
     @Mock private VehicleRepository vehicles;
     @Mock private BusinessAccountRepository businesses;
+    @Mock private UserRepository users;
     @Mock private BusinessContextService context;
     @Mock private FileStorageService storage;
     @Mock private AiAnalysisClient ai;
@@ -79,8 +80,10 @@ class DamageInspectionServiceTest {
         lenient().when(businesses.findByIdForUpdate(10L)).thenReturn(Optional.of(business));
         lenient().when(transactions.getTransaction(any())).thenAnswer(call -> new SimpleTransactionStatus());
 
+        lenient().when(users.findByIdForUpdate(actor.getId())).thenReturn(Optional.of(actor));
+
         service = new DamageInspectionService(inspections, vehicles, context,
-                new InspectionAccessService(inspections, context), businesses, CLOCK,
+                new InspectionAccessService(inspections, context), businesses, users, CLOCK,
                 storage, ai, reports, transactions,
                 new SubscriptionService(inspections, vehicles, CLOCK));
     }
@@ -89,8 +92,9 @@ class DamageInspectionServiceTest {
     @EnumSource(SubscriptionPlan.class)
     void memberUsesSharedQuotaRegardlessOfPersonalPlanAndPreservesCreator(SubscriptionPlan plan) {
         actor.setSubscriptionPlan(plan);
-        when(inspections.countBusinessAnalysesBetween(10L, NOW.toLocalDate().atStartOfDay(),
-                NOW.toLocalDate().plusDays(1).atStartOfDay())).thenReturn(99L);
+        when(inspections.countBusinessAnalysesBetween(10L,
+                NOW.toLocalDate().withDayOfMonth(1).atStartOfDay(),
+                NOW.toLocalDate().withDayOfMonth(1).plusMonths(1).atStartOfDay())).thenReturn(99L);
         successfulAnalysis();
 
         var result = service.analyzeInspection(30L, actor.getEmail());
@@ -209,7 +213,7 @@ class DamageInspectionServiceTest {
     }
 
     @Test
-    void failedAnalysisRetainsReservationAndSameDayRetryDoesNotConsumeAnotherSlot() {
+    void failedAnalysisRetainsReservationAndSameMonthRetryDoesNotConsumeAnotherSlot() {
         when(storage.resolveStoredFile("image.jpg")).thenReturn(Path.of("image.jpg"));
         when(ai.analyze(any())).thenThrow(new IllegalStateException("AI unavailable"));
         assertEquals(InspectionStatus.FAILED, service.analyzeInspection(30L, actor.getEmail()).getStatus());
@@ -222,12 +226,12 @@ class DamageInspectionServiceTest {
     }
 
     @Test
-    void previousDayFailedInspectionNeedsTodaysQuota() {
-        inspection.setAnalysisStartedAt(NOW.minusDays(1));
+    void previousMonthFailedInspectionNeedsCurrentMonthQuota() {
+        inspection.setAnalysisStartedAt(NOW.minusMonths(1));
         inspection.setStatus(InspectionStatus.FAILED);
         when(inspections.countBusinessAnalysesBetween(eq(10L), any(), any())).thenReturn(100L);
         assertThrows(IllegalStateException.class, () -> service.analyzeInspection(30L, actor.getEmail()));
-        assertEquals(NOW.minusDays(1), inspection.getAnalysisStartedAt());
+        assertEquals(NOW.minusMonths(1), inspection.getAnalysisStartedAt());
         verifyNoInteractions(ai);
     }
 

@@ -16,17 +16,17 @@ public enum BillingProduct {
             "plus_monthly",
             new BigDecimal("149.99"),
             false,
-            List.of("5 aktif araç", "Günde 15 hasar analizi")
+            List.of("3 aktif araç", "Ayda 5 AI hasar analizi")
     ),
     PRO(
             SubscriptionPlan.PRO,
             "Pro",
-            "Yoğun bireysel kullanım için limitsiz plan",
+            "İleri seviye bireysel araç takibi için",
             "eksper_pro_monthly",
             "pro_monthly",
             new BigDecimal("349.99"),
             true,
-            List.of("Sınırsız aktif araç", "Sınırsız hasar analizi")
+            List.of("10 aktif araç", "Ayda 20 AI hasar analizi")
     ),
     BUSINESS(
             SubscriptionPlan.BUSINESS,
@@ -38,7 +38,7 @@ public enum BillingProduct {
             false,
             List.of(
                     "50 ortak aktif araç",
-                    "Şirket genelinde günde 100 analiz",
+                    "Şirket genelinde ayda 100 AI analizi",
                     "Çalışan daveti ve ortak geçmiş"
             )
     );

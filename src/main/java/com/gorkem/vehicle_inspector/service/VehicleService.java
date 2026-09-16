@@ -10,10 +10,14 @@ import com.gorkem.vehicle_inspector.exception.ResourceNotFoundException;
 import com.gorkem.vehicle_inspector.mapper.VehicleMapper;
 import com.gorkem.vehicle_inspector.entity.BusinessAccount;
 import com.gorkem.vehicle_inspector.repository.VehicleRepository;
+import com.gorkem.vehicle_inspector.repository.VehicleMileageRecordRepository;
+import com.gorkem.vehicle_inspector.entity.VehicleMileageRecord;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.time.Clock;
+import java.time.LocalDateTime;
 
 @Service
 public class VehicleService {
@@ -21,15 +25,24 @@ public class VehicleService {
     private final VehicleRepository vehicleRepository;
     private final SubscriptionService subscriptionService;
     private final BusinessContextService businessContextService;
+    private final VehicleTrackingInitializer trackingInitializer;
+    private final VehicleMileageRecordRepository mileageRecords;
+    private final Clock clock;
 
     public VehicleService(
             VehicleRepository vehicleRepository,
             SubscriptionService subscriptionService,
-            BusinessContextService businessContextService
+            BusinessContextService businessContextService,
+            VehicleTrackingInitializer trackingInitializer,
+            VehicleMileageRecordRepository mileageRecords,
+            Clock clock
     ) {
         this.vehicleRepository = vehicleRepository;
         this.subscriptionService = subscriptionService;
         this.businessContextService = businessContextService;
+        this.trackingInitializer = trackingInitializer;
+        this.mileageRecords = mileageRecords;
+        this.clock = clock;
     }
 
     @Transactional
@@ -97,9 +110,10 @@ public class VehicleService {
             vehicle.setPrimaryVehicle(!hasActiveVehicle);
         }
 
-        return VehicleMapper.toResponse(
-                vehicleRepository.save(vehicle)
-        );
+        vehicle.initializeCreatedAt(LocalDateTime.now(clock));
+        Vehicle savedVehicle = vehicleRepository.save(vehicle);
+        trackingInitializer.initialize(savedVehicle, user, request.getTracking());
+        return VehicleMapper.toResponse(savedVehicle);
     }
 
     @Transactional(readOnly = true)
@@ -173,7 +187,12 @@ public class VehicleService {
             );
         }
 
+        Integer previousMileage = vehicle.getMileage();
         VehicleMapper.updateEntity(vehicle, request);
+        if (!previousMileage.equals(request.getMileage())) {
+            mileageRecords.save(new VehicleMileageRecord(vehicle, user, previousMileage,
+                    request.getMileage(), LocalDateTime.now(clock)));
+        }
         return VehicleMapper.toResponse(vehicleRepository.save(vehicle));
     }
 
