@@ -1,3 +1,5 @@
+import 'business_account.dart';
+
 class AuthResponse {
   const AuthResponse({
     required this.accessToken,
@@ -7,6 +9,7 @@ class AuthResponse {
     required this.fullName,
     required this.email,
     required this.subscriptionPlan,
+    this.businessAccount,
   });
 
   final String accessToken;
@@ -16,6 +19,7 @@ class AuthResponse {
   final String fullName;
   final String email;
   final String subscriptionPlan;
+  final BusinessAccount? businessAccount;
 
   factory AuthResponse.fromJson(Map<String, dynamic> json) {
     return AuthResponse(
@@ -26,6 +30,11 @@ class AuthResponse {
       fullName: json['fullName'] as String? ?? '',
       email: json['email'] as String? ?? '',
       subscriptionPlan: json['subscriptionPlan'] as String? ?? 'FREE',
+      businessAccount: json['businessAccount'] is Map
+          ? BusinessAccount.fromJson(
+              Map<String, dynamic>.from(json['businessAccount'] as Map),
+            )
+          : null,
     );
   }
 }

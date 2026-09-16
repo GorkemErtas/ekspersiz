@@ -6,6 +6,7 @@ import '../../../core/auth/session_manager.dart';
 import '../../../core/theme/app_theme.dart';
 
 import '../../auth/screens/login_screen.dart';
+import '../../auth/models/business_account.dart';
 import '../../inspection/screens/inspection_history_screen.dart';
 import '../../profile/screens/profile_screen.dart';
 import '../../vehicle/screens/vehicle_list_screen.dart';
@@ -17,11 +18,13 @@ class MainShell extends StatefulWidget {
     required this.fullName,
     required this.email,
     required this.subscriptionPlan,
+    this.businessAccount,
   });
 
   final String fullName;
   final String email;
   final String subscriptionPlan;
+  final BusinessAccount? businessAccount;
 
   @override
   State<MainShell> createState() => _MainShellState();
@@ -34,6 +37,8 @@ class _MainShellState extends State<MainShell> {
 
   int _selectedIndex = 0;
 
+  late BusinessAccount? _businessAccount;
+
   late final List<Widget?> _screenCache;
 
   Widget _buildScreen(int index) {
@@ -45,16 +50,19 @@ class _MainShellState extends State<MainShell> {
     final screen = switch (index) {
       0 => HomeScreen(
         fullName: widget.fullName,
+        businessAccount: _businessAccount,
         onOpenVehicles: () => _selectTab(1),
         onOpenInspections: () => _selectTab(2),
         onOpenProfile: () => _selectTab(3),
       ),
-      1 => const VehicleListScreen(),
-      2 => const InspectionHistoryScreen(),
+      1 => VehicleListScreen(businessAccount: _businessAccount),
+      2 => InspectionHistoryScreen(businessAccount: _businessAccount),
       3 => ProfileScreen(
         fullName: widget.fullName,
         email: widget.email,
         subscriptionPlan: widget.subscriptionPlan,
+        businessAccount: _businessAccount,
+        onBusinessAccountChanged: _updateBusinessAccount,
       ),
       _ => throw ArgumentError.value(index, 'index', 'Geçersiz sekme indeksi'),
     };
@@ -75,6 +83,7 @@ class _MainShellState extends State<MainShell> {
     super.initState();
 
     _screenCache = List<Widget?>.filled(4, null);
+    _businessAccount = widget.businessAccount;
     _buildScreen(0);
 
     _sessionSubscription = SessionManager.unauthorizedStream.listen((_) {
@@ -89,6 +98,15 @@ class _MainShellState extends State<MainShell> {
 
     setState(() {
       _selectedIndex = index;
+    });
+  }
+
+  void _updateBusinessAccount(BusinessAccount businessAccount) {
+    setState(() {
+      _businessAccount = businessAccount;
+      for (var index = 0; index < _screenCache.length; index++) {
+        _screenCache[index] = null;
+      }
     });
   }
 

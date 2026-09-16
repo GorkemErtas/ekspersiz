@@ -5,6 +5,7 @@ import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/app_motion.dart';
 import '../../../core/widgets/app_status_badge.dart';
 import '../../../core/widgets/section_title.dart';
+import '../../auth/models/business_account.dart';
 
 import '../../inspection/models/damage_inspection.dart';
 import '../../inspection/screens/create_inspection_screen.dart';
@@ -18,12 +19,14 @@ class HomeScreen extends StatefulWidget {
   const HomeScreen({
     super.key,
     required this.fullName,
+    this.businessAccount,
     required this.onOpenVehicles,
     required this.onOpenInspections,
     required this.onOpenProfile,
   });
 
   final String fullName;
+  final BusinessAccount? businessAccount;
   final VoidCallback onOpenVehicles;
   final VoidCallback onOpenInspections;
   final VoidCallback onOpenProfile;
@@ -143,9 +146,11 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _startInspection() async {
-    await Navigator.of(
-      context,
-    ).push(_premiumRoute<void>(const CreateInspectionScreen()));
+    await Navigator.of(context).push(
+      _premiumRoute<void>(
+        CreateInspectionScreen(businessAccount: widget.businessAccount),
+      ),
+    );
 
     if (!mounted) {
       return;
@@ -527,6 +532,15 @@ class _HomeScreenState extends State<HomeScreen> {
                       onNotificationTap: _openNotifications,
                     ),
                   ),
+                  if (widget.businessAccount != null) ...[
+                    const SizedBox(height: AppTheme.spacingM),
+                    AppFadeSlideIn(
+                      delay: const Duration(milliseconds: 45),
+                      child: _BusinessContextCard(
+                        businessAccount: widget.businessAccount!,
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: AppTheme.spacingL),
                   AppFadeSlideIn(
                     delay: const Duration(milliseconds: 70),
@@ -536,10 +550,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   AppFadeSlideIn(
                     delay: const Duration(milliseconds: 120),
                     child: SectionTitle(
-                      title: 'Ana Araç',
+                      title: widget.businessAccount == null
+                          ? 'Ana Araç'
+                          : 'Şirket Ana Aracı',
                       actionLabel: _vehicles.length > 1
                           ? 'Değiştir'
-                          : 'Araçlarım',
+                          : widget.businessAccount == null
+                          ? 'Araçlarım'
+                          : 'Şirket Araçları',
                       onActionPressed: _vehicles.length > 1
                           ? _selectMainVehicle
                           : widget.onOpenVehicles,
@@ -562,7 +580,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   AppFadeSlideIn(
                     delay: const Duration(milliseconds: 210),
                     child: SectionTitle(
-                      title: 'Son Analiz',
+                      title: widget.businessAccount == null
+                          ? 'Son Analiz'
+                          : 'Şirketin Son Analizi',
                       actionLabel: 'Geçmiş',
                       onActionPressed: widget.onOpenInspections,
                     ),
@@ -598,6 +618,54 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _BusinessContextCard extends StatelessWidget {
+  const _BusinessContextCard({required this.businessAccount});
+
+  final BusinessAccount businessAccount;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return AppCard(
+      showShadow: false,
+      backgroundColor: colorScheme.primaryContainer.withValues(alpha: 0.38),
+      child: Row(
+        children: [
+          Icon(Icons.business_rounded, color: colorScheme.primary, size: 28),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  businessAccount.companyName,
+                  style: textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  'Şirketin ortak araçları ve analiz geçmişi gösteriliyor.',
+                  style: textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          AppStatusBadge(
+            label: businessAccount.roleLabel,
+            color: colorScheme.primary,
+            compact: true,
+          ),
+        ],
       ),
     );
   }
