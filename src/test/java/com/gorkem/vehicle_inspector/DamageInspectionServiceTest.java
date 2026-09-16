@@ -3,6 +3,7 @@ package com.gorkem.vehicle_inspector;
 import com.gorkem.vehicle_inspector.client.AiAnalysisClient;
 import com.gorkem.vehicle_inspector.dto.llm.LlmInspectionReportResult;
 import com.gorkem.vehicle_inspector.dto.response.AiAnalysisResponse;
+import com.gorkem.vehicle_inspector.dto.response.RepairRecommendationResponse;
 import com.gorkem.vehicle_inspector.entity.*;
 import com.gorkem.vehicle_inspector.exception.ResourceNotFoundException;
 import com.gorkem.vehicle_inspector.repository.*;
@@ -279,22 +280,21 @@ class DamageInspectionServiceTest {
         inspection.setDamageSeverity(DamageSeverity.NONE);
         inspection.setAnalysisStartedAt(NOW);
         assertThrows(IllegalStateException.class, () -> service.analyzeInspection(30L, actor.getEmail()));
-        when(reports.generateReport(any())).thenReturn(report());
 
         var result = service.regenerateReport(30L, actor.getEmail());
 
         assertEquals(ReportStatus.COMPLETED, result.getReportStatus());
+        assertEquals("Görünür Hasar Tespit Edilmedi", result.getReport().title());
         assertEquals(creator.getId(), result.getUserId());
         assertEquals(NOW, inspection.getAnalysisStartedAt());
-        verifyNoInteractions(ai, businesses);
+        verifyNoInteractions(ai, reports, businesses);
         verify(inspections, never()).countBusinessAnalysesBetween(any(), any(), any());
     }
 
     @Test
     void reportFailureKeepsCompletedAnalysisAndCreator() {
         when(storage.resolveStoredFile("image.jpg")).thenReturn(Path.of("image.jpg"));
-        AiAnalysisResponse response = new AiAnalysisResponse();
-        response.setDamageSeverity(DamageSeverity.NONE);
+        AiAnalysisResponse response = minorAnalysisResponse();
         when(ai.analyze(any())).thenReturn(response);
         when(reports.generateReport(any())).thenThrow(new IllegalStateException("Gemini unavailable"));
 
@@ -305,12 +305,93 @@ class DamageInspectionServiceTest {
         assertEquals(creator.getId(), result.getUserId());
     }
 
+    @Test
+    void noVisibleDamageCompletesWithCanonicalResultConsumesQuotaAndSkipsGemini() {
+        when(storage.resolveStoredFile("image.jpg")).thenReturn(Path.of("image.jpg"));
+        AiAnalysisResponse response = new AiAnalysisResponse();
+        response.setDamageSeverity(DamageSeverity.NONE);
+        when(ai.analyze(any())).thenReturn(response);
+
+        var result = service.analyzeInspection(30L, actor.getEmail());
+
+        assertEquals(InspectionStatus.COMPLETED, result.getStatus());
+        assertEquals(DamageSeverity.NONE, result.getDamageSeverity());
+        assertEquals(List.of(DamageType.NO_VISIBLE_DAMAGE), result.getDamageTypes());
+        assertEquals(1, result.getRepairRecommendations().size());
+        assertEquals(RepairAction.NO_ACTION,
+                result.getRepairRecommendations().getFirst().recommendedAction());
+        assertEquals(ReportStatus.COMPLETED, result.getReportStatus());
+        assertEquals("Görünür Hasar Tespit Edilmedi", result.getReport().title());
+        assertTrue(result.getReport().disclaimer().contains("profesyonel ekspertiz garantisi değildir"));
+        assertEquals(NOW, inspection.getAnalysisStartedAt());
+        verify(inspections).countBusinessAnalysesBetween(eq(10L), any(), any());
+        verifyNoInteractions(reports);
+    }
+
+    @Test
+    void validMinorDamageRemainsMinorAndUsesGeminiReport() {
+        when(storage.resolveStoredFile("image.jpg")).thenReturn(Path.of("image.jpg"));
+        when(ai.analyze(any())).thenReturn(minorAnalysisResponse());
+        when(reports.generateReport(any())).thenReturn(report());
+
+        var result = service.analyzeInspection(30L, actor.getEmail());
+
+        assertEquals(InspectionStatus.COMPLETED, result.getStatus());
+        assertEquals(DamageSeverity.MINOR, result.getDamageSeverity());
+        assertEquals(List.of(DamageType.SCRATCH), result.getDamageTypes());
+        assertEquals(RepairAction.PAINT_TOUCH_UP,
+                result.getRepairRecommendations().getFirst().recommendedAction());
+        verify(reports).generateReport(any());
+    }
+
+    @Test
+    void invalidAiResponseIsTechnicalFailureAndKeepsQuotaReservationForRetry() {
+        when(storage.resolveStoredFile("image.jpg")).thenReturn(Path.of("image.jpg"));
+        when(ai.analyze(any())).thenReturn(new AiAnalysisResponse());
+
+        var result = service.analyzeInspection(30L, actor.getEmail());
+
+        assertEquals(InspectionStatus.FAILED, result.getStatus());
+        assertEquals(NOW, inspection.getAnalysisStartedAt());
+        assertTrue(result.getAnalysisMessage().contains("geçerli bir hasar sonucu"));
+        verifyNoInteractions(reports);
+    }
+
+    @Test
+    void noneSeverityCannotHideARealMinorDamageSignal() {
+        when(storage.resolveStoredFile("image.jpg")).thenReturn(Path.of("image.jpg"));
+        AiAnalysisResponse response = minorAnalysisResponse();
+        response.setDamageSeverity(DamageSeverity.NONE);
+        when(ai.analyze(any())).thenReturn(response);
+
+        var result = service.analyzeInspection(30L, actor.getEmail());
+
+        assertEquals(InspectionStatus.FAILED, result.getStatus());
+        assertTrue(result.getAnalysisMessage().contains("çelişen analiz verisi"));
+        verifyNoInteractions(reports);
+    }
+
     private void successfulAnalysis() {
         when(storage.resolveStoredFile("image.jpg")).thenReturn(Path.of("image.jpg"));
         AiAnalysisResponse response = new AiAnalysisResponse();
         response.setDamageSeverity(DamageSeverity.NONE);
         when(ai.analyze(any())).thenReturn(response);
-        when(reports.generateReport(any())).thenReturn(report());
+    }
+
+    private static AiAnalysisResponse minorAnalysisResponse() {
+        RepairRecommendationResponse recommendation = new RepairRecommendationResponse();
+        recommendation.setDamageType(DamageType.SCRATCH);
+        recommendation.setRecommendedAction(RepairAction.PAINT_TOUCH_UP);
+        recommendation.setPartReplacementRequired(false);
+        recommendation.setAffectedParts(List.of(VehiclePart.FRONT_BUMPER));
+
+        AiAnalysisResponse response = new AiAnalysisResponse();
+        response.setDamageSeverity(DamageSeverity.MINOR);
+        response.setConfidenceScore(0.28);
+        response.setDamageTypes(List.of(DamageType.SCRATCH));
+        response.setAffectedParts(List.of(VehiclePart.FRONT_BUMPER));
+        response.setRepairRecommendations(List.of(recommendation));
+        return response;
     }
 
     private static User user(Long id) {

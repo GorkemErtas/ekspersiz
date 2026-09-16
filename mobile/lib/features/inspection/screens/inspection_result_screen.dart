@@ -251,6 +251,7 @@ class _InspectionResultScreenState extends State<InspectionResultScreen> {
   @override
   Widget build(BuildContext context) {
     final report = _inspection.report;
+    final noVisibleDamage = _inspection.damageSeverity == 'NONE';
 
     return Scaffold(
       appBar: AppBar(
@@ -295,13 +296,20 @@ class _InspectionResultScreenState extends State<InspectionResultScreen> {
                   ),
                 ),
 
-                if (_inspection.confidenceScore != null) ...[
+                if (noVisibleDamage) ...[
+                  const SizedBox(height: 16),
+
+                  const _NoVisibleDamageCard(),
+                ],
+
+                if (!noVisibleDamage &&
+                    _inspection.confidenceScore != null) ...[
                   const SizedBox(height: 16),
 
                   _ConfidenceCard(confidence: _inspection.confidenceScore!),
                 ],
 
-                if (_inspection.damageTypes.isNotEmpty) ...[
+                if (!noVisibleDamage && _inspection.damageTypes.isNotEmpty) ...[
                   const SizedBox(height: 16),
 
                   _SectionCard(
@@ -324,7 +332,8 @@ class _InspectionResultScreenState extends State<InspectionResultScreen> {
                   ),
                 ],
 
-                if (_inspection.affectedParts.isNotEmpty) ...[
+                if (!noVisibleDamage &&
+                    _inspection.affectedParts.isNotEmpty) ...[
                   const SizedBox(height: 16),
 
                   _SectionCard(
@@ -347,7 +356,8 @@ class _InspectionResultScreenState extends State<InspectionResultScreen> {
                   ),
                 ],
 
-                if (_inspection.repairRecommendations.isNotEmpty) ...[
+                if (!noVisibleDamage &&
+                    _inspection.repairRecommendations.isNotEmpty) ...[
                   const SizedBox(height: 16),
 
                   _SectionCard(
@@ -406,25 +416,28 @@ class _InspectionResultScreenState extends State<InspectionResultScreen> {
                     repairRecommendation: report.repairRecommendation,
                   ),
 
-                  const SizedBox(height: 16),
+                  if (!noVisibleDamage) ...[
+                    const SizedBox(height: 16),
 
-                  _PriceEstimateCard(
-                    minimum: _formatPrice(report.estimatedMinimumPrice),
+                    _PriceEstimateCard(
+                      minimum: _formatPrice(report.estimatedMinimumPrice),
 
-                    maximum: _formatPrice(report.estimatedMaximumPrice),
+                      maximum: _formatPrice(report.estimatedMaximumPrice),
 
-                    currency: report.currency,
+                      currency: report.currency,
 
-                    city: _inspection.locationCity,
+                      city: _inspection.locationCity,
 
-                    priceInformation: report.priceInformation,
+                      priceInformation: report.priceInformation,
 
-                    sourceDescription: report.priceSourceDescription,
+                      sourceDescription: report.priceSourceDescription,
 
-                    disclaimer: report.disclaimer,
-                  ),
+                      disclaimer: report.disclaimer,
+                    ),
+                  ],
 
-                  if (_inspection.locationLatitude != null &&
+                  if (!noVisibleDamage &&
+                      _inspection.locationLatitude != null &&
                       _inspection.locationLongitude != null) ...[
                     const SizedBox(height: 16),
 
@@ -442,6 +455,53 @@ class _InspectionResultScreenState extends State<InspectionResultScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _NoVisibleDamageCard extends StatelessWidget {
+  const _NoVisibleDamageCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return AppCard(
+      showShadow: false,
+      backgroundColor: AppTheme.successSoft,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(
+            Icons.verified_outlined,
+            color: AppTheme.severityNone,
+            size: 26,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'İşlem Gerekmiyor',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w900),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Gönderdiğiniz görüntüde görünür hasar tespit edilmedi. '
+                  'Bu sonuç yalnızca fotoğraftaki görünür alanları değerlendirir; '
+                  'mekanik veya profesyonel ekspertiz garantisi değildir.',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

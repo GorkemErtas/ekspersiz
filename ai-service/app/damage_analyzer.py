@@ -175,8 +175,8 @@ class DamageAnalyzer:
         ]
 
         if not vehicle_detections:
-            return self._build_no_vehicle_response(
-                filename=safe_filename
+            raise ValueError(
+                "Uploaded image does not contain a recognizable vehicle."
             )
 
         (
@@ -447,6 +447,24 @@ class DamageAnalyzer:
             )
         )
 
+        if not repair_recommendations:
+            repair_recommendations = [
+                DamageRecommendation(
+                    damageType=damage_type,
+                    recommendedAction=(
+                        self._determine_recommended_action(
+                            damage_type
+                        )
+                    ),
+                    partReplacementRequired=(
+                        self._determine_replacement_requirement(
+                            damage_type
+                        )
+                    ),
+                    affectedParts=affected_parts,
+                )
+            ]
+
         damage_types = [
             recommendation.damageType
             for recommendation
@@ -503,38 +521,28 @@ class DamageAnalyzer:
             detections=damage_detections,
         )
 
-    def _build_no_vehicle_response(
-            self,
-            filename: str,
-    ) -> DamageAnalysisResponse:
-        return DamageAnalysisResponse(
-            damageTypes=[],
-            damageSeverity="UNKNOWN",
-            affectedParts=[],
-            repairRecommendations=[],
-            confidenceScore=0.0,
-            analysisMessage=(
-                f"{filename} adlı görselde güvenilir "
-                f"bir araç tespit edilemedi. "
-                f"Hasar analizi gerçekleştirilemedi."
-            ),
-            detections=[],
-        )
-
     def _build_no_damage_response(
             self,
             filename: str,
     ) -> DamageAnalysisResponse:
         return DamageAnalysisResponse(
-            damageTypes=[],
+            damageTypes=["NO_VISIBLE_DAMAGE"],
             damageSeverity="NONE",
             affectedParts=[],
-            repairRecommendations=[],
+            repairRecommendations=[
+                DamageRecommendation(
+                    damageType="NO_VISIBLE_DAMAGE",
+                    recommendedAction="NO_ACTION",
+                    partReplacementRequired=False,
+                    affectedParts=[],
+                )
+            ],
             confidenceScore=0.0,
             analysisMessage=(
-                f"{filename} adlı görselde araç "
-                f"tespit edildi ancak güvenilir "
-                f"bir hasarlı alan bulunamadı."
+                f"{filename} adlı görselde görünür hasar "
+                f"tespit edilmedi. Bu sonuç yalnızca görüntüdeki "
+                f"görünür hasar analizidir; mekanik veya profesyonel "
+                f"ekspertiz garantisi değildir."
             ),
             detections=[],
         )

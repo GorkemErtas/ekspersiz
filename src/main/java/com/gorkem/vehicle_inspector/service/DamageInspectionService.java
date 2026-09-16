@@ -5,6 +5,7 @@ import com.gorkem.vehicle_inspector.dto.llm.InspectionLlmRequest;
 import com.gorkem.vehicle_inspector.dto.llm.LlmInspectionReportResult;
 import com.gorkem.vehicle_inspector.dto.response.*;
 import com.gorkem.vehicle_inspector.entity.*;
+import com.gorkem.vehicle_inspector.exception.AiServiceException;
 import com.gorkem.vehicle_inspector.exception.ResourceNotFoundException;
 import com.gorkem.vehicle_inspector.mapper.DamageInspectionMapper;
 import com.gorkem.vehicle_inspector.mapper.InspectionLlmMapper;
@@ -28,9 +29,10 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import org.springframework.web.multipart.MultipartFile;
 
+import java.math.BigDecimal;
 import java.nio.file.Path;
-import java.time.LocalDateTime;
 import java.time.Clock;
+import java.time.LocalDateTime;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
@@ -459,8 +461,6 @@ public class DamageInspectionService {
             );
         }
 
-        AiAnalysisResponse aiResponse;
-
         try {
             Path storedImagePath =
                     fileStorageService
@@ -468,10 +468,17 @@ public class DamageInspectionService {
                                     context.imagePath()
                             );
 
-            aiResponse =
+            AiAnalysisResponse aiResponse =
                     aiAnalysisClient.analyze(
                             storedImagePath
                     );
+
+            normalizeAndValidateAnalysisResponse(aiResponse);
+
+            return persistAnalysisResult(
+                    context,
+                    aiResponse
+            );
 
         } catch (RuntimeException exception) {
 
@@ -480,11 +487,72 @@ public class DamageInspectionService {
                     exception
             );
         }
+    }
 
-        return persistAnalysisResult(
-                context,
-                aiResponse
-        );
+    private void normalizeAndValidateAnalysisResponse(
+            AiAnalysisResponse response
+    ) {
+        if (response == null || response.getDamageSeverity() == null
+                || response.getDamageSeverity() == DamageSeverity.UNKNOWN) {
+            throw new AiServiceException(
+                    "AI servisi geçerli bir hasar sonucu döndürmedi."
+            );
+        }
+
+        if (response.getDamageSeverity() == DamageSeverity.NONE) {
+            boolean hasDetections = response.getDetections() != null
+                    && !response.getDetections().isEmpty();
+            boolean hasVisibleDamageType = response.getDamageTypes() != null
+                    && response.getDamageTypes().stream().anyMatch(
+                    type -> type != null
+                            && type != DamageType.NO_VISIBLE_DAMAGE);
+            boolean hasVisibleDamageRecommendation =
+                    response.getRepairRecommendations() != null
+                    && response.getRepairRecommendations().stream().anyMatch(
+                    item -> item != null
+                            && item.getDamageType() != null
+                            && item.getDamageType() != DamageType.NO_VISIBLE_DAMAGE);
+            if (hasDetections || hasVisibleDamageType
+                    || hasVisibleDamageRecommendation) {
+                throw new AiServiceException(
+                        "AI servisi birbiriyle çelişen analiz verisi döndürdü."
+                );
+            }
+
+            RepairRecommendationResponse recommendation =
+                    new RepairRecommendationResponse();
+            recommendation.setDamageType(DamageType.NO_VISIBLE_DAMAGE);
+            recommendation.setRecommendedAction(RepairAction.NO_ACTION);
+            recommendation.setPartReplacementRequired(false);
+            recommendation.setAffectedParts(List.of());
+
+            response.setDamageTypes(List.of(DamageType.NO_VISIBLE_DAMAGE));
+            response.setAffectedParts(List.of());
+            response.setDetections(List.of());
+            response.setRepairRecommendations(List.of(recommendation));
+            response.setConfidenceScore(0.0);
+            response.setAnalysisMessage(
+                    "Gönderilen görüntüde görünür hasar tespit edilmedi. "
+                            + "Bu sonuç yalnızca görüntüdeki görünür hasar analizidir; "
+                            + "mekanik veya profesyonel ekspertiz garantisi değildir."
+            );
+            return;
+        }
+
+        Double confidence = response.getConfidenceScore();
+        if (confidence == null || !Double.isFinite(confidence)
+                || confidence < 0.0 || confidence > 1.0
+                || response.getRepairRecommendations() == null
+                || response.getRepairRecommendations().stream().noneMatch(
+                item -> item != null
+                        && item.getDamageType() != null
+                        && item.getDamageType() != DamageType.NO_VISIBLE_DAMAGE
+                        && item.getRecommendedAction() != null
+                        && item.getRecommendedAction() != RepairAction.NO_ACTION)) {
+            throw new AiServiceException(
+                    "AI servisi eksik veya geçersiz analiz verisi döndürdü."
+            );
+        }
     }
 
     private DamageInspectionResponse persistAnalysisResult(
@@ -608,10 +676,9 @@ public class DamageInspectionService {
 
         try {
             LlmInspectionReportResult result =
-                    geminiInspectionReportService
-                            .generateReport(
-                                    request
-                            );
+                    request.damageSeverity() == DamageSeverity.NONE
+                            ? buildNoVisibleDamageReport()
+                            : geminiInspectionReportService.generateReport(request);
 
             saveGeneratedReport(
                     context.inspectionId(),
@@ -632,6 +699,28 @@ public class DamageInspectionService {
                     context.user()
             );
         }
+    }
+
+    private LlmInspectionReportResult buildNoVisibleDamageReport() {
+        LlmInspectionReportResult result = new LlmInspectionReportResult();
+        result.title = "Görünür Hasar Tespit Edilmedi";
+        result.summary = "Gönderilen görüntüde görünür bir hasar tespit edilmedi.";
+        result.damageDescription =
+                "AI analizi, gönderilen fotoğrafta görünür bir hasar işareti bulmadı.";
+        result.repairRecommendation =
+                "Görüntüdeki görünür hasar açısından bir onarım işlemi önerilmiyor.";
+        result.estimatedMinimumPrice = BigDecimal.ZERO;
+        result.estimatedMaximumPrice = BigDecimal.ZERO;
+        result.currency = "TRY";
+        result.priceInformation =
+                "Görünür hasar tespit edilmediği için onarım maliyeti hesaplanmadı.";
+        result.priceSourceDescription =
+                "Sonuç, yalnızca gönderilen görüntünün AI analizine dayanır.";
+        result.disclaimer =
+                "Bu sonuç yalnızca gönderilen görüntüde görünür hasar tespit "
+                        + "edilmediğini belirtir; mekanik veya profesyonel ekspertiz "
+                        + "garantisi değildir.";
+        return result;
     }
 
     private void saveGeneratedReport(
@@ -794,7 +883,8 @@ public class DamageInspectionService {
     private String buildAnalysisErrorMessage(
             RuntimeException exception
     ) {
-        if (exception instanceof IllegalStateException
+        if ((exception instanceof IllegalStateException
+                || exception instanceof AiServiceException)
                 && exception.getMessage() != null
                 && !exception.getMessage().isBlank()) {
 
@@ -878,8 +968,9 @@ public class DamageInspectionService {
 
         try {
             LlmInspectionReportResult result =
-                    geminiInspectionReportService
-                            .generateReport(
+                    context.request().damageSeverity() == DamageSeverity.NONE
+                            ? buildNoVisibleDamageReport()
+                            : geminiInspectionReportService.generateReport(
                                     context.request()
                             );
 
