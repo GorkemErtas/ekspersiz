@@ -13,6 +13,8 @@ import '../../../core/widgets/primary_button.dart';
 import '../../vehicle/models/vehicle.dart';
 import '../../vehicle/services/vehicle_service.dart';
 import '../../auth/models/business_account.dart';
+import '../../billing/screens/subscription_screen.dart';
+import '../../billing/services/rewarded_analysis_service.dart';
 
 import '../models/damage_inspection.dart';
 import '../services/inspection_service.dart';
@@ -31,6 +33,8 @@ class _CreateInspectionScreenState extends State<CreateInspectionScreen> {
   final VehicleService _vehicleService = const VehicleService();
 
   final InspectionService _inspectionService = const InspectionService();
+  final RewardedAnalysisService _rewardedAnalysisService =
+      const RewardedAnalysisService();
 
   late Future<List<Vehicle>> _vehiclesFuture;
 
@@ -197,6 +201,10 @@ class _CreateInspectionScreenState extends State<CreateInspectionScreen> {
     });
 
     try {
+      if (!await _ensureAnalysisQuota()) {
+        return;
+      }
+
       final position = _currentPosition;
 
       if (position == null) {
@@ -244,6 +252,59 @@ class _CreateInspectionScreenState extends State<CreateInspectionScreen> {
         });
       }
     }
+  }
+
+  Future<bool> _ensureAnalysisQuota() async {
+    final quota = await _rewardedAnalysisService.getQuota();
+    if (!mounted) return false;
+    if (quota.remaining > 0) return true;
+
+    if (quota.rewardedEligible) {
+      final action = await showDialog<_QuotaAction>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('Aylık analiz hakkı'),
+          content: const Text('Bu ayki ücretsiz analiz hakkınızı kullandınız.'),
+          actions: [
+            TextButton(
+              onPressed: () =>
+                  Navigator.pop(dialogContext, _QuotaAction.upgrade),
+              child: const Text("PLUS'a Geç"),
+            ),
+            FilledButton.icon(
+              onPressed: () =>
+                  Navigator.pop(dialogContext, _QuotaAction.watchAd),
+              icon: const Icon(Icons.play_circle_outline_rounded),
+              label: const Text('Reklam İzle → +1 Analiz Hakkı'),
+            ),
+          ],
+        ),
+      );
+      if (!mounted || action == null) return false;
+      if (action == _QuotaAction.upgrade) {
+        await Navigator.of(context).push<void>(
+          MaterialPageRoute<void>(builder: (_) => const SubscriptionScreen()),
+        );
+        return false;
+      }
+
+      final granted = await _rewardedAnalysisService.watchRewardedAd();
+      if (!mounted) return false;
+      if (granted) {
+        _showMessage('Ek analiz hakkınız tanımlandı.');
+        return true;
+      }
+      _showMessage(
+        'Reklam ödülü henüz doğrulanamadı. Birkaç saniye sonra tekrar deneyin.',
+      );
+      return false;
+    }
+
+    final message = quota.plan == 'FREE'
+        ? 'Bu ayki ücretsiz ve ödüllü analiz haklarınızı kullandınız.'
+        : 'Bu ayki analiz limitinize ulaştınız.';
+    _showMessage(message);
+    return false;
   }
 
   void _showMessage(String message) {
@@ -527,6 +588,8 @@ class _CreateInspectionScreenState extends State<CreateInspectionScreen> {
     );
   }
 }
+
+enum _QuotaAction { watchAd, upgrade }
 
 class _VehicleSelectionCard extends StatelessWidget {
   const _VehicleSelectionCard({

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 
+import '../../../core/ads/free_plan_banner.dart';
+import '../../../core/notifications/push_notification_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/app_motion.dart';
@@ -16,11 +19,14 @@ import '../../vehicle/models/vehicle.dart';
 import '../../vehicle/services/vehicle_service.dart';
 import '../../vehicle/services/vehicle_tracking_service.dart';
 import '../../vehicle/models/vehicle_overview.dart';
+import '../../notification/screens/notification_center_screen.dart';
+import '../../notification/services/notification_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({
     super.key,
     required this.fullName,
+    required this.subscriptionPlan,
     this.businessAccount,
     required this.onOpenVehicles,
     required this.onOpenInspections,
@@ -28,6 +34,7 @@ class HomeScreen extends StatefulWidget {
   });
 
   final String fullName;
+  final String subscriptionPlan;
   final BusinessAccount? businessAccount;
   final VoidCallback onOpenVehicles;
   final VoidCallback onOpenInspections;
@@ -42,6 +49,8 @@ class _HomeScreenState extends State<HomeScreen> {
   final InspectionService _inspectionService = const InspectionService();
   final VehicleTrackingService _trackingService =
       const VehicleTrackingService();
+  final NotificationService _notificationService = const NotificationService();
+  StreamSubscription<void>? _notificationSubscription;
 
   bool _isLoading = true;
 
@@ -49,11 +58,31 @@ class _HomeScreenState extends State<HomeScreen> {
   Vehicle? _mainVehicle;
   DamageInspection? _latestInspection;
   VehicleOverview? _vehicleOverview;
+  int _unreadNotificationCount = 0;
 
   @override
   void initState() {
     super.initState();
     _loadHomeData();
+    _loadNotificationCount();
+    _notificationSubscription = PushNotificationService.instance.events.listen(
+      (_) => _loadNotificationCount(),
+    );
+  }
+
+  @override
+  void dispose() {
+    _notificationSubscription?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _loadNotificationCount() async {
+    try {
+      final count = await _notificationService.getUnreadCount();
+      if (mounted) setState(() => _unreadNotificationCount = count);
+    } catch (_) {
+      // Notification count must never block the primary inspection experience.
+    }
   }
 
   Future<void> _loadHomeData() async {
@@ -398,12 +427,14 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  void _openNotifications() {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        const SnackBar(content: Text('Yeni bildirim bulunmuyor.')),
-      );
+  Future<void> _openNotifications() async {
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (_) =>
+            NotificationCenterScreen(businessAccount: widget.businessAccount),
+      ),
+    );
+    await _loadNotificationCount();
   }
 
   String _severityLabel(String? severity) {
@@ -545,6 +576,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       firstName: _firstName(),
                       onProfileTap: widget.onOpenProfile,
                       onNotificationTap: _openNotifications,
+                      unreadCount: _unreadNotificationCount,
                     ),
                   ),
                   if (widget.businessAccount != null) ...[
@@ -564,6 +596,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   if (!_isLoading && _vehicleOverview != null) ...[
                     const SizedBox(height: AppTheme.spacingM),
                     _TrackingOverviewCard(overview: _vehicleOverview!),
+                  ],
+                  if (widget.subscriptionPlan == 'FREE' &&
+                      widget.businessAccount == null) ...[
+                    const SizedBox(height: AppTheme.spacingM),
+                    const FreePlanBanner(),
                   ],
                   const SizedBox(height: AppTheme.spacingXL),
                   AppFadeSlideIn(
@@ -648,7 +685,7 @@ class _TrackingOverviewCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final reminder = overview.upcomingReminders.firstOrNull;
+    final upcoming = overview.upcomingReminders.take(2).toList();
     final status = switch (overview.trackingStatus) {
       'ATTENTION' => 'Dikkat gerekiyor',
       'DUE_SOON' => 'Yaklaşan işlem var',
@@ -671,11 +708,20 @@ class _TrackingOverviewCard extends StatelessWidget {
                   ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w900),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  reminder == null
-                      ? status
-                      : '${reminder.title ?? reminder.reminderType.replaceAll('_', ' ')} • $status',
-                ),
+                if (upcoming.isEmpty)
+                  Text(status)
+                else
+                  ...upcoming.map(
+                    (reminder) => Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: Text(
+                        reminder.title ??
+                            reminder.reminderType.replaceAll('_', ' '),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),
@@ -739,12 +785,14 @@ class _DashboardHeader extends StatelessWidget {
     required this.firstName,
     required this.onProfileTap,
     required this.onNotificationTap,
+    required this.unreadCount,
   });
 
   final String fullName;
   final String firstName;
   final VoidCallback onProfileTap;
   final VoidCallback onNotificationTap;
+  final int unreadCount;
 
   static String _initials(String fullName) {
     final parts = fullName
@@ -827,8 +875,34 @@ class _DashboardHeader extends StatelessWidget {
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: colorScheme.outlineVariant),
             ),
-            child: const Center(
-              child: Icon(Icons.notifications_none_rounded, size: 23),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                const Icon(Icons.notifications_none_rounded, size: 23),
+                if (unreadCount > 0)
+                  Positioned(
+                    right: 5,
+                    top: 5,
+                    child: Container(
+                      constraints: const BoxConstraints(minWidth: 17),
+                      height: 17,
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      decoration: const BoxDecoration(
+                        color: AppTheme.dangerColor,
+                        borderRadius: BorderRadius.all(Radius.circular(9)),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        unreadCount > 99 ? '99+' : '$unreadCount',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
         ),

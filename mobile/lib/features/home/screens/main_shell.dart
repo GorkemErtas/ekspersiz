@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../../core/auth/session_manager.dart';
+import '../../../core/notifications/push_notification_service.dart';
 import '../../../core/theme/app_theme.dart';
 
 import '../../auth/screens/login_screen.dart';
@@ -51,6 +52,7 @@ class _MainShellState extends State<MainShell> {
     final screen = switch (index) {
       0 => HomeScreen(
         fullName: widget.fullName,
+        subscriptionPlan: _subscriptionPlan,
         businessAccount: _businessAccount,
         onOpenVehicles: () => _selectTab(1),
         onOpenInspections: () => _selectTab(2),
@@ -88,6 +90,7 @@ class _MainShellState extends State<MainShell> {
     _businessAccount = widget.businessAccount;
     _subscriptionPlan = widget.subscriptionPlan;
     _buildScreen(0);
+    PushNotificationService.instance.registerAuthenticatedDevice();
 
     _sessionSubscription = SessionManager.unauthorizedStream.listen((_) {
       _handleSessionExpired();
