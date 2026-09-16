@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface VehicleReminderRepository extends JpaRepository<VehicleReminder, Long> {
+    List<VehicleReminder> findAllByCompletedAtIsNull();
     List<VehicleReminder> findAllByVehicleIdOrderByCompletedAtAscDueDateAscIdDesc(Long vehicleId);
     List<VehicleReminder> findAllByVehicleIdAndCompletedAtIsNullOrderByDueDateAscIdAsc(Long vehicleId);
     Optional<VehicleReminder> findByIdAndVehicleId(Long id, Long vehicleId);

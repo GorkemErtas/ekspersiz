@@ -5,6 +5,7 @@ import com.gorkem.vehicle_inspector.entity.User;
 import com.gorkem.vehicle_inspector.entity.BusinessAccount;
 import com.gorkem.vehicle_inspector.repository.DamageInspectionRepository;
 import com.gorkem.vehicle_inspector.repository.VehicleRepository;
+import com.gorkem.vehicle_inspector.repository.RewardedAnalysisSessionRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -29,10 +30,12 @@ public class SubscriptionService {
     private final VehicleRepository
             vehicleRepository;
     private final Clock clock;
+    private final RewardedAnalysisSessionRepository rewardedSessions;
 
     public SubscriptionService(
             DamageInspectionRepository inspectionRepository,
             VehicleRepository vehicleRepository,
+            RewardedAnalysisSessionRepository rewardedSessions,
             Clock clock
     ) {
         this.inspectionRepository =
@@ -40,6 +43,7 @@ public class SubscriptionService {
 
         this.vehicleRepository =
                 vehicleRepository;
+        this.rewardedSessions = rewardedSessions;
         this.clock = clock;
     }
 
@@ -78,19 +82,7 @@ public class SubscriptionService {
         SubscriptionPlan plan =
                 getEffectivePlan(user);
 
-        int limit =
-                switch (plan) {
-                    case FREE ->
-                            FREE_MONTHLY_ANALYSIS_LIMIT;
-                    case PLUS ->
-                            PLUS_MONTHLY_ANALYSIS_LIMIT;
-                    case PRO ->
-                            PRO_MONTHLY_ANALYSIS_LIMIT;
-                    case BUSINESS ->
-                            throw new IllegalStateException(
-                                    "Business analiz limiti şirket hesabı üzerinden hesaplanmalıdır."
-                            );
-                };
+        int limit = monthlyAnalysisLimit(plan);
 
         LocalDateTime start = analysisStartedAt
                 .toLocalDate()
@@ -107,13 +99,23 @@ public class SubscriptionService {
                                 end
                         );
 
-        if (used >= limit) {
+        boolean rewardedClaimed = plan == SubscriptionPlan.FREE
+                && rewardedSessions.existsByUserIdAndMonthStartAndClaimedAtIsNotNull(
+                user.getId(), start.toLocalDate());
+        int effectiveLimit = limit + (rewardedClaimed ? 1 : 0);
+
+        if (used >= effectiveLimit) {
+            if (plan == SubscriptionPlan.FREE && !rewardedClaimed) {
+                throw new IllegalStateException(
+                        "Bu ayki ücretsiz analiz hakkınızı kullandınız."
+                );
+            }
             throw new IllegalStateException(
                     "Aylık analiz limitinize ulaştınız. "
                             + "Mevcut plan: "
                             + plan
                             + ", aylık limit: "
-                            + limit
+                            + effectiveLimit
                             + "."
             );
         }
@@ -197,5 +199,19 @@ public class SubscriptionService {
                             + "."
             );
         }
+    }
+
+    public int monthlyAnalysisLimit(SubscriptionPlan plan) {
+        return switch (plan) {
+            case FREE -> FREE_MONTHLY_ANALYSIS_LIMIT;
+            case PLUS -> PLUS_MONTHLY_ANALYSIS_LIMIT;
+            case PRO -> PRO_MONTHLY_ANALYSIS_LIMIT;
+            case BUSINESS -> throw new IllegalStateException(
+                    "Business analiz limiti şirket hesabı üzerinden hesaplanmalıdır.");
+        };
+    }
+
+    public int businessMonthlyAnalysisLimit() {
+        return BUSINESS_MONTHLY_ANALYSIS_LIMIT;
     }
 }
