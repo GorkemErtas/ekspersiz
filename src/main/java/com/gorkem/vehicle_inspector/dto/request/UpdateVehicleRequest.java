@@ -35,6 +35,9 @@ public class UpdateVehicleRequest {
     @Max(value = 2_000_000, message = "Kilometre değeri çok yüksek.")
     private Integer mileage;
 
+    @Size(max = 1000, message = "Notlar en fazla 1000 karakter olabilir.")
+    private String notes;
+
     public String getPlate() {
         return plate;
     }
@@ -74,4 +77,7 @@ public class UpdateVehicleRequest {
     public void setMileage(Integer mileage) {
         this.mileage = mileage;
     }
+
+    public String getNotes() { return notes; }
+    public void setNotes(String notes) { this.notes = notes; }
 }

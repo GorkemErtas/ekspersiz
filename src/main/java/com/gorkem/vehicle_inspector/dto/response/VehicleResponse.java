@@ -1,5 +1,7 @@
 package com.gorkem.vehicle_inspector.dto.response;
 
+import java.time.LocalDateTime;
+
 public class VehicleResponse {
 
     private Long id;
@@ -9,6 +11,8 @@ public class VehicleResponse {
     private Integer modelYear;
     private Integer mileage;
     private boolean primaryVehicle;
+    private String notes;
+    private LocalDateTime createdAt;
 
     public VehicleResponse(
             Long id,
@@ -17,7 +21,9 @@ public class VehicleResponse {
             String model,
             Integer modelYear,
             Integer mileage,
-            boolean primaryVehicle
+            boolean primaryVehicle,
+            String notes,
+            LocalDateTime createdAt
     ) {
         this.id = id;
         this.plate = plate;
@@ -26,6 +32,8 @@ public class VehicleResponse {
         this.modelYear = modelYear;
         this.mileage = mileage;
         this.primaryVehicle = primaryVehicle;
+        this.notes = notes;
+        this.createdAt = createdAt;
     }
 
     public Long getId() { return id; }
@@ -35,4 +43,6 @@ public class VehicleResponse {
     public Integer getModelYear() { return modelYear; }
     public Integer getMileage() { return mileage; }
     public boolean isPrimaryVehicle() { return primaryVehicle; }
+    public String getNotes() { return notes; }
+    public LocalDateTime getCreatedAt() { return createdAt; }
 }

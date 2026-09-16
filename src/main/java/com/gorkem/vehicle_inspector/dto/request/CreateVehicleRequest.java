@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import jakarta.validation.Valid;
 
 public class CreateVehicleRequest {
 
@@ -34,6 +35,9 @@ public class CreateVehicleRequest {
     @Min(value = 0, message = "Kilometre negatif olamaz.")
     @Max(value = 2_000_000, message = "Kilometre değeri çok yüksek.")
     private Integer mileage;
+
+    @Valid
+    private VehicleTrackingRequest tracking;
 
     public String getPlate() {
         return plate;
@@ -74,4 +78,7 @@ public class CreateVehicleRequest {
     public void setMileage(Integer mileage) {
         this.mileage = mileage;
     }
+
+    public VehicleTrackingRequest getTracking() { return tracking; }
+    public void setTracking(VehicleTrackingRequest tracking) { this.tracking = tracking; }
 }
