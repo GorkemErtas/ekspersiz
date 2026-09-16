@@ -19,6 +19,7 @@ The application analyzes vehicle images, detects visible damage, identifies affe
 * 🗃 Vehicle Archiving While Preserving Inspection History
 * 🔧 Vehicle Maintenance Records and Optional Cost Tracking
 * 🔔 Date- and Mileage-Based Vehicle Reminders
+* 🔔 Persistent In-App Notification Center and FCM Push Delivery
 * 📋 Vehicle Condition Overview and Unified History Timeline
 * 📍 GPS-Based Inspection Location
 * 🗺 Google Maps Integration
@@ -37,6 +38,7 @@ The application analyzes vehicle images, detects visible damage, identifies affe
 * 🧭 Google Maps Directions to Selected Services
 * 📊 Inspection History
 * 💳 Subscription Plans (`FREE`, `PLUS`, `PRO`, `BUSINESS`)
+* 📺 Ad-Supported FREE Plan with One Server-Verified Rewarded Analysis
 * 🏢 Business Accounts, Employee Invitations, Employee Management, and Shared Vehicles
 * 📉 Shared Monthly Inspection Limits for Personal and Business Usage
 * 🗄 PostgreSQL Persistence
@@ -71,7 +73,7 @@ PostgreSQL  FastAPI       Gemini API     Google Places
 * **Gemini** converts structured ML results into a user-friendly inspection report and estimates a repair price range based on vehicle and inspection context.
 * **Google Places** is used to discover nearby automotive repair services.
 * **Google Maps** visualizes service locations and opens driving directions from the user's current location.
-* **PostgreSQL** stores pending registrations, verified users, business accounts, memberships, invitations, vehicles, inspections, detections, repair recommendations, report status, generated reports, subscription state, and processed billing webhook events.
+* **PostgreSQL** stores pending registrations, verified users, business accounts, memberships, invitations, vehicles, inspections, detections, repair recommendations, report status, generated reports, subscription state, rewarded-analysis claims, notifications, device tokens, and processed billing webhook events.
 
 ---
 
@@ -85,6 +87,8 @@ PostgreSQL  FastAPI       Gemini API     Google Places
 * Geolocator
 * Flutter Secure Storage
 * RevenueCat Flutter SDK
+* Google Mobile Ads SDK
+* Firebase Cloud Messaging
 
 ## Backend
 
@@ -287,7 +291,7 @@ Archived vehicles remain available to history and maintenance/reminder reads, wh
 
 ### Database update
 
-Local development currently uses `spring.jpa.hibernate.ddl-auto=update`. For an existing PostgreSQL production database, review and apply [`database/migrations/V1__vehicle_tracking.sql`](database/migrations/V1__vehicle_tracking.sql) before deploying this feature. The script only adds the new vehicle fields, tracking tables, constraints, and indexes; it does not delete existing data.
+Local development currently uses `spring.jpa.hibernate.ddl-auto=update`. For an existing PostgreSQL production database, review and apply [`database/migrations/V1__vehicle_tracking.sql`](database/migrations/V1__vehicle_tracking.sql) and [`database/migrations/V2__ads_and_notifications.sql`](database/migrations/V2__ads_and_notifications.sql) before deploying these features. The scripts add the required fields, tables, constraints, and indexes without deleting existing data.
 
 ---
 
@@ -309,6 +313,8 @@ Subscription plans belong to `User`. Current personal limits are:
 | PRO | 10 | 20 |
 
 Monthly usage counts inspections with `analysisStartedAt` inside the server's current calendar month. Pending inspections that have not started analysis do not count. Retrying the same inspection in its reserved month does not consume another slot, while a retry from an earlier month requires capacity in the current month. A completed inspection cannot be analyzed again.
+
+FREE users can earn at most one additional analysis in each server calendar month by completing a rewarded AdMob ad. This raises the effective FREE maximum from one to two analyses for that month. Spring Boot grants the extra analysis only after validating AdMob's signed server-side verification callback; a Flutter reward callback by itself never changes quota. PLUS, PRO, and BUSINESS users are ad-free and do not use rewarded analyses.
 
 ### Business membership
 
@@ -363,6 +369,57 @@ flutter run \
 The secret RevenueCat API key and webhook secrets belong only on the Spring Boot server. The mobile app receives a random billing customer ID from the authenticated backend and uses it as the RevenueCat App User ID. Store purchase prices are loaded from RevenueCat, StoreKit, or Google Play at runtime; the TRY values in the API are display fallbacks for builds without store configuration.
 
 The authenticated billing API is available at `GET /api/v1/billing` and `POST /api/v1/billing/sync`. The sync endpoint re-fetches the provider state instead of accepting subscription claims from the device. Webhook event IDs are persisted to make retry delivery idempotent, and webhook HMAC signatures are checked against the raw request body with a five-minute replay tolerance.
+
+---
+
+# Ads and Rewarded FREE Analysis
+
+The home screen shows one lightweight banner only for personal FREE users. Ads are not shown during image selection, upload, analysis, report generation, or critical warnings. PLUS, PRO, BUSINESS subscribers, and users operating through a company membership are ad-free.
+
+Development builds use Google's official AdMob test IDs by default. Before a production release:
+
+1. Create the Android and iOS applications, banner units, and rewarded units in AdMob.
+2. Configure the rewarded unit's server-side verification callback as the public HTTPS endpoint `GET /api/v1/rewards/analysis/admob/ssv`.
+3. Set Android's `ADMOB_APP_ID` in the ignored `mobile/android/local.properties` file. Replace the test `GADApplicationIdentifier` in `mobile/ios/Runner/Info.plist` through the release configuration.
+4. Supply production ad-unit IDs to Flutter at build time:
+
+```bash
+flutter build apk \
+  --dart-define=ADMOB_BANNER_ANDROID_ID=<banner-ad-unit-id> \
+  --dart-define=ADMOB_REWARDED_ANDROID_ID=<rewarded-ad-unit-id>
+```
+
+Use `ADMOB_BANNER_IOS_ID` and `ADMOB_REWARDED_IOS_ID` for iOS. AdMob app IDs and ad-unit IDs are identifiers rather than server secrets, but production values should still stay in the release configuration so development continues to use test inventory.
+
+The authenticated reward API exposes quota at `GET /api/v1/rewards/analysis` and creates a short-lived server session at `POST /api/v1/rewards/analysis/session`. The SSV endpoint verifies Google's ECDSA signature, the server-issued token, customer identity, timestamp, month, and unique transaction before persisting the reward. Repeated or client-forged claims do not add quota.
+
+---
+
+# Notification Center and FCM
+
+Spring Boot evaluates incomplete vehicle reminders every day at 09:00 in `Europe/Istanbul` by default. It writes persistent, idempotent notification records first; FCM is only the delivery channel. Date reminders are evaluated at 30, 7, 1, and 0 days, while mileage reminders use 2,000 km, 500 km, and due thresholds. Vehicle inspection, compulsory traffic insurance, and kasko reminders also send push notifications at 7 days, 1 day, and the due date. Each reminder/recipient/threshold combination has one unique event key, so repeated scheduler runs do not create duplicate notifications.
+
+For a personal vehicle, the owner receives the notification. For a shared company vehicle, every current `BusinessMember` receives one personal notification record for the threshold. This gives each member independent read state and avoids duplicate records for the same member.
+
+The authenticated notification API supports listing, unread count, marking one or all as read, and registering or removing device tokens under `/api/v1/notifications`. Flutter refreshes FCM tokens, registers them against the authenticated user, and removes the current token on logout.
+
+Firebase console and credential setup must be completed separately before push delivery works:
+
+1. Create or select a Firebase project, register Android and iOS apps with bundle/application ID `com.gorkem.ekspersiz`, and enable Cloud Messaging. Configure APNs credentials and Push Notifications/Background Modes for iOS.
+2. Give the backend Firebase Admin credentials through Application Default Credentials or `GOOGLE_APPLICATION_CREDENTIALS`, then set `FCM_ENABLED=true`. Keep the service-account JSON outside the repository.
+3. Supply the Flutter Firebase client values at build or run time:
+
+```bash
+flutter run \
+  --dart-define=FIREBASE_API_KEY=<firebase-api-key> \
+  --dart-define=FIREBASE_ANDROID_APP_ID=<android-app-id> \
+  --dart-define=FIREBASE_MESSAGING_SENDER_ID=<sender-id> \
+  --dart-define=FIREBASE_PROJECT_ID=<project-id>
+```
+
+For iOS, use `FIREBASE_IOS_APP_ID` and optionally `FIREBASE_IOS_BUNDLE_ID`. Without these client values or enabled backend credentials, the application continues to provide its persistent in-app notification center while push delivery remains disabled.
+
+The schedule can be overridden with `NOTIFICATION_SCHEDULE_CRON` and `NOTIFICATION_TIME_ZONE`.
 
 ---
 
@@ -421,7 +478,6 @@ This regenerates only the AI report and does not rerun the YOLO image analysis.
 * 🌐 Optional Live Repair Pricing / Search Grounding
 * 🐳 Docker / Docker Compose Support
 * ☁️ Cloud Deployment
-* 🔔 Push Notifications
 * 🧪 Expanded Automated Test Coverage
 * ⚙️ CI/CD Pipeline
 
@@ -476,6 +532,8 @@ Software Engineer
 * ✅ Owner Employee List and Membership Removal
 * ✅ Vehicle Maintenance Records and Optional Cost Tracking
 * ✅ Date- and Mileage-Based Reminders
+* ✅ Persistent In-App Notification Center
+* ✅ Scheduled, Idempotent FCM Reminder Delivery
 * ✅ Vehicle Condition Overview and Unified History Timeline
 * ✅ Flutter Mobile Application
 * ✅ Inspection Result Screen
@@ -484,6 +542,8 @@ Software Engineer
 * ✅ Apple App Store / Google Play Subscription Purchase Flow
 * ✅ RevenueCat Server-Side Subscription Verification and Webhooks
 * ✅ Subscription Restore and Store Management Flow
+* ✅ Ad-Supported FREE Plan and AdMob Banner Integration
+* ✅ Server-Verified Rewarded FREE Analysis
 
 ## In Progress
 

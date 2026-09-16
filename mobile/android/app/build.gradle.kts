@@ -17,6 +17,8 @@ if (localPropertiesFile.exists()) {
 
 val mapsApiKey =
     localProperties.getProperty("MAPS_API_KEY") ?: ""
+val admobAppId = localProperties.getProperty("ADMOB_APP_ID")
+    ?: "ca-app-pub-3940256099942544~3347511713"
 
 val keystoreProperties = Properties()
 val keystorePropertiesFile = rootProject.file("key.properties")
@@ -46,6 +48,7 @@ android {
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
+        manifestPlaceholders["ADMOB_APP_ID"] = admobAppId
     }
 
     signingConfigs {
