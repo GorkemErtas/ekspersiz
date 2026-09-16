@@ -11,6 +11,7 @@ public class AuthResponse {
     private final String fullName;
     private final String email;
     private final SubscriptionPlan subscriptionPlan;
+    private final BusinessAccountResponse businessAccount;
 
     public AuthResponse(
             String accessToken,
@@ -19,7 +20,8 @@ public class AuthResponse {
             Long userId,
             String fullName,
             String email,
-            SubscriptionPlan subscriptionPlan
+            SubscriptionPlan subscriptionPlan,
+            BusinessAccountResponse businessAccount
     ) {
         this.accessToken = accessToken;
         this.tokenType = tokenType;
@@ -29,6 +31,7 @@ public class AuthResponse {
         this.email = email;
         this.subscriptionPlan =
                 subscriptionPlan;
+        this.businessAccount = businessAccount;
     }
 
     public String getAccessToken() {
@@ -57,5 +60,9 @@ public class AuthResponse {
 
     public SubscriptionPlan getSubscriptionPlan() {
         return subscriptionPlan;
+    }
+
+    public BusinessAccountResponse getBusinessAccount() {
+        return businessAccount;
     }
 }

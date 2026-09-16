@@ -63,6 +63,7 @@ class _LoginScreenState extends State<LoginScreen> {
             fullName: authResponse.fullName,
             email: authResponse.email,
             subscriptionPlan: authResponse.subscriptionPlan,
+            businessAccount: authResponse.businessAccount,
           ),
         ),
       );

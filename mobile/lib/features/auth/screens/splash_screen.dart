@@ -63,6 +63,7 @@ class _SplashScreenState extends State<SplashScreen> {
             fullName: user.fullName,
             email: user.email,
             subscriptionPlan: user.subscriptionPlan,
+            businessAccount: user.businessAccount,
           ),
         ),
       );

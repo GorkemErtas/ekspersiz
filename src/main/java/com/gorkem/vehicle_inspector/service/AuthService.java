@@ -6,9 +6,9 @@ import com.gorkem.vehicle_inspector.dto.request.RegisterRequest;
 import com.gorkem.vehicle_inspector.dto.request.ResendVerificationRequest;
 import com.gorkem.vehicle_inspector.dto.request.VerifyEmailRequest;
 import com.gorkem.vehicle_inspector.dto.response.AuthResponse;
+import com.gorkem.vehicle_inspector.dto.response.BusinessAccountResponse;
 import com.gorkem.vehicle_inspector.dto.response.UserResponse;
 import com.gorkem.vehicle_inspector.entity.User;
-import com.gorkem.vehicle_inspector.exception.DuplicateResourceException;
 import com.gorkem.vehicle_inspector.exception.ResourceNotFoundException;
 import com.gorkem.vehicle_inspector.mapper.UserMapper;
 import com.gorkem.vehicle_inspector.repository.UserRepository;
@@ -25,45 +25,27 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
-    private final EmailVerificationService emailVerificationService;
+    private final RegistrationService registrationService;
+    private final BusinessContextService businessContextService;
 
     public AuthService(
             UserRepository userRepository,
             PasswordEncoder passwordEncoder,
             AuthenticationManager authenticationManager,
             JwtService jwtService,
-            EmailVerificationService emailVerificationService
+            RegistrationService registrationService,
+            BusinessContextService businessContextService
     ) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
         this.jwtService = jwtService;
-        this.emailVerificationService = emailVerificationService;
+        this.registrationService = registrationService;
+        this.businessContextService = businessContextService;
     }
 
-    public UserResponse register(RegisterRequest request) {
-        String normalizedEmail = normalizeEmail(request.getEmail());
-
-        if (userRepository.existsByEmail(normalizedEmail)) {
-            throw new DuplicateResourceException(
-                    "Bu e-posta adresi zaten kullanılıyor: "
-                            + normalizedEmail
-            );
-        }
-
-        User user = new User(
-                request.getFullName().trim(),
-                normalizedEmail,
-                passwordEncoder.encode(request.getPassword())
-        );
-
-        User savedUser = userRepository.save(user);
-
-        emailVerificationService.createAndSendVerificationCode(
-                savedUser
-        );
-
-        return UserMapper.toResponse(savedUser);
+    public void register(RegisterRequest request) {
+        registrationService.start(request);
     }
 
     public AuthResponse login(LoginRequest request) {
@@ -98,65 +80,19 @@ public class AuthService {
                 user.getId(),
                 user.getFullName(),
                 user.getEmail(),
-                user.getSubscriptionPlan()
+                user.getSubscriptionPlan(),
+                getBusinessAccount(user)
         );
     }
 
     public void verifyEmail(VerifyEmailRequest request) {
-        String normalizedEmail = normalizeEmail(request.getEmail());
-
-        User user = userRepository.findByEmail(normalizedEmail)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Kullanıcı bulunamadı."
-                        )
-                );
-
-        if (user.isEmailVerified()) {
-            return;
-        }
-
-        if (user.getEmailVerificationCodeHash() == null
-                || user.isEmailVerificationCodeExpired()) {
-            throw new IllegalArgumentException(
-                    "Doğrulama kodunun süresi dolmuş. "
-                            + "Lütfen yeni kod isteyin."
-            );
-        }
-
-        if (!passwordEncoder.matches(
-                request.getCode(),
-                user.getEmailVerificationCodeHash()
-        )) {
-            throw new IllegalArgumentException(
-                    "Doğrulama kodu hatalı."
-            );
-        }
-
-        user.markEmailVerified();
-        userRepository.save(user);
+        registrationService.verify(request);
     }
 
     public void resendVerificationCode(
             ResendVerificationRequest request
     ) {
-        String normalizedEmail = normalizeEmail(request.getEmail());
-
-        User user = userRepository.findByEmail(normalizedEmail)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Kullanıcı bulunamadı."
-                        )
-                );
-
-        if (user.isEmailVerified()) {
-            throw new IllegalArgumentException(
-                    "Bu e-posta adresi zaten doğrulanmış."
-            );
-        }
-
-        emailVerificationService
-                .createAndSendVerificationCode(user);
+        registrationService.resend(request);
     }
 
     public void changePassword(
@@ -215,7 +151,17 @@ public class AuthService {
                         )
                 );
 
-        return UserMapper.toResponse(user);
+        return UserMapper.toResponse(user, getBusinessAccount(user));
+    }
+
+    private BusinessAccountResponse getBusinessAccount(User user) {
+        return businessContextService.findMembership(user)
+                .map(member -> new BusinessAccountResponse(
+                        member.getBusinessAccount().getId(),
+                        member.getBusinessAccount().getCompanyName(),
+                        member.getRole()
+                ))
+                .orElse(null);
     }
 
     private String normalizeEmail(String email) {
