@@ -153,6 +153,41 @@ public class GlobalExceptionHandler {
         );
     }
 
+    @ExceptionHandler(BillingConfigurationException.class)
+    public ResponseEntity<ApiErrorResponse>
+    handleBillingConfigurationException(
+            BillingConfigurationException exception
+    ) {
+        return buildResponse(
+                HttpStatus.SERVICE_UNAVAILABLE,
+                exception.getMessage()
+        );
+    }
+
+    @ExceptionHandler(BillingProviderException.class)
+    public ResponseEntity<ApiErrorResponse>
+    handleBillingProviderException(
+            BillingProviderException exception
+    ) {
+        log.error("Billing provider error", exception);
+
+        return buildResponse(
+                HttpStatus.BAD_GATEWAY,
+                exception.getMessage()
+        );
+    }
+
+    @ExceptionHandler(InvalidBillingWebhookException.class)
+    public ResponseEntity<ApiErrorResponse>
+    handleInvalidBillingWebhookException(
+            InvalidBillingWebhookException exception
+    ) {
+        return buildResponse(
+                HttpStatus.UNAUTHORIZED,
+                exception.getMessage()
+        );
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiErrorResponse>
     handleUnexpectedException(

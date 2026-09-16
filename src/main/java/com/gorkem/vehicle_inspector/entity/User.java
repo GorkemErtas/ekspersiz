@@ -3,6 +3,7 @@ package com.gorkem.vehicle_inspector.entity;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(
@@ -58,6 +59,13 @@ public class User {
     private LocalDateTime subscriptionExpiresAt;
 
     @Column(
+            name = "billing_customer_id",
+            unique = true,
+            length = 36
+    )
+    private String billingCustomerId;
+
+    @Column(
             name = "email_verified",
             nullable = false,
             columnDefinition = "boolean default true"
@@ -87,6 +95,7 @@ public class User {
         this.email = email;
         this.password = password;
         this.subscriptionPlan = SubscriptionPlan.FREE;
+        this.billingCustomerId = UUID.randomUUID().toString();
         this.emailVerified = false;
     }
 
@@ -116,6 +125,18 @@ public class User {
 
     public LocalDateTime getSubscriptionExpiresAt() {
         return subscriptionExpiresAt;
+    }
+
+    public String getBillingCustomerId() {
+        return billingCustomerId;
+    }
+
+    public String ensureBillingCustomerId() {
+        if (billingCustomerId == null || billingCustomerId.isBlank()) {
+            billingCustomerId = UUID.randomUUID().toString();
+        }
+
+        return billingCustomerId;
     }
 
     public boolean isEmailVerified() {
