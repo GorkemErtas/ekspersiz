@@ -1,0 +1,7 @@
+package com.gorkem.vehicle_inspector.entity;
+
+public enum MaintenanceType {
+    ENGINE_OIL, OIL_FILTER, AIR_FILTER, CABIN_FILTER, BRAKE_PADS,
+    BRAKE_FLUID, BATTERY, TIRES, TIMING_SYSTEM, TRANSMISSION,
+    PERIODIC_MAINTENANCE, CUSTOM
+}

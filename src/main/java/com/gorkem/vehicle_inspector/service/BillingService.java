@@ -273,7 +273,7 @@ public class BillingService {
                 BigDecimal.ZERO,
                 "TRY",
                 false,
-                List.of("1 aktif araç", "Günde 3 hasar analizi")
+                List.of("1 aktif araç", "Ayda 1 AI hasar analizi")
         ));
 
         for (BillingProduct product : BillingProduct.values()) {

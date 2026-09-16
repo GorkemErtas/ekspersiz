@@ -45,7 +45,9 @@ public final class VehicleMapper {
                 vehicle.getModel(),
                 vehicle.getModelYear(),
                 vehicle.getMileage(),
-                vehicle.isPrimaryVehicle()
+                vehicle.isPrimaryVehicle(),
+                vehicle.getNotes(),
+                vehicle.getCreatedAt()
         );
     }
 
@@ -55,5 +57,8 @@ public final class VehicleMapper {
         vehicle.setModel(request.getModel().trim());
         vehicle.setModelYear(request.getModelYear());
         vehicle.setMileage(request.getMileage());
+        if (request.getNotes() != null) {
+            vehicle.setNotes(request.getNotes());
+        }
     }
 }

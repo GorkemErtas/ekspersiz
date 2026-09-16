@@ -1,6 +1,7 @@
 package com.gorkem.vehicle_inspector.repository;
 
 import com.gorkem.vehicle_inspector.entity.DamageInspection;
+import com.gorkem.vehicle_inspector.entity.InspectionStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
@@ -23,6 +24,11 @@ public interface DamageInspectionRepository
     findAllByVehicleBusinessAccountIdOrderByCreatedAtDesc(
             Long businessAccountId
     );
+
+    List<DamageInspection> findAllByVehicleIdOrderByCreatedAtDesc(Long vehicleId);
+
+    Optional<DamageInspection> findFirstByVehicleIdAndStatusOrderByCompletedAtDesc(
+            Long vehicleId, InspectionStatus status);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select i from DamageInspection i where i.id = :id")

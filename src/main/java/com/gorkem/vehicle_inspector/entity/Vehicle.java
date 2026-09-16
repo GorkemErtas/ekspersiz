@@ -2,6 +2,8 @@ package com.gorkem.vehicle_inspector.entity;
 
 import jakarta.persistence.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "vehicles")
 public class Vehicle {
@@ -30,6 +32,12 @@ public class Vehicle {
 
     @Column(name = "primary_vehicle", nullable = false)
     private boolean primaryVehicle = false;
+
+    @Column(length = 1000)
+    private String notes;
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(
@@ -167,5 +175,14 @@ public class Vehicle {
 
     public void setPrimaryVehicle(boolean primaryVehicle) {
         this.primaryVehicle = primaryVehicle;
+    }
+
+    public String getNotes() { return notes; }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setNotes(String notes) {
+        this.notes = notes == null || notes.isBlank() ? null : notes.trim();
+    }
+    public void initializeCreatedAt(LocalDateTime now) {
+        if (createdAt == null) createdAt = now;
     }
 }
