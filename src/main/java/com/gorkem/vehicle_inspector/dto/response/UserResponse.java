@@ -15,6 +15,7 @@ public class UserResponse {
     private final LocalDateTime subscriptionStartedAt;
 
     private final LocalDateTime subscriptionExpiresAt;
+    private final BusinessAccountResponse businessAccount;
 
     public UserResponse(
             Long id,
@@ -22,7 +23,8 @@ public class UserResponse {
             String email,
             SubscriptionPlan subscriptionPlan,
             LocalDateTime subscriptionStartedAt,
-            LocalDateTime subscriptionExpiresAt
+            LocalDateTime subscriptionExpiresAt,
+            BusinessAccountResponse businessAccount
     ) {
         this.id = id;
         this.fullName = fullName;
@@ -30,6 +32,7 @@ public class UserResponse {
         this.subscriptionPlan = subscriptionPlan;
         this.subscriptionStartedAt = subscriptionStartedAt;
         this.subscriptionExpiresAt = subscriptionExpiresAt;
+        this.businessAccount = businessAccount;
     }
 
     public Long getId() {
@@ -54,5 +57,9 @@ public class UserResponse {
 
     public LocalDateTime getSubscriptionExpiresAt() {
         return subscriptionExpiresAt;
+    }
+
+    public BusinessAccountResponse getBusinessAccount() {
+        return businessAccount;
     }
 }
