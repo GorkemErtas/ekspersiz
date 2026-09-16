@@ -9,7 +9,7 @@ The application analyzes vehicle images, detects visible damage, identifies affe
 # ✨ Features
 
 * 🔐 JWT Authentication & Authorization
-* ✉️ Email Verification During Registration
+* ✉️ Email Verification Before Account Creation
 * 🔑 Password Change Support
 * 🔄 Persistent Login & Automatic Session Restoration
 * 👤 User Profile & Secure Logout
@@ -34,8 +34,8 @@ The application analyzes vehicle images, detects visible damage, identifies affe
 * 🧭 Google Maps Directions to Selected Services
 * 📊 Inspection History
 * 💳 Subscription Plans (`FREE`, `PLUS`, `PRO`, `BUSINESS`)
-* 🏢 Business Accounts, Member Invitations, and Shared Vehicles
-* 📉 Daily Inspection Limits for FREE and PLUS Plans
+* 🏢 Business Accounts, Employee Invitations, Employee Management, and Shared Vehicles
+* 📉 Shared Daily Inspection Limits for Personal and Business Usage
 * 🗄 PostgreSQL Persistence
 * 🌐 RESTful API
 * 🔒 Secure Mobile Token Storage
@@ -68,7 +68,7 @@ PostgreSQL  FastAPI       Gemini API     Google Places
 * **Gemini** converts structured ML results into a user-friendly inspection report and estimates a repair price range based on vehicle and inspection context.
 * **Google Places** is used to discover nearby automotive repair services.
 * **Google Maps** visualizes service locations and opens driving directions from the user's current location.
-* **PostgreSQL** stores users, business accounts, memberships, invitations, vehicles, inspections, detections, repair recommendations, report status, generated reports, and user subscription information.
+* **PostgreSQL** stores pending registrations, verified users, business accounts, memberships, invitations, vehicles, inspections, detections, repair recommendations, report status, generated reports, and user subscription information.
 
 ---
 
@@ -124,10 +124,13 @@ PostgreSQL  FastAPI       Gemini API     Google Places
 # 🔄 Inspection Workflow
 
 ```text
-User Registration / Login
+Submit Registration Details
      │
      ▼
 Email Verification
+     │
+     ▼
+Create User Account / Login
      │
      ▼
 Create / Select Vehicle
@@ -295,7 +298,13 @@ A user with the BUSINESS subscription can create a company and becomes its OWNER
 
 Vehicle access follows membership automatically: users without membership use personal vehicles; members use their company's shared vehicles. A vehicle belongs to either a user or a company. Each company has a shared limit of **50 active vehicles**, regardless of its member count.
 
-Company-scoped inspection access and the shared **100 daily inspections** limit are planned; inspection endpoints currently still use creator-user access and personal quota validation. The BUSINESS plan does not currently have a personal quota fallback before company membership is established.
+Company inspection history and access are scoped through the inspection vehicle's `BusinessAccount`. `DamageInspection.user` records the member who created the inspection for audit purposes. Each company shares a limit of **100 analyses per server calendar day**, regardless of its member count. Report regeneration does not consume another analysis slot.
+
+The mobile application receives this membership context through login and session restoration responses. Members automatically see the shared company vehicles and inspections; there is no personal/company workspace switch. Only BUSINESS subscribers receive company-management controls and can create a company. Owners can invite registered users, list employees by name and email, and remove employee memberships. Users without a company can accept an invitation through the separate company-invitation action, including invited FREE, PLUS, and PRO users. Regular company members do not receive company-management controls. The BUSINESS plan does not have a personal quota fallback before company membership is established.
+
+### Registration and email verification
+
+Submitting the registration form creates or replaces a short-lived pending registration and sends a verification code. It does not create a `User` row. A successful email verification creates the user as verified and removes the pending registration. Reopening registration with the same unverified email is therefore allowed, while an email that already belongs to a verified user cannot be registered again.
 
 Payment processing is not enabled in the current demo release. The first public version is intended to operate without paid subscriptions, while the subscription structure is already represented in the backend and mobile application for future expansion.
 
@@ -407,6 +416,9 @@ Software Engineer
 * ✅ Daily FREE and PLUS Plan Inspection Limits
 * ✅ Business Accounts and Member Invitations
 * ✅ Shared Business Vehicles and Company Vehicle Limit
+* ✅ Company-Scoped Inspection Access and Shared Daily Inspection Limit
+* ✅ Mobile Company Creation and Invitation Flow
+* ✅ Owner Employee List and Membership Removal
 * ✅ Flutter Mobile Application
 * ✅ Inspection Result Screen
 * ✅ Inspection History
