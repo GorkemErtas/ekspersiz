@@ -188,6 +188,13 @@ public class GlobalExceptionHandler {
         );
     }
 
+    @ExceptionHandler(InvalidRewardCallbackException.class)
+    public ResponseEntity<ApiErrorResponse> handleInvalidRewardCallbackException(
+            InvalidRewardCallbackException exception
+    ) {
+        return buildResponse(HttpStatus.UNAUTHORIZED, exception.getMessage());
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiErrorResponse>
     handleUnexpectedException(
