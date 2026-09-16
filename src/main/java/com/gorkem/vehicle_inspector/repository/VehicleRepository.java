@@ -31,6 +31,8 @@ public interface VehicleRepository
             Long userId
     );
 
+    Optional<Vehicle> findByIdAndUserId(Long id, Long userId);
+
     Optional<Vehicle>
     findByUserIdAndPrimaryVehicleTrueAndArchivedFalse(
             Long userId
@@ -50,6 +52,8 @@ public interface VehicleRepository
             Long id,
             Long businessAccountId
     );
+
+    Optional<Vehicle> findByIdAndBusinessAccountId(Long id, Long businessAccountId);
 
     Optional<Vehicle>
     findByBusinessAccountIdAndPrimaryVehicleTrueAndArchivedFalse(
