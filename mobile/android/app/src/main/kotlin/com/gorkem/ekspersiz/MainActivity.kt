@@ -1,4 +1,4 @@
-package com.example.mobile
+package com.gorkem.ekspersiz
 
 import io.flutter.embedding.android.FlutterActivity
 
