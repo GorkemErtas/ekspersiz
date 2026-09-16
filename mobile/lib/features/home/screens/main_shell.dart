@@ -38,6 +38,7 @@ class _MainShellState extends State<MainShell> {
   int _selectedIndex = 0;
 
   late BusinessAccount? _businessAccount;
+  late String _subscriptionPlan;
 
   late final List<Widget?> _screenCache;
 
@@ -60,9 +61,10 @@ class _MainShellState extends State<MainShell> {
       3 => ProfileScreen(
         fullName: widget.fullName,
         email: widget.email,
-        subscriptionPlan: widget.subscriptionPlan,
+        subscriptionPlan: _subscriptionPlan,
         businessAccount: _businessAccount,
         onBusinessAccountChanged: _updateBusinessAccount,
+        onSubscriptionPlanChanged: _updateSubscriptionPlan,
       ),
       _ => throw ArgumentError.value(index, 'index', 'Geçersiz sekme indeksi'),
     };
@@ -84,6 +86,7 @@ class _MainShellState extends State<MainShell> {
 
     _screenCache = List<Widget?>.filled(4, null);
     _businessAccount = widget.businessAccount;
+    _subscriptionPlan = widget.subscriptionPlan;
     _buildScreen(0);
 
     _sessionSubscription = SessionManager.unauthorizedStream.listen((_) {
@@ -104,6 +107,19 @@ class _MainShellState extends State<MainShell> {
   void _updateBusinessAccount(BusinessAccount businessAccount) {
     setState(() {
       _businessAccount = businessAccount;
+      for (var index = 0; index < _screenCache.length; index++) {
+        _screenCache[index] = null;
+      }
+    });
+  }
+
+  void _updateSubscriptionPlan(String subscriptionPlan) {
+    if (_subscriptionPlan == subscriptionPlan) {
+      return;
+    }
+
+    setState(() {
+      _subscriptionPlan = subscriptionPlan;
       for (var index = 0; index < _screenCache.length; index++) {
         _screenCache[index] = null;
       }
