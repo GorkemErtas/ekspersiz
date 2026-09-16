@@ -185,6 +185,8 @@ Explore Nearby Automotive Services
 
 The ML inspection result and the Gemini report use separate statuses. If Gemini report generation temporarily fails, the completed ML analysis remains available and the report can be regenerated without running YOLO again.
 
+A successful inference with no visible damage is stored as a completed inspection with `DamageSeverity.NONE`, `DamageType.NO_VISIBLE_DAMAGE`, and `RepairAction.NO_ACTION`. It still consumes monthly analysis quota because inference was performed. Spring Boot creates its explanatory report deterministically without calling Gemini. `InspectionStatus.FAILED` is reserved for technical failures such as an unavailable AI service, timeout, invalid image, invalid AI response, or an unexpected processing error. A valid minor detection remains `MINOR` and follows the normal report flow.
+
 ---
 
 # 🤖 Example Inspection Response
