@@ -10,6 +10,7 @@ import '../../auth/models/business_account.dart';
 import '../../auth/screens/login_screen.dart';
 import '../../auth/services/auth_service.dart';
 import '../../business/screens/business_management_screen.dart';
+import '../../billing/screens/subscription_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({
@@ -19,6 +20,7 @@ class ProfileScreen extends StatefulWidget {
     required this.subscriptionPlan,
     this.businessAccount,
     this.onBusinessAccountChanged,
+    this.onSubscriptionPlanChanged,
   });
 
   final String fullName;
@@ -26,6 +28,7 @@ class ProfileScreen extends StatefulWidget {
   final String subscriptionPlan;
   final BusinessAccount? businessAccount;
   final ValueChanged<BusinessAccount>? onBusinessAccountChanged;
+  final ValueChanged<String>? onSubscriptionPlanChanged;
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -79,6 +82,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
           behavior: SnackBarBehavior.floating,
         ),
       );
+  }
+
+  Future<void> _openSubscription() async {
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(builder: (_) => const SubscriptionScreen()),
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    try {
+      final profile = await _authService.getCurrentUser();
+
+      if (mounted) {
+        widget.onSubscriptionPlanChanged?.call(profile.subscriptionPlan);
+      }
+    } catch (_) {
+      // The subscription screen already shows billing errors. The next session
+      // refresh will reconcile the profile if this lightweight refresh fails.
+    }
   }
 
   Future<void> _openBusinessManagement() async {
@@ -302,6 +326,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   padding: EdgeInsets.zero,
                   child: Column(
                     children: [
+                      _ActionProfileItem(
+                        icon: Icons.workspace_premium_outlined,
+                        title: 'Abonelik ve Ödeme',
+                        subtitle:
+                            'Planları karşılaştırın, satın alımları geri yükleyin ve aboneliğinizi yönetin.',
+                        onTap: _openSubscription,
+                      ),
+                      const Divider(height: 1, indent: 82),
                       if (canManageBusiness) ...[
                         _ActionProfileItem(
                           icon: Icons.business_center_outlined,
