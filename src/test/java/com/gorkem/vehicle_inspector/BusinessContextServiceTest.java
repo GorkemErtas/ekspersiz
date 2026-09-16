@@ -8,6 +8,7 @@ import com.gorkem.vehicle_inspector.exception.ResourceNotFoundException;
 import com.gorkem.vehicle_inspector.repository.BusinessMemberRepository;
 import com.gorkem.vehicle_inspector.repository.UserRepository;
 import com.gorkem.vehicle_inspector.service.BusinessContextService;
+import com.gorkem.vehicle_inspector.service.SubscriptionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,14 +29,23 @@ class BusinessContextServiceTest {
     @Mock
     private BusinessMemberRepository businessMemberRepository;
 
+    @Mock
+    private SubscriptionService subscriptionService;
+
     private BusinessContextService service;
 
     @BeforeEach
     void setUp() {
         service = new BusinessContextService(
                 userRepository,
-                businessMemberRepository
+                businessMemberRepository,
+                subscriptionService
         );
+
+        lenient().when(subscriptionService.getEffectivePlan(any(User.class)))
+                .thenAnswer(invocation ->
+                        ((User) invocation.getArgument(0)).getSubscriptionPlan()
+                );
     }
 
     @Test
@@ -152,6 +162,9 @@ class BusinessContextServiceTest {
     @Test
     void shouldReturnBusinessAccount() {
         User user = mock(User.class);
+        User owner = mock(User.class);
+        when(owner.getSubscriptionPlan())
+                .thenReturn(com.gorkem.vehicle_inspector.entity.SubscriptionPlan.BUSINESS);
 
         when(user.getId()).thenReturn(1L);
 
@@ -167,6 +180,14 @@ class BusinessContextServiceTest {
 
         when(businessMemberRepository.findByUserId(1L))
                 .thenReturn(Optional.of(membership));
+        when(businessMemberRepository.findByBusinessAccountIdAndRole(
+                null,
+                BusinessRole.OWNER
+        )).thenReturn(Optional.of(new BusinessMember(
+                businessAccount,
+                owner,
+                BusinessRole.OWNER
+        )));
 
         BusinessAccount result =
                 service.requireBusinessAccount(user);
@@ -235,7 +256,6 @@ class BusinessContextServiceTest {
 
         when(businessMemberRepository.findByUserId(1L))
                 .thenReturn(Optional.of(membership));
-
         assertThrows(
                 IllegalStateException.class,
                 () -> service.requireOwner(user)

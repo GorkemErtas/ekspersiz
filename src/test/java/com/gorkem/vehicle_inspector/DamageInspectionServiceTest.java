@@ -72,6 +72,7 @@ class DamageInspectionServiceTest {
         lenient().when(context.requireUser(actor.getEmail())).thenReturn(actor);
         lenient().when(context.findMembership(actor)).thenReturn(Optional.of(
                 new BusinessMember(business, actor, BusinessRole.MEMBER)));
+        lenient().when(context.requireBusinessAccount(actor)).thenReturn(business);
         lenient().when(inspections.findById(30L)).thenReturn(Optional.of(inspection));
         lenient().when(inspections.findByIdForUpdate(30L)).thenReturn(Optional.of(inspection));
         lenient().when(inspections.save(any())).thenAnswer(call -> call.getArgument(0));

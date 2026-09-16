@@ -7,6 +7,7 @@ import com.gorkem.vehicle_inspector.repository.BusinessMemberRepository;
 import com.gorkem.vehicle_inspector.repository.UserRepository;
 import com.gorkem.vehicle_inspector.service.BusinessInvitationService;
 import com.gorkem.vehicle_inspector.service.VerificationCodeService;
+import com.gorkem.vehicle_inspector.service.SubscriptionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -41,6 +42,9 @@ class BusinessInvitationServiceTest {
     @Mock
     private JavaMailSender mailSender;
 
+    @Mock
+    private SubscriptionService subscriptionService;
+
     private BusinessInvitationService service;
 
     @BeforeEach
@@ -50,8 +54,14 @@ class BusinessInvitationServiceTest {
                 businessMemberRepository,
                 businessInvitationRepository,
                 verificationCodeService,
-                mailSender
+                mailSender,
+                subscriptionService
         );
+
+        lenient().when(subscriptionService.getEffectivePlan(any(User.class)))
+                .thenAnswer(invocation ->
+                        ((User) invocation.getArgument(0)).getSubscriptionPlan()
+                );
 
         ReflectionTestUtils.setField(
                 service,
