@@ -7,6 +7,8 @@ class Vehicle {
     required this.modelYear,
     required this.mileage,
     required this.primaryVehicle,
+    this.notes,
+    this.createdAt,
   });
 
   final int id;
@@ -16,6 +18,8 @@ class Vehicle {
   final int modelYear;
   final int mileage;
   final bool primaryVehicle;
+  final String? notes;
+  final DateTime? createdAt;
 
   String get displayName => '$brand $model';
 
@@ -28,6 +32,8 @@ class Vehicle {
       modelYear: (json['modelYear'] as num?)?.toInt() ?? 0,
       mileage: (json['mileage'] as num?)?.toInt() ?? 0,
       primaryVehicle: json['primaryVehicle'] as bool? ?? false,
+      notes: json['notes'] as String?,
+      createdAt: DateTime.tryParse(json['createdAt'] as String? ?? ''),
     );
   }
 }

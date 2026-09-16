@@ -35,6 +35,16 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
   final _modelYearController = TextEditingController();
 
   final _mileageController = TextEditingController();
+  final _lastMaintenanceMileageController = TextEditingController();
+  final _nextMaintenanceMileageController = TextEditingController();
+  final _notesController = TextEditingController();
+
+  DateTime? _lastMaintenanceDate;
+  DateTime? _nextMaintenanceDate;
+  DateTime? _inspectionDate;
+  DateTime? _trafficInsuranceDate;
+  DateTime? _comprehensiveInsuranceDate;
+  DateTime? _tireCheckDate;
 
   final VehicleService _vehicleService = const VehicleService();
 
@@ -58,6 +68,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
       _modelYearController.text = vehicle.modelYear.toString();
 
       _mileageController.text = vehicle.mileage.toString();
+      _notesController.text = vehicle.notes ?? '';
     }
   }
 
@@ -68,6 +79,9 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
     _modelController.dispose();
     _modelYearController.dispose();
     _mileageController.dispose();
+    _lastMaintenanceMileageController.dispose();
+    _nextMaintenanceMileageController.dispose();
+    _notesController.dispose();
 
     super.dispose();
   }
@@ -91,6 +105,29 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
       return;
     }
 
+    final lastMaintenanceMileage = _lastMaintenanceMileageController.text
+        .trim();
+    if ((_lastMaintenanceDate == null) != lastMaintenanceMileage.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Son bakım tarihi ve kilometresi birlikte girilmelidir.',
+          ),
+        ),
+      );
+      return;
+    }
+    if ((lastMaintenanceMileage.isNotEmpty &&
+            int.tryParse(lastMaintenanceMileage) == null) ||
+        (_nextMaintenanceMileageController.text.trim().isNotEmpty &&
+            int.tryParse(_nextMaintenanceMileageController.text.trim()) ==
+                null)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Bakım kilometresi sayı olmalıdır.')),
+      );
+      return;
+    }
+
     setState(() {
       _isLoading = true;
     });
@@ -106,6 +143,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
           model: _modelController.text,
           modelYear: modelYear,
           mileage: mileage,
+          notes: _notesController.text.trim(),
         );
       } else {
         vehicle = await _vehicleService.createVehicle(
@@ -114,6 +152,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
           model: _modelController.text,
           modelYear: modelYear,
           mileage: mileage,
+          tracking: _trackingPayload(),
         );
       }
 
@@ -143,6 +182,67 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
         });
       }
     }
+  }
+
+  String _iso(DateTime value) =>
+      '${value.year.toString().padLeft(4, '0')}-${value.month.toString().padLeft(2, '0')}-${value.day.toString().padLeft(2, '0')}';
+
+  Map<String, dynamic>? _trackingPayload() {
+    final payload = <String, dynamic>{
+      if (_lastMaintenanceDate != null)
+        'lastMaintenanceDate': _iso(_lastMaintenanceDate!),
+      if (_lastMaintenanceMileageController.text.trim().isNotEmpty)
+        'lastMaintenanceMileage': int.parse(
+          _lastMaintenanceMileageController.text,
+        ),
+      if (_nextMaintenanceDate != null)
+        'nextMaintenanceDate': _iso(_nextMaintenanceDate!),
+      if (_nextMaintenanceMileageController.text.trim().isNotEmpty)
+        'nextMaintenanceMileage': int.parse(
+          _nextMaintenanceMileageController.text,
+        ),
+      if (_inspectionDate != null)
+        'vehicleInspectionDate': _iso(_inspectionDate!),
+      if (_trafficInsuranceDate != null)
+        'trafficInsuranceExpiryDate': _iso(_trafficInsuranceDate!),
+      if (_comprehensiveInsuranceDate != null)
+        'comprehensiveInsuranceExpiryDate': _iso(_comprehensiveInsuranceDate!),
+      if (_tireCheckDate != null) 'tireCheckDate': _iso(_tireCheckDate!),
+      if (_notesController.text.trim().isNotEmpty)
+        'notes': _notesController.text.trim(),
+    };
+    return payload.isEmpty ? null : payload;
+  }
+
+  Future<void> _selectDate(
+    DateTime? current,
+    ValueChanged<DateTime?> update,
+  ) async {
+    final selected = await showDatePicker(
+      context: context,
+      initialDate: current ?? DateTime.now(),
+      firstDate: DateTime(1950),
+      lastDate: DateTime.now().add(const Duration(days: 3650)),
+    );
+    if (selected != null) setState(() => update(selected));
+  }
+
+  String _dateLabel(DateTime? value) => value == null
+      ? 'Seçilmedi'
+      : '${value.day.toString().padLeft(2, '0')}.${value.month.toString().padLeft(2, '0')}.${value.year}';
+
+  Widget _dateTile(
+    String title,
+    DateTime? value,
+    ValueChanged<DateTime?> update,
+  ) {
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      title: Text(title),
+      subtitle: Text(_dateLabel(value)),
+      trailing: const Icon(Icons.calendar_month_outlined),
+      onTap: () => _selectDate(value, update),
+    );
   }
 
   String? _validatePlate(String? value) {
@@ -427,6 +527,77 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                               ],
                             );
                           },
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  AppCard(
+                    padding: EdgeInsets.zero,
+                    child: ExpansionTile(
+                      leading: const Icon(Icons.event_note_outlined),
+                      title: const Text('Araç takip bilgileri'),
+                      subtitle: const Text('İsteğe bağlı'),
+                      childrenPadding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                      children: [
+                        if (!_isEditing) ...[
+                          _dateTile(
+                            'Son bakım tarihi',
+                            _lastMaintenanceDate,
+                            (value) => _lastMaintenanceDate = value,
+                          ),
+                          TextFormField(
+                            controller: _lastMaintenanceMileageController,
+                            keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(
+                              labelText: 'Son bakım kilometresi',
+                              suffixText: 'km',
+                            ),
+                          ),
+                          _dateTile(
+                            'Sonraki bakım tarihi',
+                            _nextMaintenanceDate,
+                            (value) => _nextMaintenanceDate = value,
+                          ),
+                          TextFormField(
+                            controller: _nextMaintenanceMileageController,
+                            keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(
+                              labelText: 'Sonraki bakım kilometresi',
+                              suffixText: 'km',
+                            ),
+                          ),
+                          _dateTile(
+                            'Araç muayenesi',
+                            _inspectionDate,
+                            (value) => _inspectionDate = value,
+                          ),
+                          _dateTile(
+                            'Trafik sigortası bitişi',
+                            _trafficInsuranceDate,
+                            (value) => _trafficInsuranceDate = value,
+                          ),
+                          _dateTile(
+                            'Kasko bitişi',
+                            _comprehensiveInsuranceDate,
+                            (value) => _comprehensiveInsuranceDate = value,
+                          ),
+                          _dateTile(
+                            'Lastik kontrolü',
+                            _tireCheckDate,
+                            (value) => _tireCheckDate = value,
+                          ),
+                        ],
+                        TextFormField(
+                          controller: _notesController,
+                          maxLines: 3,
+                          maxLength: 1000,
+                          decoration: const InputDecoration(
+                            labelText: 'Araç notları',
+                            alignLabelWithHint: true,
+                          ),
                         ),
                       ],
                     ),

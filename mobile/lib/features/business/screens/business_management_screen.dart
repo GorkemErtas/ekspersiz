@@ -308,7 +308,7 @@ class _BusinessManagementScreenState extends State<BusinessManagementScreen> {
             ),
             const SizedBox(height: 18),
             Text(
-              'Şirket genelinde 50 aktif araç ve günde 100 AI analizi ortak kullanılır.',
+              'Şirket genelinde 50 aktif araç ve ayda 100 AI analizi ortak kullanılır.',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: colorScheme.onSurfaceVariant,
                 height: 1.45,

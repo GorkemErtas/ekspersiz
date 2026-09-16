@@ -328,7 +328,7 @@ class _CreateInspectionScreenState extends State<CreateInspectionScreen> {
                           : '${widget.businessAccount!.companyName} analizi',
                       subtitle: widget.businessAccount == null
                           ? 'Aracınızı seçin. Konumunuz otomatik olarak alınacak bir sonraki adımda hasarlı bölgenin fotoğrafını ekleyeceksiniz.'
-                          : 'Şirket aracını seçin. Başlatılan analiz şirketin günlük 100 analiz hakkından ortak olarak kullanılır.',
+                          : 'Şirket aracını seçin. Başlatılan analiz şirketin aylık 100 analiz hakkından ortak olarak kullanılır.',
                       badge: 'AI INSPECTION',
                     ),
 

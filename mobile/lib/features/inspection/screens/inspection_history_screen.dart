@@ -307,7 +307,7 @@ class _HistoryHeader extends StatelessWidget {
         Text(
           businessAccount == null
               ? 'Tamamlanan araç hasar analizlerinizi ve AI raporlarınızı inceleyin.'
-              : 'Tüm şirket üyelerinin tamamladığı ortak analizleri ve AI raporlarını inceleyin. Günlük ortak sınır 100 analizdir.',
+              : 'Tüm şirket üyelerinin tamamladığı ortak analizleri ve AI raporlarını inceleyin. Aylık ortak sınır 100 analizdir.',
           style: textTheme.bodyLarge?.copyWith(
             color: colorScheme.onSurfaceVariant,
             height: 1.45,

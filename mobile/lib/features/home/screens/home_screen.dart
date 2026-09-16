@@ -14,6 +14,8 @@ import '../../inspection/services/inspection_service.dart';
 
 import '../../vehicle/models/vehicle.dart';
 import '../../vehicle/services/vehicle_service.dart';
+import '../../vehicle/services/vehicle_tracking_service.dart';
+import '../../vehicle/models/vehicle_overview.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({
@@ -38,12 +40,15 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final VehicleService _vehicleService = const VehicleService();
   final InspectionService _inspectionService = const InspectionService();
+  final VehicleTrackingService _trackingService =
+      const VehicleTrackingService();
 
   bool _isLoading = true;
 
   List<Vehicle> _vehicles = const [];
   Vehicle? _mainVehicle;
   DamageInspection? _latestInspection;
+  VehicleOverview? _vehicleOverview;
 
   @override
   void initState() {
@@ -95,6 +100,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
       mainVehicle ??= vehicles.isNotEmpty ? vehicles.first : null;
 
+      VehicleOverview? overview;
+      if (mainVehicle != null) {
+        overview = await _trackingService.getOverview(mainVehicle.id);
+      }
+
       if (!mounted) {
         return;
       }
@@ -105,6 +115,7 @@ class _HomeScreenState extends State<HomeScreen> {
         _latestInspection = completedInspections.isNotEmpty
             ? completedInspections.first
             : null;
+        _vehicleOverview = overview;
         _isLoading = false;
       });
     } catch (error, stackTrace) {
@@ -335,6 +346,7 @@ class _HomeScreenState extends State<HomeScreen> {
       final updatedVehicle = await _vehicleService.setPrimaryVehicle(
         selectedVehicle.id,
       );
+      final overview = await _trackingService.getOverview(updatedVehicle.id);
 
       if (!mounted) {
         return;
@@ -342,6 +354,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
       setState(() {
         _mainVehicle = updatedVehicle;
+        _vehicleOverview = overview;
         _vehicles = _vehicles
             .map(
               (vehicle) => Vehicle(
@@ -352,6 +365,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 modelYear: vehicle.modelYear,
                 mileage: vehicle.mileage,
                 primaryVehicle: vehicle.id == updatedVehicle.id,
+                notes: vehicle.notes,
+                createdAt: vehicle.createdAt,
               ),
             )
             .toList();
@@ -546,6 +561,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     delay: const Duration(milliseconds: 70),
                     child: _HeroAnalysisCard(onTap: _startInspection),
                   ),
+                  if (!_isLoading && _vehicleOverview != null) ...[
+                    const SizedBox(height: AppTheme.spacingM),
+                    _TrackingOverviewCard(overview: _vehicleOverview!),
+                  ],
                   const SizedBox(height: AppTheme.spacingXL),
                   AppFadeSlideIn(
                     delay: const Duration(milliseconds: 120),
@@ -618,6 +637,49 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _TrackingOverviewCard extends StatelessWidget {
+  const _TrackingOverviewCard({required this.overview});
+  final VehicleOverview overview;
+
+  @override
+  Widget build(BuildContext context) {
+    final reminder = overview.upcomingReminders.firstOrNull;
+    final status = switch (overview.trackingStatus) {
+      'ATTENTION' => 'Dikkat gerekiyor',
+      'DUE_SOON' => 'Yaklaşan işlem var',
+      _ => 'İyi',
+    };
+    return AppCard(
+      showShadow: false,
+      child: Row(
+        children: [
+          const Icon(Icons.health_and_safety_outlined),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Araç takibi',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w900),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  reminder == null
+                      ? status
+                      : '${reminder.title ?? reminder.reminderType.replaceAll('_', ' ')} • $status',
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
