@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/notifications/push_notification_service.dart';
 import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/app_icon_box.dart';
 import '../../../core/widgets/app_status_badge.dart';
@@ -157,6 +158,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     });
 
     try {
+      await PushNotificationService.instance.unregisterCurrentDevice();
       await _authService.logout();
 
       if (!mounted) {

@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 
+import 'core/ads/ad_service.dart';
+import 'core/notifications/push_notification_service.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/screens/splash_screen.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await AdService.initialize();
+  await PushNotificationService.instance.initializeFirebase();
   runApp(const VehicleInspectorApp());
 }
 
