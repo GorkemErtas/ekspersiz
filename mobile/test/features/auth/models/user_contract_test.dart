@@ -32,6 +32,42 @@ void main() {
       expect(profile.email, auth.email);
       expect(auth.subscriptionPlan, plan);
       expect(profile.subscriptionPlan, plan);
+      expect(auth.businessAccount, isNull);
+      expect(profile.businessAccount, isNull);
     });
   }
+
+  test('login and session restoration preserve business membership', () {
+    const businessAccount = {
+      'id': 12,
+      'companyName': 'ABC Ekspertiz',
+      'role': 'MEMBER',
+    };
+    final auth = AuthResponse.fromJson({
+      'accessToken': 'test-token',
+      'tokenType': 'Bearer',
+      'expiresIn': 86400000,
+      'userId': 7,
+      'fullName': 'Test User',
+      'email': 'user@example.com',
+      'subscriptionPlan': 'PLUS',
+      'businessAccount': businessAccount,
+    });
+    final profile = UserProfile.fromJson({
+      'id': 7,
+      'fullName': 'Test User',
+      'email': 'user@example.com',
+      'subscriptionPlan': 'PLUS',
+      'subscriptionStartedAt': null,
+      'subscriptionExpiresAt': null,
+      'businessAccount': businessAccount,
+    });
+
+    expect(auth.businessAccount?.id, 12);
+    expect(auth.businessAccount?.companyName, 'ABC Ekspertiz');
+    expect(auth.businessAccount?.role, 'MEMBER');
+    expect(auth.businessAccount?.isOwner, isFalse);
+    expect(profile.businessAccount?.companyName, 'ABC Ekspertiz');
+    expect(profile.subscriptionPlan, 'PLUS');
+  });
 }

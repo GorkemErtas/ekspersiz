@@ -59,6 +59,12 @@ public class BusinessInvitationService {
             );
         }
 
+        if (owner.getSubscriptionPlan() != SubscriptionPlan.BUSINESS) {
+            throw new IllegalStateException(
+                    "Şirket işlemleri için Business planı gereklidir."
+            );
+        }
+
         User invitedUser = findUser(request.email());
 
         if (owner.getId().equals(invitedUser.getId())) {

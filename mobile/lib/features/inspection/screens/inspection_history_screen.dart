@@ -5,13 +5,16 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/app_state_view.dart';
 import '../../../core/widgets/app_status_badge.dart';
+import '../../auth/models/business_account.dart';
 
 import '../models/damage_inspection.dart';
 import '../services/inspection_service.dart';
 import 'inspection_result_screen.dart';
 
 class InspectionHistoryScreen extends StatefulWidget {
-  const InspectionHistoryScreen({super.key});
+  const InspectionHistoryScreen({super.key, this.businessAccount});
+
+  final BusinessAccount? businessAccount;
 
   @override
   State<InspectionHistoryScreen> createState() =>
@@ -141,7 +144,11 @@ class _InspectionHistoryScreenState extends State<InspectionHistoryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Analizler')),
+      appBar: AppBar(
+        title: Text(
+          widget.businessAccount == null ? 'Analizler' : 'Şirket Analizleri',
+        ),
+      ),
 
       body: SafeArea(
         child: Center(
@@ -197,11 +204,12 @@ class _InspectionHistoryScreenState extends State<InspectionHistoryScreen> {
                       });
 
                 if (inspections.isEmpty) {
-                  return const AppStateView.empty(
+                  return AppStateView.empty(
                     icon: Icons.analytics_outlined,
                     title: 'Henüz tamamlanan analiz yok',
-                    message:
-                        'AI destekli bir hasar analizi tamamladığınızda raporunuz burada görüntülenecek.',
+                    message: widget.businessAccount == null
+                        ? 'AI destekli bir hasar analizi tamamladığınızda raporunuz burada görüntülenecek.'
+                        : 'Şirket üyelerinden biri bir analizi tamamladığında ortak rapor burada görüntülenecek.',
                     bottomPadding: 110,
                   );
                 }
@@ -223,6 +231,7 @@ class _InspectionHistoryScreenState extends State<InspectionHistoryScreen> {
                       if (index == 0) {
                         return _HistoryHeader(
                           inspectionCount: inspections.length,
+                          businessAccount: widget.businessAccount,
                         );
                       }
 
@@ -269,9 +278,13 @@ class _InspectionHistoryScreenState extends State<InspectionHistoryScreen> {
 }
 
 class _HistoryHeader extends StatelessWidget {
-  const _HistoryHeader({required this.inspectionCount});
+  const _HistoryHeader({
+    required this.inspectionCount,
+    required this.businessAccount,
+  });
 
   final int inspectionCount;
+  final BusinessAccount? businessAccount;
 
   @override
   Widget build(BuildContext context) {
@@ -283,14 +296,18 @@ class _HistoryHeader extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Analiz geçmişiniz',
+          businessAccount == null
+              ? 'Analiz geçmişiniz'
+              : '${businessAccount!.companyName} analizleri',
           style: textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900),
         ),
 
         const SizedBox(height: 7),
 
         Text(
-          'Tamamlanan araç hasar analizlerinizi ve AI raporlarınızı inceleyin.',
+          businessAccount == null
+              ? 'Tamamlanan araç hasar analizlerinizi ve AI raporlarınızı inceleyin.'
+              : 'Tüm şirket üyelerinin tamamladığı ortak analizleri ve AI raporlarını inceleyin. Günlük ortak sınır 100 analizdir.',
           style: textTheme.bodyLarge?.copyWith(
             color: colorScheme.onSurfaceVariant,
             height: 1.45,

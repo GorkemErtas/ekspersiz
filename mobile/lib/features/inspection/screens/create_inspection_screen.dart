@@ -12,13 +12,16 @@ import '../../../core/widgets/primary_button.dart';
 
 import '../../vehicle/models/vehicle.dart';
 import '../../vehicle/services/vehicle_service.dart';
+import '../../auth/models/business_account.dart';
 
 import '../models/damage_inspection.dart';
 import '../services/inspection_service.dart';
 import 'upload_damage_image_screen.dart';
 
 class CreateInspectionScreen extends StatefulWidget {
-  const CreateInspectionScreen({super.key});
+  const CreateInspectionScreen({super.key, this.businessAccount});
+
+  final BusinessAccount? businessAccount;
 
   @override
   State<CreateInspectionScreen> createState() => _CreateInspectionScreenState();
@@ -256,7 +259,13 @@ class _CreateInspectionScreenState extends State<CreateInspectionScreen> {
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Yeni Hasar Analizi')),
+      appBar: AppBar(
+        title: Text(
+          widget.businessAccount == null
+              ? 'Yeni Hasar Analizi'
+              : 'Yeni Şirket Analizi',
+        ),
+      ),
 
       body: SafeArea(
         child: Center(
@@ -268,9 +277,11 @@ class _CreateInspectionScreenState extends State<CreateInspectionScreen> {
 
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const AppStateView.loading(
+                  return AppStateView.loading(
                     title: 'Araçlar yükleniyor',
-                    message: 'Analiz için kayıtlı araçlarınız hazırlanıyor.',
+                    message: widget.businessAccount == null
+                        ? 'Analiz için kayıtlı araçlarınız hazırlanıyor.'
+                        : 'Analiz için şirket araçları hazırlanıyor.',
                   );
                 }
 
@@ -295,11 +306,14 @@ class _CreateInspectionScreenState extends State<CreateInspectionScreen> {
                 final vehicles = snapshot.data ?? const <Vehicle>[];
 
                 if (vehicles.isEmpty) {
-                  return const AppStateView.empty(
+                  return AppStateView.empty(
                     icon: Icons.directions_car_outlined,
-                    title: 'Önce bir araç ekleyin',
-                    message:
-                        'Hasar analizi oluşturmak için hesabınızda en az bir kayıtlı araç bulunmalıdır.',
+                    title: widget.businessAccount == null
+                        ? 'Önce bir araç ekleyin'
+                        : 'Önce bir şirket aracı ekleyin',
+                    message: widget.businessAccount == null
+                        ? 'Hasar analizi oluşturmak için hesabınızda en az bir kayıtlı araç bulunmalıdır.'
+                        : 'Şirket analizi oluşturmak için ortak filoda en az bir aktif araç bulunmalıdır.',
                   );
                 }
 
@@ -307,12 +321,14 @@ class _CreateInspectionScreenState extends State<CreateInspectionScreen> {
                   padding: const EdgeInsets.fromLTRB(20, 16, 20, 36),
 
                   children: [
-                    const AppPageHeader(
+                    AppPageHeader(
                       icon: Icons.auto_awesome_rounded,
-                      title: 'AI hasar analizi',
-                      subtitle:
-                          'Aracınızı seçin. Konumunuz otomatik olarak alınacak '
-                          'bir sonraki adımda hasarlı bölgenin fotoğrafını ekleyeceksiniz.',
+                      title: widget.businessAccount == null
+                          ? 'AI hasar analizi'
+                          : '${widget.businessAccount!.companyName} analizi',
+                      subtitle: widget.businessAccount == null
+                          ? 'Aracınızı seçin. Konumunuz otomatik olarak alınacak bir sonraki adımda hasarlı bölgenin fotoğrafını ekleyeceksiniz.'
+                          : 'Şirket aracını seçin. Başlatılan analiz şirketin günlük 100 analiz hakkından ortak olarak kullanılır.',
                       badge: 'AI INSPECTION',
                     ),
 
