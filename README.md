@@ -306,9 +306,9 @@ Tracking fields are optional during vehicle creation. Users can create a vehicle
 
 Archived vehicles remain available to history and maintenance/reminder reads, while new changes require an active vehicle.
 
-### Database update
+### Database schema
 
-Local development currently uses `spring.jpa.hibernate.ddl-auto=update`. For an existing PostgreSQL production database, review and apply [`database/migrations/V1__vehicle_tracking.sql`](database/migrations/V1__vehicle_tracking.sql) and [`database/migrations/V2__ads_and_notifications.sql`](database/migrations/V2__ads_and_notifications.sql) before deploying these features. The scripts add the required fields, tables, constraints, and indexes without deleting existing data.
+Spring Boot currently manages schema updates through `spring.jpa.hibernate.ddl-auto=update`.
 
 ---
 
