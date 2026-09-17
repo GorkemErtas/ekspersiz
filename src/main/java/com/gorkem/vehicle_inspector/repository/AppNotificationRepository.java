@@ -23,4 +23,10 @@ public interface AppNotificationRepository extends JpaRepository<AppNotification
             "where notification.user.id = :userId and notification.readAt is null")
     int markAllRead(@Param("userId") Long userId,
                     @Param("readAt") LocalDateTime readAt);
+
+    @Modifying
+    @Query("update AppNotification notification " +
+            "set notification.reminderId = null " +
+            "where notification.reminderId = :reminderId")
+    int detachReminder(@Param("reminderId") Long reminderId);
 }

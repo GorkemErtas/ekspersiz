@@ -5,6 +5,7 @@ import com.gorkem.vehicle_inspector.entity.ReminderType;
 import com.gorkem.vehicle_inspector.entity.User;
 import com.gorkem.vehicle_inspector.entity.Vehicle;
 import com.gorkem.vehicle_inspector.entity.VehicleReminder;
+import com.gorkem.vehicle_inspector.repository.AppNotificationRepository;
 import com.gorkem.vehicle_inspector.repository.VehicleReminderRepository;
 import com.gorkem.vehicle_inspector.service.BusinessContextService;
 import com.gorkem.vehicle_inspector.service.ReminderService;
@@ -20,12 +21,12 @@ import java.time.*;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class ReminderServiceTest {
     @Mock private VehicleReminderRepository reminders;
+    @Mock private AppNotificationRepository notifications;
     @Mock private BusinessContextService businessContext;
     @Mock private VehicleAccessService vehicleAccess;
 
@@ -37,16 +38,17 @@ class ReminderServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new ReminderService(reminders, businessContext, vehicleAccess, clock);
+        service = new ReminderService(reminders, notifications,
+                businessContext, vehicleAccess, clock);
         user = mock(User.class);
-        when(user.getId()).thenReturn(1L);
-        when(user.getFullName()).thenReturn("Test User");
         vehicle = new Vehicle("35ABC123", "Honda", "City", 2022, 100_000, user);
         ReflectionTestUtils.setField(vehicle, "id", 5L);
     }
 
     @Test
     void listShouldCalculateDateAndMileageStatusesAgainstCurrentVehicleState() {
+        when(user.getId()).thenReturn(1L);
+        when(user.getFullName()).thenReturn("Test User");
         VehicleReminder overdueDate = reminder(LocalDate.of(2026, 9, 15), null);
         VehicleReminder dueSoonDate = reminder(LocalDate.of(2026, 10, 16), null);
         VehicleReminder dueSoonMileage = reminder(null, 102_000);
@@ -65,6 +67,21 @@ class ReminderServiceTest {
                 result.stream().map(ReminderResponse::status).toList());
         assertEquals(-1, result.get(0).daysRemaining());
         assertEquals(2_000, result.get(2).mileageRemaining());
+    }
+
+    @Test
+    void deleteShouldDetachHistoricalNotificationsBeforeDeletingReminder() {
+        VehicleReminder reminder = reminder(LocalDate.of(2026, 10, 1), null);
+        ReflectionTestUtils.setField(reminder, "id", 7L);
+        when(businessContext.requireUser("user@example.com")).thenReturn(user);
+        when(vehicleAccess.requireActiveVehicle(5L, user)).thenReturn(vehicle);
+        when(reminders.findByIdAndVehicleId(7L, 5L)).thenReturn(java.util.Optional.of(reminder));
+
+        service.delete(5L, 7L, "user@example.com");
+
+        var ordered = inOrder(notifications, reminders);
+        ordered.verify(notifications).detachReminder(7L);
+        ordered.verify(reminders).delete(reminder);
     }
 
     private VehicleReminder reminder(LocalDate dueDate, Integer dueMileage) {

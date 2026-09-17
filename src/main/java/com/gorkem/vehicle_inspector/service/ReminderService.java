@@ -4,6 +4,7 @@ import com.gorkem.vehicle_inspector.dto.request.ReminderRequest;
 import com.gorkem.vehicle_inspector.dto.response.ReminderResponse;
 import com.gorkem.vehicle_inspector.entity.*;
 import com.gorkem.vehicle_inspector.exception.ResourceNotFoundException;
+import com.gorkem.vehicle_inspector.repository.AppNotificationRepository;
 import com.gorkem.vehicle_inspector.repository.VehicleReminderRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,14 +20,17 @@ public class ReminderService {
     private static final int DUE_SOON_DAYS = 30;
     private static final int DUE_SOON_KILOMETERS = 2_000;
     private final VehicleReminderRepository reminders;
+    private final AppNotificationRepository notifications;
     private final BusinessContextService businessContext;
     private final VehicleAccessService vehicleAccess;
     private final Clock clock;
 
     public ReminderService(VehicleReminderRepository reminders,
+                           AppNotificationRepository notifications,
                            BusinessContextService businessContext,
                            VehicleAccessService vehicleAccess, Clock clock) {
-        this.reminders = reminders; this.businessContext = businessContext;
+        this.reminders = reminders; this.notifications = notifications;
+        this.businessContext = businessContext;
         this.vehicleAccess = vehicleAccess; this.clock = clock;
     }
 
@@ -75,7 +79,9 @@ public class ReminderService {
     public void delete(Long vehicleId, Long reminderId, String email) {
         User user = businessContext.requireUser(email);
         Vehicle vehicle = vehicleAccess.requireActiveVehicle(vehicleId, user);
-        reminders.delete(require(reminderId, vehicle.getId()));
+        VehicleReminder reminder = require(reminderId, vehicle.getId());
+        notifications.detachReminder(reminder.getId());
+        reminders.delete(reminder);
     }
 
     private VehicleReminder require(Long reminderId, Long vehicleId) {
