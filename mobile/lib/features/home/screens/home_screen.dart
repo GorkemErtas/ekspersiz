@@ -460,11 +460,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Color _severityColor(String? severity) {
     return switch (severity) {
-      'NONE' => AppTheme.severityNone,
-      'MINOR' => AppTheme.severityMinor,
-      'MODERATE' => AppTheme.severityModerate,
-      'SEVERE' => AppTheme.severitySevere,
-      _ => AppTheme.severityUnknown,
+      'NONE' => AppTheme.successColorFor(context),
+      'MINOR' => AppTheme.warningColorFor(context),
+      'MODERATE' => AppTheme.moderateColorFor(context),
+      'SEVERE' => AppTheme.dangerColorFor(context),
+      _ => AppTheme.neutralColorFor(context),
     };
   }
 
@@ -556,7 +556,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -887,8 +887,8 @@ class _DashboardHeader extends StatelessWidget {
                       constraints: const BoxConstraints(minWidth: 17),
                       height: 17,
                       padding: const EdgeInsets.symmetric(horizontal: 4),
-                      decoration: const BoxDecoration(
-                        color: AppTheme.dangerColor,
+                      decoration: BoxDecoration(
+                        color: AppTheme.dangerColorFor(context),
                         borderRadius: BorderRadius.all(Radius.circular(9)),
                       ),
                       alignment: Alignment.center,
@@ -929,7 +929,7 @@ class _HeroAnalysisCard extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(24),
           gradient: AppTheme.deepBrandGradient,
-          boxShadow: AppTheme.primaryShadow,
+          boxShadow: AppTheme.primaryShadowFor(context),
         ),
         child: Stack(
           children: [

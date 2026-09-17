@@ -139,9 +139,9 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
     _ => 'İyi',
   };
   Color _statusColor(String value) => switch (value) {
-    'ATTENTION' => AppTheme.dangerColor,
-    'DUE_SOON' => AppTheme.warningColor,
-    _ => AppTheme.successColor,
+    'ATTENTION' => AppTheme.dangerColorFor(context),
+    'DUE_SOON' => AppTheme.warningColorFor(context),
+    _ => AppTheme.successColorFor(context),
   };
   String _type(String v) => v
       .replaceAll('_', ' ')
@@ -417,7 +417,7 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
               overdue
                   ? Icons.warning_amber_rounded
                   : Icons.notifications_active_outlined,
-              color: overdue ? AppTheme.dangerColor : null,
+              color: overdue ? AppTheme.dangerColorFor(context) : null,
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -442,7 +442,7 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
                     },
                     style: TextStyle(
                       color: overdue
-                          ? AppTheme.dangerColor
+                          ? AppTheme.dangerColorFor(context)
                           : Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                   ),

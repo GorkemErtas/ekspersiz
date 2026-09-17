@@ -340,11 +340,11 @@ class _CurrentSubscriptionCard extends StatelessWidget {
               AppStatusBadge(
                 label: _statusLabel(status.status),
                 color: status.currentPlan == 'FREE'
-                    ? AppTheme.severityUnknown
-                    : AppTheme.successColor,
+                    ? AppTheme.neutralColorFor(context)
+                    : AppTheme.successColorFor(context),
                 backgroundColor: status.currentPlan == 'FREE'
-                    ? const Color(0xFF24202B)
-                    : AppTheme.successSoft,
+                    ? AppTheme.neutralSoftFor(context)
+                    : AppTheme.successSoftFor(context),
                 icon: Icons.verified_rounded,
               ),
             ],
@@ -429,10 +429,12 @@ class _PlanCard extends StatelessWidget {
                 ),
               ),
               if (plan.highlighted)
-                const AppStatusBadge(
+                AppStatusBadge(
                   label: 'Önerilen',
-                  color: AppTheme.primaryColor,
-                  backgroundColor: Color(0xFF24183F),
+                  color: Theme.of(context).colorScheme.primary,
+                  backgroundColor: Theme.of(
+                    context,
+                  ).colorScheme.primaryContainer,
                   icon: Icons.auto_awesome_rounded,
                 ),
             ],
@@ -457,10 +459,10 @@ class _PlanCard extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 8),
               child: Row(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.check_circle_rounded,
                     size: 19,
-                    color: AppTheme.successColor,
+                    color: AppTheme.successColorFor(context),
                   ),
                   const SizedBox(width: 9),
                   Expanded(child: Text(feature)),

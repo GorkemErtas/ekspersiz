@@ -18,22 +18,29 @@ class AuthShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       body: Stack(
         children: [
-          const Positioned.fill(
+          Positioned.fill(
             child: DecoratedBox(
               decoration: BoxDecoration(
                 gradient: RadialGradient(
                   center: Alignment(0.72, -0.78),
                   radius: 1.15,
-                  colors: [
-                    Color(0xFF24123B),
-                    Color(0xFF0B090E),
-                    Color(0xFF08070B),
-                  ],
-                  stops: [0, 0.52, 1],
+                  colors: isDark
+                      ? const [
+                          Color(0xFF24123B),
+                          Color(0xFF0B090E),
+                          Color(0xFF08070B),
+                        ]
+                      : const [
+                          Color(0xFFEFE2FF),
+                          Color(0xFFF8F4FC),
+                          Color(0xFFFFFFFF),
+                        ],
+                  stops: const [0, 0.52, 1],
                 ),
               ),
             ),
@@ -92,7 +99,7 @@ class AuthShell extends StatelessWidget {
                                 alpha: 0.14,
                               ),
                             ),
-                            boxShadow: AppTheme.elevatedShadow,
+                            boxShadow: AppTheme.elevatedShadowFor(context),
                           ),
                           child: child,
                         ),
@@ -124,7 +131,7 @@ class _BrandHeader extends StatelessWidget {
           height: 96,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(28),
-            boxShadow: AppTheme.primaryShadow,
+            boxShadow: AppTheme.primaryShadowFor(context),
           ),
           clipBehavior: Clip.antiAlias,
           child: Image.asset(

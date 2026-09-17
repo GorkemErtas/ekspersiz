@@ -56,7 +56,7 @@ class _PrimaryButtonState extends State<PrimaryButton> {
                   : scheme.outlineVariant,
             ),
             boxShadow: _enabled && !_pressed
-                ? AppTheme.primaryShadow
+                ? AppTheme.primaryShadowFor(context)
                 : const [],
           ),
           child: Material(

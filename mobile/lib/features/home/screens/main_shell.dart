@@ -204,7 +204,7 @@ class _MobileShell extends StatelessWidget {
             border: Border.all(
               color: AppTheme.primaryColor.withValues(alpha: 0.18),
             ),
-            boxShadow: AppTheme.elevatedShadow,
+            boxShadow: AppTheme.elevatedShadowFor(context),
           ),
           child: Row(
             children: [
@@ -373,7 +373,7 @@ class _DesktopShell extends StatelessWidget {
                   border: Border.all(
                     color: AppTheme.primaryColor.withValues(alpha: 0.16),
                   ),
-                  boxShadow: AppTheme.elevatedShadow,
+                  boxShadow: AppTheme.elevatedShadowFor(context),
                 ),
                 child: NavigationRail(
                   selectedIndex: selectedIndex,
@@ -388,7 +388,7 @@ class _DesktopShell extends StatelessWidget {
                       decoration: BoxDecoration(
                         gradient: AppTheme.brandGradient,
                         borderRadius: BorderRadius.circular(18),
-                        boxShadow: AppTheme.primaryShadow,
+                        boxShadow: AppTheme.primaryShadowFor(context),
                       ),
                       child: const Icon(
                         Icons.car_crash_rounded,
