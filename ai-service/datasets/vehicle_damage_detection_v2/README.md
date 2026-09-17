@@ -34,3 +34,4 @@ Include different brands, body styles, colors, camera devices, front/rear/side/d
 
 Keep images from the same vehicle or photo sequence in one split to prevent leakage. Avoid duplicates and near-duplicates across splits. Preserve a truly independent test set and do not use it for training decisions.
 
+The manually downloaded CarDD source is imported with `scripts/import_cardd_dataset.py`. Its explicit source mapping lives in `config/cardd_import.yaml`; the importer preserves CarDD's original splits and places generated data in source-specific `cardd` subdirectories. See the AI-service README for the PowerShell command and quarantine behavior.

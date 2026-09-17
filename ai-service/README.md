@@ -51,6 +51,20 @@ Read each dataset README before adding data. Keep the canonical class order in `
 
 Never mix near-duplicates or images from the same vehicle sequence across train, validation, and test splits. Keep the test split independent and untouched until final comparison.
 
+### Import the manually downloaded CarDD dataset
+
+Place the untouched CarDD YOLO export under `datasets/raw/cardd` with its original `train`, `val`, and `test` splits, then run this command from `ai-service` in PowerShell:
+
+```powershell
+.\venv\Scripts\python.exe .\scripts\import_cardd_dataset.py
+```
+
+The reviewed mapping in `config/cardd_import.yaml` resolves target IDs through the shared `config/damage_taxonomy.yaml`. The importer validates every image/label pair and YOLO detection line, preserves the original splits, and writes generated files beneath `datasets/vehicle_damage_detection_v2/images/{split}/cardd` and `labels/{split}/cardd`.
+
+CarDD `tire flat` annotations are dropped. Images that also contain a supported damage remain in the dataset with their supported annotations. Images containing only `tire flat` are excluded from training and copied to `datasets/vehicle_damage_detection_v2/quarantine/cardd` for review; they are never converted into clean negative examples. The deterministic summary is written to `datasets/vehicle_damage_detection_v2/cardd-import-report.json`.
+
+The importer never writes to `datasets/raw/cardd`. Re-running it replaces only generated `cardd` subdirectories, removing stale CarDD output while preserving other Detection V2 sources. Raw data, generated images/labels, quarantine files, and the generated report remain ignored by Git.
+
 ## 2. Train Detection V2
 
 From `ai-service`:
