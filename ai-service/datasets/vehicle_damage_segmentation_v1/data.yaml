@@ -1,4 +1,3 @@
-path: .
 train: images/train
 val: images/val
 test: images/test
@@ -11,4 +10,3 @@ names:
   4: BROKEN_PART
   5: BROKEN_GLASS
   6: DEFORMATION
-

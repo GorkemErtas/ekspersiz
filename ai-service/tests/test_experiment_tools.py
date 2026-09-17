@@ -1,5 +1,8 @@
+import shutil
 import unittest
+from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import patch
 
 import numpy as np
 
@@ -8,6 +11,7 @@ from experiments.config import (
     canonical_damage_classes,
     canonicalize_damage_label,
     dataset_class_names,
+    resolve_split_path,
     validate_class_remap_config,
     validate_dataset_config,
 )
@@ -89,6 +93,52 @@ class ExperimentConfigurationTest(unittest.TestCase):
         self.assertEqual(42, args.seed)
         self.assertEqual("auto", args.device)
         self.assertEqual("damage-detection-v2-cardd-5class-640", args.name)
+
+    def test_validator_and_ultralytics_resolve_yaml_relative_splits_identically(
+        self,
+    ) -> None:
+        workspace = AI_SERVICE_ROOT / "tests" / ".ultralytics-path-test"
+        if workspace.exists():
+            shutil.rmtree(workspace)
+        try:
+            for split in ("train", "val", "test"):
+                (workspace / "images" / split / "cardd").mkdir(parents=True)
+            config_path = workspace / "data.yaml"
+            config_path.write_text(
+                "train: images/train/cardd\n"
+                "val: images/val/cardd\n"
+                "test: images/test/cardd\n"
+                "names:\n"
+                "  0: SCRATCH\n"
+                "  1: DENT\n",
+                encoding="utf-8",
+            )
+            config = validate_dataset_config(config_path)
+
+            from ultralytics.data.utils import check_det_dataset
+
+            with patch("ultralytics.data.utils.check_font"):
+                ultralytics_config = check_det_dataset(
+                    str(config_path), autodownload=False
+                )
+
+            for split in ("train", "val", "test"):
+                self.assertEqual(
+                    resolve_split_path(config_path, config, split),
+                    Path(ultralytics_config[split]),
+                )
+        finally:
+            if workspace.exists():
+                shutil.rmtree(workspace)
+
+    def test_relative_explicit_dataset_root_is_rejected(self) -> None:
+        config_path = AI_SERVICE_ROOT / "datasets" / "example" / "data.yaml"
+        with self.assertRaisesRegex(ValueError, "Omit 'path'"):
+            resolve_split_path(
+                config_path,
+                {"path": ".", "train": "images/train"},
+                "train",
+            )
 
 
 class MaskMetricTest(unittest.TestCase):

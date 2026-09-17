@@ -4,7 +4,7 @@ Generated CarDD data lives in source-specific `cardd` subdirectories and retains
 
 ## Layout
 
-The active `data.yaml` points to `images/{train,val,test}/cardd`; matching labels live under `labels/{train,val,test}/cardd`. An image named `car_001.jpg` uses `car_001.txt` as its label file.
+The active `data.yaml` points to `images/{train,val,test}/cardd`; matching labels live under `labels/{train,val,test}/cardd`. It intentionally omits the optional `path` field so Ultralytics anchors these portable relative paths to the directory containing `data.yaml`. An image named `car_001.jpg` uses `car_001.txt` as its label file.
 
 Each non-empty label line uses normalized YOLO detection coordinates:
 

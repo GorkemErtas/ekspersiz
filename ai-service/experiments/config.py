@@ -89,12 +89,22 @@ def validate_class_remap_config(config: dict[str, Any]) -> dict[str, str]:
 
 
 def resolve_split_path(config_path: Path, config: dict[str, Any], split: str) -> Path:
-    root_value = config.get("path", ".")
-    root = Path(root_value)
-    if not root.is_absolute():
-        root = (config_path.parent / root).resolve()
+    root_value = config.get("path")
+    if root_value is None:
+        root = config_path.resolve().parent
+    else:
+        if not isinstance(root_value, str) or not root_value.strip():
+            raise ValueError(f"Dataset 'path' must be a non-empty string: {config_path}")
+        root = Path(root_value).expanduser()
+        if not root.is_absolute():
+            raise ValueError(
+                "Relative dataset 'path' values depend on the process working directory "
+                f"in Ultralytics. Omit 'path' to anchor splits to the YAML directory: "
+                f"{config_path}"
+            )
+        root = root.resolve()
     split_path = Path(config[split])
-    return split_path if split_path.is_absolute() else root / split_path
+    return split_path.resolve() if split_path.is_absolute() else (root / split_path).resolve()
 
 
 def list_images(directory: Path) -> list[Path]:

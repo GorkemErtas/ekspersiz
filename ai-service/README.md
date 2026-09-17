@@ -82,7 +82,7 @@ Important settings are configurable:
 python scripts/train_damage_model.py --epochs 100 --batch 8 --imgsz 640 --patience 20 --seed 42 --device auto --name damage-detection-v2-cardd-5class-640
 ```
 
-Before loading the model, the script validates all train/validation/test image-label pairs, the five-class range, annotation shape, and normalized coordinates. CUDA device 0 is selected when available and CPU is the fallback. Training is deterministic where supported, performs validation, enables early stopping, and writes `weights/best.pt`, `weights/last.pt`, plots, and metrics under `training-runs/damage-detection-v2-cardd-5class-640`. It never copies weights into `models/best.pt`.
+Before loading the model, the script validates all train/validation/test image-label pairs, the five-class range, annotation shape, normalized coordinates, and portable dataset paths. The dataset YAML omits `path`, causing both the custom validator and Ultralytics to resolve split paths from the YAML directory. CUDA device 0 is selected when available and CPU is the fallback. Training is deterministic where supported, performs validation, enables early stopping, and writes `weights/best.pt`, `weights/last.pt`, plots, and metrics under `training-runs/damage-detection-v2-cardd-5class-640`. It never copies weights into `models/best.pt`.
 
 ## 3. Train Segmentation V1
 

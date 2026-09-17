@@ -1,4 +1,3 @@
-path: .
 train: images/train/cardd
 val: images/val/cardd
 test: images/test/cardd
