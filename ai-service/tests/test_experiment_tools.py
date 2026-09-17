@@ -7,6 +7,7 @@ from experiments.config import (
     AI_SERVICE_ROOT,
     canonical_damage_classes,
     canonicalize_damage_label,
+    dataset_class_names,
     validate_class_remap_config,
     validate_dataset_config,
 )
@@ -21,10 +22,11 @@ from scripts.evaluate_damage_models import (
     remap_label_lines,
     shared_model_classes,
 )
+from scripts.train_damage_model import build_parser as build_detection_train_parser
 
 
 class ExperimentConfigurationTest(unittest.TestCase):
-    def test_dataset_configs_match_canonical_taxonomy(self) -> None:
+    def test_application_taxonomy_remains_seven_classes(self) -> None:
         expected = [
             "SCRATCH",
             "DENT",
@@ -37,12 +39,23 @@ class ExperimentConfigurationTest(unittest.TestCase):
         self.assertEqual(expected, canonical_damage_classes())
         self.assertNotIn("NO_VISIBLE_DAMAGE", expected)
 
-        for dataset in (
-            "vehicle_damage_detection_v2",
-            "vehicle_damage_segmentation_v1",
-        ):
-            config = AI_SERVICE_ROOT / "datasets" / dataset / "data.yaml"
-            validate_dataset_config(config)
+        detection_config = (
+            AI_SERVICE_ROOT / "datasets" / "vehicle_damage_detection_v2" / "data.yaml"
+        )
+        detection = validate_dataset_config(detection_config)
+        self.assertEqual(
+            ["SCRATCH", "DENT", "CRACK", "BROKEN_PART", "BROKEN_GLASS"],
+            dataset_class_names(detection, detection_config),
+        )
+
+        segmentation_config = (
+            AI_SERVICE_ROOT / "datasets" / "vehicle_damage_segmentation_v1" / "data.yaml"
+        )
+        segmentation = validate_dataset_config(segmentation_config)
+        self.assertEqual(
+            expected,
+            dataset_class_names(segmentation, segmentation_config),
+        )
 
     def test_external_mapping_requires_canonical_targets_and_reject_policy(self) -> None:
         valid = {
@@ -65,6 +78,17 @@ class ExperimentConfigurationTest(unittest.TestCase):
         self.assertEqual("PAINT_DAMAGE", canonicalize_damage_label("paint-damage"))
         with self.assertRaisesRegex(ValueError, "Unmapped"):
             canonicalize_damage_label("rust")
+
+    def test_cardd_training_defaults_are_reproducible(self) -> None:
+        args = build_detection_train_parser().parse_args([])
+
+        self.assertEqual(100, args.epochs)
+        self.assertEqual(8, args.batch)
+        self.assertEqual(640, args.imgsz)
+        self.assertEqual(20, args.patience)
+        self.assertEqual(42, args.seed)
+        self.assertEqual("auto", args.device)
+        self.assertEqual("damage-detection-v2-cardd-5class-640", args.name)
 
 
 class MaskMetricTest(unittest.TestCase):
@@ -115,7 +139,13 @@ class EvaluationOutputTest(unittest.TestCase):
     def test_model_taxonomy_mapping_finds_shared_classes(self) -> None:
         production = canonical_model_names({0: "Broken part", 1: "Dent", 2: "Scratch"})
         detection_v2 = canonical_model_names(
-            {0: "SCRATCH", 1: "DENT", 2: "PAINT_DAMAGE", 3: "BROKEN_PART"}
+            {
+                0: "SCRATCH",
+                1: "DENT",
+                2: "CRACK",
+                3: "BROKEN_PART",
+                4: "BROKEN_GLASS",
+            }
         )
 
         self.assertEqual(
@@ -127,10 +157,10 @@ class EvaluationOutputTest(unittest.TestCase):
         text = remap_label_lines(
             [
                 "0 0.5 0.5 0.2 0.2",
-                "4 0.4 0.4 0.1 0.1",
-                "5 0.3 0.3 0.1 0.1",
+                "3 0.4 0.4 0.1 0.1",
+                "4 0.3 0.3 0.1 0.1",
             ],
-            canonical_damage_classes(),
+            ["SCRATCH", "DENT", "CRACK", "BROKEN_PART", "BROKEN_GLASS"],
             {"BROKEN_PART": 0, "DENT": 1, "SCRATCH": 2},
             {"SCRATCH", "DENT", "BROKEN_PART"},
         )

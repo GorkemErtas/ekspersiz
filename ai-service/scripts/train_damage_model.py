@@ -13,6 +13,7 @@ from experiments.config import (  # noqa: E402
     require_training_images,
     safe_name,
     select_device,
+    validate_detection_dataset,
     validate_dataset_config,
 )
 
@@ -29,11 +30,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--data", type=Path, default=DEFAULT_DATA)
     parser.add_argument("--model", type=Path, default=DEFAULT_MODEL)
     parser.add_argument("--project", type=Path, default=DEFAULT_PROJECT)
-    parser.add_argument("--name", default="damage-detection-v2")
+    parser.add_argument("--name", default="damage-detection-v2-cardd-5class-640")
     parser.add_argument("--epochs", type=int, default=100)
     parser.add_argument("--batch", type=int, default=8)
     parser.add_argument("--imgsz", type=int, default=640)
-    parser.add_argument("--patience", type=int, default=18)
+    parser.add_argument("--patience", type=int, default=20)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--workers", type=int)
     parser.add_argument("--device", default="auto", help="auto, cpu, 0, 1, ...")
@@ -48,6 +49,7 @@ def train_damage_model(args: argparse.Namespace) -> None:
 
     dataset = validate_dataset_config(data_path)
     require_training_images(data_path, dataset)
+    validation = validate_detection_dataset(data_path, dataset)
     device = select_device(args.device)
     workers = args.workers if args.workers is not None else (2 if device != "cpu" else 0)
     args.project.mkdir(parents=True, exist_ok=True)
@@ -56,6 +58,7 @@ def train_damage_model(args: argparse.Namespace) -> None:
     print(f"Base model: {model_path}")
     print(f"Output: {args.project.resolve() / safe_name(args.name)}")
     print(f"Device: {device}")
+    print(f"Dataset validation: {validation}")
 
     from ultralytics import YOLO
 
@@ -73,6 +76,7 @@ def train_damage_model(args: argparse.Namespace) -> None:
         project=str(args.project.resolve()),
         name=safe_name(args.name),
         pretrained=True,
+        save=True,
         cache=False,
         plots=True,
         val=True,

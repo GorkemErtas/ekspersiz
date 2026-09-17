@@ -5,7 +5,11 @@ from pathlib import Path
 
 import yaml
 
-from experiments.config import AI_SERVICE_ROOT
+from experiments.config import (
+    AI_SERVICE_ROOT,
+    validate_dataset_config,
+    validate_detection_dataset,
+)
 from scripts.import_cardd_dataset import (
     CarddImportError,
     import_cardd_dataset,
@@ -21,8 +25,8 @@ class CarddAnnotationRemappingTest(unittest.TestCase):
             AI_SERVICE_ROOT / "config" / "cardd_import.yaml"
         )
 
-    def test_each_supported_cardd_class_maps_to_canonical_id(self) -> None:
-        expected = {0: 1, 1: 0, 2: 3, 3: 5, 4: 4}
+    def test_each_supported_cardd_class_maps_to_five_class_model_id(self) -> None:
+        expected = {0: 1, 1: 0, 2: 2, 3: 4, 4: 3}
         for source_id, target_id in expected.items():
             with self.subTest(source_id=source_id):
                 converted, parsed_source_id = remap_annotation_line(
@@ -120,6 +124,10 @@ class CarddImportIntegrationTest(unittest.TestCase):
         )
         self.assertEqual(1, report["tire_flat_annotations_dropped"])
         self.assertEqual(0, report["tire_flat_only_images_quarantined"])
+        self.assertEqual(
+            ["SCRATCH", "DENT", "CRACK", "BROKEN_PART", "BROKEN_GLASS"],
+            report["model_classes"],
+        )
 
     def test_tire_flat_only_image_is_quarantined(self) -> None:
         self._add_pair("val", "tire_only", "5 0.5 0.5 0.2 0.2\n")
@@ -179,6 +187,19 @@ class CarddImportIntegrationTest(unittest.TestCase):
         )
         with self.assertRaisesRegex(CarddImportError, "Missing image"):
             self._run_import()
+
+    def test_training_validation_rejects_class_id_outside_five_class_head(self) -> None:
+        self._add_pair("train", "invalid_later", "2 0.5 0.5 0.2 0.2\n")
+        self._run_import()
+        generated_label = (
+            self.target / "labels" / "train" / "cardd" / "invalid_later.txt"
+        )
+        generated_label.write_text("5 0.5 0.5 0.2 0.2\n", encoding="utf-8")
+        config_path = self.target / "data.yaml"
+        config = validate_dataset_config(config_path)
+
+        with self.assertRaisesRegex(ValueError, "configured range 0..4"):
+            validate_detection_dataset(config_path, config)
 
     def _add_pair(self, split: str, stem: str, labels: str) -> None:
         (self.source / split / "images" / f"{stem}.jpg").write_bytes(b"image")

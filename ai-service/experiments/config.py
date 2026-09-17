@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 import re
 from pathlib import Path
 from typing import Any
@@ -36,21 +37,32 @@ def canonicalize_damage_label(value: str) -> str:
     return mapped
 
 
-def validate_dataset_config(path: Path) -> dict[str, Any]:
+def dataset_class_names(config: dict[str, Any], source: Path) -> list[str]:
+    return _ordered_names(config.get("names"), source)
+
+
+def validate_dataset_config(
+    path: Path,
+    *,
+    require_split_dirs: bool = True,
+) -> dict[str, Any]:
     config = load_yaml(path)
-    actual_names = _ordered_names(config.get("names"), path)
-    expected_names = canonical_damage_classes()
-    if actual_names != expected_names:
+    actual_names = dataset_class_names(config, path)
+    canonical_names = canonical_damage_classes()
+    unknown_names = [name for name in actual_names if name not in canonical_names]
+    if unknown_names:
         raise ValueError(
-            "Dataset class order does not match the canonical damage taxonomy. "
-            f"Expected {expected_names}, got {actual_names}."
+            f"Dataset contains classes outside the canonical damage taxonomy: "
+            f"{unknown_names}."
         )
+    if len(actual_names) != len(set(actual_names)):
+        raise ValueError(f"Dataset class names must be unique: {path}")
 
     for split in ("train", "val", "test"):
         if not isinstance(config.get(split), str) or not config[split].strip():
             raise ValueError(f"Dataset config must define a non-empty '{split}' path: {path}")
         split_path = resolve_split_path(path, config, split)
-        if not split_path.is_dir():
+        if require_split_dirs and not split_path.is_dir():
             raise FileNotFoundError(f"Dataset '{split}' directory not found: {split_path}")
     return config
 
@@ -105,6 +117,82 @@ def require_training_images(config_path: Path, config: dict[str, Any]) -> None:
             )
 
 
+def validate_detection_dataset(
+    config_path: Path,
+    config: dict[str, Any],
+) -> dict[str, Any]:
+    """Validate YOLO detection pairs and labels for every configured split."""
+    names = dataset_class_names(config, config_path)
+    class_counts = {name: 0 for name in names}
+    image_counts: dict[str, int] = {}
+    annotation_counts: dict[str, int] = {}
+
+    for split in ("train", "val", "test"):
+        images_root = resolve_split_path(config_path, config, split)
+        labels_root = _labels_root_for_images(images_root)
+        images = _relative_files(images_root, SUPPORTED_IMAGE_EXTENSIONS)
+        labels = _relative_files(labels_root, {".txt"})
+        missing_labels = sorted(set(images) - set(labels))
+        missing_images = sorted(set(labels) - set(images))
+        if missing_labels:
+            raise ValueError(
+                f"Dataset '{split}' is missing labels for {len(missing_labels)} image(s); "
+                f"first: {missing_labels[0]}."
+            )
+        if missing_images:
+            raise ValueError(
+                f"Dataset '{split}' is missing images for {len(missing_images)} label(s); "
+                f"first: {missing_images[0]}."
+            )
+
+        split_annotations = 0
+        for label_path in labels.values():
+            for line_number, line in enumerate(
+                label_path.read_text(encoding="utf-8-sig").splitlines(), start=1
+            ):
+                if not line.strip():
+                    continue
+                values = line.split()
+                if len(values) != 5:
+                    raise ValueError(
+                        f"Malformed detection annotation at {label_path}:{line_number}; "
+                        f"expected 5 fields, found {len(values)}."
+                    )
+                try:
+                    class_id = int(values[0])
+                except ValueError as exc:
+                    raise ValueError(
+                        f"Invalid class ID at {label_path}:{line_number}: {values[0]}"
+                    ) from exc
+                if not 0 <= class_id < len(names):
+                    raise ValueError(
+                        f"Class ID {class_id} at {label_path}:{line_number} is outside "
+                        f"the configured range 0..{len(names) - 1}."
+                    )
+                coordinates = _normalized_detection_coordinates(
+                    values[1:], label_path, line_number
+                )
+                if coordinates[2] <= 0.0 or coordinates[3] <= 0.0:
+                    raise ValueError(
+                        f"Detection width and height must be greater than zero at "
+                        f"{label_path}:{line_number}."
+                    )
+                class_counts[names[class_id]] += 1
+                split_annotations += 1
+
+        image_counts[split] = len(images)
+        annotation_counts[split] = split_annotations
+
+    return {
+        "classes": names,
+        "images_per_split": image_counts,
+        "annotations_per_split": annotation_counts,
+        "total_images": sum(image_counts.values()),
+        "total_annotations": sum(annotation_counts.values()),
+        "per_class_annotations": class_counts,
+    }
+
+
 def parse_model_spec(value: str) -> tuple[str, Path]:
     if "=" not in value:
         raise ValueError("Model must use LABEL=PATH format.")
@@ -138,6 +226,59 @@ def select_device(requested: str) -> int | str:
         return 0
     print("CUDA is unavailable; using CPU.")
     return "cpu"
+
+
+def _labels_root_for_images(images_root: Path) -> Path:
+    parts = list(images_root.parts)
+    try:
+        images_index = max(
+            index for index, part in enumerate(parts) if part.lower() == "images"
+        )
+    except ValueError as exc:
+        raise ValueError(
+            f"Dataset split path must contain an 'images' directory: {images_root}"
+        ) from exc
+    parts[images_index] = "labels"
+    labels_root = Path(*parts)
+    if not labels_root.is_dir():
+        raise FileNotFoundError(f"Dataset label directory not found: {labels_root}")
+    return labels_root
+
+
+def _relative_files(directory: Path, extensions: set[str]) -> dict[str, Path]:
+    files: dict[str, Path] = {}
+    for path in sorted(directory.rglob("*")):
+        if not path.is_file() or path.suffix.lower() not in extensions:
+            continue
+        key = str(path.relative_to(directory).with_suffix("")).lower()
+        if key in files:
+            raise ValueError(
+                f"Multiple dataset files share the same relative stem: {files[key]}, {path}"
+            )
+        files[key] = path
+    return files
+
+
+def _normalized_detection_coordinates(
+    raw_values: list[str],
+    label_path: Path,
+    line_number: int,
+) -> list[float]:
+    coordinates: list[float] = []
+    for value in raw_values:
+        try:
+            coordinate = float(value)
+        except ValueError as exc:
+            raise ValueError(
+                f"Invalid detection coordinate at {label_path}:{line_number}: {value}"
+            ) from exc
+        if not math.isfinite(coordinate) or not 0.0 <= coordinate <= 1.0:
+            raise ValueError(
+                f"Detection coordinate must be normalized to [0, 1] at "
+                f"{label_path}:{line_number}: {value}"
+            )
+        coordinates.append(coordinate)
+    return coordinates
 
 
 def _ordered_names(value: Any, source: Path) -> list[str]:

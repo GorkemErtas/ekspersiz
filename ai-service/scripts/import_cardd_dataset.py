@@ -18,6 +18,7 @@ if str(PROJECT_ROOT) not in sys.path:
 from experiments.config import (  # noqa: E402
     SUPPORTED_IMAGE_EXTENSIONS,
     canonical_damage_classes,
+    dataset_class_names,
     load_yaml,
     validate_dataset_config,
 )
@@ -38,6 +39,7 @@ class CarddImportError(ValueError):
 @dataclass(frozen=True)
 class ImportMapping:
     source_names: dict[int, str]
+    model_classes: tuple[str, ...]
     target_ids: dict[int, int | None]
     dropped_class_ids: frozenset[int]
 
@@ -74,6 +76,20 @@ def load_import_mapping(path: Path) -> ImportMapping:
         raise CarddImportError("CarDD source_names and class_mapping IDs must match.")
 
     canonical = canonical_damage_classes()
+    raw_model_classes = _indexed_mapping(config.get("model_classes"), "model_classes")
+    model_classes = tuple(
+        str(raw_model_classes[index]).strip().upper()
+        for index in raw_model_classes
+    )
+    if len(model_classes) != len(set(model_classes)):
+        raise CarddImportError("CarDD model_classes must be unique.")
+    unknown_model_classes = [name for name in model_classes if name not in canonical]
+    if unknown_model_classes:
+        raise CarddImportError(
+            f"CarDD model_classes are outside the application taxonomy: "
+            f"{unknown_model_classes}"
+        )
+    model_ids = {name: index for index, name in enumerate(model_classes)}
     target_ids: dict[int, int | None] = {}
     for source_id, target in class_mapping.items():
         if target is None:
@@ -84,7 +100,12 @@ def load_import_mapping(path: Path) -> ImportMapping:
             raise CarddImportError(
                 f"CarDD class {source_id} maps to unknown canonical class: {target}"
             )
-        target_ids[source_id] = canonical.index(normalized)
+        if normalized not in model_ids:
+            raise CarddImportError(
+                f"CarDD class {source_id} maps to canonical class {normalized}, but that "
+                "class is absent from this model's output head."
+            )
+        target_ids[source_id] = model_ids[normalized]
 
     drop_policy = _indexed_mapping(
         config.get("drop_policy"), "drop_policy", require_contiguous=False
@@ -99,7 +120,7 @@ def load_import_mapping(path: Path) -> ImportMapping:
             raise CarddImportError(
                 f"Unsupported drop policy for CarDD class {source_id}: {policy}"
             )
-    return ImportMapping(source_names, target_ids, dropped)
+    return ImportMapping(source_names, model_classes, target_ids, dropped)
 
 
 def remap_annotation_line(
@@ -162,7 +183,16 @@ def import_cardd_dataset(
     _validate_separate_roots(source_root, target_root)
     mapping = load_import_mapping(mapping_path)
     _validate_source_config(source_root, mapping)
-    validate_dataset_config(target_root / "data.yaml")
+    target_config_path = target_root / "data.yaml"
+    target_config = validate_dataset_config(
+        target_config_path, require_split_dirs=False
+    )
+    configured_classes = dataset_class_names(target_config, target_config_path)
+    if configured_classes != list(mapping.model_classes):
+        raise CarddImportError(
+            "Detection V2 data.yaml classes do not match the CarDD model output head. "
+            f"Expected {list(mapping.model_classes)}, got {configured_classes}."
+        )
 
     plans, validation = _plan_import(source_root, mapping)
     if validation["errors"]:
@@ -172,7 +202,7 @@ def import_cardd_dataset(
             f"{details}"
         )
 
-    report = _build_report(source_root, target_root, plans, validation)
+    report = _build_report(source_root, target_root, plans, validation, mapping)
     _write_staging_output(target_root, plans, report)
     _replace_generated_output(target_root)
     return report
@@ -269,8 +299,8 @@ def _build_report(
     target_root: Path,
     plans: list[PlannedImage],
     validation: dict[str, Any],
+    mapping: ImportMapping,
 ) -> dict[str, Any]:
-    canonical = canonical_damage_classes()
     imported_per_split = {split: 0 for split in SPLITS}
     processed_per_split = {split: 0 for split in SPLITS}
     class_counts: Counter[int] = Counter()
@@ -294,6 +324,8 @@ def _build_report(
 
     return {
         "source_dataset": "CarDD",
+        "application_taxonomy": canonical_damage_classes(),
+        "model_classes": list(mapping.model_classes),
         "source_root": str(source_root),
         "target_root": str(target_root),
         "total_images_processed": len(plans),
@@ -307,7 +339,8 @@ def _build_report(
         "malformed_labels": validation["malformed_labels"],
         "missing_image_label_pairs": validation["missing_image_label_pairs"],
         "per_class_counts_after_remapping": {
-            name: class_counts[index] for index, name in enumerate(canonical)
+            name: class_counts[index]
+            for index, name in enumerate(mapping.model_classes)
         },
         "quarantined_images": quarantine,
     }

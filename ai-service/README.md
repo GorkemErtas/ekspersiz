@@ -21,10 +21,13 @@ Image brightness, blur, recognizable-vehicle presence, and vehicle framing are v
 
 ### Model A — Damage Detection V2
 
-- Dataset: `datasets/vehicle_damage_detection_v2`
+- Dataset config: `datasets/vehicle_damage_detection_v2/data.yaml`
+- Output classes: `SCRATCH`, `DENT`, `CRACK`, `BROKEN_PART`, `BROKEN_GLASS`
 - Base model: the existing `yolo11n.pt`
-- Default run: `training-runs/damage-detection-v2`
-- Candidate destination after review: `models/candidates/damage_detection_v2.pt`
+- Default run: `training-runs/damage-detection-v2-cardd-5class-640`
+- Candidate destination after review: `models/candidates/damage_detection_v2_cardd_5class.pt`
+
+The application taxonomy remains the seven classes in `config/damage_taxonomy.yaml`. This first CarDD model has a five-class output head because CarDD has no supported examples for `PAINT_DAMAGE` or `DEFORMATION`. Those application damage types remain valid for legacy models, future datasets, backend records, and Flutter display.
 
 ### Model B — Damage Segmentation V1 (EXPERIMENTAL)
 
@@ -47,7 +50,7 @@ vehicle detection
 
 ## 1. Populate datasets
 
-Read each dataset README before adding data. Keep the canonical class order in `config/damage_taxonomy.yaml`. Use real images and reviewed YOLO annotations only. Clean vehicles are negative examples with empty label files.
+Read each dataset README before adding data. Keep `config/damage_taxonomy.yaml` as the application-level source of truth. Each experiment may declare a reviewed subset and contiguous model-specific IDs in its own `data.yaml`. Use real images and reviewed YOLO annotations only. Clean vehicles are negative examples with empty label files.
 
 Never mix near-duplicates or images from the same vehicle sequence across train, validation, and test splits. Keep the test split independent and untouched until final comparison.
 
@@ -59,7 +62,7 @@ Place the untouched CarDD YOLO export under `datasets/raw/cardd` with its origin
 .\venv\Scripts\python.exe .\scripts\import_cardd_dataset.py
 ```
 
-The reviewed mapping in `config/cardd_import.yaml` resolves target IDs through the shared `config/damage_taxonomy.yaml`. The importer validates every image/label pair and YOLO detection line, preserves the original splits, and writes generated files beneath `datasets/vehicle_damage_detection_v2/images/{split}/cardd` and `labels/{split}/cardd`.
+The reviewed mapping in `config/cardd_import.yaml` validates its model classes against the shared `config/damage_taxonomy.yaml`, then assigns contiguous CarDD model IDs. The importer validates every image/label pair and YOLO detection line, preserves the original splits, and writes generated files beneath `datasets/vehicle_damage_detection_v2/images/{split}/cardd` and `labels/{split}/cardd`.
 
 CarDD `tire flat` annotations are dropped. Images that also contain a supported damage remain in the dataset with their supported annotations. Images containing only `tire flat` are excluded from training and copied to `datasets/vehicle_damage_detection_v2/quarantine/cardd` for review; they are never converted into clean negative examples. The deterministic summary is written to `datasets/vehicle_damage_detection_v2/cardd-import-report.json`.
 
@@ -76,10 +79,10 @@ python scripts/train_damage_model.py
 Important settings are configurable:
 
 ```bash
-python scripts/train_damage_model.py --epochs 100 --batch 8 --imgsz 640 --patience 18 --seed 42 --device auto --name damage-detection-v2
+python scripts/train_damage_model.py --epochs 100 --batch 8 --imgsz 640 --patience 20 --seed 42 --device auto --name damage-detection-v2-cardd-5class-640
 ```
 
-CUDA device 0 is selected when available and CPU is the fallback. Training is deterministic where supported, performs validation, enables early stopping, and writes plots and metrics into a versioned Ultralytics run directory. It never copies weights into `models/best.pt`.
+Before loading the model, the script validates all train/validation/test image-label pairs, the five-class range, annotation shape, and normalized coordinates. CUDA device 0 is selected when available and CPU is the fallback. Training is deterministic where supported, performs validation, enables early stopping, and writes `weights/best.pt`, `weights/last.pt`, plots, and metrics under `training-runs/damage-detection-v2-cardd-5class-640`. It never copies weights into `models/best.pt`.
 
 ## 3. Train Segmentation V1
 
@@ -101,7 +104,7 @@ python scripts/evaluate_damage_models.py \
   --data datasets/vehicle_damage_detection_v2/data.yaml \
   --split test \
   --model production=models/best.pt \
-  --model detection-v2=models/candidates/damage_detection_v2.pt
+  --model detection-v2=models/candidates/damage_detection_v2_cardd_5class.pt
 ```
 
 Evaluate segmentation separately:
@@ -116,14 +119,14 @@ python scripts/evaluate_damage_models.py \
 
 The evaluator stores aggregate precision, recall, mAP50, mAP50-95, per-class metrics, and Ultralytics plots/confusion matrices under `evaluation-runs`. Review every class; do not promote a model from one aggregate mAP number.
 
-The current production checkpoint exposes only `BROKEN_PART`, `DENT`, and `SCRATCH`, in a different numeric order from the canonical V2 taxonomy. When multiple models are supplied, the evaluator therefore builds ignored comparison views of the same test images, remaps label IDs for each checkpoint, and calculates comparison metrics over the canonical classes shared by every model. Each JSON result records that `evaluation_scope`. Run Detection V2 by itself as well to measure all seven canonical classes; do not interpret the shared three-class aggregate as full-taxonomy performance.
+The current production checkpoint exposes only `BROKEN_PART`, `DENT`, and `SCRATCH`, in a different numeric order from the CarDD candidate. When multiple models are supplied, the evaluator reads the dataset's model-specific class names, builds ignored comparison views of the same test images, remaps label IDs for each checkpoint, and calculates metrics over the semantically shared `SCRATCH`, `DENT`, and `BROKEN_PART` classes. Each JSON result records that `evaluation_scope`. Run Detection V2 by itself as well to measure all five CarDD candidate classes; do not interpret the shared three-class aggregate as full candidate performance.
 
 ```bash
 python scripts/evaluate_damage_models.py \
   --task detect \
   --data datasets/vehicle_damage_detection_v2/data.yaml \
   --split test \
-  --model detection-v2=models/candidates/damage_detection_v2.pt
+  --model detection-v2=models/candidates/damage_detection_v2_cardd_5class.pt
 ```
 
 ## 5. Real-world error analysis
@@ -133,7 +136,7 @@ Place manually selected images in `evaluation-images` and optionally complete `r
 ```bash
 python scripts/analyze_damage_errors.py \
   --model production=models/best.pt \
-  --model detection-v2=models/candidates/damage_detection_v2.pt
+  --model detection-v2=models/candidates/damage_detection_v2_cardd_5class.pt
 ```
 
 The utility saves annotated images plus CSV/JSON review tables. It flags clean-image false positives, low-confidence false positives, missed known damage, and incorrect damage types when manifest expectations exist. Use annotated outputs to review localization, small missed damage, `SCRATCH` vs `PAINT_DAMAGE`, and `DENT` vs `DEFORMATION`. Run segmentation candidates separately and inspect the emitted mask/image area ratios.

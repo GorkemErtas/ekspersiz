@@ -20,6 +20,7 @@ if str(PROJECT_ROOT) not in sys.path:
 from experiments.config import (  # noqa: E402
     canonical_damage_classes,
     canonicalize_damage_label,
+    dataset_class_names,
     list_images,
     parse_model_spec,
     resolve_split_path,
@@ -225,7 +226,7 @@ def build_comparison_dataset(
     target_images.mkdir(parents=True, exist_ok=True)
     target_labels.mkdir(parents=True, exist_ok=True)
 
-    source_classes = canonical_damage_classes()
+    source_classes = dataset_class_names(source_config, source_config_path)
     target_names = canonical_model_names(model_names)
     target_ids = {name: class_id for class_id, name in target_names.items()}
     scope = set(shared_classes)

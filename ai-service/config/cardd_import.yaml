@@ -7,8 +7,17 @@ source_names:
   4: lamp broken
   5: tire flat
 
-# Targets are resolved against config/damage_taxonomy.yaml. A null target means
-# that the annotation is unsupported and must follow the explicit drop policy.
+# This is the output head for the CarDD Detection V2 experiment. These names
+# must remain a unique subset of the application taxonomy in damage_taxonomy.yaml.
+model_classes:
+  0: SCRATCH
+  1: DENT
+  2: CRACK
+  3: BROKEN_PART
+  4: BROKEN_GLASS
+
+# Targets are canonical application class names. Their model IDs are resolved
+# through model_classes above. A null target follows the explicit drop policy.
 class_mapping:
   0: DENT
   1: SCRATCH
