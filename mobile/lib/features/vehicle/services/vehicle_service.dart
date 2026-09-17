@@ -38,6 +38,8 @@ class VehicleService {
     required String model,
     required int modelYear,
     required int mileage,
+    String? vehicleCategory,
+    String? conformityDate,
     Map<String, dynamic>? tracking,
   }) async {
     final response = await apiClient.post(
@@ -48,6 +50,8 @@ class VehicleService {
         'model': model.trim(),
         'modelYear': modelYear,
         'mileage': mileage,
+        'vehicleCategory': vehicleCategory,
+        'conformityDate': conformityDate,
         'tracking': ?tracking,
       },
     );
@@ -66,6 +70,8 @@ class VehicleService {
     required String model,
     required int modelYear,
     required int mileage,
+    String? vehicleCategory,
+    String? conformityDate,
     String? notes,
   }) async {
     final response = await apiClient.put(
@@ -79,6 +85,8 @@ class VehicleService {
         'model': model.trim(),
         'modelYear': modelYear,
         'mileage': mileage,
+        'vehicleCategory': vehicleCategory,
+        'conformityDate': conformityDate,
         'notes': notes,
       },
     );

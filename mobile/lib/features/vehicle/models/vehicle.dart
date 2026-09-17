@@ -6,6 +6,8 @@ class Vehicle {
     required this.model,
     required this.modelYear,
     required this.mileage,
+    this.vehicleCategory,
+    this.conformityDate,
     required this.primaryVehicle,
     this.notes,
     this.createdAt,
@@ -17,6 +19,8 @@ class Vehicle {
   final String model;
   final int modelYear;
   final int mileage;
+  final String? vehicleCategory;
+  final DateTime? conformityDate;
   final bool primaryVehicle;
   final String? notes;
   final DateTime? createdAt;
@@ -31,6 +35,10 @@ class Vehicle {
       model: json['model'] as String? ?? '',
       modelYear: (json['modelYear'] as num?)?.toInt() ?? 0,
       mileage: (json['mileage'] as num?)?.toInt() ?? 0,
+      vehicleCategory: json['vehicleCategory'] as String?,
+      conformityDate: DateTime.tryParse(
+        json['conformityDate'] as String? ?? '',
+      ),
       primaryVehicle: json['primaryVehicle'] as bool? ?? false,
       notes: json['notes'] as String?,
       createdAt: DateTime.tryParse(json['createdAt'] as String? ?? ''),

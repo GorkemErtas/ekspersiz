@@ -8,6 +8,8 @@ class MaintenanceRecord {
     this.note,
     this.nextRecommendedDate,
     this.nextRecommendedMileage,
+    this.intervalMonths,
+    this.intervalMileage,
     required this.createdByName,
   });
   final int id;
@@ -18,6 +20,8 @@ class MaintenanceRecord {
   final String? note;
   final DateTime? nextRecommendedDate;
   final int? nextRecommendedMileage;
+  final int? intervalMonths;
+  final int? intervalMileage;
   final String createdByName;
 
   factory MaintenanceRecord.fromJson(Map<String, dynamic> json) =>
@@ -33,6 +37,8 @@ class MaintenanceRecord {
         ),
         nextRecommendedMileage: (json['nextRecommendedMileage'] as num?)
             ?.toInt(),
+        intervalMonths: (json['intervalMonths'] as num?)?.toInt(),
+        intervalMileage: (json['intervalMileage'] as num?)?.toInt(),
         createdByName: json['createdByName'] as String? ?? '',
       );
 }

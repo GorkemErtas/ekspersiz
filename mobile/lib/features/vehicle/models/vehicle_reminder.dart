@@ -9,6 +9,11 @@ class VehicleReminder {
     required this.status,
     this.daysRemaining,
     this.mileageRemaining,
+    this.sourceDate,
+    this.sourceMileage,
+    this.intervalMonths,
+    this.intervalMileage,
+    this.firstInspection,
   });
   final int id;
   final String reminderType;
@@ -19,6 +24,11 @@ class VehicleReminder {
   final String status;
   final int? daysRemaining;
   final int? mileageRemaining;
+  final DateTime? sourceDate;
+  final int? sourceMileage;
+  final int? intervalMonths;
+  final int? intervalMileage;
+  final bool? firstInspection;
 
   factory VehicleReminder.fromJson(Map<String, dynamic> json) =>
       VehicleReminder(
@@ -31,5 +41,10 @@ class VehicleReminder {
         status: json['status'] as String? ?? 'UPCOMING',
         daysRemaining: (json['daysRemaining'] as num?)?.toInt(),
         mileageRemaining: (json['mileageRemaining'] as num?)?.toInt(),
+        sourceDate: DateTime.tryParse(json['sourceDate'] as String? ?? ''),
+        sourceMileage: (json['sourceMileage'] as num?)?.toInt(),
+        intervalMonths: (json['intervalMonths'] as num?)?.toInt(),
+        intervalMileage: (json['intervalMileage'] as num?)?.toInt(),
+        firstInspection: json['firstInspection'] as bool?,
       );
 }
