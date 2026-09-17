@@ -205,6 +205,29 @@ Completed results can be exported as a branded PDF and shared through the device
 
 ---
 
+# 🧪 AI/ML Experimentation Pipeline
+
+The current production AI path remains:
+
+```text
+Vehicle Detection
+  → Damage Object Detection
+  → Vehicle Part Detection
+  → Bounding-Box Overlap Matching
+  → Structured Result
+```
+
+Two isolated experiments are available without changing `ai-service/models/best.pt`:
+
+1. **Damage Detection V2** uses the empty `vehicle_damage_detection_v2` dataset structure and the existing YOLO detection base model.
+2. **Damage Segmentation V1 — EXPERIMENTAL** uses a separate polygon dataset and segmentation checkpoint. Its future target is vehicle detection → damage mask → vehicle-part localization → mask/part intersection → structured result.
+
+Both experiments share the canonical `SCRATCH`, `DENT`, `PAINT_DAMAGE`, `CRACK`, `BROKEN_PART`, `BROKEN_GLASS`, and `DEFORMATION` taxonomy. `NO_VISIBLE_DAMAGE` remains a deterministic domain result represented by clean negative images, never a learned object or mask class.
+
+Dataset population, training commands, independent test comparison, real-world error analysis, future mask-area signals, and the manual candidate promotion process are documented in [`ai-service/README.md`](ai-service/README.md). Training and evaluation outputs remain outside production, and candidate promotion is always an explicit reviewed action.
+
+---
+
 # 🤖 Example Inspection Response
 
 ```json
