@@ -37,10 +37,10 @@ class _MaintenanceFormScreenState extends State<MaintenanceFormScreen> {
   final _mileage = TextEditingController();
   final _cost = TextEditingController();
   final _note = TextEditingController();
-  final _nextMileage = TextEditingController();
+  final _intervalMonths = TextEditingController();
+  final _intervalMileage = TextEditingController();
   late String _type;
   late DateTime _date;
-  DateTime? _nextDate;
   bool _saving = false;
 
   @override
@@ -49,11 +49,11 @@ class _MaintenanceFormScreenState extends State<MaintenanceFormScreen> {
     final r = widget.record;
     _type = r?.maintenanceType ?? 'PERIODIC_MAINTENANCE';
     _date = r?.maintenanceDate ?? DateTime.now();
-    _nextDate = r?.nextRecommendedDate;
     _mileage.text = (r?.mileage ?? widget.currentMileage).toString();
     _cost.text = r?.cost?.toString() ?? '';
     _note.text = r?.note ?? '';
-    _nextMileage.text = r?.nextRecommendedMileage?.toString() ?? '';
+    _intervalMonths.text = r?.intervalMonths?.toString() ?? '';
+    _intervalMileage.text = r?.intervalMileage?.toString() ?? '';
   }
 
   @override
@@ -61,7 +61,8 @@ class _MaintenanceFormScreenState extends State<MaintenanceFormScreen> {
     _mileage.dispose();
     _cost.dispose();
     _note.dispose();
-    _nextMileage.dispose();
+    _intervalMonths.dispose();
+    _intervalMileage.dispose();
     super.dispose();
   }
 
@@ -87,9 +88,24 @@ class _MaintenanceFormScreenState extends State<MaintenanceFormScreen> {
       if (_cost.text.trim().isNotEmpty)
         'cost': double.parse(_cost.text.replaceAll(',', '.')),
       if (_note.text.trim().isNotEmpty) 'note': _note.text.trim(),
-      if (_nextDate != null) 'nextRecommendedDate': _iso(_nextDate!),
-      if (_nextMileage.text.trim().isNotEmpty)
-        'nextRecommendedMileage': int.parse(_nextMileage.text),
+      if (_intervalMonths.text.trim().isNotEmpty)
+        'intervalMonths': int.parse(_intervalMonths.text),
+      if (_intervalMileage.text.trim().isNotEmpty)
+        'intervalMileage': int.parse(_intervalMileage.text),
+      if (widget.record != null &&
+          _intervalMonths.text.trim().isEmpty &&
+          _intervalMileage.text.trim().isEmpty &&
+          widget.record!.intervalMonths == null &&
+          widget.record!.intervalMileage == null &&
+          widget.record!.nextRecommendedDate != null)
+        'nextRecommendedDate': _iso(widget.record!.nextRecommendedDate!),
+      if (widget.record != null &&
+          _intervalMonths.text.trim().isEmpty &&
+          _intervalMileage.text.trim().isEmpty &&
+          widget.record!.intervalMonths == null &&
+          widget.record!.intervalMileage == null &&
+          widget.record!.nextRecommendedMileage != null)
+        'nextRecommendedMileage': widget.record!.nextRecommendedMileage,
     };
     try {
       const service = VehicleTrackingService();
@@ -184,45 +200,42 @@ class _MaintenanceFormScreenState extends State<MaintenanceFormScreen> {
             ),
             const SizedBox(height: 14),
             TextFormField(
-              controller: _nextMileage,
+              controller: _intervalMonths,
               keyboardType: TextInputType.number,
               decoration: const InputDecoration(
-                labelText: 'Sonraki bakım kilometresi',
+                labelText: 'Bakım aralığı (ay)',
+              ),
+              validator: (v) {
+                final value = v?.trim() ?? '';
+                if (value.isEmpty) return null;
+                final parsed = int.tryParse(value);
+                return parsed == null || parsed < 1 || parsed > 600
+                    ? '1-600 arasında ay girin.'
+                    : null;
+              },
+            ),
+            const SizedBox(height: 14),
+            TextFormField(
+              controller: _intervalMileage,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: 'Bakım aralığı (km)',
                 suffixText: 'km',
               ),
               validator: (v) {
                 final value = v?.trim() ?? '';
                 if (value.isEmpty) return null;
                 final parsed = int.tryParse(value);
-                if (parsed == null || parsed < 0 || parsed > 2000000) {
-                  return 'Geçerli kilometre girin.';
-                }
-                final current = int.tryParse(_mileage.text);
-                return current != null && parsed < current
-                    ? 'Sonraki kilometre bakım kilometresinden küçük olamaz.'
+                return parsed == null || parsed < 1 || parsed > 2000000
+                    ? 'Geçerli kilometre aralığı girin.'
                     : null;
               },
             ),
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('Sonraki bakım tarihi'),
-              subtitle: Text(_dateText(_nextDate)),
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (_nextDate != null)
-                    IconButton(
-                      onPressed: () => setState(() => _nextDate = null),
-                      icon: const Icon(Icons.close),
-                    ),
-                  const Icon(Icons.calendar_month_outlined),
-                ],
-              ),
-              onTap: () async {
-                final d = await _pick(_nextDate ?? DateTime.now());
-                if (d != null) setState(() => _nextDate = d);
-              },
+            const SizedBox(height: 8),
+            const Text(
+              'Üretici veya servis planındaki aralığı girin. Sonraki bakım tarihi ve kilometresi sunucuda hesaplanır.',
             ),
+            const SizedBox(height: 14),
             TextFormField(
               controller: _note,
               maxLines: 3,

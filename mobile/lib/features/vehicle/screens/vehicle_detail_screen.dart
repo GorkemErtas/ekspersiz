@@ -93,10 +93,8 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => ReminderFormScreen(
-          vehicleId: widget.vehicle.id,
-          reminder: reminder,
-        ),
+        builder: (_) =>
+            ReminderFormScreen(vehicle: widget.vehicle, reminder: reminder),
       ),
     );
     if (result != null) await _load();

@@ -36,15 +36,18 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
 
   final _mileageController = TextEditingController();
   final _lastMaintenanceMileageController = TextEditingController();
-  final _nextMaintenanceMileageController = TextEditingController();
+  final _maintenanceIntervalMonthsController = TextEditingController();
+  final _maintenanceIntervalMileageController = TextEditingController();
   final _notesController = TextEditingController();
 
   DateTime? _lastMaintenanceDate;
-  DateTime? _nextMaintenanceDate;
+  String? _vehicleCategory;
+  DateTime? _conformityDate;
   DateTime? _inspectionDate;
   DateTime? _trafficInsuranceDate;
   DateTime? _comprehensiveInsuranceDate;
   DateTime? _tireCheckDate;
+  bool _firstInspection = false;
 
   final VehicleService _vehicleService = const VehicleService();
 
@@ -68,6 +71,8 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
       _modelYearController.text = vehicle.modelYear.toString();
 
       _mileageController.text = vehicle.mileage.toString();
+      _vehicleCategory = vehicle.vehicleCategory;
+      _conformityDate = vehicle.conformityDate;
       _notesController.text = vehicle.notes ?? '';
     }
   }
@@ -80,7 +85,8 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
     _modelYearController.dispose();
     _mileageController.dispose();
     _lastMaintenanceMileageController.dispose();
-    _nextMaintenanceMileageController.dispose();
+    _maintenanceIntervalMonthsController.dispose();
+    _maintenanceIntervalMileageController.dispose();
     _notesController.dispose();
 
     super.dispose();
@@ -117,10 +123,48 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
       );
       return;
     }
+    final hasMonthInterval = _maintenanceIntervalMonthsController.text
+        .trim()
+        .isNotEmpty;
+    final hasMileageInterval = _maintenanceIntervalMileageController.text
+        .trim()
+        .isNotEmpty;
+    if (hasMonthInterval && _lastMaintenanceDate == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Aylık bakım aralığı için son bakım tarihini girin.'),
+        ),
+      );
+      return;
+    }
+    if (hasMileageInterval && lastMaintenanceMileage.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Kilometre bakım aralığı için son bakım kilometresini girin.',
+          ),
+        ),
+      );
+      return;
+    }
+    if (_firstInspection &&
+        (_vehicleCategory == null || _conformityDate == null)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'İlk muayene hesabı için araç kategorisini ve uygunluk belgesi tarihini girin.',
+          ),
+        ),
+      );
+      return;
+    }
     if ((lastMaintenanceMileage.isNotEmpty &&
             int.tryParse(lastMaintenanceMileage) == null) ||
-        (_nextMaintenanceMileageController.text.trim().isNotEmpty &&
-            int.tryParse(_nextMaintenanceMileageController.text.trim()) ==
+        (_maintenanceIntervalMonthsController.text.trim().isNotEmpty &&
+            int.tryParse(_maintenanceIntervalMonthsController.text.trim()) ==
+                null) ||
+        (_maintenanceIntervalMileageController.text.trim().isNotEmpty &&
+            int.tryParse(_maintenanceIntervalMileageController.text.trim()) ==
                 null)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Bakım kilometresi sayı olmalıdır.')),
@@ -143,6 +187,10 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
           model: _modelController.text,
           modelYear: modelYear,
           mileage: mileage,
+          vehicleCategory: _vehicleCategory,
+          conformityDate: _conformityDate == null
+              ? null
+              : _iso(_conformityDate!),
           notes: _notesController.text.trim(),
         );
       } else {
@@ -152,6 +200,10 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
           model: _modelController.text,
           modelYear: modelYear,
           mileage: mileage,
+          vehicleCategory: _vehicleCategory,
+          conformityDate: _conformityDate == null
+              ? null
+              : _iso(_conformityDate!),
           tracking: _trackingPayload(),
         );
       }
@@ -195,14 +247,17 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
         'lastMaintenanceMileage': int.parse(
           _lastMaintenanceMileageController.text,
         ),
-      if (_nextMaintenanceDate != null)
-        'nextMaintenanceDate': _iso(_nextMaintenanceDate!),
-      if (_nextMaintenanceMileageController.text.trim().isNotEmpty)
-        'nextMaintenanceMileage': int.parse(
-          _nextMaintenanceMileageController.text,
+      if (_maintenanceIntervalMonthsController.text.trim().isNotEmpty)
+        'maintenanceIntervalMonths': int.parse(
+          _maintenanceIntervalMonthsController.text,
+        ),
+      if (_maintenanceIntervalMileageController.text.trim().isNotEmpty)
+        'maintenanceIntervalMileage': int.parse(
+          _maintenanceIntervalMileageController.text,
         ),
       if (_inspectionDate != null)
         'vehicleInspectionDate': _iso(_inspectionDate!),
+      if (_firstInspection) 'firstInspection': true,
       if (_trafficInsuranceDate != null)
         'trafficInsuranceExpiryDate': _iso(_trafficInsuranceDate!),
       if (_comprehensiveInsuranceDate != null)
@@ -542,6 +597,37 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                       subtitle: const Text('İsteğe bağlı'),
                       childrenPadding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
                       children: [
+                        DropdownButtonFormField<String>(
+                          initialValue: _vehicleCategory,
+                          decoration: const InputDecoration(
+                            labelText: 'Araç kategorisi',
+                          ),
+                          items: const [
+                            DropdownMenuItem(
+                              value: 'PRIVATE_OR_OFFICIAL_CAR',
+                              child: Text('Hususi / resmî otomobil'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'WHEELED_TRACTOR',
+                              child: Text('Lastik tekerlekli traktör'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'TWO_OR_THREE_WHEELED',
+                              child: Text('İki / üç tekerlekli araç'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'OTHER_VEHICLE',
+                              child: Text('Diğer motorlu araç / römork'),
+                            ),
+                          ],
+                          onChanged: (value) =>
+                              setState(() => _vehicleCategory = value),
+                        ),
+                        _dateTile(
+                          'Uygunluk belgesindeki imal tarihi',
+                          _conformityDate,
+                          (value) => _conformityDate = value,
+                        ),
                         if (!_isEditing) ...[
                           _dateTile(
                             'Son bakım tarihi',
@@ -556,24 +642,40 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                               suffixText: 'km',
                             ),
                           ),
-                          _dateTile(
-                            'Sonraki bakım tarihi',
-                            _nextMaintenanceDate,
-                            (value) => _nextMaintenanceDate = value,
-                          ),
                           TextFormField(
-                            controller: _nextMaintenanceMileageController,
+                            controller: _maintenanceIntervalMonthsController,
                             keyboardType: TextInputType.number,
                             decoration: const InputDecoration(
-                              labelText: 'Sonraki bakım kilometresi',
+                              labelText: 'Bakım aralığı (ay)',
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          TextFormField(
+                            controller: _maintenanceIntervalMileageController,
+                            keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(
+                              labelText: 'Bakım aralığı (km)',
                               suffixText: 'km',
                             ),
                           ),
-                          _dateTile(
-                            'Araç muayenesi',
-                            _inspectionDate,
-                            (value) => _inspectionDate = value,
+                          CheckboxListTile(
+                            contentPadding: EdgeInsets.zero,
+                            value: _firstInspection,
+                            title: const Text('İlk muayene tarihini hesapla'),
+                            subtitle: const Text(
+                              'Araç kategorisi ve uygunluk belgesi tarihi kullanılır.',
+                            ),
+                            onChanged: (value) => setState(() {
+                              _firstInspection = value ?? false;
+                              if (_firstInspection) _inspectionDate = null;
+                            }),
                           ),
+                          if (!_firstInspection)
+                            _dateTile(
+                              'Muayene raporundaki son geçerlilik tarihi',
+                              _inspectionDate,
+                              (value) => _inspectionDate = value,
+                            ),
                           _dateTile(
                             'Trafik sigortası bitişi',
                             _trafficInsuranceDate,
