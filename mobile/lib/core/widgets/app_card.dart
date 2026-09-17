@@ -36,7 +36,7 @@ class AppCard extends StatelessWidget {
           color:
               borderColor ?? colorScheme.outlineVariant.withValues(alpha: 0.9),
         ),
-        boxShadow: showShadow ? AppTheme.softShadow : null,
+        boxShadow: showShadow ? AppTheme.softShadowFor(context) : null,
       ),
       child: child,
     );

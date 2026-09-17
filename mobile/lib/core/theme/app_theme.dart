@@ -104,8 +104,469 @@ class AppTheme {
     ),
   ];
 
-  static ThemeData get lightTheme => _buildDarkTheme();
+  static Color successSoftFor(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+      ? successSoft
+      : const Color(0xFFDDF8EC);
+
+  static Color successColorFor(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+      ? successColor
+      : const Color(0xFF087A55);
+
+  static Color warningSoftFor(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+      ? warningSoft
+      : const Color(0xFFFFF1C7);
+
+  static Color warningColorFor(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+      ? warningColor
+      : const Color(0xFF8A5A00);
+
+  static Color dangerSoftFor(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+      ? dangerSoft
+      : const Color(0xFFFFE1E6);
+
+  static Color dangerColorFor(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+      ? dangerColor
+      : const Color(0xFFBE123C);
+
+  static Color infoSoftFor(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+      ? infoSoft
+      : const Color(0xFFF0E7FF);
+
+  static Color infoColorFor(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark ? infoColor : primaryDark;
+
+  static Color moderateSoftFor(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+      ? const Color(0xFF33200F)
+      : const Color(0xFFFFE8D2);
+
+  static Color moderateColorFor(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+      ? severityModerate
+      : const Color(0xFFB54708);
+
+  static Color neutralSoftFor(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+      ? const Color(0xFF24202B)
+      : Theme.of(context).colorScheme.surfaceContainerHighest;
+
+  static Color neutralColorFor(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+      ? severityUnknown
+      : const Color(0xFF59616D);
+
+  static List<BoxShadow> softShadowFor(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+      ? softShadow
+      : [
+          BoxShadow(
+            color: const Color(0xFF3D284D).withValues(alpha: 0.08),
+            blurRadius: 24,
+            offset: const Offset(0, 10),
+          ),
+        ];
+
+  static List<BoxShadow> elevatedShadowFor(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+      ? elevatedShadow
+      : [
+          BoxShadow(
+            color: const Color(0xFF3D284D).withValues(alpha: 0.13),
+            blurRadius: 34,
+            offset: const Offset(0, 15),
+          ),
+        ];
+
+  static List<BoxShadow> primaryShadowFor(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+      ? primaryShadow
+      : [
+          BoxShadow(
+            color: primaryDark.withValues(alpha: 0.18),
+            blurRadius: 28,
+            offset: const Offset(0, 12),
+          ),
+        ];
+
+  static ThemeData get lightTheme => _buildLightTheme();
   static ThemeData get darkTheme => _buildDarkTheme();
+
+  static const PageTransitionsTheme _pageTransitions = PageTransitionsTheme(
+    builders: {
+      TargetPlatform.android: _SmoothPageTransitionsBuilder(),
+      TargetPlatform.iOS: _SmoothPageTransitionsBuilder(),
+      TargetPlatform.windows: _SmoothPageTransitionsBuilder(),
+      TargetPlatform.macOS: _SmoothPageTransitionsBuilder(),
+      TargetPlatform.linux: _SmoothPageTransitionsBuilder(),
+    },
+  );
+
+  static TextTheme _customizeTextTheme(
+    TextTheme base,
+    Color primaryText,
+    Color secondaryText,
+  ) => base.copyWith(
+    displayLarge: base.displayLarge?.copyWith(
+      fontWeight: FontWeight.w900,
+      letterSpacing: -1.6,
+      height: 1.04,
+    ),
+    displayMedium: base.displayMedium?.copyWith(
+      fontWeight: FontWeight.w900,
+      letterSpacing: -1.2,
+      height: 1.06,
+    ),
+    headlineLarge: base.headlineLarge?.copyWith(
+      fontWeight: FontWeight.w900,
+      letterSpacing: -0.9,
+    ),
+    headlineMedium: base.headlineMedium?.copyWith(
+      fontWeight: FontWeight.w900,
+      letterSpacing: -0.7,
+    ),
+    headlineSmall: base.headlineSmall?.copyWith(
+      fontWeight: FontWeight.w800,
+      letterSpacing: -0.45,
+    ),
+    titleLarge: base.titleLarge?.copyWith(
+      fontWeight: FontWeight.w800,
+      letterSpacing: -0.3,
+    ),
+    titleMedium: base.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+    titleSmall: base.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+    bodyLarge: base.bodyLarge?.copyWith(color: primaryText, height: 1.5),
+    bodyMedium: base.bodyMedium?.copyWith(color: secondaryText, height: 1.5),
+    bodySmall: base.bodySmall?.copyWith(color: secondaryText, height: 1.45),
+    labelLarge: base.labelLarge?.copyWith(fontWeight: FontWeight.w800),
+    labelMedium: base.labelMedium?.copyWith(
+      color: secondaryText,
+      fontWeight: FontWeight.w700,
+    ),
+  );
+
+  static ThemeData _buildLightTheme() {
+    const background = Color(0xFFF8F6FB);
+    const surface = Color(0xFFFFFFFF);
+    const surfaceLow = Color(0xFFF4F0F8);
+    const surfaceContainer = Color(0xFFF0EBF5);
+    const surfaceHigh = Color(0xFFEAE3F0);
+    const surfaceHighest = Color(0xFFE2D9E9);
+    const foreground = Color(0xFF211A29);
+    const foregroundMuted = Color(0xFF655C6F);
+    const outline = Color(0xFF7B7185);
+    const outlineVariant = Color(0xFFD9D0E1);
+
+    final scheme = const ColorScheme.light().copyWith(
+      primary: primaryDark,
+      onPrimary: Colors.white,
+      primaryContainer: const Color(0xFFEBDDFF),
+      onPrimaryContainer: const Color(0xFF32105A),
+      secondary: const Color(0xFF7C3AED),
+      onSecondary: Colors.white,
+      secondaryContainer: const Color(0xFFF0E4FF),
+      onSecondaryContainer: const Color(0xFF32104F),
+      tertiary: const Color(0xFF7253B7),
+      onTertiary: Colors.white,
+      surface: surface,
+      onSurface: foreground,
+      surfaceContainerLowest: const Color(0xFFFFFFFF),
+      surfaceContainerLow: surfaceLow,
+      surfaceContainer: surfaceContainer,
+      surfaceContainerHigh: surfaceHigh,
+      surfaceContainerHighest: surfaceHighest,
+      onSurfaceVariant: foregroundMuted,
+      error: const Color(0xFFBA1A1A),
+      onError: Colors.white,
+      errorContainer: const Color(0xFFFFDAD6),
+      onErrorContainer: const Color(0xFF410002),
+      outline: outline,
+      outlineVariant: outlineVariant,
+      shadow: const Color(0xFF211A29),
+      scrim: Colors.black,
+    );
+
+    final baseTextTheme = GoogleFonts.interTextTheme(
+      ThemeData.light(useMaterial3: true).textTheme,
+    ).apply(bodyColor: foreground, displayColor: foreground);
+    final textTheme = _customizeTextTheme(
+      baseTextTheme,
+      foreground,
+      foregroundMuted,
+    );
+
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.light,
+      colorScheme: scheme,
+      scaffoldBackgroundColor: background,
+      canvasColor: background,
+      textTheme: textTheme,
+      visualDensity: VisualDensity.standard,
+      splashFactory: InkSparkle.splashFactory,
+      pageTransitionsTheme: _pageTransitions,
+      appBarTheme: AppBarTheme(
+        centerTitle: false,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        backgroundColor: Colors.transparent,
+        foregroundColor: foreground,
+        surfaceTintColor: Colors.transparent,
+        titleSpacing: 20,
+        toolbarHeight: 64,
+        titleTextStyle: textTheme.titleLarge?.copyWith(
+          color: foreground,
+          fontSize: 20,
+          fontWeight: FontWeight.w800,
+          letterSpacing: -0.4,
+        ),
+        iconTheme: const IconThemeData(color: foreground, size: 24),
+        actionsIconTheme: const IconThemeData(color: foreground, size: 24),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: const Color(0xFFFCFAFD),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 18,
+          vertical: 18,
+        ),
+        hintStyle: const TextStyle(color: Color(0xFF81778B), fontSize: 15),
+        labelStyle: const TextStyle(
+          color: foregroundMuted,
+          fontWeight: FontWeight.w600,
+        ),
+        prefixIconColor: const Color(0xFF766685),
+        suffixIconColor: const Color(0xFF766685),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(radiusMedium),
+          borderSide: const BorderSide(color: outlineVariant),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(radiusMedium),
+          borderSide: const BorderSide(color: outlineVariant),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(radiusMedium),
+          borderSide: const BorderSide(color: primaryDark, width: 1.6),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(radiusMedium),
+          borderSide: BorderSide(color: scheme.error),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(radiusMedium),
+          borderSide: BorderSide(color: scheme.error, width: 1.6),
+        ),
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: primaryDark,
+          foregroundColor: Colors.white,
+          disabledBackgroundColor: surfaceHighest,
+          disabledForegroundColor: foregroundMuted,
+          minimumSize: const Size.fromHeight(54),
+          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(radiusMedium),
+          ),
+          textStyle: const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.1,
+          ),
+          elevation: 0,
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: foreground,
+          minimumSize: const Size.fromHeight(52),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+          side: const BorderSide(color: outlineVariant),
+          backgroundColor: surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(radiusMedium),
+          ),
+          textStyle: const TextStyle(fontWeight: FontWeight.w700),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: primaryDark,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(radiusSmall),
+          ),
+          textStyle: const TextStyle(fontWeight: FontWeight.w700),
+        ),
+      ),
+      iconButtonTheme: IconButtonThemeData(
+        style: IconButton.styleFrom(
+          foregroundColor: foreground,
+          highlightColor: primaryColor.withValues(alpha: 0.10),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(radiusSmall),
+          ),
+        ),
+      ),
+      cardTheme: CardThemeData(
+        elevation: 0,
+        color: surface,
+        surfaceTintColor: Colors.transparent,
+        margin: EdgeInsets.zero,
+        clipBehavior: Clip.antiAlias,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(radiusLarge),
+          side: const BorderSide(color: outlineVariant),
+        ),
+      ),
+      dividerTheme: const DividerThemeData(
+        color: outlineVariant,
+        thickness: 1,
+        space: 1,
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        height: 76,
+        elevation: 0,
+        backgroundColor: surface,
+        surfaceTintColor: Colors.transparent,
+        indicatorColor: const Color(0xFFEBDDFF),
+        indicatorShape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(radiusMedium),
+        ),
+        iconTheme: WidgetStateProperty.resolveWith(
+          (states) => IconThemeData(
+            color: states.contains(WidgetState.selected)
+                ? primaryDark
+                : foregroundMuted,
+            size: states.contains(WidgetState.selected) ? 25 : 23,
+          ),
+        ),
+        labelTextStyle: WidgetStateProperty.resolveWith(
+          (states) => TextStyle(
+            fontSize: 11,
+            color: states.contains(WidgetState.selected)
+                ? primaryDark
+                : foregroundMuted,
+            fontWeight: states.contains(WidgetState.selected)
+                ? FontWeight.w800
+                : FontWeight.w600,
+          ),
+        ),
+      ),
+      navigationRailTheme: NavigationRailThemeData(
+        backgroundColor: surface,
+        indicatorColor: const Color(0xFFEBDDFF),
+        indicatorShape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(radiusMedium),
+        ),
+        selectedIconTheme: const IconThemeData(color: primaryDark, size: 25),
+        unselectedIconTheme: const IconThemeData(
+          color: foregroundMuted,
+          size: 24,
+        ),
+        selectedLabelTextStyle: const TextStyle(
+          color: primaryDark,
+          fontWeight: FontWeight.w800,
+        ),
+        unselectedLabelTextStyle: const TextStyle(
+          color: foregroundMuted,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      floatingActionButtonTheme: const FloatingActionButtonThemeData(
+        backgroundColor: primaryDark,
+        foregroundColor: Colors.white,
+        elevation: 4,
+        focusElevation: 5,
+        hoverElevation: 6,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(radiusMedium)),
+        ),
+      ),
+      chipTheme: ChipThemeData(
+        backgroundColor: surfaceLow,
+        selectedColor: const Color(0xFFEBDDFF),
+        side: const BorderSide(color: outlineVariant),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(radiusSmall),
+        ),
+        labelStyle: const TextStyle(
+          fontWeight: FontWeight.w700,
+          color: foreground,
+          fontSize: 13,
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      ),
+      snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: const Color(0xFF2B2432),
+        contentTextStyle: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.w600,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(radiusMedium),
+        ),
+        elevation: 8,
+      ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: surface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 14,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(radiusLarge),
+          side: const BorderSide(color: outlineVariant),
+        ),
+      ),
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: surface,
+        modalBackgroundColor: surface,
+        surfaceTintColor: Colors.transparent,
+        showDragHandle: true,
+        dragHandleColor: outline,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(radiusXLarge),
+          ),
+        ),
+      ),
+      popupMenuTheme: PopupMenuThemeData(
+        color: surface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 10,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(radiusMedium),
+          side: const BorderSide(color: outlineVariant),
+        ),
+      ),
+      progressIndicatorTheme: const ProgressIndicatorThemeData(
+        color: primaryDark,
+        linearTrackColor: outlineVariant,
+        circularTrackColor: outlineVariant,
+      ),
+      radioTheme: RadioThemeData(
+        fillColor: WidgetStateProperty.resolveWith(
+          (states) => states.contains(WidgetState.selected)
+              ? primaryDark
+              : foregroundMuted,
+        ),
+      ),
+      switchTheme: SwitchThemeData(
+        trackColor: WidgetStateProperty.resolveWith(
+          (states) => states.contains(WidgetState.selected)
+              ? primaryColor
+              : surfaceHighest,
+        ),
+      ),
+    );
+  }
 
   static ThemeData _buildDarkTheme() {
     final scheme = const ColorScheme.dark().copyWith(

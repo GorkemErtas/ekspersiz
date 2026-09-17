@@ -178,7 +178,7 @@ class _AnalyzingContent extends StatelessWidget {
 
               borderRadius: BorderRadius.circular(34),
 
-              boxShadow: AppTheme.primaryShadow,
+              boxShadow: AppTheme.primaryShadowFor(context),
             ),
 
             child: Stack(
@@ -271,7 +271,7 @@ class _AnalyzingContent extends StatelessWidget {
 
           child: Row(
             children: [
-              const AppIconBox(
+              AppIconBox(
                 icon: Icons.directions_car_filled_rounded,
                 size: 50,
                 iconSize: 25,
@@ -369,20 +369,20 @@ class _AnalyzingContent extends StatelessWidget {
           padding: const EdgeInsets.all(16),
 
           decoration: BoxDecoration(
-            color: AppTheme.infoSoft,
+            color: AppTheme.infoSoftFor(context),
             borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
           ),
 
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const AppIconBox(
+              AppIconBox(
                 icon: Icons.hourglass_top_rounded,
                 size: 38,
                 iconSize: 19,
                 borderRadius: 12,
-                backgroundColor: AppTheme.surfaceColor,
-                iconColor: AppTheme.infoColor,
+                backgroundColor: Theme.of(context).colorScheme.surface,
+                iconColor: AppTheme.infoColorFor(context),
               ),
 
               const SizedBox(width: 10),
@@ -392,7 +392,7 @@ class _AnalyzingContent extends StatelessWidget {
                   'Analiz tamamlanana kadar bu ekranda kalın. '
                   'İşlem tamamlandığında sonuç ekranı otomatik olarak açılacak.',
                   style: textTheme.bodySmall?.copyWith(
-                    color: AppTheme.infoColor,
+                    color: AppTheme.infoColorFor(context),
                     height: 1.45,
                     fontWeight: FontWeight.w600,
                   ),

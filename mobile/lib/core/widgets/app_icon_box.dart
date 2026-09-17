@@ -44,7 +44,7 @@ class AppIconBox extends StatelessWidget {
               ? Colors.white.withValues(alpha: 0.10)
               : colorScheme.primary.withValues(alpha: 0.10),
         ),
-        boxShadow: showShadow ? AppTheme.primaryShadow : null,
+        boxShadow: showShadow ? AppTheme.primaryShadowFor(context) : null,
       ),
       child: Icon(
         icon,

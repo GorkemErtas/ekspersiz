@@ -115,7 +115,9 @@ class AppStateView extends StatelessWidget {
 
                       borderRadius: BorderRadius.circular(28),
 
-                      boxShadow: isError ? null : AppTheme.softShadow,
+                      boxShadow: isError
+                          ? null
+                          : AppTheme.softShadowFor(context),
                     ),
 
                     child: isLoading
