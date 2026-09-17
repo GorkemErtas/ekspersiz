@@ -8,6 +8,7 @@ import com.gorkem.vehicle_inspector.entity.Vehicle;
 import com.gorkem.vehicle_inspector.repository.MaintenanceRecordRepository;
 import com.gorkem.vehicle_inspector.service.BusinessContextService;
 import com.gorkem.vehicle_inspector.service.MaintenanceService;
+import com.gorkem.vehicle_inspector.service.ReminderScheduleCalculator;
 import com.gorkem.vehicle_inspector.service.VehicleAccessService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -37,6 +38,7 @@ class MaintenanceServiceTest {
     @BeforeEach
     void setUp() {
         service = new MaintenanceService(records, businessContext, vehicleAccess,
+                new ReminderScheduleCalculator(),
                 Clock.fixed(Instant.parse("2026-09-16T09:00:00Z"), ZoneOffset.UTC));
         user = mock(User.class);
         lenient().when(user.getId()).thenReturn(1L);

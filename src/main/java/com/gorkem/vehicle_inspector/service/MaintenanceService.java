@@ -17,13 +17,15 @@ public class MaintenanceService {
     private final MaintenanceRecordRepository records;
     private final BusinessContextService businessContext;
     private final VehicleAccessService vehicleAccess;
+    private final ReminderScheduleCalculator calculator;
     private final Clock clock;
 
     public MaintenanceService(MaintenanceRecordRepository records,
                               BusinessContextService businessContext,
-                              VehicleAccessService vehicleAccess, Clock clock) {
+                              VehicleAccessService vehicleAccess,
+                              ReminderScheduleCalculator calculator, Clock clock) {
         this.records = records; this.businessContext = businessContext;
-        this.vehicleAccess = vehicleAccess; this.clock = clock;
+        this.vehicleAccess = vehicleAccess; this.calculator = calculator; this.clock = clock;
     }
 
     @Transactional(readOnly = true)
@@ -39,11 +41,13 @@ public class MaintenanceService {
         User user = businessContext.requireUser(email);
         Vehicle vehicle = vehicleAccess.requireActiveVehicle(vehicleId, user);
         validate(request);
+        ReminderScheduleCalculator.MaintenanceSchedule schedule =
+                calculator.calculateMaintenance(request);
         LocalDateTime now = LocalDateTime.now(clock);
         return toResponse(records.save(new MaintenanceRecord(vehicle, user,
                 request.maintenanceType(), request.maintenanceDate(), request.mileage(),
-                request.cost(), request.note(), request.nextRecommendedDate(),
-                request.nextRecommendedMileage(), now)));
+                request.cost(), request.note(), schedule.nextDate(), schedule.nextMileage(),
+                schedule.intervalMonths(), schedule.intervalMileage(), now)));
     }
 
     @Transactional
@@ -54,9 +58,11 @@ public class MaintenanceService {
         MaintenanceRecord record = records.findByIdAndVehicleId(recordId, vehicle.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Bakım kaydı bulunamadı."));
         validate(request);
+        ReminderScheduleCalculator.MaintenanceSchedule schedule =
+                calculator.calculateMaintenance(request);
         record.update(request.maintenanceType(), request.maintenanceDate(), request.mileage(),
-                request.cost(), request.note(), request.nextRecommendedDate(),
-                request.nextRecommendedMileage(), LocalDateTime.now(clock));
+                request.cost(), request.note(), schedule.nextDate(), schedule.nextMileage(),
+                schedule.intervalMonths(), schedule.intervalMileage(), LocalDateTime.now(clock));
         return toResponse(records.save(record));
     }
 
@@ -84,7 +90,8 @@ public class MaintenanceService {
         return new MaintenanceResponse(record.getId(), record.getVehicle().getId(),
                 record.getMaintenanceType(), record.getMaintenanceDate(), record.getMileage(),
                 record.getCost(), record.getNote(), record.getNextRecommendedDate(),
-                record.getNextRecommendedMileage(), record.getCreatedBy().getId(),
+                record.getNextRecommendedMileage(), record.getIntervalMonths(),
+                record.getIntervalMileage(), record.getCreatedBy().getId(),
                 record.getCreatedBy().getFullName(), record.getCreatedAt());
     }
 }

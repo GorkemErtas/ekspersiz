@@ -21,15 +21,18 @@ public class ReminderService {
     private static final int DUE_SOON_KILOMETERS = 2_000;
     private final VehicleReminderRepository reminders;
     private final AppNotificationRepository notifications;
+    private final ReminderScheduleCalculator calculator;
     private final BusinessContextService businessContext;
     private final VehicleAccessService vehicleAccess;
     private final Clock clock;
 
     public ReminderService(VehicleReminderRepository reminders,
                            AppNotificationRepository notifications,
+                           ReminderScheduleCalculator calculator,
                            BusinessContextService businessContext,
                            VehicleAccessService vehicleAccess, Clock clock) {
         this.reminders = reminders; this.notifications = notifications;
+        this.calculator = calculator;
         this.businessContext = businessContext;
         this.vehicleAccess = vehicleAccess; this.clock = clock;
     }
@@ -47,9 +50,12 @@ public class ReminderService {
         User user = businessContext.requireUser(email);
         Vehicle vehicle = vehicleAccess.requireActiveVehicle(vehicleId, user);
         validate(request);
+        ReminderScheduleCalculator.Schedule schedule = calculator.calculate(vehicle, request);
         return toResponse(reminders.save(new VehicleReminder(vehicle, user,
-                request.reminderType(), request.title(), request.dueDate(),
-                request.dueMileage(), request.note(), LocalDateTime.now(clock))), vehicle.getMileage());
+                request.reminderType(), request.title(), schedule.dueDate(),
+                schedule.dueMileage(), request.note(), schedule.sourceDate(),
+                schedule.sourceMileage(), schedule.intervalMonths(), schedule.intervalMileage(),
+                schedule.firstInspection(), LocalDateTime.now(clock))), vehicle.getMileage());
     }
 
     @Transactional
@@ -59,8 +65,11 @@ public class ReminderService {
         Vehicle vehicle = vehicleAccess.requireActiveVehicle(vehicleId, user);
         VehicleReminder reminder = require(reminderId, vehicle.getId());
         validate(request);
-        reminder.update(request.reminderType(), request.title(), request.dueDate(),
-                request.dueMileage(), request.note(), LocalDateTime.now(clock));
+        ReminderScheduleCalculator.Schedule schedule = calculator.calculate(vehicle, request);
+        reminder.update(request.reminderType(), request.title(), schedule.dueDate(),
+                schedule.dueMileage(), request.note(), schedule.sourceDate(),
+                schedule.sourceMileage(), schedule.intervalMonths(), schedule.intervalMileage(),
+                schedule.firstInspection(), LocalDateTime.now(clock));
         return toResponse(reminders.save(reminder), vehicle.getMileage());
     }
 
@@ -90,9 +99,6 @@ public class ReminderService {
     }
 
     private void validate(ReminderRequest request) {
-        if (request.dueDate() == null && request.dueMileage() == null) {
-            throw new IllegalArgumentException("Hatırlatma için tarih veya kilometre girilmelidir.");
-        }
         if (request.reminderType() == ReminderType.CUSTOM
                 && (request.title() == null || request.title().isBlank())) {
             throw new IllegalArgumentException("Özel hatırlatma başlığı zorunludur.");
@@ -114,6 +120,9 @@ public class ReminderService {
         return new ReminderResponse(reminder.getId(), reminder.getVehicle().getId(),
                 reminder.getReminderType(), reminder.getTitle(), reminder.getDueDate(),
                 reminder.getDueMileage(), reminder.getNote(), status, days, kilometers,
+                reminder.getSourceDate(), reminder.getSourceMileage(),
+                reminder.getIntervalMonths(), reminder.getIntervalMileage(),
+                reminder.getFirstInspection(),
                 reminder.getCompletedAt(), reminder.getCreatedBy().getId(),
                 reminder.getCreatedBy().getFullName());
     }

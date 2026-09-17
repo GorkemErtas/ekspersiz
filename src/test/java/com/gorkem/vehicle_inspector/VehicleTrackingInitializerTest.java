@@ -8,6 +8,7 @@ import com.gorkem.vehicle_inspector.entity.VehicleReminder;
 import com.gorkem.vehicle_inspector.repository.MaintenanceRecordRepository;
 import com.gorkem.vehicle_inspector.repository.VehicleReminderRepository;
 import com.gorkem.vehicle_inspector.service.VehicleTrackingInitializer;
+import com.gorkem.vehicle_inspector.service.ReminderScheduleCalculator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,6 +33,7 @@ class VehicleTrackingInitializerTest {
     @BeforeEach
     void setUp() {
         initializer = new VehicleTrackingInitializer(maintenance, reminders,
+                new ReminderScheduleCalculator(),
                 Clock.fixed(Instant.parse("2026-09-16T09:00:00Z"), ZoneOffset.UTC));
         user = mock(User.class);
         vehicle = new Vehicle("35ABC123", "Honda", "City", 2022, 50_000, user);
@@ -65,7 +67,7 @@ class VehicleTrackingInitializerTest {
         assertEquals(48_000, record.getMileage());
         assertEquals(58_000, record.getNextRecommendedMileage());
         assertEquals(LocalDate.of(2027, 8, 1), record.getNextRecommendedDate());
-        verify(reminders, times(4)).save(any(VehicleReminder.class));
+        verify(reminders, times(5)).save(any(VehicleReminder.class));
         assertEquals("Kapalı garajda tutuluyor.", vehicle.getNotes());
     }
 
@@ -78,5 +80,37 @@ class VehicleTrackingInitializerTest {
         assertThrows(IllegalArgumentException.class,
                 () -> initializer.initialize(vehicle, user, request));
         verifyNoInteractions(maintenance, reminders);
+    }
+
+    @Test
+    void monthIntervalNeedsOnlyLastMaintenanceDate() {
+        VehicleTrackingRequest request = new VehicleTrackingRequest(
+                LocalDate.of(2026, 8, 31), null,
+                null, null, null, null, null, null, null,
+                6, null, null, null);
+
+        initializer.initialize(vehicle, user, request);
+
+        verifyNoInteractions(maintenance);
+        ArgumentCaptor<VehicleReminder> captor = ArgumentCaptor.forClass(VehicleReminder.class);
+        verify(reminders).save(captor.capture());
+        assertEquals(LocalDate.of(2027, 2, 28), captor.getValue().getDueDate());
+        assertNull(captor.getValue().getDueMileage());
+    }
+
+    @Test
+    void mileageIntervalNeedsOnlyLastMaintenanceMileage() {
+        VehicleTrackingRequest request = new VehicleTrackingRequest(
+                null, 48_000,
+                null, null, null, null, null, null, null,
+                null, 10_000, null, null);
+
+        initializer.initialize(vehicle, user, request);
+
+        verifyNoInteractions(maintenance);
+        ArgumentCaptor<VehicleReminder> captor = ArgumentCaptor.forClass(VehicleReminder.class);
+        verify(reminders).save(captor.capture());
+        assertNull(captor.getValue().getDueDate());
+        assertEquals(58_000, captor.getValue().getDueMileage());
     }
 }
