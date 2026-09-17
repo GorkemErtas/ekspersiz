@@ -8,5 +8,7 @@ public record ReminderResponse(
         Long id, Long vehicleId, ReminderType reminderType, String title,
         LocalDate dueDate, Integer dueMileage, String note, String status,
         Integer daysRemaining, Integer mileageRemaining,
+        LocalDate sourceDate, Integer sourceMileage, Integer intervalMonths,
+        Integer intervalMileage, Boolean firstInspection,
         LocalDateTime completedAt, Long createdByUserId, String createdByName
 ) {}

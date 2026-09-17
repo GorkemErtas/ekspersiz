@@ -42,6 +42,12 @@ public class MaintenanceRecord {
     @Column(name = "next_recommended_mileage")
     private Integer nextRecommendedMileage;
 
+    @Column(name = "interval_months")
+    private Integer intervalMonths;
+
+    @Column(name = "interval_mileage")
+    private Integer intervalMileage;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -61,9 +67,29 @@ public class MaintenanceRecord {
         this.createdAt = now;
     }
 
+    public MaintenanceRecord(Vehicle vehicle, User createdBy, MaintenanceType maintenanceType,
+                             LocalDate maintenanceDate, Integer mileage, BigDecimal cost,
+                             String note, LocalDate nextRecommendedDate,
+                             Integer nextRecommendedMileage, Integer intervalMonths,
+                             Integer intervalMileage, LocalDateTime now) {
+        this.vehicle = vehicle;
+        this.createdBy = createdBy;
+        update(maintenanceType, maintenanceDate, mileage, cost, note,
+                nextRecommendedDate, nextRecommendedMileage, intervalMonths, intervalMileage, now);
+        this.createdAt = now;
+    }
+
     public void update(MaintenanceType type, LocalDate date, Integer mileage,
                        BigDecimal cost, String note, LocalDate nextDate,
                        Integer nextMileage, LocalDateTime now) {
+        update(type, date, mileage, cost, note, nextDate, nextMileage,
+                null, null, now);
+    }
+
+    public void update(MaintenanceType type, LocalDate date, Integer mileage,
+                       BigDecimal cost, String note, LocalDate nextDate,
+                       Integer nextMileage, Integer intervalMonths,
+                       Integer intervalMileage, LocalDateTime now) {
         this.maintenanceType = type;
         this.maintenanceDate = date;
         this.mileage = mileage;
@@ -71,6 +97,8 @@ public class MaintenanceRecord {
         this.note = normalize(note);
         this.nextRecommendedDate = nextDate;
         this.nextRecommendedMileage = nextMileage;
+        this.intervalMonths = intervalMonths;
+        this.intervalMileage = intervalMileage;
         this.updatedAt = now;
     }
 
@@ -88,6 +116,8 @@ public class MaintenanceRecord {
     public String getNote() { return note; }
     public LocalDate getNextRecommendedDate() { return nextRecommendedDate; }
     public Integer getNextRecommendedMileage() { return nextRecommendedMileage; }
+    public Integer getIntervalMonths() { return intervalMonths; }
+    public Integer getIntervalMileage() { return intervalMileage; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
 }

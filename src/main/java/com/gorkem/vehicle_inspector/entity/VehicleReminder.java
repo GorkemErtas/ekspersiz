@@ -32,6 +32,21 @@ public class VehicleReminder {
     @Column(name = "due_mileage")
     private Integer dueMileage;
 
+    @Column(name = "source_date")
+    private LocalDate sourceDate;
+
+    @Column(name = "source_mileage")
+    private Integer sourceMileage;
+
+    @Column(name = "interval_months")
+    private Integer intervalMonths;
+
+    @Column(name = "interval_mileage")
+    private Integer intervalMileage;
+
+    @Column(name = "first_inspection")
+    private Boolean firstInspection;
+
     @Column(length = 1000)
     private String note;
 
@@ -55,12 +70,38 @@ public class VehicleReminder {
         update(type, title, dueDate, dueMileage, note, now);
     }
 
+    public VehicleReminder(Vehicle vehicle, User createdBy, ReminderType type,
+                           String title, LocalDate dueDate, Integer dueMileage,
+                           String note, LocalDate sourceDate, Integer sourceMileage,
+                           Integer intervalMonths, Integer intervalMileage,
+                           Boolean firstInspection, LocalDateTime now) {
+        this.vehicle = vehicle;
+        this.createdBy = createdBy;
+        this.createdAt = now;
+        update(type, title, dueDate, dueMileage, note, sourceDate, sourceMileage,
+                intervalMonths, intervalMileage, firstInspection, now);
+    }
+
     public void update(ReminderType type, String title, LocalDate dueDate,
                        Integer dueMileage, String note, LocalDateTime now) {
+        update(type, title, dueDate, dueMileage, note,
+                null, null, null, null, null, now);
+    }
+
+    public void update(ReminderType type, String title, LocalDate dueDate,
+                       Integer dueMileage, String note, LocalDate sourceDate,
+                       Integer sourceMileage, Integer intervalMonths,
+                       Integer intervalMileage, Boolean firstInspection,
+                       LocalDateTime now) {
         this.reminderType = type;
         this.title = normalize(title);
         this.dueDate = dueDate;
         this.dueMileage = dueMileage;
+        this.sourceDate = sourceDate;
+        this.sourceMileage = sourceMileage;
+        this.intervalMonths = intervalMonths;
+        this.intervalMileage = intervalMileage;
+        this.firstInspection = firstInspection;
         this.note = normalize(note);
         this.updatedAt = now;
     }
@@ -76,6 +117,11 @@ public class VehicleReminder {
     public String getTitle() { return title; }
     public LocalDate getDueDate() { return dueDate; }
     public Integer getDueMileage() { return dueMileage; }
+    public LocalDate getSourceDate() { return sourceDate; }
+    public Integer getSourceMileage() { return sourceMileage; }
+    public Integer getIntervalMonths() { return intervalMonths; }
+    public Integer getIntervalMileage() { return intervalMileage; }
+    public Boolean getFirstInspection() { return firstInspection; }
     public String getNote() { return note; }
     public LocalDateTime getCompletedAt() { return completedAt; }
     public LocalDateTime getCreatedAt() { return createdAt; }

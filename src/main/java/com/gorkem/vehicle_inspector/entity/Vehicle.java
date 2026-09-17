@@ -2,6 +2,7 @@ package com.gorkem.vehicle_inspector.entity;
 
 import jakarta.persistence.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -23,6 +24,13 @@ public class Vehicle {
 
     @Column(name = "model_year", nullable = false)
     private Integer modelYear;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "vehicle_category", length = 40)
+    private VehicleCategory vehicleCategory;
+
+    @Column(name = "conformity_date")
+    private LocalDate conformityDate;
 
     @Column(nullable = false)
     private Integer mileage;
@@ -121,6 +129,9 @@ public class Vehicle {
         return mileage;
     }
 
+    public VehicleCategory getVehicleCategory() { return vehicleCategory; }
+    public LocalDate getConformityDate() { return conformityDate; }
+
     public User getUser() {
         return user;
     }
@@ -159,6 +170,14 @@ public class Vehicle {
 
     public void setMileage(Integer mileage) {
         this.mileage = mileage;
+    }
+
+    public void setVehicleCategory(VehicleCategory vehicleCategory) {
+        this.vehicleCategory = vehicleCategory;
+    }
+
+    public void setConformityDate(LocalDate conformityDate) {
+        this.conformityDate = conformityDate;
     }
 
     public boolean isArchived() {
