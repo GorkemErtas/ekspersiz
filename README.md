@@ -13,6 +13,7 @@ The application analyzes vehicle images, detects visible damage, identifies affe
 * 🔑 Password Change Support
 * 🔄 Persistent Login & Automatic Session Restoration
 * 👤 User Profile & Secure Logout
+* 🌗 Persistent Dark and Light Themes (Dark by Default)
 * 🛡 Business Membership Permissions (`OWNER`, `MEMBER`)
 * 🚙 Vehicle Management
 * ⭐ Main Vehicle Selection
@@ -313,10 +314,6 @@ The overview combines the latest maintenance, active reminders, and latest compl
 Tracking fields are optional during vehicle creation. Users can create a vehicle with only its core details and add maintenance or reminders later. Company members automatically read and update the same vehicle records through their shared `BusinessAccount`; the creator user is retained for audit information.
 
 Archived vehicles remain available to history and maintenance/reminder reads, while new changes require an active vehicle.
-
-### Database schema
-
-Spring Boot currently manages local schema updates through `spring.jpa.hibernate.ddl-auto=update`. Existing PostgreSQL deployments can apply [`database/migrations/V3__calculated_reminder_sources.sql`](database/migrations/V3__calculated_reminder_sources.sql) before deploying the calculated-reminder fields.
 
 ---
 
