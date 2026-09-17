@@ -47,6 +47,9 @@ dependencies:
   google_mobile_ads: ^9.1.0
   firebase_core: ^4.15.0
   firebase_messaging: ^16.7.0
+  pdf: ^3.13.0
+  share_plus: ^13.3.0
+  path_provider: ^2.1.6
 
 dev_dependencies:
 
@@ -83,6 +86,7 @@ flutter:
 
   assets:
     - assets/images/
+    - assets/fonts/
 
   # To add assets to your application, add an assets section, like this:
   # assets:

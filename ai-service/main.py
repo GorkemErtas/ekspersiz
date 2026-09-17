@@ -8,7 +8,7 @@ from fastapi import (
 )
 
 from app.damage_analyzer import DamageAnalyzer
-from app.schemas import DamageAnalysisResponse
+from app.schemas import DamageAnalysisResponse, ImageQualityResponse
 
 
 logger = logging.getLogger(__name__)
@@ -30,6 +30,24 @@ ALLOWED_CONTENT_TYPES = {
 MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024
 
 
+async def read_valid_image(image: UploadFile) -> bytes:
+    if image.content_type not in ALLOWED_CONTENT_TYPES:
+        raise HTTPException(
+            status_code=415,
+            detail="Only JPG, PNG and WEBP images are supported.",
+        )
+
+    file_content = await image.read()
+    if not file_content:
+        raise HTTPException(status_code=400, detail="Uploaded image cannot be empty.")
+    if len(file_content) > MAX_IMAGE_SIZE_BYTES:
+        raise HTTPException(
+            status_code=413,
+            detail="Uploaded image cannot be larger than 10 MB.",
+        )
+    return file_content
+
+
 @app.get("/health")
 def health_check():
     return {
@@ -47,36 +65,7 @@ async def analyze_damage(
         image: UploadFile = File(...),
 ) -> DamageAnalysisResponse:
     try:
-        if image.content_type not in ALLOWED_CONTENT_TYPES:
-            raise HTTPException(
-                status_code=415,
-                detail=(
-                    "Only JPG, PNG and WEBP images "
-                    "are supported."
-                ),
-            )
-
-        file_content = await image.read()
-
-        if not file_content:
-            raise HTTPException(
-                status_code=400,
-                detail=(
-                    "Uploaded image cannot be empty."
-                ),
-            )
-
-        if (
-                len(file_content)
-                > MAX_IMAGE_SIZE_BYTES
-        ):
-            raise HTTPException(
-                status_code=413,
-                detail=(
-                    "Uploaded image cannot be larger "
-                    "than 10 MB."
-                ),
-            )
+        file_content = await read_valid_image(image)
 
         return damage_analyzer.analyze(
             file_content=file_content,
@@ -104,5 +93,29 @@ async def analyze_damage(
             ),
         ) from exc
 
+    finally:
+        await image.close()
+
+
+@app.post(
+    "/api/v1/validate-image",
+    response_model=ImageQualityResponse,
+)
+async def validate_image_quality(
+        image: UploadFile = File(...),
+) -> ImageQualityResponse:
+    try:
+        file_content = await read_valid_image(image)
+        return damage_analyzer.validate_image_quality(file_content)
+    except HTTPException:
+        raise
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        logger.exception("Unexpected error during image quality validation.")
+        raise HTTPException(
+            status_code=500,
+            detail="Image quality could not be validated.",
+        ) from exc
     finally:
         await image.close()

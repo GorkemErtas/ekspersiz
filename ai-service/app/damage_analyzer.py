@@ -3,6 +3,8 @@ from pathlib import Path
 from typing import Any
 
 from PIL import Image, UnidentifiedImageError
+import cv2
+import numpy as np
 from ultralytics import YOLO
 
 from app.schemas import (
@@ -10,6 +12,7 @@ from app.schemas import (
     DamageAnalysisResponse,
     DetectedObject,
     DamageRecommendation,
+    ImageQualityResponse,
 )
 
 
@@ -89,6 +92,9 @@ class DamageAnalyzer:
             minimum_part_overlap_ratio: float = 0.25,
             affected_part_damage_confidence_threshold: float = 0.50,
             damage_recommendation_confidence_threshold: float = 0.30,
+            minimum_brightness: float = 35.0,
+            minimum_blur_score: float = 20.0,
+            minimum_vehicle_area_ratio: float = 0.12,
     ) -> None:
         self.vehicle_model_path = Path(
             vehicle_model_path
@@ -130,6 +136,10 @@ class DamageAnalyzer:
             damage_recommendation_confidence_threshold
         )
 
+        self.minimum_brightness = minimum_brightness
+        self.minimum_blur_score = minimum_blur_score
+        self.minimum_vehicle_area_ratio = minimum_vehicle_area_ratio
+
         self._validate_model_paths()
 
         self.vehicle_model = YOLO(
@@ -143,6 +153,73 @@ class DamageAnalyzer:
         self.vehicle_part_model = YOLO(
             str(self.vehicle_part_model_path)
         )
+
+    def validate_image_quality(
+            self,
+            file_content: bytes,
+    ) -> ImageQualityResponse:
+        image = self._load_image(file_content)
+        grayscale = cv2.cvtColor(
+            np.asarray(image),
+            cv2.COLOR_RGB2GRAY,
+        )
+
+        if float(grayscale.mean()) < self.minimum_brightness:
+            return ImageQualityResponse(
+                suitable=False,
+                code="TOO_DARK",
+                message="Fotoğraf çok karanlık. Daha aydınlık bir ortamda tekrar çekin.",
+            )
+
+        blur_score = float(cv2.Laplacian(grayscale, cv2.CV_64F).var())
+        if blur_score < self.minimum_blur_score:
+            return ImageQualityResponse(
+                suitable=False,
+                code="TOO_BLURRY",
+                message="Araç net görünmüyor. Kamerayı sabit tutup tekrar çekin.",
+            )
+
+        vehicle_results = self.vehicle_model.predict(
+            source=image,
+            conf=self.vehicle_confidence_threshold,
+            verbose=False,
+        )
+        vehicle_detections = [
+            detection
+            for detection in self._extract_detections(vehicle_results)
+            if detection.label.lower() in self.VEHICLE_LABELS
+        ]
+
+        if not vehicle_detections:
+            return ImageQualityResponse(
+                suitable=False,
+                code="NO_VEHICLE",
+                message="Fotoğrafta tanınabilir bir araç görünmüyor.",
+            )
+
+        primary_vehicle = max(
+            vehicle_detections,
+            key=self._detection_area,
+        )
+        image_area = float(max(1, image.width * image.height))
+        vehicle_area_ratio = self._detection_area(primary_vehicle) / image_area
+        if vehicle_area_ratio < self.minimum_vehicle_area_ratio:
+            return ImageQualityResponse(
+                suitable=False,
+                code="VEHICLE_TOO_SMALL",
+                message="Araç fotoğrafta çok küçük görünüyor. Araca biraz daha yaklaşın.",
+            )
+
+        return ImageQualityResponse(
+            suitable=True,
+            code="SUITABLE",
+            message="Fotoğraf analiz için uygun.",
+        )
+
+    @staticmethod
+    def _detection_area(detection: DetectedObject) -> float:
+        box = detection.boundingBox
+        return max(0.0, box.x2 - box.x1) * max(0.0, box.y2 - box.y1)
 
     def analyze(
             self,

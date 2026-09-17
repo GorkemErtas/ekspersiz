@@ -130,3 +130,9 @@ class DamageAnalysisResponse(BaseModel):
     detections: list[DetectedObject] = Field(
         default_factory=list
     )
+
+
+class ImageQualityResponse(BaseModel):
+    suitable: bool
+    code: str
+    message: str

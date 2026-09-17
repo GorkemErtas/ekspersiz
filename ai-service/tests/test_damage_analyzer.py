@@ -56,6 +56,60 @@ class DamageAnalyzerResultTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "recognizable vehicle"):
             self.analyzer.analyze(image_bytes.getvalue(), "empty-road.jpg")
 
+    def test_dark_image_is_rejected_before_vehicle_detection(self) -> None:
+        image_bytes = BytesIO()
+        Image.new("RGB", (100, 100), (5, 5, 5)).save(image_bytes, format="JPEG")
+        self.analyzer.minimum_brightness = 35.0
+        self.analyzer.minimum_blur_score = 20.0
+        self.analyzer.minimum_vehicle_area_ratio = 0.12
+        self.analyzer.vehicle_model = Mock()
+
+        result = self.analyzer.validate_image_quality(image_bytes.getvalue())
+
+        self.assertFalse(result.suitable)
+        self.assertEqual("TOO_DARK", result.code)
+        self.analyzer.vehicle_model.predict.assert_not_called()
+
+    def test_small_vehicle_is_rejected_with_retake_guidance(self) -> None:
+        image_bytes = BytesIO()
+        image = Image.effect_noise((200, 200), 80).convert("RGB")
+        image.save(image_bytes, format="JPEG")
+        self.analyzer.minimum_brightness = 1.0
+        self.analyzer.minimum_blur_score = 1.0
+        self.analyzer.minimum_vehicle_area_ratio = 0.12
+        self.analyzer.vehicle_confidence_threshold = 0.40
+        self.analyzer.vehicle_model = Mock()
+        detection = DetectedObject(
+            label="car",
+            confidence=0.9,
+            boundingBox=BoundingBox(x1=10, y1=10, x2=50, y2=50),
+        )
+        self.analyzer._extract_detections = Mock(return_value=[detection])
+
+        result = self.analyzer.validate_image_quality(image_bytes.getvalue())
+
+        self.assertFalse(result.suitable)
+        self.assertEqual("VEHICLE_TOO_SMALL", result.code)
+        self.assertIn("yaklaşın", result.message)
+
+    def test_clear_image_without_vehicle_requests_a_retake(self) -> None:
+        image_bytes = BytesIO()
+        Image.effect_noise((200, 200), 80).convert("RGB").save(
+            image_bytes,
+            format="JPEG",
+        )
+        self.analyzer.minimum_brightness = 1.0
+        self.analyzer.minimum_blur_score = 1.0
+        self.analyzer.minimum_vehicle_area_ratio = 0.12
+        self.analyzer.vehicle_confidence_threshold = 0.40
+        self.analyzer.vehicle_model = Mock()
+        self.analyzer._extract_detections = Mock(return_value=[])
+
+        result = self.analyzer.validate_image_quality(image_bytes.getvalue())
+
+        self.assertFalse(result.suitable)
+        self.assertEqual("NO_VEHICLE", result.code)
+
 
 if __name__ == "__main__":
     unittest.main()
