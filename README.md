@@ -298,7 +298,15 @@ The Flutter application displays these services on a Google Map. Users can selec
 
 # 🔧 Vehicle Companion
 
-Each active vehicle has a detail screen for its maintenance records, reminders, current overview, and history. Maintenance entries store the maintenance type, date, mileage, optional cost and note, and optional next recommended date or mileage. Reminders can use a date, mileage, or both and are calculated as `OVERDUE`, `DUE_SOON`, `UPCOMING`, or `COMPLETED` from the current date and vehicle mileage.
+Each active vehicle has a detail screen for its maintenance records, reminders, current overview, and history. Maintenance entries store the maintenance type, date, mileage, optional cost and note, and calculated next recommended date or mileage. Reminders can use a date, mileage, or both and are classified as `OVERDUE`, `DUE_SOON`, `UPCOMING`, or `COMPLETED` from the current date and vehicle mileage.
+
+Reminder inputs are type-specific and the backend owns every deterministic calculation:
+
+* **Periodic inspection:** Turkey's Ministry of Transport rules use the conformity document's manufacture date for a new vehicle's first inspection and the approved inspection date for later periods. Private/official cars and two/three-wheeled vehicles use 3 years for the first inspection and 2 years thereafter; wheeled tractors use 3 years for both; other motor vehicles, trailers, and semi-trailers use 1 year. When category or source data is unknown, users enter the official expiry date instead of the application guessing. See the Ministry's [Vehicle Inspection Stations Regulation, Article 14](https://uhdgm.uab.gov.tr/uploads/pages/yonetmelikler/yonetmelik.pdf).
+* **Traffic insurance and comprehensive insurance:** the policy's actual expiry date is stored as the due date. The application does not assume a universal one-year term because the SEDDK general conditions define coverage through the start and end dates written in the policy: [traffic insurance general conditions](https://seddk.gov.tr/upload/Sigortac%C4%B1l%C4%B1k%20Mevzuat%C4%B1/Genel%20%C5%9Eartlar/Sorumluluk%20Sigortalar%C4%B1/Karayollar%C4%B1%20Motorlu%20Ara%C3%A7lar%20Zorunlu%20Mali%20Sorumluluk%20Trafik%20Sigortas%C4%B1%20Genel%20%C5%9Eartlar%C4%B1.pdf) and [comprehensive insurance general conditions](https://seddk.gov.tr/upload/Sigortac%C4%B1l%C4%B1k%20Mevzuat%C4%B1/Genel%20%C5%9Eartlar/Mal%20Sigortalar%C4%B1/Kara%20Ara%C3%A7lar%C4%B1%20Kasko%20Sigortas%C4%B1%20Genel%20%C5%9Eartlar%C4%B1.pdf).
+* **Maintenance:** users provide the last maintenance date/mileage and the manufacturer or service interval in months and/or kilometres. The backend calculates the next target. No universal maintenance interval is assumed.
+
+The persisted source fields remain separate from the calculated due fields. The existing notification scheduler continues to use the calculated due date/mileage and its 30/7/1/0-day and mileage thresholds.
 
 The overview combines the latest maintenance, active reminders, and latest completed AI damage inspection. Its condition label is a practical summary of stored data and is not a mechanical inspection. The history timeline combines vehicle creation, mileage updates, maintenance, and completed AI inspections without duplicating inspection records.
 
@@ -308,7 +316,7 @@ Archived vehicles remain available to history and maintenance/reminder reads, wh
 
 ### Database schema
 
-Spring Boot currently manages schema updates through `spring.jpa.hibernate.ddl-auto=update`.
+Spring Boot currently manages local schema updates through `spring.jpa.hibernate.ddl-auto=update`. Existing PostgreSQL deployments can apply [`database/migrations/V3__calculated_reminder_sources.sql`](database/migrations/V3__calculated_reminder_sources.sql) before deploying the calculated-reminder fields.
 
 ---
 
