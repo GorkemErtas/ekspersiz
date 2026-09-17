@@ -151,6 +151,15 @@ Create Inspection
 Upload Vehicle Image
      │
      ▼
+Pre-Analysis Image Quality Check
+     │
+     ├── Vehicle Visibility / Framing
+     ├── Excessive Blur
+     └── Unusable Darkness
+     │
+     ├── Unsuitable → Retake (no quota reservation)
+     │
+     ▼
 FastAPI / YOLO Analysis
      │
      ├── Damage Detection
@@ -174,6 +183,8 @@ Save Inspection Report
      ▼
 Display Complete Inspection Result
      │
+     ├── Generate / Share Branded PDF
+     │
      ▼
 Explore Nearby Automotive Services
      │
@@ -186,6 +197,10 @@ Explore Nearby Automotive Services
 The ML inspection result and the Gemini report use separate statuses. If Gemini report generation temporarily fails, the completed ML analysis remains available and the report can be regenerated without running YOLO again.
 
 A successful inference with no visible damage is stored as a completed inspection with `DamageSeverity.NONE`, `DamageType.NO_VISIBLE_DAMAGE`, and `RepairAction.NO_ACTION`. It still consumes monthly analysis quota because inference was performed. Spring Boot creates its explanatory report deterministically without calling Gemini. `InspectionStatus.FAILED` is reserved for technical failures such as an unavailable AI service, timeout, invalid image, invalid AI response, or an unexpected processing error. A valid minor detection remains `MINOR` and follows the normal report flow.
+
+Before Spring Boot reserves analysis quota, FastAPI performs a lightweight suitability check using image brightness, blur, recognizable-vehicle detection, and the detected vehicle's share of the frame. An unsuitable photo remains retryable, does not reserve quota, and does not create a failed analysis. Flutter keeps the user on the photo step with a specific retake message.
+
+Completed results can be exported as a branded PDF and shared through the device's native share sheet. The PDF uses the stored inspection, vehicle, report, and image data. No-visible-damage PDFs omit damage and repair-price sections and retain the visible-image-only disclaimer.
 
 ---
 
@@ -316,7 +331,7 @@ Subscription plans belong to `User`. Current personal limits are:
 
 Monthly usage counts inspections with `analysisStartedAt` inside the server's current calendar month. Pending inspections that have not started analysis do not count. Retrying the same inspection in its reserved month does not consume another slot, while a retry from an earlier month requires capacity in the current month. A completed inspection cannot be analyzed again.
 
-FREE users can earn at most one additional analysis in each server calendar month by completing a rewarded AdMob ad. This raises the effective FREE maximum from one to two analyses for that month. Spring Boot grants the extra analysis only after validating AdMob's signed server-side verification callback; a Flutter reward callback by itself never changes quota. PLUS, PRO, and BUSINESS users are ad-free and do not use rewarded analyses.
+FREE users can earn at most one additional analysis in each server calendar month by completing a rewarded AdMob ad. This raises the effective FREE maximum from one to two analyses for that month. Spring Boot grants the extra analysis only after validating AdMob's signed server-side verification callback; a Flutter reward callback by itself never changes quota. After the client callback, Flutter polls the quota endpoint for a short bounded period and continues the pending inspection flow only when the backend confirms the reward. PLUS, PRO, and BUSINESS users are ad-free and do not use rewarded analyses.
 
 ### Business membership
 
@@ -378,7 +393,7 @@ The authenticated billing API is available at `GET /api/v1/billing` and `POST /a
 
 The home screen shows one lightweight banner only for personal FREE users. Ads are not shown during image selection, upload, analysis, report generation, or critical warnings. PLUS, PRO, BUSINESS subscribers, and users operating through a company membership are ad-free.
 
-Development builds use Google's official AdMob test IDs by default. Before a production release:
+Development builds use Google's official AdMob test IDs by default. Those sample units validate the ad UI but cannot call this project's SSV endpoint. To test the complete rewarded-analysis flow securely, use the application's own rewarded unit ID, configure its SSV callback, and mark the device as a test device with the comma-separated `ADMOB_TEST_DEVICE_IDS` Dart define. The real unit remains in test mode on those devices while its SSV configuration stays under project control. Before a production release:
 
 1. Create the Android and iOS applications, banner units, and rewarded units in AdMob.
 2. Configure the rewarded unit's server-side verification callback as the public HTTPS endpoint `GET /api/v1/rewards/analysis/admob/ssv`.
@@ -388,12 +403,13 @@ Development builds use Google's official AdMob test IDs by default. Before a pro
 ```bash
 flutter build apk \
   --dart-define=ADMOB_BANNER_ANDROID_ID=<banner-ad-unit-id> \
-  --dart-define=ADMOB_REWARDED_ANDROID_ID=<rewarded-ad-unit-id>
+  --dart-define=ADMOB_REWARDED_ANDROID_ID=<rewarded-ad-unit-id> \
+  --dart-define=ADMOB_TEST_DEVICE_IDS=<device-id-1,device-id-2>
 ```
 
 Use `ADMOB_BANNER_IOS_ID` and `ADMOB_REWARDED_IOS_ID` for iOS. AdMob app IDs and ad-unit IDs are identifiers rather than server secrets, but production values should still stay in the release configuration so development continues to use test inventory.
 
-The authenticated reward API exposes quota at `GET /api/v1/rewards/analysis` and creates a short-lived server session at `POST /api/v1/rewards/analysis/session`. The SSV endpoint verifies Google's ECDSA signature, the server-issued token, customer identity, timestamp, month, and unique transaction before persisting the reward. Repeated or client-forged claims do not add quota.
+The authenticated reward API exposes quota at `GET /api/v1/rewards/analysis` and creates a short-lived server session at `POST /api/v1/rewards/analysis/session`. An unexpired session is reused so repeated taps cannot rotate the token while an SSV callback is in flight. The SSV endpoint verifies Google's ECDSA signature, the server-issued token, customer identity, timestamp, month, and unique transaction before persisting the reward. Repeated or client-forged claims do not add quota.
 
 ---
 
@@ -473,10 +489,8 @@ This regenerates only the AI report and does not rerun the YOLO image analysis.
 
 # 🚀 Future Improvements
 
-* 📄 PDF Damage Reports
 * 🎯 Larger and More Diverse Damage Detection Dataset
 * 🎯 Improved Vehicle-Part Classification
-* 📷 Image Quality / Retake Validation
 * 🌐 Optional Live Repair Pricing / Search Grounding
 * 🐳 Docker / Docker Compose Support
 * ☁️ Cloud Deployment
@@ -546,6 +560,8 @@ Software Engineer
 * ✅ Subscription Restore and Store Management Flow
 * ✅ Ad-Supported FREE Plan and AdMob Banner Integration
 * ✅ Server-Verified Rewarded FREE Analysis
+* ✅ Pre-Analysis Image Quality and Retake Validation
+* ✅ Branded PDF Inspection Reports and Native Sharing
 
 ## In Progress
 
