@@ -91,6 +91,31 @@ class RewardedAnalysisServiceTest {
     }
 
     @Test
+    void createSessionReusesUnexpiredSessionToPreventDuplicateAdFlows() {
+        RewardedAnalysisSession existing = new RewardedAnalysisSession(
+                user,
+                LocalDate.of(2026, 9, 1),
+                "existing-server-token",
+                LocalDateTime.of(2026, 9, 16, 9, 20),
+                LocalDateTime.of(2026, 9, 16, 9, 0)
+        );
+        when(businessContext.requireUser("user@example.com")).thenReturn(user);
+        when(businessContext.findMembership(user)).thenReturn(Optional.empty());
+        when(subscriptions.getEffectivePlan(user)).thenReturn(SubscriptionPlan.FREE);
+        when(users.findByIdForUpdate(42L)).thenReturn(Optional.of(user));
+        when(subscriptions.monthlyAnalysisLimit(SubscriptionPlan.FREE)).thenReturn(1);
+        when(inspections.countPersonalAnalysesBetween(anyLong(), any(), any())).thenReturn(1L);
+        when(sessions.findByUserIdAndMonthStart(42L, LocalDate.of(2026, 9, 1)))
+                .thenReturn(Optional.of(existing));
+        when(sessions.save(existing)).thenReturn(existing);
+
+        RewardedAdSessionResponse result = service.createSession("user@example.com");
+
+        assertEquals("existing-server-token", result.customData());
+        assertEquals(LocalDateTime.of(2026, 9, 16, 9, 20), result.expiresAt());
+    }
+
+    @Test
     void validSsvClaimsSessionOnlyAfterSignatureVerification() {
         RewardedAnalysisSession session = new RewardedAnalysisSession(
                 user, LocalDate.of(2026, 9, 1), "server-token",

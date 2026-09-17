@@ -153,6 +153,16 @@ public class GlobalExceptionHandler {
         );
     }
 
+    @ExceptionHandler(UnsuitableInspectionImageException.class)
+    public ResponseEntity<ApiErrorResponse> handleUnsuitableInspectionImage(
+            UnsuitableInspectionImageException exception
+    ) {
+        return buildResponse(
+                HttpStatus.UNPROCESSABLE_ENTITY,
+                exception.getMessage()
+        );
+    }
+
     @ExceptionHandler(BillingConfigurationException.class)
     public ResponseEntity<ApiErrorResponse>
     handleBillingConfigurationException(

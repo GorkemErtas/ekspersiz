@@ -8,12 +8,15 @@ import com.gorkem.vehicle_inspector.exception.ResourceNotFoundException;
 import com.gorkem.vehicle_inspector.repository.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.*;
 import java.util.UUID;
 
 @Service
 public class RewardedAnalysisService {
+    private static final Logger log = LoggerFactory.getLogger(RewardedAnalysisService.class);
     private final BusinessContextService businessContext;
     private final SubscriptionService subscriptions;
     private final DamageInspectionRepository inspections;
@@ -89,23 +92,31 @@ public class RewardedAnalysisService {
             throw new IllegalStateException("Bu ayki ödüllü analiz hakkı zaten kazanıldı.");
         }
         LocalDateTime now = LocalDateTime.now(clock);
-        String token = UUID.randomUUID().toString();
         if (session == null) {
+            String token = UUID.randomUUID().toString();
             session = new RewardedAnalysisSession(user, month, token, now.plusMinutes(30), now);
-        } else {
+        } else if (!now.isBefore(session.getExpiresAt())) {
+            String token = UUID.randomUUID().toString();
             session.rotate(token, now.plusMinutes(30));
         }
         String userId = user.ensureBillingCustomerId();
         users.save(user);
         RewardedAnalysisSession saved = sessions.save(session);
+        log.info("Reward session ready: sessionId={}, tokenId={}, userId={}",
+                saved.getId(), shortId(saved.getToken()), shortId(userId));
         return new RewardedAdSessionResponse(saved.getToken(), userId, saved.getExpiresAt());
     }
 
     @Transactional
     public void acceptSsv(String rawQuery, String customData, String userId,
                           String transactionId, long timestamp) {
+        log.info("AdMob SSV received: tokenId={}, transactionId={}",
+                shortId(customData), shortId(transactionId));
         verifier.verify(rawQuery);
-        if (sessions.existsByTransactionId(transactionId)) return;
+        if (sessions.existsByTransactionId(transactionId)) {
+            log.info("AdMob SSV already processed: transactionId={}", shortId(transactionId));
+            return;
+        }
         RewardedAnalysisSession session = sessions.findByTokenForUpdate(customData)
                 .orElseThrow(() -> new InvalidRewardCallbackException("Ödül oturumu bulunamadı."));
         if (!session.getUser().ensureBillingCustomerId().equals(userId)) {
@@ -127,9 +138,16 @@ public class RewardedAnalysisService {
         }
         session.claim(transactionId, now);
         sessions.save(session);
+        log.info("Reward verified and claimed: sessionId={}, tokenId={}",
+                session.getId(), shortId(session.getToken()));
     }
 
     private LocalDateTime monthStart() {
         return LocalDate.now(clock).withDayOfMonth(1).atStartOfDay();
+    }
+
+    private static String shortId(String value) {
+        if (value == null || value.isBlank()) return "-";
+        return value.substring(0, Math.min(8, value.length()));
     }
 }

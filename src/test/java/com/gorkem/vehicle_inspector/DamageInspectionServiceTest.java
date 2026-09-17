@@ -3,9 +3,11 @@ package com.gorkem.vehicle_inspector;
 import com.gorkem.vehicle_inspector.client.AiAnalysisClient;
 import com.gorkem.vehicle_inspector.dto.llm.LlmInspectionReportResult;
 import com.gorkem.vehicle_inspector.dto.response.AiAnalysisResponse;
+import com.gorkem.vehicle_inspector.dto.response.ImageQualityResponse;
 import com.gorkem.vehicle_inspector.dto.response.RepairRecommendationResponse;
 import com.gorkem.vehicle_inspector.entity.*;
 import com.gorkem.vehicle_inspector.exception.ResourceNotFoundException;
+import com.gorkem.vehicle_inspector.exception.UnsuitableInspectionImageException;
 import com.gorkem.vehicle_inspector.repository.*;
 import com.gorkem.vehicle_inspector.service.*;
 import com.gorkem.vehicle_inspector.service.report.GeminiInspectionReportService;
@@ -83,6 +85,9 @@ class DamageInspectionServiceTest {
         lenient().when(transactions.getTransaction(any())).thenAnswer(call -> new SimpleTransactionStatus());
 
         lenient().when(users.findByIdForUpdate(actor.getId())).thenReturn(Optional.of(actor));
+        lenient().when(storage.resolveStoredFile("image.jpg")).thenReturn(Path.of("image.jpg"));
+        lenient().when(ai.validateImage(any())).thenReturn(
+                new ImageQualityResponse(true, "SUITABLE", "Fotoğraf analiz için uygun."));
 
         service = new DamageInspectionService(inspections, vehicles, context,
                 new InspectionAccessService(inspections, context), businesses, users, CLOCK,
@@ -119,7 +124,9 @@ class DamageInspectionServiceTest {
         assertNull(inspection.getAnalysisStartedAt());
         assertEquals(InspectionStatus.PENDING, inspection.getStatus());
         verify(inspections, never()).save(any());
-        verifyNoInteractions(ai, reports, storage);
+        verify(ai).validateImage(Path.of("image.jpg"));
+        verify(ai, never()).analyze(any());
+        verifyNoInteractions(reports);
     }
 
     @Test
@@ -234,7 +241,8 @@ class DamageInspectionServiceTest {
         when(inspections.countBusinessAnalysesBetween(eq(10L), any(), any())).thenReturn(100L);
         assertThrows(IllegalStateException.class, () -> service.analyzeInspection(30L, actor.getEmail()));
         assertEquals(NOW.minusMonths(1), inspection.getAnalysisStartedAt());
-        verifyNoInteractions(ai);
+        verify(ai).validateImage(Path.of("image.jpg"));
+        verify(ai, never()).analyze(any());
     }
 
     @Test
@@ -369,6 +377,44 @@ class DamageInspectionServiceTest {
         assertEquals(InspectionStatus.FAILED, result.getStatus());
         assertTrue(result.getAnalysisMessage().contains("çelişen analiz verisi"));
         verifyNoInteractions(reports);
+    }
+
+    @Test
+    void unsuitableImageDoesNotReserveQuotaOrCreateFailedAnalysis() {
+        when(ai.validateImage(any())).thenReturn(new ImageQualityResponse(
+                false,
+                "TOO_DARK",
+                "Fotoğraf çok karanlık. Daha aydınlık bir ortamda tekrar çekin."
+        ));
+
+        UnsuitableInspectionImageException exception = assertThrows(
+                UnsuitableInspectionImageException.class,
+                () -> service.analyzeInspection(30L, actor.getEmail())
+        );
+
+        assertTrue(exception.getMessage().contains("çok karanlık"));
+        assertEquals(InspectionStatus.PENDING, inspection.getStatus());
+        assertNull(inspection.getAnalysisStartedAt());
+        verify(ai, never()).analyze(any());
+        verify(inspections, never()).countBusinessAnalysesBetween(any(), any(), any());
+    }
+
+    @Test
+    void technicalQualityValidationFailureIsFailedWithoutReservingQuota() {
+        when(ai.validateImage(any())).thenThrow(
+                new IllegalStateException("AI quality service unavailable")
+        );
+
+        assertThrows(
+                IllegalStateException.class,
+                () -> service.analyzeInspection(30L, actor.getEmail())
+        );
+
+        assertEquals(InspectionStatus.FAILED, inspection.getStatus());
+        assertNull(inspection.getAnalysisStartedAt());
+        assertTrue(inspection.getAnalysisMessage().contains("unavailable"));
+        verify(ai, never()).analyze(any());
+        verify(inspections, never()).countBusinessAnalysesBetween(any(), any(), any());
     }
 
     private void successfulAnalysis() {

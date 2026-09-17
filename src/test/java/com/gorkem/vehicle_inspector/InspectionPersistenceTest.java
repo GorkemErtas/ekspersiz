@@ -6,6 +6,7 @@ import com.gorkem.vehicle_inspector.dto.llm.NearbyServiceSearchResult;
 import com.gorkem.vehicle_inspector.dto.request.RegisterRequest;
 import com.gorkem.vehicle_inspector.dto.request.VerifyEmailRequest;
 import com.gorkem.vehicle_inspector.dto.response.AiAnalysisResponse;
+import com.gorkem.vehicle_inspector.dto.response.ImageQualityResponse;
 import com.gorkem.vehicle_inspector.entity.*;
 import com.gorkem.vehicle_inspector.exception.ResourceNotFoundException;
 import com.gorkem.vehicle_inspector.repository.*;
@@ -111,6 +112,8 @@ class InspectionPersistenceTest {
         reset(ai, reports, storage, subscriptions, passwordEncoder,
                 verificationCodes, mailSender,
                 app.getBean(GeminiNearbyServiceSearchService.class), app.getBean(GooglePlacesClient.class));
+        lenient().when(ai.validateImage(any())).thenReturn(
+                new ImageQualityResponse(true, "SUITABLE", "Fotoğraf analiz için uygun."));
         jdbc.execute("TRUNCATE TABLE pending_registrations, users, business_accounts RESTART IDENTITY CASCADE");
         tx.executeWithoutResult(status -> {
             owner = users.save(new User("Owner", "owner@example.com", "hash"));

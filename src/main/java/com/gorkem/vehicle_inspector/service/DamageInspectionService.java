@@ -7,6 +7,7 @@ import com.gorkem.vehicle_inspector.dto.response.*;
 import com.gorkem.vehicle_inspector.entity.*;
 import com.gorkem.vehicle_inspector.exception.AiServiceException;
 import com.gorkem.vehicle_inspector.exception.ResourceNotFoundException;
+import com.gorkem.vehicle_inspector.exception.UnsuitableInspectionImageException;
 import com.gorkem.vehicle_inspector.mapper.DamageInspectionMapper;
 import com.gorkem.vehicle_inspector.mapper.InspectionLlmMapper;
 import com.gorkem.vehicle_inspector.mapper.InspectionReportMapper;
@@ -409,6 +410,17 @@ public class DamageInspectionService {
             Long inspectionId,
             String authenticatedEmail
     ) {
+        ImageValidationContext imageValidation =
+                validateInspectionImageInternal(
+                        inspectionId,
+                        authenticatedEmail
+                );
+        if (!imageValidation.quality().suitable()) {
+            throw new UnsuitableInspectionImageException(
+                    imageValidation.quality().message()
+            );
+        }
+
         AnalysisContext context =
                 transactionTemplate.execute(
                         status -> {
@@ -427,6 +439,15 @@ public class DamageInspectionService {
                             validateImageExists(
                                     inspection
                             );
+
+                            if (!Objects.equals(
+                                    inspection.getImagePath(),
+                                    imageValidation.imagePath()
+                            )) {
+                                throw new IllegalStateException(
+                                        "Fotoğraf değiştirildi. Lütfen analizi tekrar başlatın."
+                                );
+                            }
 
                             validateNotProcessing(inspection);
                             validateAnalysisLimit(inspection, user);
@@ -487,6 +508,86 @@ public class DamageInspectionService {
                     exception
             );
         }
+    }
+
+    public ImageQualityResponse validateInspectionImage(
+            Long inspectionId,
+            String authenticatedEmail
+    ) {
+        return validateInspectionImageInternal(
+                inspectionId,
+                authenticatedEmail
+        ).quality();
+    }
+
+    private ImageValidationContext validateInspectionImageInternal(
+            Long inspectionId,
+            String authenticatedEmail
+    ) {
+        ImageValidationContext context = transactionTemplate.execute(
+                status -> {
+                    User user = businessContextService.requireUser(
+                            authenticatedEmail
+                    );
+                    DamageInspection inspection =
+                            inspectionAccessService.requireInspection(
+                                    inspectionId,
+                                    user
+                            );
+                    validateImageExists(inspection);
+                    validateNotProcessing(inspection);
+                    if (inspection.getStatus() == InspectionStatus.COMPLETED) {
+                        throw new IllegalStateException(
+                                "Bu inceleme tamamlandı. Yeni fotoğraf analizi için yeni bir inceleme oluşturun."
+                        );
+                    }
+                    return new ImageValidationContext(
+                            inspection.getId(),
+                            user,
+                            inspection.getImagePath(),
+                            null
+                    );
+                }
+        );
+
+        if (context == null) {
+            throw new IllegalStateException(
+                    "Fotoğraf uygunluğu kontrol edilemedi."
+            );
+        }
+
+        ImageQualityResponse quality;
+        try {
+            Path storedImagePath = fileStorageService.resolveStoredFile(
+                    context.imagePath()
+            );
+            quality = aiAnalysisClient.validateImage(
+                    storedImagePath
+            );
+            if (quality == null
+                    || quality.code() == null
+                    || quality.message() == null) {
+                throw new AiServiceException(
+                        "AI servisi geçerli bir fotoğraf uygunluk sonucu döndürmedi."
+                );
+            }
+        } catch (RuntimeException exception) {
+            markAnalysisAsFailed(
+                    new AnalysisContext(
+                            context.inspectionId(),
+                            context.user(),
+                            context.imagePath()
+                    ),
+                    exception
+            );
+            throw exception;
+        }
+        return new ImageValidationContext(
+                context.inspectionId(),
+                context.user(),
+                context.imagePath(),
+                quality
+        );
     }
 
     private void normalizeAndValidateAnalysisResponse(
@@ -1218,6 +1319,14 @@ public class DamageInspectionService {
             Long inspectionId,
             User user,
             String imagePath
+    ) {
+    }
+
+    private record ImageValidationContext(
+            Long inspectionId,
+            User user,
+            String imagePath,
+            ImageQualityResponse quality
     ) {
     }
 

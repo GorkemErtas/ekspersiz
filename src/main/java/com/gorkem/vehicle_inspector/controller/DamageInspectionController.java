@@ -1,6 +1,7 @@
 package com.gorkem.vehicle_inspector.controller;
 
 import com.gorkem.vehicle_inspector.dto.response.DamageInspectionResponse;
+import com.gorkem.vehicle_inspector.dto.response.ImageQualityResponse;
 import com.gorkem.vehicle_inspector.service.DamageInspectionService;
 import com.gorkem.vehicle_inspector.dto.response.NearbyServiceResponse;
 import com.gorkem.vehicle_inspector.service.NearbyServiceService;
@@ -177,6 +178,19 @@ public class DamageInspectionController {
                 );
 
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{inspectionId}/image-quality")
+    public ResponseEntity<ImageQualityResponse> validateInspectionImage(
+            @PathVariable Long inspectionId,
+            Authentication authentication
+    ) {
+        return ResponseEntity.ok(
+                inspectionService.validateInspectionImage(
+                        inspectionId,
+                        authentication.getName()
+                )
+        );
     }
 
     @PostMapping("/{inspectionId}/report")

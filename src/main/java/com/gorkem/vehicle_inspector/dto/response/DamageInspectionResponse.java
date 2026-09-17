@@ -14,6 +14,10 @@ public class DamageInspectionResponse {
     private final Long id;
     private final Long vehicleId;
     private final String vehiclePlate;
+    private final String vehicleBrand;
+    private final String vehicleModel;
+    private final Integer vehicleModelYear;
+    private final Integer vehicleMileage;
     private final Long userId;
     private final String imagePath;
     private final InspectionStatus status;
@@ -46,6 +50,10 @@ public class DamageInspectionResponse {
             Long id,
             Long vehicleId,
             String vehiclePlate,
+            String vehicleBrand,
+            String vehicleModel,
+            Integer vehicleModelYear,
+            Integer vehicleMileage,
             Long userId,
             String imagePath,
             InspectionStatus status,
@@ -68,6 +76,10 @@ public class DamageInspectionResponse {
         this.id = id;
         this.vehicleId = vehicleId;
         this.vehiclePlate = vehiclePlate;
+        this.vehicleBrand = vehicleBrand;
+        this.vehicleModel = vehicleModel;
+        this.vehicleModelYear = vehicleModelYear;
+        this.vehicleMileage = vehicleMileage;
         this.userId = userId;
         this.imagePath = imagePath;
         this.status = status;
@@ -107,6 +119,14 @@ public class DamageInspectionResponse {
     public String getVehiclePlate() {
         return vehiclePlate;
     }
+
+    public String getVehicleBrand() { return vehicleBrand; }
+
+    public String getVehicleModel() { return vehicleModel; }
+
+    public Integer getVehicleModelYear() { return vehicleModelYear; }
+
+    public Integer getVehicleMileage() { return vehicleMileage; }
 
     public Long getUserId() {
         return userId;

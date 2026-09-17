@@ -1,6 +1,7 @@
 package com.gorkem.vehicle_inspector.client;
 
 import com.gorkem.vehicle_inspector.dto.response.AiAnalysisResponse;
+import com.gorkem.vehicle_inspector.dto.response.ImageQualityResponse;
 import com.gorkem.vehicle_inspector.exception.AiServiceException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
@@ -34,6 +35,28 @@ public class AiAnalysisClient {
 
     public AiAnalysisResponse analyze(
             Path imagePath
+    ) {
+        return postImage(
+                imagePath,
+                "/api/v1/analyze",
+                AiAnalysisResponse.class
+        );
+    }
+
+    public ImageQualityResponse validateImage(
+            Path imagePath
+    ) {
+        return postImage(
+                imagePath,
+                "/api/v1/validate-image",
+                ImageQualityResponse.class
+        );
+    }
+
+    private <T> T postImage(
+            Path imagePath,
+            String endpoint,
+            Class<T> responseType
     ) {
         if (imagePath == null
                 || !Files.exists(imagePath)
@@ -121,15 +144,15 @@ public class AiAnalysisClient {
                 );
 
         try {
-            ResponseEntity<AiAnalysisResponse> response =
+            ResponseEntity<T> response =
                     restTemplate.postForEntity(
                             aiServiceBaseUrl
-                                    + "/api/v1/analyze",
+                                    + endpoint,
                             request,
-                            AiAnalysisResponse.class
+                            responseType
                     );
 
-            AiAnalysisResponse responseBody =
+            T responseBody =
                     response.getBody();
 
             if (responseBody == null) {
