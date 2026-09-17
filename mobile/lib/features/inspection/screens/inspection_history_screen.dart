@@ -101,21 +101,21 @@ class _InspectionHistoryScreenState extends State<InspectionHistoryScreen> {
 
   Color _severityColor(String? severity) {
     return switch (severity) {
-      'NONE' => AppTheme.severityNone,
-      'MINOR' => AppTheme.severityMinor,
-      'MODERATE' => AppTheme.severityModerate,
-      'SEVERE' => AppTheme.severitySevere,
-      _ => AppTheme.severityUnknown,
+      'NONE' => AppTheme.successColorFor(context),
+      'MINOR' => AppTheme.warningColorFor(context),
+      'MODERATE' => AppTheme.moderateColorFor(context),
+      'SEVERE' => AppTheme.dangerColorFor(context),
+      _ => AppTheme.neutralColorFor(context),
     };
   }
 
   Color _severitySoftColor(String? severity) {
     return switch (severity) {
-      'NONE' => AppTheme.successSoft,
-      'MINOR' => AppTheme.warningSoft,
-      'MODERATE' => const Color(0xFF33200F),
-      'SEVERE' => AppTheme.dangerSoft,
-      _ => const Color(0xFF24202B),
+      'NONE' => AppTheme.successSoftFor(context),
+      'MINOR' => AppTheme.warningSoftFor(context),
+      'MODERATE' => AppTheme.moderateSoftFor(context),
+      'SEVERE' => AppTheme.dangerSoftFor(context),
+      _ => AppTheme.neutralSoftFor(context),
     };
   }
 

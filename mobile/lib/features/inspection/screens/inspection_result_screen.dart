@@ -144,21 +144,21 @@ class _InspectionResultScreenState extends State<InspectionResultScreen> {
 
   Color _severityColor(String? severity) {
     return switch (severity) {
-      'NONE' => AppTheme.severityNone,
-      'MINOR' => AppTheme.severityMinor,
-      'MODERATE' => AppTheme.severityModerate,
-      'SEVERE' => AppTheme.severitySevere,
-      _ => AppTheme.severityUnknown,
+      'NONE' => AppTheme.successColorFor(context),
+      'MINOR' => AppTheme.warningColorFor(context),
+      'MODERATE' => AppTheme.moderateColorFor(context),
+      'SEVERE' => AppTheme.dangerColorFor(context),
+      _ => AppTheme.neutralColorFor(context),
     };
   }
 
   Color _severitySoftColor(String? severity) {
     return switch (severity) {
-      'NONE' => AppTheme.successSoft,
-      'MINOR' => AppTheme.warningSoft,
-      'MODERATE' => const Color(0xFF33200F),
-      'SEVERE' => AppTheme.dangerSoft,
-      _ => const Color(0xFF24202B),
+      'NONE' => AppTheme.successSoftFor(context),
+      'MINOR' => AppTheme.warningSoftFor(context),
+      'MODERATE' => AppTheme.moderateSoftFor(context),
+      'SEVERE' => AppTheme.dangerSoftFor(context),
+      _ => AppTheme.neutralSoftFor(context),
     };
   }
 
@@ -520,13 +520,13 @@ class _NoVisibleDamageCard extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     return AppCard(
       showShadow: false,
-      backgroundColor: AppTheme.successSoft,
+      backgroundColor: AppTheme.successSoftFor(context),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(
+          Icon(
             Icons.verified_outlined,
-            color: AppTheme.severityNone,
+            color: AppTheme.successColorFor(context),
             size: 26,
           ),
           const SizedBox(width: 12),
@@ -961,10 +961,10 @@ class _RepairRecommendationTile extends StatelessWidget {
                     ),
 
                     if (replacementRequired)
-                      const AppStatusBadge(
+                      AppStatusBadge(
                         label: 'Değişim',
-                        color: AppTheme.warningColor,
-                        backgroundColor: AppTheme.warningSoft,
+                        color: AppTheme.warningColorFor(context),
+                        backgroundColor: AppTheme.warningSoftFor(context),
                         compact: true,
                       ),
                   ],
@@ -1025,7 +1025,7 @@ class _AiReportCard extends StatelessWidget {
 
         border: Border.all(color: colorScheme.primary.withValues(alpha: 0.18)),
 
-        boxShadow: AppTheme.softShadow,
+        boxShadow: AppTheme.softShadowFor(context),
       ),
 
       padding: const EdgeInsets.all(22),
@@ -1168,7 +1168,7 @@ class _PriceEstimateCard extends StatelessWidget {
             padding: const EdgeInsets.all(18),
 
             decoration: BoxDecoration(
-              color: AppTheme.successSoft,
+              color: AppTheme.successSoftFor(context),
 
               borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
             ),
@@ -1178,10 +1178,10 @@ class _PriceEstimateCard extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.location_on_outlined,
                       size: 16,
-                      color: AppTheme.successColor,
+                      color: AppTheme.successColorFor(context),
                     ),
 
                     const SizedBox(width: 5),
@@ -1190,7 +1190,7 @@ class _PriceEstimateCard extends StatelessWidget {
                       child: Text(
                         city,
                         style: textTheme.bodySmall?.copyWith(
-                          color: AppTheme.successColor,
+                          color: AppTheme.successColorFor(context),
                           fontWeight: FontWeight.w800,
                         ),
                       ),
@@ -1203,7 +1203,7 @@ class _PriceEstimateCard extends StatelessWidget {
                 Text(
                   'TAHMİNİ ARALIK',
                   style: textTheme.labelSmall?.copyWith(
-                    color: AppTheme.successColor,
+                    color: AppTheme.successColorFor(context),
                     fontWeight: FontWeight.w900,
                     letterSpacing: 0.5,
                   ),
@@ -1218,7 +1218,7 @@ class _PriceEstimateCard extends StatelessWidget {
                   child: Text(
                     '$minimum - $maximum $currency',
                     style: textTheme.headlineSmall?.copyWith(
-                      color: AppTheme.successColor,
+                      color: AppTheme.successColorFor(context),
                       fontWeight: FontWeight.w900,
                     ),
                   ),

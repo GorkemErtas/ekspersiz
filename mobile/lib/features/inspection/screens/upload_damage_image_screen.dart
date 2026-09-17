@@ -416,10 +416,10 @@ class _UploadDamageImageScreenState extends State<UploadDamageImageScreen> {
                         ),
                       ),
 
-                      const AppStatusBadge(
+                      AppStatusBadge(
                         label: 'AI',
-                        color: AppTheme.infoColor,
-                        backgroundColor: AppTheme.infoSoft,
+                        color: AppTheme.infoColorFor(context),
+                        backgroundColor: AppTheme.infoSoftFor(context),
                         compact: true,
                       ),
                     ],
@@ -739,15 +739,15 @@ class _PhotoTipsCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
               AppIconBox(
                 icon: Icons.tips_and_updates_outlined,
                 size: 38,
                 iconSize: 20,
                 borderRadius: 12,
-                backgroundColor: AppTheme.infoSoft,
-                iconColor: AppTheme.infoColor,
+                backgroundColor: AppTheme.infoSoftFor(context),
+                iconColor: AppTheme.infoColorFor(context),
               ),
 
               SizedBox(width: 11),

@@ -80,9 +80,9 @@ class _NotificationCenterScreenState extends State<NotificationCenterScreen> {
   }
 
   Color _color(String severity) => switch (severity) {
-    'CRITICAL' => AppTheme.dangerColor,
-    'WARNING' => AppTheme.warningColor,
-    _ => AppTheme.infoColor,
+    'CRITICAL' => AppTheme.dangerColorFor(context),
+    'WARNING' => AppTheme.warningColorFor(context),
+    _ => AppTheme.infoColorFor(context),
   };
 
   String _date(DateTime value) =>
