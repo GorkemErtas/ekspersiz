@@ -41,6 +41,7 @@ class _CreateInspectionScreenState extends State<CreateInspectionScreen> {
   Vehicle? _selectedVehicle;
 
   bool _isCreating = false;
+  String? _creationProgressMessage;
   Position? _currentPosition;
   bool _isLoadingLocation = false;
   String? _locationError;
@@ -198,6 +199,7 @@ class _CreateInspectionScreenState extends State<CreateInspectionScreen> {
 
     setState(() {
       _isCreating = true;
+      _creationProgressMessage = null;
     });
 
     try {
@@ -222,6 +224,10 @@ class _CreateInspectionScreenState extends State<CreateInspectionScreen> {
       if (!mounted) {
         return;
       }
+
+      debugPrint(
+        'Reward/quota confirmed; navigating to inspection image flow.',
+      );
 
       final uploadedInspection = await Navigator.of(context)
           .push<DamageInspection>(
@@ -249,6 +255,7 @@ class _CreateInspectionScreenState extends State<CreateInspectionScreen> {
       if (mounted) {
         setState(() {
           _isCreating = false;
+          _creationProgressMessage = null;
         });
       }
     }
@@ -288,15 +295,29 @@ class _CreateInspectionScreenState extends State<CreateInspectionScreen> {
         return false;
       }
 
-      final granted = await _rewardedAnalysisService.watchRewardedAd();
+      final result = await _rewardedAnalysisService.watchRewardedAd(
+        onVerificationStarted: () {
+          if (!mounted) return;
+          setState(() {
+            _creationProgressMessage = 'Reklam ödülü doğrulanıyor...';
+          });
+        },
+      );
       if (!mounted) return false;
-      if (granted) {
+      if (result == RewardedAnalysisResult.verified) {
+        debugPrint(
+          'Verified reward received; continuing intended analysis flow.',
+        );
+        setState(() {
+          _creationProgressMessage = 'Ek analiz hakkı hazır. Devam ediliyor...';
+        });
         _showMessage('Ek analiz hakkınız tanımlandı.');
         return true;
       }
-      _showMessage(
-        'Reklam ödülü henüz doğrulanamadı. Birkaç saniye sonra tekrar deneyin.',
-      );
+      final message = result == RewardedAnalysisResult.cancelled
+          ? 'Ödül alınabilmesi için reklamı tamamlayın ve tekrar deneyin.'
+          : 'Reklam ödülü sunucu tarafından doğrulanamadı. İnternet bağlantınızı kontrol edip tekrar deneyin.';
+      _showMessage(message);
       return false;
     }
 
@@ -571,6 +592,33 @@ class _CreateInspectionScreenState extends State<CreateInspectionScreen> {
                     ),
 
                     const SizedBox(height: 26),
+
+                    if (_creationProgressMessage != null) ...[
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: colorScheme.primaryContainer.withValues(
+                            alpha: 0.45,
+                          ),
+                          borderRadius: BorderRadius.circular(
+                            AppTheme.radiusMedium,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(child: Text(_creationProgressMessage!)),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
 
                     PrimaryButton(
                       label: 'Fotoğraf Eklemeye Devam Et',

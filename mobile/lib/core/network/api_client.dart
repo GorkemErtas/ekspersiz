@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
@@ -30,6 +31,29 @@ class ApiClient {
       );
     } on http.ClientException {
       throw ApiException(
+        statusCode: 0,
+        message: 'Sunucuya bağlanılamadı. İnternet bağlantınızı kontrol edin.',
+      );
+    }
+  }
+
+  Future<Uint8List> getBytes(String path) async {
+    try {
+      final response = await http
+          .get(_buildUri(path), headers: await _buildHeaders())
+          .timeout(_requestTimeout);
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        return response.bodyBytes;
+      }
+      await _handleResponse(response);
+      throw const ApiException(message: 'Dosya indirilemedi.');
+    } on TimeoutException {
+      throw const ApiException(
+        statusCode: 408,
+        message: 'Dosya indirme zaman aşımına uğradı.',
+      );
+    } on http.ClientException {
+      throw const ApiException(
         statusCode: 0,
         message: 'Sunucuya bağlanılamadı. İnternet bağlantınızı kontrol edin.',
       );

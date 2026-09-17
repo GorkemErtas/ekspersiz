@@ -1,5 +1,6 @@
 import '../../../core/network/api_client.dart';
 import '../models/damage_inspection.dart';
+import '../models/image_quality_result.dart';
 
 class InspectionService {
   const InspectionService({this.apiClient = const ApiClient()});
@@ -73,6 +74,23 @@ class InspectionService {
     );
 
     return _parseInspection(response, 'Hasar analizi tamamlanamadı.');
+  }
+
+  Future<List<int>> getInspectionImage(int inspectionId) {
+    return apiClient.getBytes('/inspections/$inspectionId/image');
+  }
+
+  Future<ImageQualityResult> validateImageQuality(int inspectionId) async {
+    final response = await apiClient.post(
+      '/inspections/$inspectionId/image-quality',
+      timeout: _analysisTimeout,
+    );
+    if (response is! Map) {
+      throw const FormatException(
+        'Fotoğraf uygunluk sonucu geçerli formatta alınamadı.',
+      );
+    }
+    return ImageQualityResult.fromJson(Map<String, dynamic>.from(response));
   }
 
   Future<DamageInspection> regenerateReport(int inspectionId) async {

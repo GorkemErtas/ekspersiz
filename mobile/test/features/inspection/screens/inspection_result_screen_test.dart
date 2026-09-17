@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/features/inspection/models/damage_inspection.dart';
 import 'package:mobile/features/inspection/models/damage_repair_recommendation.dart';
 import 'package:mobile/features/inspection/models/inspection_report.dart';
 import 'package:mobile/features/inspection/screens/inspection_result_screen.dart';
+import 'package:mobile/features/inspection/services/inspection_pdf_service.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   testWidgets('no visible damage renders a completed success explanation', (
     tester,
   ) async {
@@ -16,12 +20,20 @@ void main() {
     expect(find.text('Görünür Hasar Tespit Edilmedi'), findsWidgets);
     expect(find.text('İşlem Gerekmiyor'), findsOneWidget);
     expect(
-      find.textContaining('mekanik veya profesyonel ekspertiz garantisi değildir'),
+      find.textContaining(
+        'mekanik veya profesyonel ekspertiz garantisi değildir',
+      ),
       findsOneWidget,
     );
     expect(find.text('Tespit Edilen Hasarlar'), findsNothing);
     expect(find.text('Onarım Önerileri'), findsNothing);
     expect(find.text('Yakındaki Uygun Servisler'), findsNothing);
+    await tester.scrollUntilVisible(
+      find.text('PDF Raporu Oluştur / Paylaş'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.text('PDF Raporu Oluştur / Paylaş'), findsOneWidget);
   });
 
   testWidgets('minor damage remains a normal detected damage result', (
@@ -42,12 +54,37 @@ void main() {
     expect(find.text('Onarım Önerileri'), findsOneWidget);
     expect(find.text('İşlem Gerekmiyor'), findsNothing);
   });
+
+  test('completed inspection produces a PDF document', () async {
+    final regular = await rootBundle.load('assets/fonts/Roboto-Regular.ttf');
+    final bold = await rootBundle.load('assets/fonts/Roboto-Bold.ttf');
+    final logo = await rootBundle.load('assets/images/ekspersiz_logo.png');
+    final logoBytes = logo.buffer.asUint8List(
+      logo.offsetInBytes,
+      logo.lengthInBytes,
+    );
+
+    final bytes = await const InspectionPdfService().buildReport(
+      inspection: noDamageResult(),
+      imageBytes: logoBytes,
+      regularFont: regular,
+      boldFont: bold,
+      logoBytes: logoBytes,
+    );
+
+    expect(bytes.length, greaterThan(1000));
+    expect(String.fromCharCodes(bytes.take(4)), '%PDF');
+  });
 }
 
 DamageInspection noDamageResult() => DamageInspection(
   id: 1,
   vehicleId: 2,
   vehiclePlate: '35 TEST 01',
+  vehicleBrand: 'Test',
+  vehicleModel: 'Araç',
+  vehicleModelYear: 2024,
+  vehicleMileage: 12000,
   userId: 3,
   imagePath: 'image.jpg',
   status: 'COMPLETED',
@@ -91,6 +128,10 @@ DamageInspection minorResult() => DamageInspection(
   id: 4,
   vehicleId: 5,
   vehiclePlate: '35 TEST 02',
+  vehicleBrand: 'Test',
+  vehicleModel: 'Araç',
+  vehicleModelYear: 2024,
+  vehicleMileage: 13000,
   userId: 6,
   imagePath: 'image.jpg',
   status: 'COMPLETED',

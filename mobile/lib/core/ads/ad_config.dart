@@ -34,4 +34,8 @@ class AdConfig {
     }
     return '';
   }
+
+  static List<String> get testDeviceIds => const String.fromEnvironment(
+    'ADMOB_TEST_DEVICE_IDS',
+  ).split(',').map((id) => id.trim()).where((id) => id.isNotEmpty).toList();
 }

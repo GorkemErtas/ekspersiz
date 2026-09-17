@@ -38,6 +38,7 @@ class _UploadDamageImageScreenState extends State<UploadDamageImageScreen> {
   String? _selectedFilename;
 
   bool _isUploading = false;
+  String? _qualityIssue;
 
   Future<void> _pickImage(ImageSource source) async {
     try {
@@ -86,6 +87,7 @@ class _UploadDamageImageScreenState extends State<UploadDamageImageScreen> {
         _selectedContentType = detectedContentType;
 
         _selectedFilename = correctedFilename;
+        _qualityIssue = null;
       });
     } catch (_) {
       if (!mounted) {
@@ -200,7 +202,18 @@ class _UploadDamageImageScreenState extends State<UploadDamageImageScreen> {
         contentType: contentType,
       );
 
+      final quality = await _inspectionService.validateImageQuality(
+        widget.inspection.id,
+      );
+
       if (!mounted) {
+        return;
+      }
+
+      if (!quality.suitable) {
+        setState(() {
+          _qualityIssue = quality.message;
+        });
         return;
       }
 
@@ -431,6 +444,11 @@ class _UploadDamageImageScreenState extends State<UploadDamageImageScreen> {
                   ),
                 ],
 
+                if (_qualityIssue != null) ...[
+                  const SizedBox(height: 12),
+                  _ImageQualityIssueCard(message: _qualityIssue!),
+                ],
+
                 const SizedBox(height: 18),
 
                 const _PhotoTipsCard(),
@@ -453,6 +471,44 @@ class _UploadDamageImageScreenState extends State<UploadDamageImageScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _ImageQualityIssueCard extends StatelessWidget {
+  const _ImageQualityIssueCard({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return AppCard(
+      showShadow: false,
+      backgroundColor: colorScheme.errorContainer.withValues(alpha: 0.45),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.camera_alt_outlined, color: colorScheme.error),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Fotoğrafı yeniden çekin',
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    color: colorScheme.error,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Text(message, style: Theme.of(context).textTheme.bodyMedium),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

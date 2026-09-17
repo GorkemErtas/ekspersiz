@@ -7,6 +7,10 @@ class DamageInspection {
     required this.id,
     required this.vehicleId,
     required this.vehiclePlate,
+    required this.vehicleBrand,
+    required this.vehicleModel,
+    required this.vehicleModelYear,
+    required this.vehicleMileage,
     required this.userId,
     required this.imagePath,
     required this.status,
@@ -31,6 +35,10 @@ class DamageInspection {
 
   final int vehicleId;
   final String vehiclePlate;
+  final String vehicleBrand;
+  final String vehicleModel;
+  final int vehicleModelYear;
+  final int vehicleMileage;
   final int userId;
 
   final String? imagePath;
@@ -85,6 +93,10 @@ class DamageInspection {
       id: _parseInt(json['id']),
       vehicleId: _parseInt(json['vehicleId']),
       vehiclePlate: _parseString(json['vehiclePlate']),
+      vehicleBrand: _parseString(json['vehicleBrand']),
+      vehicleModel: _parseString(json['vehicleModel']),
+      vehicleModelYear: _parseInt(json['vehicleModelYear']),
+      vehicleMileage: _parseInt(json['vehicleMileage']),
       userId: _parseInt(json['userId']),
       imagePath: _parseNullableString(json['imagePath']),
       status: _parseEnumString(json['status'], fallback: 'PENDING'),
