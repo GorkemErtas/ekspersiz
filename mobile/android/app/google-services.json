@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "129219400982",
+    "project_id": "ekspersiz",
+    "storage_bucket": "ekspersiz.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:129219400982:android:b83f3d8f3c02a99cdd6c37",
+        "android_client_info": {
+          "package_name": "com.gorkem.ekspersiz"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCBkmphAjEjg6BIwLDIt_j1iif8p9_PjSs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

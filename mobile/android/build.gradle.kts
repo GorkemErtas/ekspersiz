@@ -1,3 +1,6 @@
+plugins {
+}
+
 allprojects {
     repositories {
         google()

@@ -52,3 +52,11 @@ ai-service/datasets/
 
 ### Test Images ###
 ai-service/test-images/
+
+### Firebase / Secrets ###
+firebase-admin.json
+**/firebase-admin.json
+*-firebase-adminsdk-*.json
+
+### YOLO Weights ###
+ai-service/*.pt

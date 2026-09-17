@@ -38,6 +38,17 @@ class PushNotificationService {
       _openedSubscription ??= FirebaseMessaging.onMessageOpenedApp.listen((_) {
         _events.add(null);
       });
+
+      _refreshSubscription ??=
+          FirebaseMessaging.instance.onTokenRefresh.listen((token) async {
+        if (token.isEmpty) return;
+
+        try {
+          await _register(token);
+        } catch (_) {
+          // A temporary backend/network failure must not interrupt the app.
+        }
+      });
     } catch (_) {
       _firebaseReady = false;
     }
@@ -54,13 +65,13 @@ class PushNotificationService {
         }
       }
       final token = await FirebaseMessaging.instance.getToken();
-      if (token != null) await _register(token);
-      _refreshSubscription ??= FirebaseMessaging.instance.onTokenRefresh.listen(
-        _register,
-      );
-    } catch (_) {
-      // Firebase console configuration is optional in local development.
-    }
+
+      if (token != null && token.isNotEmpty) {
+        await _register(token);
+      }
+      } catch (_) {
+        // Device registration failure must not block the authenticated session.
+      }
   }
 
   Future<void> unregisterCurrentDevice() async {
