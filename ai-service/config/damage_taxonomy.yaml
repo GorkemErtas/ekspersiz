@@ -1,0 +1,28 @@
+version: 1
+names:
+  0: SCRATCH
+  1: DENT
+  2: PAINT_DAMAGE
+  3: CRACK
+  4: BROKEN_PART
+  5: BROKEN_GLASS
+  6: DEFORMATION
+
+# External datasets must declare an explicit mapping before labels are converted.
+# Unknown source classes must be rejected or reviewed; never guess a mapping.
+aliases:
+  scratch: SCRATCH
+  dent: DENT
+  paint_damage: PAINT_DAMAGE
+  paint-damage: PAINT_DAMAGE
+  crack: CRACK
+  broken_part: BROKEN_PART
+  broken-part: BROKEN_PART
+  broken_glass: BROKEN_GLASS
+  broken-glass: BROKEN_GLASS
+  deformation: DEFORMATION
+
+no_damage:
+  domain_value: NO_VISIBLE_DAMAGE
+  training_representation: negative_image_without_damage_annotations
+

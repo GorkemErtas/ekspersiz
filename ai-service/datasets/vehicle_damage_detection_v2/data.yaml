@@ -1,0 +1,14 @@
+path: .
+train: images/train
+val: images/val
+test: images/test
+
+names:
+  0: SCRATCH
+  1: DENT
+  2: PAINT_DAMAGE
+  3: CRACK
+  4: BROKEN_PART
+  5: BROKEN_GLASS
+  6: DEFORMATION
+

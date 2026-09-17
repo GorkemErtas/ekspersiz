@@ -45,10 +45,47 @@ ai-service/__pycache__/
 ai-service/models/*.pt
 ai-service/training-runs/
 ai-service/prediction-runs/
+ai-service/evaluation-runs/
+ai-service/error-analysis-runs/
 ai-service/yolo11n.pt
 
 ### Dataset ###
-ai-service/datasets/
+ai-service/datasets/**
+!ai-service/datasets/vehicle_damage_detection_v2/
+!ai-service/datasets/vehicle_damage_detection_v2/data.yaml
+!ai-service/datasets/vehicle_damage_detection_v2/README.md
+!ai-service/datasets/vehicle_damage_detection_v2/images/
+!ai-service/datasets/vehicle_damage_detection_v2/images/train/
+!ai-service/datasets/vehicle_damage_detection_v2/images/val/
+!ai-service/datasets/vehicle_damage_detection_v2/images/test/
+!ai-service/datasets/vehicle_damage_detection_v2/images/**/.gitkeep
+!ai-service/datasets/vehicle_damage_detection_v2/labels/
+!ai-service/datasets/vehicle_damage_detection_v2/labels/train/
+!ai-service/datasets/vehicle_damage_detection_v2/labels/val/
+!ai-service/datasets/vehicle_damage_detection_v2/labels/test/
+!ai-service/datasets/vehicle_damage_detection_v2/labels/**/.gitkeep
+!ai-service/datasets/vehicle_damage_segmentation_v1/
+!ai-service/datasets/vehicle_damage_segmentation_v1/data.yaml
+!ai-service/datasets/vehicle_damage_segmentation_v1/README.md
+!ai-service/datasets/vehicle_damage_segmentation_v1/images/
+!ai-service/datasets/vehicle_damage_segmentation_v1/images/train/
+!ai-service/datasets/vehicle_damage_segmentation_v1/images/val/
+!ai-service/datasets/vehicle_damage_segmentation_v1/images/test/
+!ai-service/datasets/vehicle_damage_segmentation_v1/images/**/.gitkeep
+!ai-service/datasets/vehicle_damage_segmentation_v1/labels/
+!ai-service/datasets/vehicle_damage_segmentation_v1/labels/train/
+!ai-service/datasets/vehicle_damage_segmentation_v1/labels/val/
+!ai-service/datasets/vehicle_damage_segmentation_v1/labels/test/
+!ai-service/datasets/vehicle_damage_segmentation_v1/labels/**/.gitkeep
+
+### Manual ML Evaluation Images ###
+ai-service/evaluation-images/*
+!ai-service/evaluation-images/.gitkeep
+!ai-service/evaluation-images/README.md
+!ai-service/evaluation-images/review_manifest.csv
+
+### Candidate Model Weights ###
+ai-service/models/candidates/*.pt
 
 ### Test Images ###
 ai-service/test-images/

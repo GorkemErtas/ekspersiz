@@ -1,0 +1,4 @@
+source_dataset: REPLACE_WITH_DATASET_NAME
+unmapped_class_policy: reject
+mappings: {}
+
