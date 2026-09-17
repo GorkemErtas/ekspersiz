@@ -14,5 +14,23 @@ public record VehicleTrackingRequest(
         LocalDate trafficInsuranceExpiryDate,
         LocalDate comprehensiveInsuranceExpiryDate,
         LocalDate tireCheckDate,
-        @Size(max = 1000) String notes
-) {}
+        @Size(max = 1000) String notes,
+        @Min(1) @Max(600) Integer maintenanceIntervalMonths,
+        @Min(1) @Max(2_000_000) Integer maintenanceIntervalMileage,
+        LocalDate inspectionReferenceDate,
+        Boolean firstInspection
+) {
+    public VehicleTrackingRequest(LocalDate lastMaintenanceDate,
+                                  Integer lastMaintenanceMileage,
+                                  LocalDate nextMaintenanceDate,
+                                  Integer nextMaintenanceMileage,
+                                  LocalDate vehicleInspectionDate,
+                                  LocalDate trafficInsuranceExpiryDate,
+                                  LocalDate comprehensiveInsuranceExpiryDate,
+                                  LocalDate tireCheckDate, String notes) {
+        this(lastMaintenanceDate, lastMaintenanceMileage, nextMaintenanceDate,
+                nextMaintenanceMileage, vehicleInspectionDate,
+                trafficInsuranceExpiryDate, comprehensiveInsuranceExpiryDate,
+                tireCheckDate, notes, null, null, null, null);
+    }
+}

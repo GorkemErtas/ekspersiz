@@ -9,6 +9,7 @@ public record MaintenanceResponse(
         Long id, Long vehicleId, MaintenanceType maintenanceType,
         LocalDate maintenanceDate, Integer mileage, BigDecimal cost,
         String note, LocalDate nextRecommendedDate,
-        Integer nextRecommendedMileage, Long createdByUserId,
+        Integer nextRecommendedMileage, Integer intervalMonths,
+        Integer intervalMileage, Long createdByUserId,
         String createdByName, LocalDateTime createdAt
 ) {}
