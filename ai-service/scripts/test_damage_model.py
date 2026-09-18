@@ -7,9 +7,9 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from ultralytics import YOLO  # noqa: E402
 
-from app.damage_analyzer import resolve_damage_model_path  # noqa: E402
+from app.damage_analyzer import DEFAULT_DAMAGE_MODEL_PATH  # noqa: E402
 
-MODEL_PATH = resolve_damage_model_path()
+MODEL_PATH = DEFAULT_DAMAGE_MODEL_PATH
 
 TEST_IMAGE_PATH = (
         PROJECT_ROOT

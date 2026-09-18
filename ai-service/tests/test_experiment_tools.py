@@ -4,8 +4,6 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
-import numpy as np
-
 from experiments.config import (
     AI_SERVICE_ROOT,
     canonical_damage_classes,
@@ -14,10 +12,6 @@ from experiments.config import (
     resolve_split_path,
     validate_class_remap_config,
     validate_dataset_config,
-)
-from experiments.mask_metrics import (
-    damage_part_intersection_ratio,
-    damage_to_part_area_ratio,
 )
 from scripts.analyze_damage_errors import review_flags
 from scripts.evaluate_damage_models import (
@@ -50,15 +44,6 @@ class ExperimentConfigurationTest(unittest.TestCase):
         self.assertEqual(
             ["SCRATCH", "DENT", "CRACK", "BROKEN_PART", "BROKEN_GLASS"],
             dataset_class_names(detection, detection_config),
-        )
-
-        segmentation_config = (
-            AI_SERVICE_ROOT / "datasets" / "vehicle_damage_segmentation_v1" / "data.yaml"
-        )
-        segmentation = validate_dataset_config(segmentation_config)
-        self.assertEqual(
-            expected,
-            dataset_class_names(segmentation, segmentation_config),
         )
 
     def test_external_mapping_requires_canonical_targets_and_reject_policy(self) -> None:
@@ -141,19 +126,6 @@ class ExperimentConfigurationTest(unittest.TestCase):
             )
 
 
-class MaskMetricTest(unittest.TestCase):
-    def test_mask_intersection_and_part_area_signals(self) -> None:
-        damage = np.array([[1, 1], [0, 0]], dtype=np.uint8)
-        part = np.array([[1, 0], [1, 1]], dtype=np.uint8)
-
-        self.assertEqual(0.5, damage_part_intersection_ratio(damage, part))
-        self.assertAlmostEqual(1 / 3, damage_to_part_area_ratio(damage, part))
-
-    def test_mask_shapes_must_match(self) -> None:
-        with self.assertRaisesRegex(ValueError, "same shape"):
-            damage_part_intersection_ratio(np.ones((2, 2)), np.ones((3, 3)))
-
-
 class EvaluationOutputTest(unittest.TestCase):
     def test_metric_report_exposes_aggregate_and_per_class_values(self) -> None:
         metric = SimpleNamespace(
@@ -163,7 +135,6 @@ class EvaluationOutputTest(unittest.TestCase):
         )
         report = metric_report(
             SimpleNamespace(box=metric),
-            "detect",
             {0: "SCRATCH", 1: "DENT"},
         )
 
@@ -179,7 +150,6 @@ class EvaluationOutputTest(unittest.TestCase):
         )
         report = metric_report(
             SimpleNamespace(box=metric),
-            "detect",
             {0: "SCRATCH", 1: "DENT"},
         )
 

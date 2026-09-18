@@ -46,7 +46,6 @@ def build_parser() -> argparse.ArgumentParser:
         metavar="LABEL=PATH",
         help="Repeat for each model being compared.",
     )
-    parser.add_argument("--task", choices=("detect", "segment"), default="detect")
     parser.add_argument("--data", type=Path, default=DEFAULT_DETECTION_DATA)
     parser.add_argument("--split", choices=("val", "test"), default="test")
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
@@ -58,10 +57,10 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def metric_report(metrics: Any, task: str, names: Any) -> dict[str, Any]:
-    metric = getattr(metrics, "seg" if task == "segment" else "box", None)
+def metric_report(metrics: Any, names: Any) -> dict[str, Any]:
+    metric = getattr(metrics, "box", None)
     if metric is None:
-        raise ValueError(f"Ultralytics returned no {task} metrics.")
+        raise ValueError("Ultralytics returned no detection metrics.")
 
     precision, recall, map50, map50_95 = [
         _finite_float(value) for value in metric.mean_results()
@@ -147,12 +146,11 @@ def evaluate(args: argparse.Namespace) -> None:
             exist_ok=True,
             verbose=True,
         )
-        report = metric_report(metrics, args.task, model.names)
+        report = metric_report(metrics, model.names)
         report.update(
             {
                 "model": label,
                 "model_path": str(model_path),
-                "task": args.task,
                 "split": args.split,
                 "dataset": str(data_path),
                 "evaluation_scope": shared_classes,

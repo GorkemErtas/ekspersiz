@@ -115,19 +115,12 @@ def prediction_row(result: Any, names: Any) -> dict[str, Any]:
             raw_name = names[int(class_id)] if isinstance(names, dict) else names[int(class_id)]
             labels.append(canonicalize_damage_label(str(raw_name)))
 
-    mask_area_ratios: list[float] = []
-    masks = getattr(result, "masks", None)
-    if masks is not None and getattr(masks, "data", None) is not None:
-        for mask in masks.data.cpu().numpy():
-            mask_area_ratios.append(round(float((mask > 0.5).mean()), 6))
-
     return {
         "predicted_damage": bool(labels),
         "predicted_types": "|".join(labels),
         "confidences": "|".join(str(value) for value in confidences),
         "highest_confidence": max(confidences, default=0.0),
         "instance_count": len(labels),
-        "mask_image_area_ratios": "|".join(str(value) for value in mask_area_ratios),
     }
 
 
@@ -187,4 +180,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

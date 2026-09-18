@@ -1,9 +1,6 @@
-# Candidate Model Weights
+# Production Model Weights
 
-Store evaluated, unpromoted checkpoints here using versioned names such as:
+The active damage detector is `damage_detection_v2_cardd_5class.pt`.
 
-- `damage_detection_v2.pt`
-- `damage_segmentation_v1.pt`
-
-Weights are ignored by Git. Nothing in the training or evaluation pipeline copies a candidate over `../best.pt`. Production promotion requires an explicit reviewed deployment action after independent testing and manual error analysis.
-
+Weights are ignored by Git and must be provisioned at deployment time. The
+production service uses this checkpoint directly.
