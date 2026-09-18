@@ -198,6 +198,10 @@ public final class InspectionReportPromptBuilder {
 
                 16. Yalnızca istenen JSON nesnesini
                     üret.
+                    
+                17. Kullanıcıya gösterilecek metinlerde parantez kullanma.
+                    Ek açıklama gerekiyorsa parantez yerine doğal ve ayrı bir cümle kullan.
+                    Teknik enum, kod veya İngilizce terimleri parantez içinde tekrar etme.    
 
                 JSON dışında hiçbir açıklama,
                 Markdown veya kod bloğu üretme.

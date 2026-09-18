@@ -9,6 +9,7 @@ import '../../../core/widgets/app_motion.dart';
 import '../../../core/widgets/app_status_badge.dart';
 import '../../../core/widgets/section_title.dart';
 import '../../auth/models/business_account.dart';
+import '../../vehicle/screens/vehicle_detail_screen.dart';
 
 import '../../inspection/models/damage_inspection.dart';
 import '../../inspection/screens/create_inspection_screen.dart';
@@ -82,6 +83,24 @@ class _HomeScreenState extends State<HomeScreen> {
       if (mounted) setState(() => _unreadNotificationCount = count);
     } catch (_) {
       // Notification count must never block the primary inspection experience.
+    }
+  }
+
+  Future<void> _openMainVehicle() async {
+    final vehicle = _mainVehicle;
+    if (vehicle == null) return;
+
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => VehicleDetailScreen(
+          vehicle: vehicle,
+          businessAccount: widget.businessAccount,
+        ),
+      ),
+    );
+
+    if (mounted) {
+      await _loadHomeData();
     }
   }
 
@@ -595,7 +614,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   if (!_isLoading && _vehicleOverview != null) ...[
                     const SizedBox(height: AppTheme.spacingM),
-                    _TrackingOverviewCard(overview: _vehicleOverview!),
+                    _TrackingOverviewCard(
+                      overview: _vehicleOverview!,
+                      onTap: _openMainVehicle,
+                    ),
                   ],
                   const SizedBox(height: AppTheme.spacingXL),
                   AppFadeSlideIn(
@@ -675,8 +697,14 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 
 class _TrackingOverviewCard extends StatelessWidget {
-  const _TrackingOverviewCard({required this.overview});
-  final VehicleOverview overview;String _reminderTypeLabel(String value) => switch (value) {
+  const _TrackingOverviewCard({
+    required this.overview,
+    required this.onTap,
+  });
+
+  final VehicleOverview overview;
+  final VoidCallback onTap;
+  String _reminderTypeLabel(String value) => switch (value) {
 'PERIODIC_MAINTENANCE' => 'Periyodik bakım',
 'VEHICLE_INSPECTION' => 'Araç muayenesi',
 'TRAFFIC_INSURANCE' => 'Trafik sigortası',
@@ -696,6 +724,7 @@ _ => 'Hatırlatma',
     };
     return AppCard(
       showShadow: false,
+      onTap: onTap,
       child: Row(
         children: [
           const Icon(Icons.health_and_safety_outlined),
