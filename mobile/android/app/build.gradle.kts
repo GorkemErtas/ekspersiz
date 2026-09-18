@@ -18,9 +18,6 @@ if (localPropertiesFile.exists()) {
 
 val mapsApiKey =
     localProperties.getProperty("MAPS_API_KEY") ?: ""
-val admobAppId = localProperties.getProperty("ADMOB_APP_ID")
-    ?: "ca-app-pub-3940256099942544~3347511713"
-
 val keystoreProperties = Properties()
 val keystorePropertiesFile = rootProject.file("key.properties")
 
@@ -49,7 +46,7 @@ android {
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
-        manifestPlaceholders["ADMOB_APP_ID"] = admobAppId
+        manifestPlaceholders["USES_CLEARTEXT_TRAFFIC"] = "true"
     }
 
     signingConfigs {
@@ -65,10 +62,10 @@ android {
 
     buildTypes {
         release {
-            signingConfig = if (keystorePropertiesFile.exists()) {
+            manifestPlaceholders["USES_CLEARTEXT_TRAFFIC"] = "false"
+            if (keystorePropertiesFile.exists()) {
                 signingConfigs.getByName("release")
-            } else {
-                signingConfigs.getByName("debug")
+                    .also { signingConfig = it }
             }
         }
     }

@@ -14,6 +14,7 @@ The application analyzes vehicle images, detects visible damage, identifies affe
 * 🔄 Persistent Login & Automatic Session Restoration
 * 👤 User Profile & Secure Logout
 * 🌗 Persistent Dark and Light Themes (Dark by Default)
+* 🌐 Persistent Turkish and English Interface (Turkish by Default)
 * 🛡 Business Membership Permissions (`OWNER`, `MEMBER`)
 * 🚙 Vehicle Management
 * ⭐ Main Vehicle Selection
@@ -39,7 +40,6 @@ The application analyzes vehicle images, detects visible damage, identifies affe
 * 🧭 Google Maps Directions to Selected Services
 * 📊 Inspection History
 * 💳 Subscription Plans (`FREE`, `PLUS`, `PRO`, `BUSINESS`)
-* 📺 Ad-Supported FREE Plan with One Server-Verified Rewarded Analysis
 * 🏢 Business Accounts, Employee Invitations, Employee Management, and Shared Vehicles
 * 📉 Shared Monthly Inspection Limits for Personal and Business Usage
 * 🗄 PostgreSQL Persistence
@@ -74,7 +74,7 @@ PostgreSQL  FastAPI       Gemini API     Google Places
 * **Gemini** converts structured ML results into a user-friendly inspection report and estimates a repair price range based on vehicle and inspection context.
 * **Google Places** is used to discover nearby automotive repair services.
 * **Google Maps** visualizes service locations and opens driving directions from the user's current location.
-* **PostgreSQL** stores pending registrations, verified users, business accounts, memberships, invitations, vehicles, inspections, detections, repair recommendations, report status, generated reports, subscription state, rewarded-analysis claims, notifications, device tokens, and processed billing webhook events.
+* **PostgreSQL** stores pending registrations, verified users, business accounts, memberships, invitations, vehicles, inspections, detections, repair recommendations, report status, generated reports, subscription state, notifications, device tokens, and processed billing webhook events.
 
 ---
 
@@ -88,7 +88,6 @@ PostgreSQL  FastAPI       Gemini API     Google Places
 * Geolocator
 * Flutter Secure Storage
 * RevenueCat Flutter SDK
-* Google Mobile Ads SDK
 * Firebase Cloud Messaging
 
 ## Backend
@@ -359,7 +358,7 @@ Subscription plans belong to `User`. Current personal limits are:
 
 Monthly usage counts inspections with `analysisStartedAt` inside the server's current calendar month. Pending inspections that have not started analysis do not count. Retrying the same inspection in its reserved month does not consume another slot, while a retry from an earlier month requires capacity in the current month. A completed inspection cannot be analyzed again.
 
-FREE users can earn at most one additional analysis in each server calendar month by completing a rewarded AdMob ad. This raises the effective FREE maximum from one to two analyses for that month. Spring Boot grants the extra analysis only after validating AdMob's signed server-side verification callback; a Flutter reward callback by itself never changes quota. After the client callback, Flutter polls the quota endpoint for a short bounded period and continues the pending inspection flow only when the backend confirms the reward. PLUS, PRO, and BUSINESS users are ad-free and do not use rewarded analyses.
+The authenticated mobile quota precheck is available at `GET /api/v1/analysis-quota`. It reports the effective personal or shared company allowance before the user starts an analysis. The backend remains authoritative and validates the limit again when analysis begins.
 
 ### Business membership
 
@@ -414,30 +413,6 @@ flutter run \
 The secret RevenueCat API key and webhook secrets belong only on the Spring Boot server. The mobile app receives a random billing customer ID from the authenticated backend and uses it as the RevenueCat App User ID. Store purchase prices are loaded from RevenueCat, StoreKit, or Google Play at runtime; the TRY values in the API are display fallbacks for builds without store configuration.
 
 The authenticated billing API is available at `GET /api/v1/billing` and `POST /api/v1/billing/sync`. The sync endpoint re-fetches the provider state instead of accepting subscription claims from the device. Webhook event IDs are persisted to make retry delivery idempotent, and webhook HMAC signatures are checked against the raw request body with a five-minute replay tolerance.
-
----
-
-# Ads and Rewarded FREE Analysis
-
-The home screen shows one lightweight banner only for personal FREE users. Ads are not shown during image selection, upload, analysis, report generation, or critical warnings. PLUS, PRO, BUSINESS subscribers, and users operating through a company membership are ad-free.
-
-Development builds use Google's official AdMob test IDs by default. Those sample units validate the ad UI but cannot call this project's SSV endpoint. To test the complete rewarded-analysis flow securely, use the application's own rewarded unit ID, configure its SSV callback, and mark the device as a test device with the comma-separated `ADMOB_TEST_DEVICE_IDS` Dart define. The real unit remains in test mode on those devices while its SSV configuration stays under project control. Before a production release:
-
-1. Create the Android and iOS applications, banner units, and rewarded units in AdMob.
-2. Configure the rewarded unit's server-side verification callback as the public HTTPS endpoint `GET /api/v1/rewards/analysis/admob/ssv`.
-3. Set Android's `ADMOB_APP_ID` in the ignored `mobile/android/local.properties` file. Replace the test `GADApplicationIdentifier` in `mobile/ios/Runner/Info.plist` through the release configuration.
-4. Supply production ad-unit IDs to Flutter at build time:
-
-```bash
-flutter build apk \
-  --dart-define=ADMOB_BANNER_ANDROID_ID=<banner-ad-unit-id> \
-  --dart-define=ADMOB_REWARDED_ANDROID_ID=<rewarded-ad-unit-id> \
-  --dart-define=ADMOB_TEST_DEVICE_IDS=<device-id-1,device-id-2>
-```
-
-Use `ADMOB_BANNER_IOS_ID` and `ADMOB_REWARDED_IOS_ID` for iOS. AdMob app IDs and ad-unit IDs are identifiers rather than server secrets, but production values should still stay in the release configuration so development continues to use test inventory.
-
-The authenticated reward API exposes quota at `GET /api/v1/rewards/analysis` and creates a short-lived server session at `POST /api/v1/rewards/analysis/session`. An unexpired session is reused so repeated taps cannot rotate the token while an SSV callback is in flight. The SSV endpoint verifies Google's ECDSA signature, the server-issued token, customer identity, timestamp, month, and unique transaction before persisting the reward. Repeated or client-forged claims do not add quota.
 
 ---
 
@@ -586,10 +561,9 @@ Software Engineer
 * ✅ Apple App Store / Google Play Subscription Purchase Flow
 * ✅ RevenueCat Server-Side Subscription Verification and Webhooks
 * ✅ Subscription Restore and Store Management Flow
-* ✅ Ad-Supported FREE Plan and AdMob Banner Integration
-* ✅ Server-Verified Rewarded FREE Analysis
 * ✅ Pre-Analysis Image Quality and Retake Validation
 * ✅ Branded PDF Inspection Reports and Native Sharing
+* ✅ Persistent Turkish / English Language Selection
 
 ## In Progress
 

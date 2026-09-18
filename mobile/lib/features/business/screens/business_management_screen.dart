@@ -1,3 +1,4 @@
+import 'package:mobile/core/localization/app_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -107,7 +108,7 @@ class _BusinessManagementScreenState extends State<BusinessManagementScreen> {
         ..hideCurrentSnackBar()
         ..showSnackBar(
           const SnackBar(
-            content: Text(
+            content: AppText(
               'Davet kodu kullanıcının e-posta adresine gönderildi.',
             ),
           ),
@@ -159,18 +160,18 @@ class _BusinessManagementScreenState extends State<BusinessManagementScreen> {
     final shouldRemove = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Çalışan üyelikten çıkarılsın mı?'),
-        content: Text(
+        title: const AppText('Çalışan üyelikten çıkarılsın mı?'),
+        content: AppText(
           '${employee.fullName} (${employee.email}) şirket araçlarına ve analizlerine erişimini kaybedecek.',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Vazgeç'),
+            child: const AppText('Vazgeç'),
           ),
           FilledButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Üyelikten Çıkar'),
+            child: const AppText('Üyelikten Çıkar'),
           ),
         ],
       ),
@@ -190,7 +191,7 @@ class _BusinessManagementScreenState extends State<BusinessManagementScreen> {
         ..hideCurrentSnackBar()
         ..showSnackBar(
           SnackBar(
-            content: Text('${employee.fullName} şirket üyeliğinden çıkarıldı.'),
+            content: AppText('${employee.fullName} şirket üyeliğinden çıkarıldı.'),
           ),
         );
     } catch (exception) {
@@ -213,30 +214,30 @@ class _BusinessManagementScreenState extends State<BusinessManagementScreen> {
 
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
+      ..showSnackBar(SnackBar(content: AppText(message)));
   }
 
   String? _validateCompanyName(String? value) {
     final companyName = value?.trim() ?? '';
-    if (companyName.isEmpty) return 'Şirket adı zorunludur.';
+    if (companyName.isEmpty) return 'Şirket adı zorunludur.'.tr;
     if (companyName.length > 150) {
-      return 'Şirket adı en fazla 150 karakter olabilir.';
+      return 'Şirket adı en fazla 150 karakter olabilir.'.tr;
     }
     return null;
   }
 
   String? _validateEmail(String? value) {
     final email = value?.trim() ?? '';
-    if (email.isEmpty) return 'E-posta adresi zorunludur.';
+    if (email.isEmpty) return 'E-posta adresi zorunludur.'.tr;
     if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email)) {
-      return 'Geçerli bir e-posta adresi girin.';
+      return 'Geçerli bir e-posta adresi girin.'.tr;
     }
     return null;
   }
 
   String? _validateCode(String? value) {
     if (!RegExp(r'^\d{6}$').hasMatch(value?.trim() ?? '')) {
-      return 'Davet kodu 6 haneli olmalıdır.';
+      return 'Davet kodu 6 haneli olmalıdır.'.tr;
     }
     return null;
   }
@@ -247,7 +248,7 @@ class _BusinessManagementScreenState extends State<BusinessManagementScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isInvitationOnly ? 'Şirket Daveti' : 'Şirket İşlemleri'),
+        title: AppText(_isInvitationOnly ? 'Şirket Daveti' : 'Şirket İşlemleri'),
       ),
       body: SafeArea(
         child: Center(
@@ -307,7 +308,7 @@ class _BusinessManagementScreenState extends State<BusinessManagementScreen> {
               subtitle: account.roleLabel,
             ),
             const SizedBox(height: 18),
-            Text(
+            AppText(
               'Şirket genelinde 50 aktif araç ve ayda 100 AI analizi ortak kullanılır.',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: colorScheme.onSurfaceVariant,
@@ -330,14 +331,14 @@ class _BusinessManagementScreenState extends State<BusinessManagementScreen> {
             const AppSectionHeader(
               icon: Icons.add_business_rounded,
               title: 'Şirket oluştur',
-              subtitle: 'BUSINESS planınızla yeni bir şirket hesabı açın.',
+              subtitle: 'Kurumsal planınızla yeni bir şirket hesabı açın.',
             ),
             const SizedBox(height: 18),
             TextFormField(
               controller: _companyNameController,
               textCapitalization: TextCapitalization.words,
-              decoration: const InputDecoration(
-                labelText: 'Şirket Adı',
+              decoration: InputDecoration(
+                labelText: 'Şirket Adı'.tr,
                 prefixIcon: Icon(Icons.business_outlined),
               ),
               validator: _validateCompanyName,
@@ -372,8 +373,8 @@ class _BusinessManagementScreenState extends State<BusinessManagementScreen> {
               controller: _emailController,
               keyboardType: TextInputType.emailAddress,
               autocorrect: false,
-              decoration: const InputDecoration(
-                labelText: 'Kullanıcının E-postası',
+              decoration: InputDecoration(
+                labelText: 'Kullanıcının E-postası'.tr,
                 prefixIcon: Icon(Icons.mail_outline_rounded),
               ),
               validator: _validateEmail,
@@ -405,7 +406,7 @@ class _BusinessManagementScreenState extends State<BusinessManagementScreen> {
             title: 'Çalışanlar',
             subtitle: 'Şirket araçlarına ve analizlerine erişebilen üyeler.',
             trailing: IconButton(
-              tooltip: 'Çalışan listesini yenile',
+              tooltip: 'Çalışan listesini yenile'.tr,
               onPressed: _removingMembershipId == null
                   ? _reloadEmployees
                   : null,
@@ -436,7 +437,7 @@ class _BusinessManagementScreenState extends State<BusinessManagementScreen> {
 
                   return Column(
                     children: [
-                      Text(
+                      AppText(
                         message,
                         textAlign: TextAlign.center,
                         style: textTheme.bodyMedium?.copyWith(
@@ -447,7 +448,7 @@ class _BusinessManagementScreenState extends State<BusinessManagementScreen> {
                       TextButton.icon(
                         onPressed: _reloadEmployees,
                         icon: const Icon(Icons.refresh_rounded),
-                        label: const Text('Tekrar Dene'),
+                        label: const AppText('Tekrar Dene'),
                       ),
                     ],
                   );
@@ -465,7 +466,7 @@ class _BusinessManagementScreenState extends State<BusinessManagementScreen> {
                       ),
                       borderRadius: BorderRadius.circular(16),
                     ),
-                    child: const Text(
+                    child: const AppText(
                       'Henüz şirkete katılmış bir çalışan bulunmuyor.',
                       textAlign: TextAlign.center,
                     ),
@@ -515,9 +516,9 @@ class _BusinessManagementScreenState extends State<BusinessManagementScreen> {
                 FilteringTextInputFormatter.digitsOnly,
                 LengthLimitingTextInputFormatter(6),
               ],
-              decoration: const InputDecoration(
-                labelText: 'Davet Kodu',
-                hintText: '123456',
+              decoration: InputDecoration(
+                labelText: 'Davet Kodu'.tr,
+                hintText: '123456'.tr,
                 prefixIcon: Icon(Icons.password_rounded),
               ),
               validator: _validateCode,
@@ -526,8 +527,8 @@ class _BusinessManagementScreenState extends State<BusinessManagementScreen> {
             if (!_canCreateAccount &&
                 widget.subscriptionPlan != 'BUSINESS') ...[
               const SizedBox(height: 12),
-              Text(
-                'Davet edilen üyelerin BUSINESS planına ihtiyacı yoktur.',
+              AppText(
+                'Davet edilen üyelerin Kurumsal plana ihtiyacı yoktur.',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
@@ -579,14 +580,14 @@ class _EmployeeListItem extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                AppText(
                   employee.fullName,
                   style: textTheme.bodyLarge?.copyWith(
                     fontWeight: FontWeight.w800,
                   ),
                 ),
                 const SizedBox(height: 3),
-                Text(
+                AppText(
                   employee.email,
                   style: textTheme.bodySmall?.copyWith(
                     color: colorScheme.onSurfaceVariant,
@@ -604,7 +605,7 @@ class _EmployeeListItem extends StatelessWidget {
             )
           else
             IconButton(
-              tooltip: 'Üyelikten çıkar',
+              tooltip: 'Üyelikten çıkar'.tr,
               onPressed: canRemove ? onRemove : null,
               icon: Icon(
                 Icons.person_remove_outlined,
