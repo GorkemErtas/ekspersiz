@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 
 import '../../../core/network/api_exception.dart';
@@ -13,19 +15,24 @@ import '../services/inspection_service.dart';
 import 'nearby_services_screen.dart';
 
 class InspectionResultScreen extends StatefulWidget {
-  const InspectionResultScreen({super.key, required this.inspection});
+  const InspectionResultScreen({
+    super.key,
+    required this.inspection,
+    this.inspectionService = const InspectionService(),
+  });
 
   final DamageInspection inspection;
+  final InspectionService inspectionService;
 
   @override
   State<InspectionResultScreen> createState() => _InspectionResultScreenState();
 }
 
 class _InspectionResultScreenState extends State<InspectionResultScreen> {
-  final InspectionService _inspectionService = const InspectionService();
   final InspectionPdfService _pdfService = const InspectionPdfService();
 
   late DamageInspection _inspection;
+  Future<List<int>>? _inspectionImageFuture;
 
   bool _isRegeneratingReport = false;
   bool _isSharingPdf = false;
@@ -35,6 +42,22 @@ class _InspectionResultScreenState extends State<InspectionResultScreen> {
     super.initState();
 
     _inspection = widget.inspection;
+    _loadInspectionImage();
+  }
+
+  InspectionService get _inspectionService => widget.inspectionService;
+
+  bool get _hasInspectionImage =>
+      _inspection.imagePath?.trim().isNotEmpty == true;
+
+  void _loadInspectionImage() {
+    _inspectionImageFuture = _hasInspectionImage
+        ? _inspectionService.getInspectionImage(_inspection.id)
+        : null;
+  }
+
+  void _retryInspectionImage() {
+    setState(_loadInspectionImage);
   }
 
   Future<void> _regenerateReport() async {
@@ -325,6 +348,15 @@ class _InspectionResultScreenState extends State<InspectionResultScreen> {
                   ),
                 ),
 
+                if (_inspectionImageFuture != null) ...[
+                  const SizedBox(height: 16),
+
+                  _InspectionImageCard(
+                    imageFuture: _inspectionImageFuture!,
+                    onRetry: _retryInspectionImage,
+                  ),
+                ],
+
                 if (noVisibleDamage) ...[
                   const SizedBox(height: 16),
 
@@ -507,6 +539,89 @@ class _InspectionResultScreenState extends State<InspectionResultScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _InspectionImageCard extends StatelessWidget {
+  const _InspectionImageCard({
+    required this.imageFuture,
+    required this.onRetry,
+  });
+
+  final Future<List<int>> imageFuture;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return _SectionCard(
+      icon: Icons.photo_outlined,
+      title: 'Analiz Fotoğrafı',
+      subtitle: 'Hasar analizi için yüklenen görüntü',
+      child: FutureBuilder<List<int>>(
+        future: imageFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState != ConnectionState.done) {
+            return AspectRatio(
+              aspectRatio: 16 / 10,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: const Center(child: CircularProgressIndicator()),
+              ),
+            );
+          }
+
+          final bytes = snapshot.data;
+          if (snapshot.hasError || bytes == null || bytes.isEmpty) {
+            return Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: colorScheme.errorContainer.withValues(alpha: 0.45),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Column(
+                children: [
+                  Icon(Icons.broken_image_outlined, color: colorScheme.error),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Analiz fotoğrafı yüklenemedi.',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: 10),
+                  TextButton.icon(
+                    onPressed: onRetry,
+                    icon: const Icon(Icons.refresh_rounded),
+                    label: const Text('Tekrar Dene'),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          return ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: ColoredBox(
+              color: colorScheme.surfaceContainerHighest,
+              child: AspectRatio(
+                aspectRatio: 16 / 10,
+                child: Image.memory(
+                  Uint8List.fromList(bytes),
+                  key: const Key('inspection-analysis-image'),
+                  fit: BoxFit.contain,
+                  semanticLabel: 'Analiz için yüklenen araç fotoğrafı',
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }

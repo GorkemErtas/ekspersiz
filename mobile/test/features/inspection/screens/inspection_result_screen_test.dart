@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mobile/core/network/api_client.dart';
 import 'package:mobile/features/inspection/models/damage_inspection.dart';
 import 'package:mobile/features/inspection/models/damage_repair_recommendation.dart';
 import 'package:mobile/features/inspection/models/inspection_report.dart';
 import 'package:mobile/features/inspection/screens/inspection_result_screen.dart';
 import 'package:mobile/features/inspection/services/inspection_pdf_service.dart';
+import 'package:mobile/features/inspection/services/inspection_service.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -13,11 +15,16 @@ void main() {
   testWidgets('no visible damage renders a completed success explanation', (
     tester,
   ) async {
-    await tester.pumpWidget(
-      MaterialApp(home: InspectionResultScreen(inspection: noDamageResult())),
-    );
+    await _pumpResultScreen(tester, noDamageResult());
 
     expect(find.text('Görünür Hasar Tespit Edilmedi'), findsWidgets);
+    expect(find.text('Analiz Fotoğrafı'), findsOneWidget);
+    expect(find.byKey(const Key('inspection-analysis-image')), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('İşlem Gerekmiyor'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.text('İşlem Gerekmiyor'), findsOneWidget);
     expect(
       find.textContaining(
@@ -39,11 +46,14 @@ void main() {
   testWidgets('minor damage remains a normal detected damage result', (
     tester,
   ) async {
-    await tester.pumpWidget(
-      MaterialApp(home: InspectionResultScreen(inspection: minorResult())),
-    );
+    await _pumpResultScreen(tester, minorResult());
 
     expect(find.text('Hafif Seviye Hasar'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('Tespit Edilen Hasarlar'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.text('Tespit Edilen Hasarlar'), findsOneWidget);
     expect(find.text('Çizik'), findsOneWidget);
     await tester.scrollUntilVisible(
@@ -75,6 +85,38 @@ void main() {
     expect(bytes.length, greaterThan(1000));
     expect(String.fromCharCodes(bytes.take(4)), '%PDF');
   });
+}
+
+Future<void> _pumpResultScreen(
+  WidgetTester tester,
+  DamageInspection inspection,
+) async {
+  final imageData = await rootBundle.load('assets/images/ekspersiz_logo.png');
+  final imageBytes = imageData.buffer.asUint8List(
+    imageData.offsetInBytes,
+    imageData.lengthInBytes,
+  );
+
+  await tester.pumpWidget(
+    MaterialApp(
+      home: InspectionResultScreen(
+        inspection: inspection,
+        inspectionService: InspectionService(
+          apiClient: _ImageApiClient(imageBytes),
+        ),
+      ),
+    ),
+  );
+  await tester.pumpAndSettle();
+}
+
+class _ImageApiClient extends ApiClient {
+  _ImageApiClient(this.imageBytes);
+
+  final Uint8List imageBytes;
+
+  @override
+  Future<Uint8List> getBytes(String path) async => imageBytes;
 }
 
 DamageInspection noDamageResult() => DamageInspection(
