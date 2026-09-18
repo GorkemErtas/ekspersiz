@@ -1,7 +1,6 @@
 import 'package:mobile/core/localization/app_text.dart';
 import 'package:flutter/material.dart';
 
-import '../../../core/localization/app_locale_controller.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_theme_controller.dart';
 import '../../../core/notifications/push_notification_service.dart';
@@ -335,8 +334,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     children: [
                       const _ThemeModeProfileItem(),
                       const Divider(height: 1, indent: 82),
-                      const _LanguageProfileItem(),
-                      const Divider(height: 1, indent: 82),
                       _ActionProfileItem(
                         icon: Icons.workspace_premium_outlined,
                         title: 'Abonelik ve Ödeme',
@@ -547,70 +544,6 @@ class _ThemeModeProfileItem extends StatelessWidget {
           ),
         );
       },
-    );
-  }
-}
-
-class _LanguageProfileItem extends StatelessWidget {
-  const _LanguageProfileItem();
-
-  @override
-  Widget build(BuildContext context) {
-    final controller = AppLocaleController.instance;
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-
-    return AnimatedBuilder(
-      animation: controller,
-      builder: (context, _) => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-        child: Row(
-          children: [
-            AppIconBox(
-              icon: Icons.language_rounded,
-              size: 46,
-              iconSize: 22,
-              borderRadius: 14,
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  AppText(
-                    'Dil',
-                    style: textTheme.bodyLarge?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  AppText(
-                    controller.isTurkish ? 'Türkçe' : 'İngilizce',
-                    style: textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            SegmentedButton<String>(
-              segments: const [
-                ButtonSegment(value: 'tr', label: AppText('TR')),
-                ButtonSegment(value: 'en', label: AppText('EN')),
-              ],
-              selected: {controller.locale.languageCode},
-              onSelectionChanged: (selection) {
-                controller.setLanguage(selection.first);
-              },
-              showSelectedIcon: false,
-              style: const ButtonStyle(
-                visualDensity: VisualDensity.compact,
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

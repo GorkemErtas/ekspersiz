@@ -271,7 +271,7 @@ class _BusinessManagementScreenState extends State<BusinessManagementScreen> {
                       : 'Şirket araçları ve analizleri bütün üyeler tarafından ortak kullanılır.',
                   badge: _isInvitationOnly
                       ? 'DAVET'
-                      : account?.roleLabel ?? 'BUSINESS',
+                      : account?.roleLabel ?? 'Kurumsal'
                 ),
                 const SizedBox(height: 24),
                 if (account?.isOwner ?? false) ...[

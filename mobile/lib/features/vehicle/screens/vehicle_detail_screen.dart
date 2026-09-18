@@ -144,12 +144,37 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
     'DUE_SOON' => AppTheme.warningColorFor(context),
     _ => AppTheme.successColorFor(context),
   };
-  String _type(String v) => v
-      .replaceAll('_', ' ')
-      .toLowerCase()
-      .split(' ')
-      .map((e) => e.isEmpty ? e : '${e[0].toUpperCase()}${e.substring(1)}')
-      .join(' ');
+  String _type(String value) => switch (value) {
+  // Bakım türleri
+    'ENGINE_OIL' => 'Motor yağı',
+    'OIL_FILTER' => 'Yağ filtresi',
+    'AIR_FILTER' => 'Hava filtresi',
+    'CABIN_FILTER' => 'Polen filtresi',
+    'BRAKE_PADS' => 'Fren balataları',
+    'BRAKE_FLUID' => 'Fren hidroliği',
+    'BATTERY' => 'Akü',
+    'TIRES' => 'Lastikler',
+    'TIMING_SYSTEM' => 'Triger / zincir',
+    'TRANSMISSION' => 'Şanzıman',
+    'PERIODIC_MAINTENANCE' => 'Periyodik bakım',
+    'CUSTOM' => 'Özel bakım',
+
+  // Hatırlatma türleri
+    'VEHICLE_INSPECTION' => 'Araç muayenesi',
+    'TRAFFIC_INSURANCE' => 'Trafik sigortası',
+    'COMPREHENSIVE_INSURANCE' => 'Kasko',
+    'TIRE_CHECK' => 'Lastik kontrolü',
+
+  // Hasar seviyeleri
+    'UNKNOWN' => 'Bilinmiyor',
+    'NONE' => 'Hasar yok',
+    'MINOR' => 'Hafif',
+    'MODERATE' => 'Orta',
+    'SEVERE' => 'Ağır',
+
+  // Bilinmeyen backend değerini kullanıcıya ham enum olarak göstermeyelim.
+    _ => 'Bilinmiyor',
+  };
 
   @override
   Widget build(BuildContext context) => Scaffold(

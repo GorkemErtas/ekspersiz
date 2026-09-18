@@ -676,7 +676,15 @@ class _HomeScreenState extends State<HomeScreen> {
 
 class _TrackingOverviewCard extends StatelessWidget {
   const _TrackingOverviewCard({required this.overview});
-  final VehicleOverview overview;
+  final VehicleOverview overview;String _reminderTypeLabel(String value) => switch (value) {
+'PERIODIC_MAINTENANCE' => 'Periyodik bakım',
+'VEHICLE_INSPECTION' => 'Araç muayenesi',
+'TRAFFIC_INSURANCE' => 'Trafik sigortası',
+'COMPREHENSIVE_INSURANCE' => 'Kasko',
+'TIRE_CHECK' => 'Lastik kontrolü',
+'CUSTOM' => 'Özel hatırlatma',
+_ => 'Hatırlatma',
+};
 
   @override
   Widget build(BuildContext context) {
@@ -711,7 +719,7 @@ class _TrackingOverviewCard extends StatelessWidget {
                       padding: const EdgeInsets.only(top: 2),
                       child: AppText(
                         reminder.title ??
-                            reminder.reminderType.replaceAll('_', ' '),
+                            _reminderTypeLabel(reminder.reminderType),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),

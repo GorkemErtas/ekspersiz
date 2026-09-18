@@ -274,7 +274,7 @@ class _MaintenanceFormScreenState extends State<MaintenanceFormScreen> {
         'TIMING_SYSTEM': 'Triger / zincir',
         'TRANSMISSION': 'Şanzıman',
         'PERIODIC_MAINTENANCE': 'Periyodik bakım',
-        'CUSTOM': 'Diğer',
+        'CUSTOM': 'Özel bakım'
       }[value] ??
-      value;
+          value;
 }

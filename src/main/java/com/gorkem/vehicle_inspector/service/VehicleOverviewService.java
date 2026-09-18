@@ -36,6 +36,33 @@ public class VehicleOverviewService {
         this.maintenanceService = maintenanceService; this.reminderService = reminderService;
     }
 
+    private String maintenanceTypeLabel(MaintenanceType type) {
+        return switch (type) {
+            case ENGINE_OIL -> "Motor yağı";
+            case OIL_FILTER -> "Yağ filtresi";
+            case AIR_FILTER -> "Hava filtresi";
+            case CABIN_FILTER -> "Polen filtresi";
+            case BRAKE_PADS -> "Fren balataları";
+            case BRAKE_FLUID -> "Fren hidroliği";
+            case BATTERY -> "Akü";
+            case TIRES -> "Lastikler";
+            case TIMING_SYSTEM -> "Triger / zincir";
+            case TRANSMISSION -> "Şanzıman";
+            case PERIODIC_MAINTENANCE -> "Periyodik bakım";
+            case CUSTOM -> "Özel bakım";
+        };
+    }
+
+    private String damageSeverityLabel(DamageSeverity severity) {
+        return switch (severity) {
+            case UNKNOWN -> "Bilinmiyor";
+            case NONE -> "Hasar yok";
+            case MINOR -> "Hafif";
+            case MODERATE -> "Orta";
+            case SEVERE -> "Ağır";
+        };
+    }
+
     @Transactional(readOnly = true)
     public VehicleOverviewResponse overview(Long vehicleId, String email) {
         User user = businessContext.requireUser(email);
@@ -77,14 +104,20 @@ public class VehicleOverviewService {
                         record.getPreviousMileage() + " km → " + record.getNewMileage() + " km",
                         record.getRecordedAt())));
         maintenance.findAllByVehicleIdOrderByMaintenanceDateDescIdDesc(vehicleId).forEach(record ->
-                items.add(new VehicleHistoryItemResponse("MAINTENANCE", record.getId(),
-                        "Bakım: " + record.getMaintenanceType().name(),
-                        record.getMileage() + " km", record.getMaintenanceDate().atStartOfDay())));
+                items.add(new VehicleHistoryItemResponse(
+                        "MAINTENANCE",
+                        record.getId(),
+                        "Bakım: " + maintenanceTypeLabel(record.getMaintenanceType()),
+                        record.getMileage() + " km",
+                        record.getMaintenanceDate().atStartOfDay()
+                )));
         inspections.findAllByVehicleIdOrderByCreatedAtDesc(vehicleId).stream()
                 .filter(item -> item.getStatus() == InspectionStatus.COMPLETED).forEach(item ->
                         items.add(new VehicleHistoryItemResponse("AI_INSPECTION", item.getId(),
                                 "AI hasar analizi",
-                                item.getDamageSeverity() == null ? "Sonuç kaydedildi" : item.getDamageSeverity().name(),
+                                item.getDamageSeverity() == null
+                                        ? "Sonuç kaydedildi"
+                                        : damageSeverityLabel(item.getDamageSeverity()),
                                 item.getCompletedAt() == null ? item.getCreatedAt() : item.getCompletedAt())));
         return items.stream().sorted(Comparator.comparing(
                         VehicleHistoryItemResponse::occurredAt,
