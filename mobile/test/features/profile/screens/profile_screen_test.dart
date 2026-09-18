@@ -5,10 +5,10 @@ import 'package:mobile/features/profile/screens/profile_screen.dart';
 
 void main() {
   for (final entry in {
-    'FREE': 'Free',
+    'FREE': 'Ücretsiz',
     'PLUS': 'Plus',
     'PRO': 'Pro',
-    'BUSINESS': 'Business',
+    'BUSINESS': 'Kurumsal',
   }.entries) {
     testWidgets('profile shows user identity and ${entry.key} subscription', (
       tester,
@@ -26,7 +26,6 @@ void main() {
       expect(find.text('Test User'), findsWidgets);
       expect(find.text(entry.value), findsWidgets);
       expect(find.text('Bireysel'), findsNothing);
-      expect(find.text('Kurumsal'), findsNothing);
 
       await tester.scrollUntilVisible(
         find.text('Abonelik Planı'),

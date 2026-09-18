@@ -5,10 +5,7 @@ import com.gorkem.vehicle_inspector.entity.SubscriptionPlan;
 public record AnalysisQuotaResponse(
         SubscriptionPlan plan,
         long used,
-        int baseLimit,
-        boolean rewardedClaimed,
-        boolean rewardedEligible,
-        int totalLimit,
+        int limit,
         long remaining
 ) {
 }

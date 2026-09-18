@@ -101,8 +101,7 @@ public class SecurityConfig {
                                         "/api/v1/auth/verify-email",
                                         "/api/v1/auth/resend-verification",
                                         "/api/v1/auth/login",
-                                        "/api/v1/billing/revenuecat/webhook",
-                                        "/api/v1/rewards/analysis/admob/ssv"
+                                        "/api/v1/billing/revenuecat/webhook"
                                 )
                                 .permitAll()
 
