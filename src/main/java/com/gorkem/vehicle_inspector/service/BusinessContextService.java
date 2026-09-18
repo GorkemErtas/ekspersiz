@@ -102,7 +102,7 @@ public class BusinessContextService {
         if (subscriptionService.getEffectivePlan(user)
                 != SubscriptionPlan.BUSINESS) {
             throw new IllegalStateException(
-                    "Şirket işlemleri için Business planı gereklidir."
+                    "Şirket işlemleri için Kurumsal plan gereklidir."
             );
         }
 

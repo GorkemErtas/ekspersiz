@@ -44,7 +44,6 @@ class DamageInspectionServiceTest {
     @Mock private VehicleRepository vehicles;
     @Mock private BusinessAccountRepository businesses;
     @Mock private UserRepository users;
-    @Mock private RewardedAnalysisSessionRepository rewardedSessions;
     @Mock private BusinessContextService context;
     @Mock private FileStorageService storage;
     @Mock private AiAnalysisClient ai;
@@ -92,7 +91,7 @@ class DamageInspectionServiceTest {
         service = new DamageInspectionService(inspections, vehicles, context,
                 new InspectionAccessService(inspections, context), businesses, users, CLOCK,
                 storage, ai, reports, transactions,
-                new SubscriptionService(inspections, vehicles, rewardedSessions, CLOCK));
+                new SubscriptionService(inspections, vehicles, CLOCK));
     }
 
     @ParameterizedTest

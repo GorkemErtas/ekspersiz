@@ -5,7 +5,6 @@ import com.gorkem.vehicle_inspector.entity.User;
 import com.gorkem.vehicle_inspector.entity.BusinessAccount;
 import com.gorkem.vehicle_inspector.repository.DamageInspectionRepository;
 import com.gorkem.vehicle_inspector.repository.VehicleRepository;
-import com.gorkem.vehicle_inspector.repository.RewardedAnalysisSessionRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -30,12 +29,9 @@ public class SubscriptionService {
     private final VehicleRepository
             vehicleRepository;
     private final Clock clock;
-    private final RewardedAnalysisSessionRepository rewardedSessions;
-
     public SubscriptionService(
             DamageInspectionRepository inspectionRepository,
             VehicleRepository vehicleRepository,
-            RewardedAnalysisSessionRepository rewardedSessions,
             Clock clock
     ) {
         this.inspectionRepository =
@@ -43,7 +39,6 @@ public class SubscriptionService {
 
         this.vehicleRepository =
                 vehicleRepository;
-        this.rewardedSessions = rewardedSessions;
         this.clock = clock;
     }
 
@@ -99,13 +94,8 @@ public class SubscriptionService {
                                 end
                         );
 
-        boolean rewardedClaimed = plan == SubscriptionPlan.FREE
-                && rewardedSessions.existsByUserIdAndMonthStartAndClaimedAtIsNotNull(
-                user.getId(), start.toLocalDate());
-        int effectiveLimit = limit + (rewardedClaimed ? 1 : 0);
-
-        if (used >= effectiveLimit) {
-            if (plan == SubscriptionPlan.FREE && !rewardedClaimed) {
+        if (used >= limit) {
+            if (plan == SubscriptionPlan.FREE) {
                 throw new IllegalStateException(
                         "Bu ayki ücretsiz analiz hakkınızı kullandınız."
                 );
@@ -115,7 +105,7 @@ public class SubscriptionService {
                             + "Mevcut plan: "
                             + plan
                             + ", aylık limit: "
-                            + effectiveLimit
+                            + limit
                             + "."
             );
         }
@@ -160,7 +150,7 @@ public class SubscriptionService {
                             PRO_VEHICLE_LIMIT;
                     case BUSINESS ->
                             throw new IllegalStateException(
-                                    "Business araç limiti şirket hesabı üzerinden hesaplanmalıdır."
+                                    "Kurumsal araç limiti şirket hesabı üzerinden hesaplanmalıdır."
                             );
                 };
 
@@ -194,7 +184,7 @@ public class SubscriptionService {
         if (vehicleCount >= BUSINESS_VEHICLE_LIMIT) {
             throw new IllegalStateException(
                     "Şirket araç limitine ulaştınız. "
-                            + "Business araç limiti: "
+                            + "Kurumsal araç limiti: "
                             + BUSINESS_VEHICLE_LIMIT
                             + "."
             );
@@ -207,7 +197,7 @@ public class SubscriptionService {
             case PLUS -> PLUS_MONTHLY_ANALYSIS_LIMIT;
             case PRO -> PRO_MONTHLY_ANALYSIS_LIMIT;
             case BUSINESS -> throw new IllegalStateException(
-                    "Business analiz limiti şirket hesabı üzerinden hesaplanmalıdır.");
+                    "Kurumsal analiz limiti şirket hesabı üzerinden hesaplanmalıdır.");
         };
     }
 

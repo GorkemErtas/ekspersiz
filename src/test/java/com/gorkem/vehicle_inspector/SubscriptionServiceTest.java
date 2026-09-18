@@ -5,7 +5,6 @@ import com.gorkem.vehicle_inspector.entity.SubscriptionPlan;
 import com.gorkem.vehicle_inspector.entity.User;
 import com.gorkem.vehicle_inspector.repository.DamageInspectionRepository;
 import com.gorkem.vehicle_inspector.repository.VehicleRepository;
-import com.gorkem.vehicle_inspector.repository.RewardedAnalysisSessionRepository;
 import com.gorkem.vehicle_inspector.service.SubscriptionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,7 +15,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.LocalDate;
 import java.time.ZoneId;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -33,13 +31,12 @@ class SubscriptionServiceTest {
 
     @Mock private DamageInspectionRepository inspections;
     @Mock private VehicleRepository vehicles;
-    @Mock private RewardedAnalysisSessionRepository rewardedSessions;
     @Mock private User user;
     private SubscriptionService service;
 
     @BeforeEach
     void setUp() {
-        service = new SubscriptionService(inspections, vehicles, rewardedSessions, CLOCK);
+        service = new SubscriptionService(inspections, vehicles, CLOCK);
         lenient().when(user.getId()).thenReturn(1L);
     }
 
@@ -54,19 +51,6 @@ class SubscriptionServiceTest {
     void freeUserSecondMonthlyAnalysisIsBlocked() {
         plan(SubscriptionPlan.FREE);
         when(inspections.countPersonalAnalysesBetween(1L, MONTH_START, NEXT_MONTH)).thenReturn(1L);
-        assertThrows(IllegalStateException.class,
-                () -> service.validatePersonalMonthlyAnalysisLimit(user, NOW));
-    }
-
-    @Test
-    void verifiedRewardAllowsExactlyOneAdditionalFreeAnalysis() {
-        plan(SubscriptionPlan.FREE);
-        when(rewardedSessions.existsByUserIdAndMonthStartAndClaimedAtIsNotNull(
-                1L, LocalDate.of(2026, 9, 1))).thenReturn(true);
-        when(inspections.countPersonalAnalysesBetween(1L, MONTH_START, NEXT_MONTH))
-                .thenReturn(1L, 2L);
-
-        assertDoesNotThrow(() -> service.validatePersonalMonthlyAnalysisLimit(user, NOW));
         assertThrows(IllegalStateException.class,
                 () -> service.validatePersonalMonthlyAnalysisLimit(user, NOW));
     }

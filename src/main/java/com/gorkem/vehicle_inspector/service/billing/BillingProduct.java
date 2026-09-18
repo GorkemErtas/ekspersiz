@@ -30,7 +30,7 @@ public enum BillingProduct {
     ),
     BUSINESS(
             SubscriptionPlan.BUSINESS,
-            "Business",
+            "Kurumsal",
             "Ekipler ve ortak şirket araçları için",
             "eksper_business_monthly",
             "business_monthly",

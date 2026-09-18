@@ -410,8 +410,7 @@ class InspectionPersistenceTest {
 
         @Bean
         SubscriptionService subscriptionService(DamageInspectionRepository inspections, VehicleRepository vehicles) {
-            return spy(new SubscriptionService(inspections, vehicles,
-                    mock(RewardedAnalysisSessionRepository.class), CLOCK));
+            return spy(new SubscriptionService(inspections, vehicles, CLOCK));
         }
     }
 }

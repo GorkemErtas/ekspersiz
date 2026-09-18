@@ -65,7 +65,7 @@ public class BusinessInvitationService {
         if (subscriptionService.getEffectivePlan(owner)
                 != SubscriptionPlan.BUSINESS) {
             throw new IllegalStateException(
-                    "Şirket işlemleri için Business planı gereklidir."
+                    "Şirket işlemleri için Kurumsal plan gereklidir."
             );
         }
 

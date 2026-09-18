@@ -56,7 +56,7 @@ public class BusinessAccountService {
                 != SubscriptionPlan.BUSINESS) {
 
             throw new IllegalStateException(
-                    "Şirket ortamı oluşturmak için Business planı gereklidir."
+                    "Şirket ortamı oluşturmak için Kurumsal plan gereklidir."
             );
         }
 

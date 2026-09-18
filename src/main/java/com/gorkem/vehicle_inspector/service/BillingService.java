@@ -266,7 +266,7 @@ public class BillingService {
         List<BillingPlanResponse> plans = new ArrayList<>();
         plans.add(new BillingPlanResponse(
                 SubscriptionPlan.FREE,
-                "Free",
+                "Ücretsiz",
                 "Temel bireysel kullanım",
                 null,
                 null,
