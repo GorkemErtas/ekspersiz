@@ -1,3 +1,4 @@
+import 'package:mobile/core/localization/app_text.dart';
 import 'package:flutter/material.dart';
 
 class SectionTitle extends StatelessWidget {
@@ -17,7 +18,7 @@ class SectionTitle extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: Text(
+          child: AppText(
             title,
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.w800,
@@ -26,7 +27,7 @@ class SectionTitle extends StatelessWidget {
           ),
         ),
         if (actionLabel != null)
-          TextButton(onPressed: onActionPressed, child: Text(actionLabel!)),
+          TextButton(onPressed: onActionPressed, child: AppText(actionLabel!)),
       ],
     );
   }

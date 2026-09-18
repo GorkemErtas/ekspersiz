@@ -1,3 +1,4 @@
+import 'package:mobile/core/localization/app_text.dart';
 import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
@@ -40,7 +41,7 @@ class AppStatusBadge extends StatelessWidget {
             const SizedBox(width: 5),
           ],
 
-          Text(
+          AppText(
             label,
             style: textTheme.labelMedium?.copyWith(
               color: color,

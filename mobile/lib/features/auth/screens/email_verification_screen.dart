@@ -1,3 +1,4 @@
+import 'package:mobile/core/localization/app_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -64,7 +65,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
         ..hideCurrentSnackBar()
         ..showSnackBar(
           const SnackBar(
-            content: Text(
+            content: AppText(
               'E-posta adresiniz doğrulandı. Şimdi giriş yapabilirsiniz.',
             ),
           ),
@@ -78,7 +79,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
 
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(message)));
+        ..showSnackBar(SnackBar(content: AppText(message)));
     } finally {
       if (mounted) {
         setState(() {
@@ -110,7 +111,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
         ..hideCurrentSnackBar()
         ..showSnackBar(
           const SnackBar(
-            content: Text('Yeni doğrulama kodu e-posta adresinize gönderildi.'),
+            content: AppText('Yeni doğrulama kodu e-posta adresinize gönderildi.'),
           ),
         );
     } catch (exception) {
@@ -122,7 +123,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
 
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(message)));
+        ..showSnackBar(SnackBar(content: AppText(message)));
     } finally {
       if (mounted) {
         setState(() {
@@ -136,11 +137,11 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
     final code = value?.trim() ?? '';
 
     if (code.isEmpty) {
-      return 'Doğrulama kodunu girin.';
+      return 'Doğrulama kodunu girin.'.tr;
     }
 
     if (!RegExp(r'^\d{6}$').hasMatch(code)) {
-      return 'Doğrulama kodu 6 haneli olmalıdır.';
+      return 'Doğrulama kodu 6 haneli olmalıdır.'.tr;
     }
 
     return null;
@@ -180,14 +181,14 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
+                      AppText(
                         'E-postanı doğrula',
                         style: textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.w900,
                         ),
                       ),
                       const SizedBox(height: 2),
-                      Text(
+                      AppText(
                         'EksperSiz hesabını aktifleştir',
                         style: textTheme.bodySmall?.copyWith(
                           color: colorScheme.onSurfaceVariant,
@@ -199,14 +200,14 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
               ],
             ),
             const SizedBox(height: 30),
-            Text(
+            AppText(
               'Doğrulama kodunu gir',
               style: textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.w900,
               ),
             ),
             const SizedBox(height: 8),
-            Text(
+            AppText(
               '${widget.email} adresine gönderdiğimiz 6 haneli kodu girin.',
               style: textTheme.bodyMedium?.copyWith(
                 color: colorScheme.onSurfaceVariant,
@@ -231,9 +232,9 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                   _verifyEmail();
                 }
               },
-              decoration: const InputDecoration(
-                labelText: 'Doğrulama Kodu',
-                hintText: '123456',
+              decoration: InputDecoration(
+                labelText: 'Doğrulama Kodu'.tr,
+                hintText: '123456'.tr,
                 prefixIcon: Icon(Icons.password_rounded),
                 counterText: '',
               ),
@@ -260,7 +261,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                   ),
                   const SizedBox(width: 10),
                   Expanded(
-                    child: Text(
+                    child: AppText(
                       'Doğrulama kodu 5 dakika boyunca geçerlidir.',
                       style: textTheme.bodySmall?.copyWith(
                         color: colorScheme.onSurfaceVariant,
@@ -290,7 +291,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.refresh_rounded),
-                label: Text(
+                label: AppText(
                   _isResending ? 'Kod gönderiliyor...' : 'Kodu Tekrar Gönder',
                 ),
               ),
@@ -309,7 +310,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                         );
                       },
                 icon: const Icon(Icons.arrow_back_rounded),
-                label: const Text('Giriş ekranına dön'),
+                label: const AppText('Giriş ekranına dön'),
               ),
             ),
           ],

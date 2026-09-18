@@ -1,3 +1,4 @@
+import 'package:mobile/core/localization/app_text.dart';
 import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
@@ -153,7 +154,7 @@ class _BrandHeader extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
-        Text(
+        AppText(
           'EksperSiz',
           style: textTheme.headlineSmall?.copyWith(
             fontWeight: FontWeight.w900,
@@ -161,7 +162,7 @@ class _BrandHeader extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 6),
-        Text(
+        AppText(
           'AI destekli araç hasar analizi',
           textAlign: TextAlign.center,
           style: textTheme.bodyMedium?.copyWith(

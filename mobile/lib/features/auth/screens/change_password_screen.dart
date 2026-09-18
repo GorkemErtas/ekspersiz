@@ -1,3 +1,4 @@
+import 'package:mobile/core/localization/app_text.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_theme.dart';
@@ -67,7 +68,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
         ..showSnackBar(
-          SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
+          SnackBar(content: AppText(message), behavior: SnackBarBehavior.floating),
         );
     } finally {
       if (mounted) {
@@ -80,7 +81,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
 
   String? _validateCurrentPassword(String? value) {
     if ((value ?? '').isEmpty) {
-      return 'Mevcut şifrenizi girin.';
+      return 'Mevcut şifrenizi girin.'.tr;
     }
 
     return null;
@@ -90,15 +91,15 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     final password = value ?? '';
 
     if (password.isEmpty) {
-      return 'Yeni şifrenizi girin.';
+      return 'Yeni şifrenizi girin.'.tr;
     }
 
     if (password.length < 8 || password.length > 72) {
-      return 'Şifre 8 ile 72 karakter arasında olmalıdır.';
+      return 'Şifre 8 ile 72 karakter arasında olmalıdır.'.tr;
     }
 
     if (password == _currentPasswordController.text) {
-      return 'Yeni şifre mevcut şifreden farklı olmalıdır.';
+      return 'Yeni şifre mevcut şifreden farklı olmalıdır.'.tr;
     }
 
     return null;
@@ -108,11 +109,11 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     final password = value ?? '';
 
     if (password.isEmpty) {
-      return 'Yeni şifrenizi tekrar girin.';
+      return 'Yeni şifrenizi tekrar girin.'.tr;
     }
 
     if (password != _newPasswordController.text) {
-      return 'Yeni şifreler eşleşmiyor.';
+      return 'Yeni şifreler eşleşmiyor.'.tr;
     }
 
     return null;
@@ -124,7 +125,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Şifre Değiştir')),
+      appBar: AppBar(title: const AppText('Şifre Değiştir')),
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -139,14 +140,14 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
+                        AppText(
                           'Hesap güvenliği',
                           style: textTheme.headlineSmall?.copyWith(
                             fontWeight: FontWeight.w900,
                           ),
                         ),
                         const SizedBox(height: 8),
-                        Text(
+                        AppText(
                           'Şifrenizi değiştirmek için önce mevcut '
                           'şifrenizi doğrulayın.',
                           style: textTheme.bodyMedium?.copyWith(
@@ -162,13 +163,11 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                           textInputAction: TextInputAction.next,
                           autofillHints: const [AutofillHints.password],
                           decoration: InputDecoration(
-                            labelText: 'Mevcut Şifre',
-                            hintText: 'Mevcut şifrenizi girin',
+                            labelText: 'Mevcut Şifre'.tr,
+                            hintText: 'Mevcut şifrenizi girin'.tr,
                             prefixIcon: const Icon(Icons.lock_outline_rounded),
                             suffixIcon: IconButton(
-                              tooltip: _obscureCurrentPassword
-                                  ? 'Şifreyi göster'
-                                  : 'Şifreyi gizle',
+                              tooltip: (_obscureCurrentPassword ? 'Şifreyi göster' : 'Şifreyi gizle').tr,
                               onPressed: _isLoading
                                   ? null
                                   : () {
@@ -194,13 +193,11 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                           textInputAction: TextInputAction.next,
                           autofillHints: const [AutofillHints.newPassword],
                           decoration: InputDecoration(
-                            labelText: 'Yeni Şifre',
-                            hintText: 'En az 8 karakter',
+                            labelText: 'Yeni Şifre'.tr,
+                            hintText: 'En az 8 karakter'.tr,
                             prefixIcon: const Icon(Icons.password_rounded),
                             suffixIcon: IconButton(
-                              tooltip: _obscureNewPassword
-                                  ? 'Şifreyi göster'
-                                  : 'Şifreyi gizle',
+                              tooltip: (_obscureNewPassword ? 'Şifreyi göster' : 'Şifreyi gizle').tr,
                               onPressed: _isLoading
                                   ? null
                                   : () {
@@ -230,13 +227,11 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                             }
                           },
                           decoration: InputDecoration(
-                            labelText: 'Yeni Şifre Tekrar',
-                            hintText: 'Yeni şifrenizi tekrar girin',
+                            labelText: 'Yeni Şifre Tekrar'.tr,
+                            hintText: 'Yeni şifrenizi tekrar girin'.tr,
                             prefixIcon: const Icon(Icons.lock_reset_rounded),
                             suffixIcon: IconButton(
-                              tooltip: _obscureConfirmPassword
-                                  ? 'Şifreyi göster'
-                                  : 'Şifreyi gizle',
+                              tooltip: (_obscureConfirmPassword ? 'Şifreyi göster' : 'Şifreyi gizle').tr,
                               onPressed: _isLoading
                                   ? null
                                   : () {
@@ -273,7 +268,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                               ),
                               const SizedBox(width: 10),
                               Expanded(
-                                child: Text(
+                                child: AppText(
                                   'Yeni şifreniz 8 ile 72 karakter '
                                   'arasında olmalı ve mevcut '
                                   'şifrenizden farklı olmalıdır.',

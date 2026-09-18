@@ -1,3 +1,4 @@
+import 'package:mobile/core/localization/app_text.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_theme.dart';
@@ -80,7 +81,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(message)));
+        ..showSnackBar(SnackBar(content: AppText(message)));
     } finally {
       if (mounted) {
         setState(() {
@@ -94,15 +95,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final fullName = value?.trim() ?? '';
 
     if (fullName.isEmpty) {
-      return 'Ad soyad boş bırakılamaz.';
+      return 'Ad soyad boş bırakılamaz.'.tr;
     }
 
     if (fullName.length < 2) {
-      return 'Ad soyad en az 2 karakter olmalıdır.';
+      return 'Ad soyad en az 2 karakter olmalıdır.'.tr;
     }
 
     if (fullName.length > 100) {
-      return 'Ad soyad en fazla 100 karakter olabilir.';
+      return 'Ad soyad en fazla 100 karakter olabilir.'.tr;
     }
 
     return null;
@@ -112,17 +113,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final email = value?.trim() ?? '';
 
     if (email.isEmpty) {
-      return 'E-posta adresinizi girin.';
+      return 'E-posta adresinizi girin.'.tr;
     }
 
     if (email.length > 150) {
-      return 'E-posta en fazla 150 karakter olabilir.';
+      return 'E-posta en fazla 150 karakter olabilir.'.tr;
     }
 
     final emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
 
     if (!emailRegex.hasMatch(email)) {
-      return 'Geçerli bir e-posta adresi girin.';
+      return 'Geçerli bir e-posta adresi girin.'.tr;
     }
 
     return null;
@@ -132,15 +133,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final password = value ?? '';
 
     if (password.isEmpty) {
-      return 'Şifre boş bırakılamaz.';
+      return 'Şifre boş bırakılamaz.'.tr;
     }
 
     if (password.length < 8) {
-      return 'Şifre en az 8 karakter olmalıdır.';
+      return 'Şifre en az 8 karakter olmalıdır.'.tr;
     }
 
     if (password.length > 72) {
-      return 'Şifre en fazla 72 karakter olabilir.';
+      return 'Şifre en fazla 72 karakter olabilir.'.tr;
     }
 
     return null;
@@ -148,11 +149,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   String? _validatePasswordConfirm(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Şifrenizi tekrar girin.';
+      return 'Şifrenizi tekrar girin.'.tr;
     }
 
     if (value != _passwordController.text) {
-      return 'Şifreler eşleşmiyor.';
+      return 'Şifreler eşleşmiyor.'.tr;
     }
 
     return null;
@@ -197,7 +198,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
 
                     children: [
-                      Text(
+                      AppText(
                         'EksperSiz',
                         style: textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.w900,
@@ -206,7 +207,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                       const SizedBox(height: 2),
 
-                      Text(
+                      AppText(
                         'AI destekli araç hasar analizi',
                         style: textTheme.bodySmall?.copyWith(
                           color: colorScheme.onSurfaceVariant,
@@ -220,7 +221,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
             const SizedBox(height: 30),
 
-            Text(
+            AppText(
               'Hesabını oluştur',
               style: textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.w900,
@@ -229,7 +230,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
             const SizedBox(height: 8),
 
-            Text(
+            AppText(
               'Araçlarını kaydet ve AI destekli '
               'hasar analizlerini tek yerden yönet.',
               style: textTheme.bodyMedium?.copyWith(
@@ -247,9 +248,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
               autofillHints: const [AutofillHints.name],
 
-              decoration: const InputDecoration(
-                labelText: 'Ad Soyad',
-                hintText: 'Adınız Soyadınız',
+              decoration: InputDecoration(
+                labelText: 'Ad Soyad'.tr,
+                hintText: 'Adınız Soyadınız'.tr,
                 prefixIcon: Icon(Icons.person_outline_rounded),
               ),
 
@@ -268,9 +269,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
               autofillHints: const [AutofillHints.email],
 
-              decoration: const InputDecoration(
-                labelText: 'E-posta',
-                hintText: 'ornek@email.com',
+              decoration: InputDecoration(
+                labelText: 'E-posta'.tr,
+                hintText: 'ornek@email.com'.tr,
                 prefixIcon: Icon(Icons.mail_outline_rounded),
               ),
 
@@ -287,15 +288,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
               autofillHints: const [AutofillHints.newPassword],
 
               decoration: InputDecoration(
-                labelText: 'Şifre',
-                hintText: 'En az 8 karakter',
+                labelText: 'Şifre'.tr,
+                hintText: 'En az 8 karakter'.tr,
 
                 prefixIcon: const Icon(Icons.lock_outline_rounded),
 
                 suffixIcon: IconButton(
-                  tooltip: _obscurePassword
-                      ? 'Şifreyi göster'
-                      : 'Şifreyi gizle',
+                  tooltip: (_obscurePassword ? 'Şifreyi göster' : 'Şifreyi gizle').tr,
 
                   onPressed: _isLoading
                       ? null
@@ -330,15 +329,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
               },
 
               decoration: InputDecoration(
-                labelText: 'Şifre Tekrar',
-                hintText: 'Şifrenizi tekrar girin',
+                labelText: 'Şifre Tekrar'.tr,
+                hintText: 'Şifrenizi tekrar girin'.tr,
 
                 prefixIcon: const Icon(Icons.lock_reset_rounded),
 
                 suffixIcon: IconButton(
-                  tooltip: _obscurePasswordConfirm
-                      ? 'Şifreyi göster'
-                      : 'Şifreyi gizle',
+                  tooltip: (_obscurePasswordConfirm ? 'Şifreyi göster' : 'Şifreyi gizle').tr,
 
                   onPressed: _isLoading
                       ? null
@@ -383,7 +380,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   const SizedBox(width: 10),
 
                   Expanded(
-                    child: Text(
+                    child: AppText(
                       'Şifreniz en az 8, en fazla 72 karakter olmalıdır.',
                       style: textTheme.bodySmall?.copyWith(
                         color: colorScheme.onSurfaceVariant,
@@ -413,7 +410,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
 
-                  child: Text(
+                  child: AppText(
                     'veya',
                     style: textTheme.bodySmall?.copyWith(
                       color: colorScheme.onSurfaceVariant,
@@ -439,7 +436,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                 icon: const Icon(Icons.login_rounded),
 
-                label: const Text('Zaten Hesabım Var'),
+                label: const AppText('Zaten Hesabım Var'),
               ),
             ),
           ],

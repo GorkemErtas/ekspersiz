@@ -1,3 +1,4 @@
+import 'package:mobile/core/localization/app_text.dart';
 import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
@@ -104,7 +105,7 @@ class _PrimaryButtonState extends State<PrimaryButton> {
                                 ),
                                 const SizedBox(width: 8),
                               ],
-                              Text(
+                              AppText(
                                 widget.label,
                                 style: const TextStyle(
                                   color: Colors.white,

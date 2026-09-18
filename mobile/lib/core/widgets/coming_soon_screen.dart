@@ -1,3 +1,4 @@
+import 'package:mobile/core/localization/app_text.dart';
 import 'package:flutter/material.dart';
 
 class ComingSoonScreen extends StatelessWidget {
@@ -11,7 +12,7 @@ class ComingSoonScreen extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      appBar: AppBar(title: Text(title)),
+      appBar: AppBar(title: AppText(title)),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(32),
@@ -39,14 +40,14 @@ class ComingSoonScreen extends StatelessWidget {
                 child: Icon(icon, size: 40, color: Colors.white),
               ),
               const SizedBox(height: 24),
-              Text(
+              AppText(
                 title,
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.w800,
                 ),
               ),
               const SizedBox(height: 10),
-              Text(
+              AppText(
                 'Bu bölüm sonraki geliştirme adımında eklenecek.',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
