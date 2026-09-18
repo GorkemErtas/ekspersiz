@@ -1,3 +1,4 @@
+import 'package:mobile/core/localization/app_text.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/network/api_exception.dart';
@@ -123,7 +124,7 @@ class _MaintenanceFormScreenState extends State<MaintenanceFormScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
+            content: AppText(
               e is ApiException ? e.message : 'Bakım kaydı kaydedilemedi.',
             ),
           ),
@@ -137,7 +138,7 @@ class _MaintenanceFormScreenState extends State<MaintenanceFormScreen> {
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(
-      title: Text(widget.record == null ? 'Bakım Ekle' : 'Bakımı Düzenle'),
+      title: AppText(widget.record == null ? 'Bakım Ekle' : 'Bakımı Düzenle'),
     ),
     body: SafeArea(
       child: Form(
@@ -147,10 +148,10 @@ class _MaintenanceFormScreenState extends State<MaintenanceFormScreen> {
           children: [
             DropdownButtonFormField<String>(
               initialValue: _type,
-              decoration: const InputDecoration(labelText: 'Bakım Türü'),
+              decoration: InputDecoration(labelText: 'Bakım Türü'.tr),
               items: _types
                   .map(
-                    (e) => DropdownMenuItem(value: e, child: Text(_label(e))),
+                    (e) => DropdownMenuItem(value: e, child: AppText(_label(e))),
                   )
                   .toList(),
               onChanged: (v) => setState(() => _type = v!),
@@ -158,8 +159,8 @@ class _MaintenanceFormScreenState extends State<MaintenanceFormScreen> {
             const SizedBox(height: 14),
             ListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('Bakım Tarihi'),
-              subtitle: Text(_dateText(_date)),
+              title: const AppText('Bakım Tarihi'),
+              subtitle: AppText(_dateText(_date)),
               trailing: const Icon(Icons.calendar_month_outlined),
               onTap: () async {
                 final d = await _pick(_date);
@@ -169,8 +170,8 @@ class _MaintenanceFormScreenState extends State<MaintenanceFormScreen> {
             TextFormField(
               controller: _mileage,
               keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'Kilometre',
+              decoration: InputDecoration(
+                labelText: 'Kilometre'.tr,
                 suffixText: 'km',
               ),
               validator: (v) => int.tryParse(v ?? '') == null
@@ -185,8 +186,8 @@ class _MaintenanceFormScreenState extends State<MaintenanceFormScreen> {
               keyboardType: const TextInputType.numberWithOptions(
                 decimal: true,
               ),
-              decoration: const InputDecoration(
-                labelText: 'Maliyet (isteğe bağlı)',
+              decoration: InputDecoration(
+                labelText: 'Maliyet (isteğe bağlı)'.tr,
                 suffixText: '₺',
               ),
               validator: (v) {
@@ -202,8 +203,8 @@ class _MaintenanceFormScreenState extends State<MaintenanceFormScreen> {
             TextFormField(
               controller: _intervalMonths,
               keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'Bakım aralığı (ay)',
+              decoration: InputDecoration(
+                labelText: 'Bakım aralığı (ay)'.tr,
               ),
               validator: (v) {
                 final value = v?.trim() ?? '';
@@ -218,8 +219,8 @@ class _MaintenanceFormScreenState extends State<MaintenanceFormScreen> {
             TextFormField(
               controller: _intervalMileage,
               keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'Bakım aralığı (km)',
+              decoration: InputDecoration(
+                labelText: 'Bakım aralığı (km)'.tr,
                 suffixText: 'km',
               ),
               validator: (v) {
@@ -232,7 +233,7 @@ class _MaintenanceFormScreenState extends State<MaintenanceFormScreen> {
               },
             ),
             const SizedBox(height: 8),
-            const Text(
+            const AppText(
               'Üretici veya servis planındaki aralığı girin. Sonraki bakım tarihi ve kilometresi sunucuda hesaplanır.',
             ),
             const SizedBox(height: 14),
@@ -240,7 +241,7 @@ class _MaintenanceFormScreenState extends State<MaintenanceFormScreen> {
               controller: _note,
               maxLines: 3,
               maxLength: 1000,
-              decoration: const InputDecoration(labelText: 'Not'),
+              decoration: InputDecoration(labelText: 'Not'.tr),
             ),
             const SizedBox(height: 24),
             FilledButton.icon(
@@ -252,7 +253,7 @@ class _MaintenanceFormScreenState extends State<MaintenanceFormScreen> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.save_outlined),
-              label: const Text('Kaydet'),
+              label: const AppText('Kaydet'),
             ),
           ],
         ),

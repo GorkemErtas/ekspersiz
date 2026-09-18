@@ -1,3 +1,4 @@
+import 'package:mobile/core/localization/app_text.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/network/api_exception.dart';
@@ -116,7 +117,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
     if ((_lastMaintenanceDate == null) != lastMaintenanceMileage.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
+          content: AppText(
             'Son bakım tarihi ve kilometresi birlikte girilmelidir.',
           ),
         ),
@@ -132,7 +133,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
     if (hasMonthInterval && _lastMaintenanceDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Aylık bakım aralığı için son bakım tarihini girin.'),
+          content: AppText('Aylık bakım aralığı için son bakım tarihini girin.'),
         ),
       );
       return;
@@ -140,7 +141,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
     if (hasMileageInterval && lastMaintenanceMileage.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
+          content: AppText(
             'Kilometre bakım aralığı için son bakım kilometresini girin.',
           ),
         ),
@@ -151,7 +152,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
         (_vehicleCategory == null || _conformityDate == null)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
+          content: AppText(
             'İlk muayene hesabı için araç kategorisini ve uygunluk belgesi tarihini girin.',
           ),
         ),
@@ -167,7 +168,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
             int.tryParse(_maintenanceIntervalMileageController.text.trim()) ==
                 null)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Bakım kilometresi sayı olmalıdır.')),
+        const SnackBar(content: AppText('Bakım kilometresi sayı olmalıdır.')),
       );
       return;
     }
@@ -226,7 +227,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
 
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(message)));
+        ..showSnackBar(SnackBar(content: AppText(message)));
     } finally {
       if (mounted) {
         setState(() {
@@ -293,8 +294,8 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
   ) {
     return ListTile(
       contentPadding: EdgeInsets.zero,
-      title: Text(title),
-      subtitle: Text(_dateLabel(value)),
+      title: AppText(title),
+      subtitle: AppText(_dateLabel(value)),
       trailing: const Icon(Icons.calendar_month_outlined),
       onTap: () => _selectDate(value, update),
     );
@@ -307,13 +308,13 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
     );
 
     if (plate.isEmpty) {
-      return 'Plaka girin.';
+      return 'Plaka girin.'.tr;
     }
 
     final pattern = RegExp(r'^[0-9]{2}[A-Z]{1,3}[0-9]{2,4}$');
 
     if (!pattern.hasMatch(plate)) {
-      return 'Geçerli bir plaka girin. Örnek: 35 ABC 123';
+      return 'Geçerli bir plaka girin. Örnek: 35 ABC 123'.tr;
     }
 
     return null;
@@ -323,11 +324,11 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
     final brand = value?.trim() ?? '';
 
     if (brand.isEmpty) {
-      return 'Marka girin.';
+      return 'Marka girin.'.tr;
     }
 
     if (brand.length > 50) {
-      return 'Marka en fazla 50 karakter olabilir.';
+      return 'Marka en fazla 50 karakter olabilir.'.tr;
     }
 
     return null;
@@ -337,11 +338,11 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
     final model = value?.trim() ?? '';
 
     if (model.isEmpty) {
-      return 'Model girin.';
+      return 'Model girin.'.tr;
     }
 
     if (model.length > 50) {
-      return 'Model en fazla 50 karakter olabilir.';
+      return 'Model en fazla 50 karakter olabilir.'.tr;
     }
 
     return null;
@@ -351,7 +352,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
     final year = int.tryParse(value?.trim() ?? '');
 
     if (year == null) {
-      return 'Geçerli bir model yılı girin.';
+      return 'Geçerli bir model yılı girin.'.tr;
     }
 
     final currentYear = DateTime.now().year;
@@ -359,7 +360,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
     final maximumYear = currentYear + 1;
 
     if (year < 1950 || year > maximumYear) {
-      return 'Model yılı 1950-$maximumYear arasında olmalıdır.';
+      return 'Model yılı 1950-$maximumYear arasında olmalıdır.'.tr;
     }
 
     return null;
@@ -369,11 +370,11 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
     final mileage = int.tryParse(value?.trim() ?? '');
 
     if (mileage == null) {
-      return 'Geçerli kilometre girin.';
+      return 'Geçerli kilometre girin.'.tr;
     }
 
     if (mileage < 0 || mileage > 2000000) {
-      return 'Kilometre 0-2.000.000 arasında olmalıdır.';
+      return 'Kilometre 0-2.000.000 arasında olmalıdır.'.tr;
     }
 
     return null;
@@ -387,7 +388,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
+        title: AppText(
           _isEditing
               ? 'Araç Düzenle'
               : widget.businessAccount == null
@@ -444,9 +445,9 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                           textInputAction: TextInputAction.next,
                           autocorrect: false,
                           enableSuggestions: false,
-                          decoration: const InputDecoration(
-                            labelText: 'Plaka',
-                            hintText: '35 ABC 123',
+                          decoration: InputDecoration(
+                            labelText: 'Plaka'.tr,
+                            hintText: '35 ABC 123'.tr,
                             prefixIcon: Icon(Icons.badge_outlined),
                           ),
                           validator: _validatePlate,
@@ -458,9 +459,9 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                           controller: _brandController,
                           textCapitalization: TextCapitalization.words,
                           textInputAction: TextInputAction.next,
-                          decoration: const InputDecoration(
-                            labelText: 'Marka',
-                            hintText: 'Honda',
+                          decoration: InputDecoration(
+                            labelText: 'Marka'.tr,
+                            hintText: 'Honda'.tr,
                             prefixIcon: Icon(Icons.factory_outlined),
                           ),
                           validator: _validateBrand,
@@ -472,9 +473,9 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                           controller: _modelController,
                           textCapitalization: TextCapitalization.words,
                           textInputAction: TextInputAction.next,
-                          decoration: const InputDecoration(
-                            labelText: 'Model',
-                            hintText: 'Civic',
+                          decoration: InputDecoration(
+                            labelText: 'Model'.tr,
+                            hintText: 'Civic'.tr,
                             prefixIcon: Icon(Icons.directions_car_outlined),
                           ),
                           validator: _validateModel,
@@ -510,9 +511,9 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                                     controller: _modelYearController,
                                     keyboardType: TextInputType.number,
                                     textInputAction: TextInputAction.next,
-                                    decoration: const InputDecoration(
-                                      labelText: 'Model Yılı',
-                                      hintText: '2020',
+                                    decoration: InputDecoration(
+                                      labelText: 'Model Yılı'.tr,
+                                      hintText: '2020'.tr,
                                       prefixIcon: Icon(
                                         Icons.calendar_today_outlined,
                                       ),
@@ -529,9 +530,9 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                                     onFieldSubmitted: (_) {
                                       _saveVehicle();
                                     },
-                                    decoration: const InputDecoration(
-                                      labelText: 'Kilometre',
-                                      hintText: '145000',
+                                    decoration: InputDecoration(
+                                      labelText: 'Kilometre'.tr,
+                                      hintText: '145000'.tr,
                                       suffixText: 'km',
                                       prefixIcon: Icon(Icons.speed_outlined),
                                     ),
@@ -549,9 +550,9 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                                     controller: _modelYearController,
                                     keyboardType: TextInputType.number,
                                     textInputAction: TextInputAction.next,
-                                    decoration: const InputDecoration(
-                                      labelText: 'Model Yılı',
-                                      hintText: '2020',
+                                    decoration: InputDecoration(
+                                      labelText: 'Model Yılı'.tr,
+                                      hintText: '2020'.tr,
                                       prefixIcon: Icon(
                                         Icons.calendar_today_outlined,
                                       ),
@@ -570,9 +571,9 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                                     onFieldSubmitted: (_) {
                                       _saveVehicle();
                                     },
-                                    decoration: const InputDecoration(
-                                      labelText: 'Kilometre',
-                                      hintText: '145000',
+                                    decoration: InputDecoration(
+                                      labelText: 'Kilometre'.tr,
+                                      hintText: '145000'.tr,
                                       suffixText: 'km',
                                       prefixIcon: Icon(Icons.speed_outlined),
                                     ),
@@ -593,31 +594,31 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                     padding: EdgeInsets.zero,
                     child: ExpansionTile(
                       leading: const Icon(Icons.event_note_outlined),
-                      title: const Text('Araç takip bilgileri'),
-                      subtitle: const Text('İsteğe bağlı'),
+                      title: const AppText('Araç takip bilgileri'),
+                      subtitle: const AppText('İsteğe bağlı'),
                       childrenPadding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
                       children: [
                         DropdownButtonFormField<String>(
                           initialValue: _vehicleCategory,
-                          decoration: const InputDecoration(
-                            labelText: 'Araç kategorisi',
+                          decoration: InputDecoration(
+                            labelText: 'Araç kategorisi'.tr,
                           ),
                           items: const [
                             DropdownMenuItem(
                               value: 'PRIVATE_OR_OFFICIAL_CAR',
-                              child: Text('Hususi / resmî otomobil'),
+                              child: AppText('Hususi / resmî otomobil'),
                             ),
                             DropdownMenuItem(
                               value: 'WHEELED_TRACTOR',
-                              child: Text('Lastik tekerlekli traktör'),
+                              child: AppText('Lastik tekerlekli traktör'),
                             ),
                             DropdownMenuItem(
                               value: 'TWO_OR_THREE_WHEELED',
-                              child: Text('İki / üç tekerlekli araç'),
+                              child: AppText('İki / üç tekerlekli araç'),
                             ),
                             DropdownMenuItem(
                               value: 'OTHER_VEHICLE',
-                              child: Text('Diğer motorlu araç / römork'),
+                              child: AppText('Diğer motorlu araç / römork'),
                             ),
                           ],
                           onChanged: (value) =>
@@ -637,32 +638,32 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                           TextFormField(
                             controller: _lastMaintenanceMileageController,
                             keyboardType: TextInputType.number,
-                            decoration: const InputDecoration(
-                              labelText: 'Son bakım kilometresi',
+                            decoration: InputDecoration(
+                              labelText: 'Son bakım kilometresi'.tr,
                               suffixText: 'km',
                             ),
                           ),
                           TextFormField(
                             controller: _maintenanceIntervalMonthsController,
                             keyboardType: TextInputType.number,
-                            decoration: const InputDecoration(
-                              labelText: 'Bakım aralığı (ay)',
+                            decoration: InputDecoration(
+                              labelText: 'Bakım aralığı (ay)'.tr,
                             ),
                           ),
                           const SizedBox(height: 12),
                           TextFormField(
                             controller: _maintenanceIntervalMileageController,
                             keyboardType: TextInputType.number,
-                            decoration: const InputDecoration(
-                              labelText: 'Bakım aralığı (km)',
+                            decoration: InputDecoration(
+                              labelText: 'Bakım aralığı (km)'.tr,
                               suffixText: 'km',
                             ),
                           ),
                           CheckboxListTile(
                             contentPadding: EdgeInsets.zero,
                             value: _firstInspection,
-                            title: const Text('İlk muayene tarihini hesapla'),
-                            subtitle: const Text(
+                            title: const AppText('İlk muayene tarihini hesapla'),
+                            subtitle: const AppText(
                               'Araç kategorisi ve uygunluk belgesi tarihi kullanılır.',
                             ),
                             onChanged: (value) => setState(() {
@@ -696,8 +697,8 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                           controller: _notesController,
                           maxLines: 3,
                           maxLength: 1000,
-                          decoration: const InputDecoration(
-                            labelText: 'Araç notları',
+                          decoration: InputDecoration(
+                            labelText: 'Araç notları'.tr,
                             alignLabelWithHint: true,
                           ),
                         ),
@@ -729,7 +730,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                         const SizedBox(width: 12),
 
                         Expanded(
-                          child: Text(
+                          child: AppText(
                             _isEditing
                                 ? 'Yaptığınız değişiklikler mevcut analiz geçmişinizi silmez.'
                                 : widget.businessAccount == null

@@ -1,3 +1,4 @@
+import 'package:mobile/core/localization/app_text.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/network/api_exception.dart';
@@ -104,16 +105,16 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
       await showDialog<bool>(
         context: context,
         builder: (c) => AlertDialog(
-          title: const Text('Kayıt silinsin mi?'),
-          content: Text(text),
+          title: const AppText('Kayıt silinsin mi?'),
+          content: AppText(text),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(c, false),
-              child: const Text('Vazgeç'),
+              child: const AppText('Vazgeç'),
             ),
             FilledButton(
               onPressed: () => Navigator.pop(c, true),
-              child: const Text('Sil'),
+              child: const AppText('Sil'),
             ),
           ],
         ),
@@ -152,7 +153,7 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: Text(widget.vehicle.displayName)),
+    appBar: AppBar(title: AppText(widget.vehicle.displayName)),
     body: SafeArea(
       child: _loading
           ? const Center(child: CircularProgressIndicator())
@@ -161,11 +162,11 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(_error!),
+                  AppText(_error!),
                   const SizedBox(height: 12),
                   FilledButton(
                     onPressed: _load,
-                    child: const Text('Tekrar Dene'),
+                    child: const AppText('Tekrar Dene'),
                   ),
                 ],
               ),
@@ -249,13 +250,13 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
+                  AppText(
                     widget.vehicle.displayName,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.w900,
                     ),
                   ),
-                  Text(
+                  AppText(
                     '${widget.vehicle.modelYear} • ${widget.vehicle.mileage} km • ${widget.vehicle.plate}',
                   ),
                 ],
@@ -279,7 +280,7 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
               if (mounted) await _load();
             },
             icon: const Icon(Icons.auto_awesome_rounded),
-            label: const Text('AI Hasar Analizi'),
+            label: const AppText('AI Hasar Analizi'),
           ),
         ),
       ],
@@ -296,14 +297,14 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
             children: [
               Icon(Icons.health_and_safety_outlined, color: c),
               const SizedBox(width: 9),
-              Text(
+              AppText(
                 'Araç takip durumu',
                 style: Theme.of(
                   context,
                 ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
               ),
               const Spacer(),
-              Text(
+              AppText(
                 _status(o.trackingStatus),
                 style: TextStyle(color: c, fontWeight: FontWeight.w800),
               ),
@@ -311,16 +312,16 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
           ),
           if (o.latestMaintenance != null) ...[
             const SizedBox(height: 14),
-            Text(
+            AppText(
               'Son bakım: ${_date(o.latestMaintenance!.maintenanceDate)} • ${o.latestMaintenance!.mileage} km',
             ),
           ],
           if (o.latestDamageSeverity != null) ...[
             const SizedBox(height: 8),
-            Text('Son görünür hasar sonucu: ${_type(o.latestDamageSeverity!)}'),
+            AppText('Son görünür hasar sonucu: ${_type(o.latestDamageSeverity!)}'),
           ],
           const SizedBox(height: 12),
-          Text(
+          AppText(
             o.disclaimer,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -344,13 +345,13 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+            AppText(
               title,
               style: Theme.of(
                 context,
               ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
             ),
-            Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
+            AppText(subtitle, style: Theme.of(context).textTheme.bodySmall),
           ],
         ),
       ),
@@ -364,7 +365,7 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
   Widget _empty(String text) => AppCard(
     showShadow: false,
     child: Center(
-      child: Padding(padding: const EdgeInsets.all(8), child: Text(text)),
+      child: Padding(padding: const EdgeInsets.all(8), child: AppText(text)),
     ),
   );
   Widget _maintenanceCard(MaintenanceRecord item) => Padding(
@@ -379,13 +380,13 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                AppText(
                   _type(item.maintenanceType),
                   style: const TextStyle(fontWeight: FontWeight.w800),
                 ),
-                Text('${_date(item.maintenanceDate)} • ${item.mileage} km'),
+                AppText('${_date(item.maintenanceDate)} • ${item.mileage} km'),
                 if (item.note != null)
-                  Text(
+                  AppText(
                     item.note!,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -397,8 +398,8 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
             onSelected: (v) =>
                 v == 'edit' ? _openMaintenance(item) : _deleteMaintenance(item),
             itemBuilder: (_) => const [
-              PopupMenuItem(value: 'edit', child: Text('Düzenle')),
-              PopupMenuItem(value: 'delete', child: Text('Sil')),
+              PopupMenuItem(value: 'edit', child: AppText('Düzenle')),
+              PopupMenuItem(value: 'delete', child: AppText('Sil')),
             ],
           ),
         ],
@@ -424,16 +425,16 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
+                  AppText(
                     item.title ?? _type(item.reminderType),
                     style: const TextStyle(fontWeight: FontWeight.w800),
                   ),
-                  Text(
+                  AppText(
                     item.dueDate != null
                         ? _date(item.dueDate!)
                         : '${item.dueMileage} km',
                   ),
-                  Text(
+                  AppText(
                     switch (item.status) {
                       'OVERDUE' => 'Gecikmiş',
                       'DUE_SOON' => 'Yaklaşıyor',
@@ -464,8 +465,8 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
               onSelected: (v) =>
                   v == 'edit' ? _openReminder(item) : _deleteReminder(item),
               itemBuilder: (_) => const [
-                PopupMenuItem(value: 'edit', child: Text('Düzenle')),
-                PopupMenuItem(value: 'delete', child: Text('Sil')),
+                PopupMenuItem(value: 'edit', child: AppText('Düzenle')),
+                PopupMenuItem(value: 'delete', child: AppText('Sil')),
               ],
             ),
           ],
@@ -477,9 +478,9 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
   Widget _historyTile(VehicleHistoryItem item) => ListTile(
     contentPadding: EdgeInsets.zero,
     leading: const Icon(Icons.circle, size: 12),
-    title: Text(item.title),
-    subtitle: Text(item.description),
-    trailing: Text(
+    title: AppText(item.title),
+    subtitle: AppText(item.description),
+    trailing: AppText(
       _date(item.occurredAt),
       style: Theme.of(context).textTheme.bodySmall,
     ),

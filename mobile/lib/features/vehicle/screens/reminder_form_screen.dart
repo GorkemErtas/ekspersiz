@@ -1,3 +1,4 @@
+import 'package:mobile/core/localization/app_text.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/network/api_exception.dart';
@@ -175,13 +176,13 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
   void _message(String text) {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(text)));
+      ..showSnackBar(SnackBar(content: AppText(text)));
   }
 
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(
-      title: Text(
+      title: AppText(
         widget.reminder == null ? 'Hatırlatma Ekle' : 'Hatırlatmayı Düzenle',
       ),
     ),
@@ -193,12 +194,12 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
           children: [
             DropdownButtonFormField<String>(
               initialValue: _type,
-              decoration: const InputDecoration(labelText: 'Hatırlatma türü'),
+              decoration: InputDecoration(labelText: 'Hatırlatma türü'.tr),
               items: _types
                   .map(
                     (type) => DropdownMenuItem(
                       value: type,
-                      child: Text(_label(type)),
+                      child: AppText(_label(type)),
                     ),
                   )
                   .toList(),
@@ -210,7 +211,7 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
               TextFormField(
                 controller: _title,
                 maxLength: 120,
-                decoration: const InputDecoration(labelText: 'Başlık'),
+                decoration: InputDecoration(labelText: 'Başlık'.tr),
                 validator: (value) =>
                     value!.trim().isEmpty ? 'Başlık girin.' : null,
               ),
@@ -220,8 +221,8 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
               controller: _note,
               maxLines: 3,
               maxLength: 1000,
-              decoration: const InputDecoration(
-                labelText: 'Not (isteğe bağlı)',
+              decoration: InputDecoration(
+                labelText: 'Not (isteğe bağlı)'.tr,
               ),
             ),
             const SizedBox(height: 24),
@@ -234,7 +235,7 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.save_outlined),
-              label: const Text('Kaydet'),
+              label: const AppText('Kaydet'),
             ),
           ],
         ),
@@ -254,7 +255,7 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
         ),
         const Padding(
           padding: EdgeInsets.only(bottom: 16),
-          child: Text(
+          child: AppText(
             'Hatırlatma poliçedeki gerçek bitiş tarihine göre oluşturulur.',
           ),
         ),
@@ -266,16 +267,16 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
   List<Widget> _inspectionFields() => [
     DropdownButtonFormField<String>(
       initialValue: _inspectionMode,
-      decoration: const InputDecoration(labelText: 'Muayene bilgisi'),
+      decoration: InputDecoration(labelText: 'Muayene bilgisi'.tr),
       items: const [
-        DropdownMenuItem(value: 'FIRST', child: Text('İlk muayene')),
+        DropdownMenuItem(value: 'FIRST', child: AppText('İlk muayene')),
         DropdownMenuItem(
           value: 'LAST',
-          child: Text('Son onaylanan muayene tarihi'),
+          child: AppText('Son onaylanan muayene tarihi'),
         ),
         DropdownMenuItem(
           value: 'EXPLICIT',
-          child: Text('Resmî son geçerlilik tarihi'),
+          child: AppText('Resmî son geçerlilik tarihi'),
         ),
       ],
       onChanged: (value) => setState(() => _inspectionMode = value!),
@@ -285,8 +286,8 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
       ListTile(
         contentPadding: EdgeInsets.zero,
         leading: const Icon(Icons.calculate_outlined),
-        title: const Text('İlk muayene tarihi otomatik hesaplanacak'),
-        subtitle: Text(
+        title: const AppText('İlk muayene tarihi otomatik hesaplanacak'),
+        subtitle: AppText(
           widget.vehicle.vehicleCategory == null ||
                   widget.vehicle.conformityDate == null
               ? 'Araç kategorisi veya uygunluk belgesi tarihi eksik.'
@@ -307,7 +308,7 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
       ),
     const Padding(
       padding: EdgeInsets.only(bottom: 16),
-      child: Text(
+      child: AppText(
         'Kategoriye göre yasal periyot backend tarafından uygulanır. Emin değilseniz muayene raporundaki son geçerlilik tarihini girin.',
       ),
     ),
@@ -316,10 +317,10 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
   List<Widget> _maintenanceFields() {
     if (_manualMaintenance) {
       return [
-        const Text('Bu eski hatırlatma manuel hedef kullanıyor.'),
+        const AppText('Bu eski hatırlatma manuel hedef kullanıyor.'),
         TextButton(
           onPressed: () => setState(() => _manualMaintenance = false),
-          child: const Text('Kaynak bilgilerle yeniden hesapla'),
+          child: const AppText('Kaynak bilgilerle yeniden hesapla'),
         ),
         ..._manualFields(),
       ];
@@ -337,7 +338,7 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
       _numberField(_intervalMileage, 'Bakım aralığı (km)'),
       const Padding(
         padding: EdgeInsets.symmetric(vertical: 14),
-        child: Text(
+        child: AppText(
           'Üretici veya servis planındaki ay ve/veya kilometre aralığını girin. Sonraki bakım hedefi backend tarafından hesaplanır.',
         ),
       ),
@@ -356,8 +357,8 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
     ValueChanged<DateTime> update,
   ) => ListTile(
     contentPadding: EdgeInsets.zero,
-    title: Text(label),
-    subtitle: Text(_dateText(value)),
+    title: AppText(label),
+    subtitle: AppText(_dateText(value)),
     trailing: const Icon(Icons.calendar_month_outlined),
     onTap: () => _pickDate(value, update),
   );

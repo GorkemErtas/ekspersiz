@@ -20,7 +20,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Abonelik ve Ödeme'), findsOneWidget);
-    expect(find.text('Free'), findsNWidgets(2));
+    expect(find.text('Ücretsiz'), findsWidgets);
     expect(
       find.textContaining('Satın alma anahtarı bu sürümde tanımlı değil'),
       findsOneWidget,

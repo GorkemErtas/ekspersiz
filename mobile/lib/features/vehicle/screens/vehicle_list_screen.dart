@@ -1,3 +1,4 @@
+import 'package:mobile/core/localization/app_text.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/network/api_exception.dart';
@@ -119,7 +120,7 @@ class _VehicleListScreenState extends State<VehicleListScreen> {
             ),
           ),
 
-          title: const Text(
+          title: const AppText(
             'Araç garajdan kaldırılsın mı?',
             textAlign: TextAlign.center,
           ),
@@ -127,7 +128,7 @@ class _VehicleListScreenState extends State<VehicleListScreen> {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
+              AppText(
                 widget.businessAccount == null
                     ? '${vehicle.displayName} aktif araçlarınızdan kaldırılacak.'
                     : '${vehicle.displayName} şirketin aktif araçlarından kaldırılacak.',
@@ -137,7 +138,7 @@ class _VehicleListScreenState extends State<VehicleListScreen> {
 
               const SizedBox(height: 10),
 
-              Text(
+              AppText(
                 widget.businessAccount == null
                     ? 'Geçmiş analizleriniz korunmaya devam eder.'
                     : 'Şirketin geçmiş analizleri korunmaya devam eder.',
@@ -169,7 +170,7 @@ class _VehicleListScreenState extends State<VehicleListScreen> {
                     const SizedBox(width: 8),
 
                     Expanded(
-                      child: Text(
+                      child: AppText(
                         vehicle.plate,
                         style: textTheme.bodyMedium?.copyWith(
                           fontWeight: FontWeight.w800,
@@ -187,7 +188,7 @@ class _VehicleListScreenState extends State<VehicleListScreen> {
               onPressed: () {
                 Navigator.of(dialogContext).pop(false);
               },
-              child: const Text('Vazgeç'),
+              child: const AppText('Vazgeç'),
             ),
 
             FilledButton(
@@ -198,7 +199,7 @@ class _VehicleListScreenState extends State<VehicleListScreen> {
               onPressed: () {
                 Navigator.of(dialogContext).pop(true);
               },
-              child: const Text('Garajdan Kaldır'),
+              child: const AppText('Garajdan Kaldır'),
             ),
           ],
         );
@@ -241,7 +242,7 @@ class _VehicleListScreenState extends State<VehicleListScreen> {
   void _showMessage(String message) {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
+      ..showSnackBar(SnackBar(content: AppText(message)));
   }
 
   String _formatMileage(int mileage) {
@@ -266,7 +267,7 @@ class _VehicleListScreenState extends State<VehicleListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
+        title: AppText(
           widget.businessAccount == null ? 'Araçlarım' : 'Şirket Araçları',
         ),
       ),
@@ -278,7 +279,7 @@ class _VehicleListScreenState extends State<VehicleListScreen> {
         child: FloatingActionButton.extended(
           onPressed: _openAddVehicleScreen,
           icon: const Icon(Icons.add_rounded),
-          label: const Text('Araç Ekle'),
+          label: const AppText('Araç Ekle'),
         ),
       ),
 
@@ -400,14 +401,14 @@ class _VehicleHeader extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
+        AppText(
           businessAccount == null ? 'Garajınız' : businessAccount!.companyName,
           style: textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900),
         ),
 
         const SizedBox(height: 6),
 
-        Text(
+        AppText(
           businessAccount == null
               ? 'Kayıtlı araçlarınızı buradan görüntüleyebilir, düzenleyebilir ve yönetebilirsiniz.'
               : 'Şirket üyelerinin ortak kullandığı araçları buradan yönetebilirsiniz. Aktif araç sınırı şirket genelinde 50’dir.',
@@ -476,7 +477,7 @@ class _VehicleCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
-                      child: Text(
+                      child: AppText(
                         vehicle.displayName,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -522,7 +523,7 @@ class _VehicleCard extends StatelessWidget {
 
                     const SizedBox(width: 6),
 
-                    Text(
+                    AppText(
                       '$mileage km',
                       style: textTheme.bodyMedium?.copyWith(
                         color: colorScheme.onSurfaceVariant,
@@ -553,7 +554,7 @@ class _VehicleActionsMenu extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     return PopupMenuButton<_VehicleAction>(
-      tooltip: 'Araç işlemleri',
+      tooltip: 'Araç işlemleri'.tr,
       icon: const Icon(Icons.more_vert_rounded),
       onSelected: (action) {
         switch (action) {
@@ -572,7 +573,7 @@ class _VehicleActionsMenu extends StatelessWidget {
             children: [
               Icon(Icons.edit_outlined, size: 20),
               SizedBox(width: 12),
-              Text('Düzenle'),
+              AppText('Düzenle'),
             ],
           ),
         ),
@@ -586,7 +587,7 @@ class _VehicleActionsMenu extends StatelessWidget {
                 color: colorScheme.error,
               ),
               const SizedBox(width: 12),
-              Text(
+              AppText(
                 'Garajdan Kaldır',
                 style: TextStyle(color: colorScheme.error),
               ),
@@ -623,7 +624,7 @@ class _InfoBadge extends StatelessWidget {
 
           const SizedBox(width: 5),
 
-          Text(
+          AppText(
             label,
             style: textTheme.labelMedium?.copyWith(
               color: colorScheme.onSurfaceVariant,
