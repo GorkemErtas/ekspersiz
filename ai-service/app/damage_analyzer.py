@@ -1,5 +1,7 @@
 from io import BytesIO
+import os
 from pathlib import Path
+import re
 from typing import Any
 
 from PIL import Image, UnidentifiedImageError
@@ -10,6 +12,7 @@ from ultralytics import YOLO
 from app.schemas import (
     BoundingBox,
     DamageAnalysisResponse,
+    DamageType,
     DetectedObject,
     DamageRecommendation,
     ImageQualityResponse,
@@ -23,7 +26,26 @@ DEFAULT_VEHICLE_MODEL_PATH = (
 )
 
 DEFAULT_DAMAGE_MODEL_PATH = (
-        PROJECT_ROOT / "models" / "best.pt"
+        PROJECT_ROOT
+        / "models"
+        / "candidates"
+        / "damage_detection_v2_cardd_5class.pt"
+)
+
+DAMAGE_MODEL_PATH_ENV = "DAMAGE_MODEL_PATH"
+
+SUPPORTED_DAMAGE_MODEL_CLASSES = frozenset({
+    "SCRATCH",
+    "DENT",
+    "CRACK",
+    "BROKEN_PART",
+    "BROKEN_GLASS",
+})
+
+APPLICATION_DAMAGE_TYPES = frozenset(
+    damage_type.value
+    for damage_type in DamageType
+    if damage_type is not DamageType.NO_VISIBLE_DAMAGE
 )
 
 DEFAULT_VEHICLE_PART_MODEL_PATH = (
@@ -31,6 +53,25 @@ DEFAULT_VEHICLE_PART_MODEL_PATH = (
         / "models"
         / "vehicle_part_best.pt"
 )
+
+
+def resolve_damage_model_path(
+        configured_path: str | Path | None = None,
+) -> Path:
+    """Resolve an explicit or environment-provided damage model path."""
+    raw_path = configured_path
+
+    if raw_path is None:
+        raw_path = os.getenv(DAMAGE_MODEL_PATH_ENV)
+
+    if raw_path is None or not str(raw_path).strip():
+        return DEFAULT_DAMAGE_MODEL_PATH
+
+    model_path = Path(raw_path).expanduser()
+    if not model_path.is_absolute():
+        model_path = PROJECT_ROOT / model_path
+
+    return model_path
 
 
 class DamageAnalyzer:
@@ -79,9 +120,7 @@ class DamageAnalyzer:
             vehicle_model_path: str | Path = (
                     DEFAULT_VEHICLE_MODEL_PATH
             ),
-            damage_model_path: str | Path = (
-                    DEFAULT_DAMAGE_MODEL_PATH
-            ),
+            damage_model_path: str | Path | None = None,
             vehicle_part_model_path: str | Path = (
                     DEFAULT_VEHICLE_PART_MODEL_PATH
             ),
@@ -100,8 +139,8 @@ class DamageAnalyzer:
             vehicle_model_path
         )
 
-        self.damage_model_path = Path(
-            damage_model_path
+        self.damage_model_path = resolve_damage_model_path(
+            damage_model_path,
         )
 
         self.vehicle_part_model_path = Path(
@@ -148,6 +187,12 @@ class DamageAnalyzer:
 
         self.damage_model = YOLO(
             str(self.damage_model_path)
+        )
+
+        self.damage_class_mapping = (
+            self._build_damage_class_mapping(
+                self.damage_model.names
+            )
         )
 
         self.vehicle_part_model = YOLO(
@@ -288,7 +333,10 @@ class DamageAnalyzer:
 
         damage_detections = (
             self._extract_detections(
-                damage_results
+                damage_results,
+                class_name_mapping=(
+                    self.damage_class_mapping
+                ),
             )
         )
 
@@ -457,12 +505,14 @@ class DamageAnalyzer:
     def _determine_damage_severity(
             damage_type: str,
             affected_part_count: int,
-            highest_confidence: float,
     ) -> str:
         if damage_type == "NO_VISIBLE_DAMAGE":
             return "NONE"
 
-        if damage_type == "BROKEN_PART":
+        if damage_type in {
+            "BROKEN_PART",
+            "BROKEN_GLASS",
+        }:
             if affected_part_count >= 2:
                 return "SEVERE"
 
@@ -472,9 +522,6 @@ class DamageAnalyzer:
             return "SEVERE"
 
         if affected_part_count == 2:
-            return "MODERATE"
-
-        if highest_confidence >= 0.60:
             return "MODERATE"
 
         return "MINOR"
@@ -553,9 +600,6 @@ class DamageAnalyzer:
                 damage_type=damage_type,
                 affected_part_count=(
                     len(affected_parts)
-                ),
-                highest_confidence=(
-                    primary_damage.confidence
                 ),
             )
         )
@@ -779,6 +823,7 @@ class DamageAnalyzer:
             "CRACK": "PART_REPAIR",
             "PAINT_DAMAGE": "FULL_PAINTING",
             "BROKEN_PART": "PART_REPLACEMENT",
+            "BROKEN_GLASS": "GLASS_REPLACEMENT",
         }
 
         return recommendations.get(
@@ -791,8 +836,81 @@ class DamageAnalyzer:
             damage_type: str,
     ) -> bool:
         return (
-                damage_type == "BROKEN_PART"
+                damage_type in {
+                    "BROKEN_PART",
+                    "BROKEN_GLASS",
+                }
         )
+
+    @classmethod
+    def _build_damage_class_mapping(
+            cls,
+            model_class_names: Any,
+    ) -> dict[int, str]:
+        if isinstance(model_class_names, dict):
+            class_items = list(model_class_names.items())
+        elif isinstance(model_class_names, (list, tuple)):
+            class_items = list(enumerate(model_class_names))
+        else:
+            raise ValueError(
+                "Damage model class names must be a dictionary or list."
+            )
+
+        if not class_items:
+            raise ValueError("Damage model does not expose any class names.")
+
+        class_ids = [class_id for class_id, _ in class_items]
+        if (
+                any(
+                    isinstance(class_id, bool)
+                    or not isinstance(class_id, int)
+                    for class_id in class_ids
+                )
+                or sorted(class_ids) != list(range(len(class_items)))
+        ):
+            raise ValueError(
+                "Damage model class IDs must be contiguous integers starting at 0."
+            )
+
+        class_mapping: dict[int, str] = {}
+        seen_damage_types: set[str] = set()
+
+        for class_id, raw_name in sorted(class_items):
+            if (
+                    not isinstance(raw_name, str)
+                    or not raw_name.strip()
+                    or re.fullmatch(
+                        r"[A-Za-z][A-Za-z0-9 _-]*",
+                        raw_name.strip(),
+                    ) is None
+            ):
+                raise ValueError(
+                    f"Damage model class {class_id} has a malformed name: "
+                    f"{raw_name!r}."
+                )
+
+            damage_type = cls._normalize_enum_value(raw_name)
+
+            if damage_type in seen_damage_types:
+                raise ValueError(
+                    f"Damage model exposes duplicate class name: {damage_type}."
+                )
+
+            if damage_type not in APPLICATION_DAMAGE_TYPES:
+                raise ValueError(
+                    f"Damage model exposes unknown class name: {damage_type}."
+                )
+
+            if damage_type not in SUPPORTED_DAMAGE_MODEL_CLASSES:
+                raise ValueError(
+                    f"Damage model class is not supported by the active "
+                    f"detector contract: {damage_type}."
+                )
+
+            seen_damage_types.add(damage_type)
+            class_mapping[class_id] = damage_type
+
+        return class_mapping
 
     @staticmethod
     def _load_image(
@@ -830,6 +948,7 @@ class DamageAnalyzer:
     @staticmethod
     def _extract_detections(
             results: list[Any],
+            class_name_mapping: dict[int, str] | None = None,
     ) -> list[DetectedObject]:
         detections: list[
             DetectedObject
@@ -859,13 +978,20 @@ class DamageAnalyzer:
                     .tolist()
                 )
 
+                if class_name_mapping is not None:
+                    if class_id not in class_name_mapping:
+                        raise ValueError(
+                            "Damage model returned an unmapped class ID: "
+                            f"{class_id}."
+                        )
+
+                    label = class_name_mapping[class_id]
+                else:
+                    label = str(class_names[class_id])
+
                 detections.append(
                     DetectedObject(
-                        label=str(
-                            class_names[
-                                class_id
-                            ]
-                        ),
+                        label=label,
                         confidence=confidence,
                         affectedPart="UNKNOWN",
                         boundingBox=(

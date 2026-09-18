@@ -1,17 +1,15 @@
+import sys
 from pathlib import Path
 
-from ultralytics import YOLO
-
-
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
-MODEL_PATH = (
-        PROJECT_ROOT
-        / "training-runs"
-        / "vehicle_damage_type_v1"
-        / "weights"
-        / "best.pt"
-)
+from ultralytics import YOLO  # noqa: E402
+
+from app.damage_analyzer import resolve_damage_model_path  # noqa: E402
+
+MODEL_PATH = resolve_damage_model_path()
 
 TEST_IMAGE_PATH = (
         PROJECT_ROOT

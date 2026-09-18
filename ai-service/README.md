@@ -2,12 +2,12 @@
 
 ## Production pipeline
 
-Production remains unchanged:
+The reviewed CarDD five-class checkpoint is the active production damage detector:
 
 ```text
 image
   -> general YOLO vehicle detection and primary-vehicle crop
-  -> models/best.pt damage object detection
+  -> models/candidates/damage_detection_v2_cardd_5class.pt damage object detection
   -> models/vehicle_part_best.pt vehicle-part detection
   -> bounding-box overlap matching
   -> deterministic severity and repair recommendation
@@ -17,15 +17,19 @@ image
 
 Image brightness, blur, recognizable-vehicle presence, and vehicle framing are validated before quota reservation. A successful inference with no damage remains `NO_VISIBLE_DAMAGE` / `NONE` / `NO_ACTION`. `NO_VISIBLE_DAMAGE` is never a learned damage class.
 
+The detector's class IDs are never interpreted using a hardcoded numeric order. At startup, the service reads the checkpoint's class names, normalizes them to the application enum values, and rejects malformed, duplicate, unknown, or unsupported names. The active checkpoint exposes `SCRATCH`, `DENT`, `CRACK`, `BROKEN_PART`, and `BROKEN_GLASS`. The seven-class application taxonomy remains unchanged; `PAINT_DAMAGE` and `DEFORMATION` stay available for stored data and future compatible models.
+
+`DAMAGE_MODEL_PATH` can select another reviewed local checkpoint. Relative values are resolved from `ai-service`; for example, `DAMAGE_MODEL_PATH=models/best.pt` selects the preserved previous checkpoint for rollback. The configured checkpoint must still pass the startup class-name validation.
+
 ## Experimental pipelines
 
-### Model A — Damage Detection V2
+### Model A — Damage Detection V2 (ACTIVE)
 
 - Dataset config: `datasets/vehicle_damage_detection_v2/data.yaml`
 - Output classes: `SCRATCH`, `DENT`, `CRACK`, `BROKEN_PART`, `BROKEN_GLASS`
 - Base model: the existing `yolo11n.pt`
 - Default run: `training-runs/damage-detection-v2-cardd-5class-640`
-- Candidate destination after review: `models/candidates/damage_detection_v2_cardd_5class.pt`
+- Active production checkpoint: `models/candidates/damage_detection_v2_cardd_5class.pt`
 
 The application taxonomy remains the seven classes in `config/damage_taxonomy.yaml`. This first CarDD model has a five-class output head because CarDD has no supported examples for `PAINT_DAMAGE` or `DEFORMATION`. Those application damage types remain valid for legacy models, future datasets, backend records, and Flutter display.
 
@@ -119,7 +123,7 @@ python scripts/evaluate_damage_models.py \
 
 The evaluator stores aggregate precision, recall, mAP50, mAP50-95, per-class metrics, and Ultralytics plots/confusion matrices under `evaluation-runs`. Review every class; do not promote a model from one aggregate mAP number.
 
-The current production checkpoint exposes only `BROKEN_PART`, `DENT`, and `SCRATCH`, in a different numeric order from the CarDD candidate. When multiple models are supplied, the evaluator reads the dataset's model-specific class names, builds ignored comparison views of the same test images, remaps label IDs for each checkpoint, and calculates metrics over the semantically shared `SCRATCH`, `DENT`, and `BROKEN_PART` classes. Each JSON result records that `evaluation_scope`. Run Detection V2 by itself as well to measure all five CarDD candidate classes; do not interpret the shared three-class aggregate as full candidate performance.
+The previous production checkpoint exposes only `BROKEN_PART`, `DENT`, and `SCRATCH`, in a different numeric order from the CarDD checkpoint. When multiple models are supplied, the evaluator reads the dataset's model-specific class names, builds ignored comparison views of the same test images, remaps label IDs for each checkpoint, and calculates metrics over the semantically shared `SCRATCH`, `DENT`, and `BROKEN_PART` classes. Each JSON result records that `evaluation_scope`. Run Detection V2 by itself as well to measure all five CarDD classes; do not interpret the shared three-class aggregate as full candidate performance.
 
 ```bash
 python scripts/evaluate_damage_models.py \
@@ -141,17 +145,20 @@ python scripts/analyze_damage_errors.py \
 
 The utility saves annotated images plus CSV/JSON review tables. It flags clean-image false positives, low-confidence false positives, missed known damage, and incorrect damage types when manifest expectations exist. Use annotated outputs to review localization, small missed damage, `SCRATCH` vs `PAINT_DAMAGE`, and `DENT` vs `DEFORMATION`. Run segmentation candidates separately and inspect the emitted mask/image area ratios.
 
-## 6. Manual production promotion
+## 6. Production selection and rollback
 
-Promotion is intentionally manual:
+Damage Detection V2 was promoted after independent CarDD test evaluation and shared-class comparison. The service now selects `models/candidates/damage_detection_v2_cardd_5class.pt` by default and keeps `models/best.pt` unchanged as the previous checkpoint.
 
-1. Train without touching production weights.
-2. Review validation metrics and training plots.
-3. Evaluate once on the independent test split.
-4. Compare production and candidate per class.
-5. Review real-world false positives, misses, class confusion, and localization.
-6. Copy the accepted run weight to `models/candidates` and record the experiment settings/results.
-7. Back up `models/best.pt` and replace it only through an explicit reviewed deployment action.
-8. Run AI-service tests and an end-to-end inspection smoke test before release.
+To run the previous checkpoint temporarily in PowerShell, set the override before starting FastAPI:
 
-Training and evaluation scripts never overwrite `models/best.pt`.
+```powershell
+$env:DAMAGE_MODEL_PATH = "models/best.pt"
+```
+
+Remove the override to return to the default promoted checkpoint:
+
+```powershell
+Remove-Item Env:DAMAGE_MODEL_PATH
+```
+
+Checkpoint files remain deployment artifacts and are ignored by Git. Each deployment must provision the selected weight at the documented path. Training and evaluation scripts never overwrite either production or rollback weights.

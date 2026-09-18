@@ -1,9 +1,15 @@
 import unittest
 from io import BytesIO
-from unittest.mock import Mock
+import os
+from unittest.mock import Mock, patch
 
 from PIL import Image
-from app.damage_analyzer import DamageAnalyzer
+from app.damage_analyzer import (
+    DEFAULT_DAMAGE_MODEL_PATH,
+    PROJECT_ROOT,
+    DamageAnalyzer,
+    resolve_damage_model_path,
+)
 from app.schemas import BoundingBox, DetectedObject
 
 
@@ -45,6 +51,134 @@ class DamageAnalyzerResultTest(unittest.TestCase):
             "PAINT_TOUCH_UP",
             result.repairRecommendations[0].recommendedAction.value,
         )
+
+    def test_supported_damage_types_flow_to_domain_results(self) -> None:
+        cases = (
+            ("SCRATCH", "PAINT_TOUCH_UP", False, "MINOR"),
+            ("DENT", "DENT_REPAIR", False, "MINOR"),
+            ("CRACK", "PART_REPAIR", False, "MINOR"),
+            ("BROKEN_PART", "PART_REPLACEMENT", True, "MODERATE"),
+            ("BROKEN_GLASS", "GLASS_REPLACEMENT", True, "MODERATE"),
+        )
+
+        for damage_type, action, replacement_required, severity in cases:
+            with self.subTest(damage_type=damage_type):
+                detection = DetectedObject(
+                    label=damage_type,
+                    confidence=0.95,
+                    affectedPart="FRONT_BUMPER",
+                    boundingBox=BoundingBox(x1=1, y1=1, x2=10, y2=10),
+                )
+
+                result = self.analyzer._build_damage_response(
+                    filename="vehicle.jpg",
+                    primary_damage=detection,
+                    damage_detections=[detection],
+                    affected_parts=["FRONT_BUMPER"],
+                )
+
+                self.assertEqual(severity, result.damageSeverity.value)
+                self.assertEqual(
+                    [damage_type],
+                    [item.value for item in result.damageTypes],
+                )
+                recommendation = result.repairRecommendations[0]
+                self.assertEqual(action, recommendation.recommendedAction.value)
+                self.assertEqual(
+                    replacement_required,
+                    recommendation.partReplacementRequired,
+                )
+
+    def test_candidate_model_names_map_to_canonical_damage_types(self) -> None:
+        mapping = DamageAnalyzer._build_damage_class_mapping({
+            0: "SCRATCH",
+            1: "DENT",
+            2: "CRACK",
+            3: "BROKEN_PART",
+            4: "BROKEN_GLASS",
+        })
+
+        self.assertEqual(
+            {
+                0: "SCRATCH",
+                1: "DENT",
+                2: "CRACK",
+                3: "BROKEN_PART",
+                4: "BROKEN_GLASS",
+            },
+            mapping,
+        )
+
+    def test_model_mapping_uses_names_instead_of_numeric_order(self) -> None:
+        mapping = DamageAnalyzer._build_damage_class_mapping({
+            0: "BROKEN_GLASS",
+            1: "CRACK",
+            2: "SCRATCH",
+            3: "DENT",
+            4: "BROKEN_PART",
+        })
+
+        self.assertEqual("BROKEN_GLASS", mapping[0])
+        self.assertEqual("SCRATCH", mapping[2])
+
+        class_value = Mock()
+        class_value.item.return_value = 0
+        confidence_value = Mock()
+        confidence_value.item.return_value = 0.9
+        coordinates = Mock()
+        coordinates.cpu.return_value.tolist.return_value = [1, 2, 10, 20]
+        box = Mock()
+        box.cls = [class_value]
+        box.conf = [confidence_value]
+        box.xyxy = [coordinates]
+        result = Mock(
+            boxes=[box],
+            names={0: "SCRATCH"},
+        )
+
+        detections = DamageAnalyzer._extract_detections(
+            [result],
+            class_name_mapping=mapping,
+        )
+
+        self.assertEqual("BROKEN_GLASS", detections[0].label)
+
+    def test_unknown_model_class_is_rejected(self) -> None:
+        with self.assertRaisesRegex(ValueError, "unknown class name: RUST"):
+            DamageAnalyzer._build_damage_class_mapping({0: "rust"})
+
+    def test_known_but_unsupported_model_class_is_rejected(self) -> None:
+        with self.assertRaisesRegex(ValueError, "not supported.*PAINT_DAMAGE"):
+            DamageAnalyzer._build_damage_class_mapping({0: "PAINT_DAMAGE"})
+
+    def test_duplicate_model_class_is_rejected_after_normalization(self) -> None:
+        with self.assertRaisesRegex(ValueError, "duplicate class name"):
+            DamageAnalyzer._build_damage_class_mapping({
+                0: "broken glass",
+                1: "BROKEN_GLASS",
+            })
+
+    def test_malformed_model_class_is_rejected(self) -> None:
+        with self.assertRaisesRegex(ValueError, "malformed name"):
+            DamageAnalyzer._build_damage_class_mapping({0: ""})
+
+    def test_damage_model_path_defaults_to_promoted_candidate(self) -> None:
+        with patch.dict(os.environ, {}, clear=True):
+            self.assertEqual(
+                DEFAULT_DAMAGE_MODEL_PATH,
+                resolve_damage_model_path(),
+            )
+
+    def test_relative_damage_model_override_is_resolved_from_ai_service(self) -> None:
+        with patch.dict(
+                os.environ,
+                {"DAMAGE_MODEL_PATH": "models/best.pt"},
+                clear=True,
+        ):
+            self.assertEqual(
+                PROJECT_ROOT / "models" / "best.pt",
+                resolve_damage_model_path(),
+            )
 
     def test_image_without_a_recognizable_vehicle_is_rejected(self) -> None:
         image_bytes = BytesIO()
