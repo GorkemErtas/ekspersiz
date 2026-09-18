@@ -619,7 +619,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       onTap: _openMainVehicle,
                     ),
                   ],
-                  const SizedBox(height: AppTheme.spacingXL),
+                  const SizedBox(height: AppTheme.spacingL),
                   AppFadeSlideIn(
                     delay: const Duration(milliseconds: 120),
                     child: SectionTitle(
@@ -649,7 +649,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             onTap: _selectMainVehicle,
                           ),
                   ),
-                  const SizedBox(height: AppTheme.spacingXL),
+                  const SizedBox(height: AppTheme.spacingL),
                   AppFadeSlideIn(
                     delay: const Duration(milliseconds: 210),
                     child: SectionTitle(
