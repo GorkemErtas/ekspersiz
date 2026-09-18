@@ -86,7 +86,7 @@ void main() {
     expect(find.text('Şirket Daveti'), findsOneWidget);
     expect(find.text('Şirket İşlemleri'), findsNothing);
     expect(
-      find.text('Davet edilen üyelerin BUSINESS planına ihtiyacı yoktur.'),
+      find.text('Davet edilen üyelerin Kurumsal plana ihtiyacı yoktur.'),
       findsOneWidget,
     );
     expect(find.text('Şirket oluştur'), findsNothing);

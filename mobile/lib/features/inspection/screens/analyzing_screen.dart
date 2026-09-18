@@ -1,3 +1,4 @@
+import 'package:mobile/core/localization/app_text.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/network/api_exception.dart';
@@ -230,7 +231,7 @@ class _AnalyzingContent extends StatelessWidget {
 
               const SizedBox(width: 8),
 
-              Text(
+              AppText(
                 'AI ANALİZİ DEVAM EDİYOR',
                 style: textTheme.labelSmall?.copyWith(
                   color: colorScheme.primary,
@@ -244,7 +245,7 @@ class _AnalyzingContent extends StatelessWidget {
 
         const SizedBox(height: 18),
 
-        Text(
+        AppText(
           'Aracınız analiz ediliyor',
           textAlign: TextAlign.center,
           style: textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900),
@@ -252,7 +253,7 @@ class _AnalyzingContent extends StatelessWidget {
 
         const SizedBox(height: 10),
 
-        Text(
+        AppText(
           'Yapay zekâ görüntüyü inceliyor, '
           'hasarlı bölgeleri ve etkilenen parçaları belirliyor.',
           textAlign: TextAlign.center,
@@ -284,7 +285,7 @@ class _AnalyzingContent extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    AppText(
                       inspection.vehiclePlate,
                       style: textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w900,
@@ -304,7 +305,7 @@ class _AnalyzingContent extends StatelessWidget {
                         const SizedBox(width: 4),
 
                         Expanded(
-                          child: Text(
+                          child: AppText(
                             inspection.locationCity,
                             style: textTheme.bodySmall?.copyWith(
                               color: colorScheme.onSurfaceVariant,
@@ -388,7 +389,7 @@ class _AnalyzingContent extends StatelessWidget {
               const SizedBox(width: 10),
 
               Expanded(
-                child: Text(
+                child: AppText(
                   'Analiz tamamlanana kadar bu ekranda kalın. '
                   'İşlem tamamlandığında sonuç ekranı otomatik olarak açılacak.',
                   style: textTheme.bodySmall?.copyWith(
@@ -467,7 +468,7 @@ class _AnalysisStep extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
+                  AppText(
                     title,
                     style: textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.w800,
@@ -476,7 +477,7 @@ class _AnalysisStep extends StatelessWidget {
 
                   const SizedBox(height: 4),
 
-                  Text(
+                  AppText(
                     description,
                     style: textTheme.bodySmall?.copyWith(
                       color: colorScheme.onSurfaceVariant,

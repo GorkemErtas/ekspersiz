@@ -1,3 +1,4 @@
+import 'package:mobile/core/localization/app_text.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
@@ -14,7 +15,7 @@ import '../../vehicle/models/vehicle.dart';
 import '../../vehicle/services/vehicle_service.dart';
 import '../../auth/models/business_account.dart';
 import '../../billing/screens/subscription_screen.dart';
-import '../../billing/services/rewarded_analysis_service.dart';
+import '../../billing/services/analysis_quota_service.dart';
 
 import '../models/damage_inspection.dart';
 import '../services/inspection_service.dart';
@@ -33,8 +34,8 @@ class _CreateInspectionScreenState extends State<CreateInspectionScreen> {
   final VehicleService _vehicleService = const VehicleService();
 
   final InspectionService _inspectionService = const InspectionService();
-  final RewardedAnalysisService _rewardedAnalysisService =
-      const RewardedAnalysisService();
+  final AnalysisQuotaService _analysisQuotaService =
+      const AnalysisQuotaService();
 
   late Future<List<Vehicle>> _vehiclesFuture;
 
@@ -225,10 +226,6 @@ class _CreateInspectionScreenState extends State<CreateInspectionScreen> {
         return;
       }
 
-      debugPrint(
-        'Reward/quota confirmed; navigating to inspection image flow.',
-      );
-
       final uploadedInspection = await Navigator.of(context)
           .push<DamageInspection>(
             MaterialPageRoute<DamageInspection>(
@@ -262,76 +259,43 @@ class _CreateInspectionScreenState extends State<CreateInspectionScreen> {
   }
 
   Future<bool> _ensureAnalysisQuota() async {
-    final quota = await _rewardedAnalysisService.getQuota();
+    final quota = await _analysisQuotaService.getQuota();
     if (!mounted) return false;
     if (quota.remaining > 0) return true;
 
-    if (quota.rewardedEligible) {
-      final action = await showDialog<_QuotaAction>(
-        context: context,
-        builder: (dialogContext) => AlertDialog(
-          title: const Text('Aylık analiz hakkı'),
-          content: const Text('Bu ayki ücretsiz analiz hakkınızı kullandınız.'),
-          actions: [
-            TextButton(
-              onPressed: () =>
-                  Navigator.pop(dialogContext, _QuotaAction.upgrade),
-              child: const Text("PLUS'a Geç"),
-            ),
-            FilledButton.icon(
-              onPressed: () =>
-                  Navigator.pop(dialogContext, _QuotaAction.watchAd),
-              icon: const Icon(Icons.play_circle_outline_rounded),
-              label: const Text('Reklam İzle → +1 Analiz Hakkı'),
-            ),
-          ],
-        ),
-      );
-      if (!mounted || action == null) return false;
-      if (action == _QuotaAction.upgrade) {
-        await Navigator.of(context).push<void>(
-          MaterialPageRoute<void>(builder: (_) => const SubscriptionScreen()),
-        );
-        return false;
-      }
-
-      final result = await _rewardedAnalysisService.watchRewardedAd(
-        onVerificationStarted: () {
-          if (!mounted) return;
-          setState(() {
-            _creationProgressMessage = 'Reklam ödülü doğrulanıyor...';
-          });
-        },
-      );
-      if (!mounted) return false;
-      if (result == RewardedAnalysisResult.verified) {
-        debugPrint(
-          'Verified reward received; continuing intended analysis flow.',
-        );
-        setState(() {
-          _creationProgressMessage = 'Ek analiz hakkı hazır. Devam ediliyor...';
-        });
-        _showMessage('Ek analiz hakkınız tanımlandı.');
-        return true;
-      }
-      final message = result == RewardedAnalysisResult.cancelled
-          ? 'Ödül alınabilmesi için reklamı tamamlayın ve tekrar deneyin.'
-          : 'Reklam ödülü sunucu tarafından doğrulanamadı. İnternet bağlantınızı kontrol edip tekrar deneyin.';
-      _showMessage(message);
-      return false;
-    }
-
     final message = quota.plan == 'FREE'
-        ? 'Bu ayki ücretsiz ve ödüllü analiz haklarınızı kullandınız.'
+        ? 'Bu ayki ücretsiz analiz hakkınızı kullandınız.'
         : 'Bu ayki analiz limitinize ulaştınız.';
-    _showMessage(message);
+    final upgrade = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const AppText('Aylık analiz limiti'),
+        content: AppText(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const AppText('Kapat'),
+          ),
+          FilledButton.icon(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            icon: const Icon(Icons.workspace_premium_outlined),
+            label: const AppText('Planları İncele'),
+          ),
+        ],
+      ),
+    );
+    if (upgrade == true && mounted) {
+      await Navigator.of(context).push<void>(
+        MaterialPageRoute<void>(builder: (_) => const SubscriptionScreen()),
+      );
+    }
     return false;
   }
 
   void _showMessage(String message) {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
+      ..showSnackBar(SnackBar(content: AppText(message)));
   }
 
   @override
@@ -342,7 +306,7 @@ class _CreateInspectionScreenState extends State<CreateInspectionScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
+        title: AppText(
           widget.businessAccount == null
               ? 'Yeni Hasar Analizi'
               : 'Yeni Şirket Analizi',
@@ -411,7 +375,7 @@ class _CreateInspectionScreenState extends State<CreateInspectionScreen> {
                       subtitle: widget.businessAccount == null
                           ? 'Aracınızı seçin. Konumunuz otomatik olarak alınacak bir sonraki adımda hasarlı bölgenin fotoğrafını ekleyeceksiniz.'
                           : 'Şirket aracını seçin. Başlatılan analiz şirketin aylık 100 analiz hakkından ortak olarak kullanılır.',
-                      badge: 'AI INSPECTION',
+                      badge: 'YAPAY ZEKÂ İNCELEMESİ',
                     ),
 
                     const SizedBox(height: 24),
@@ -498,7 +462,7 @@ class _CreateInspectionScreenState extends State<CreateInspectionScreen> {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      Text(
+                                      AppText(
                                         'Mevcut Konum',
                                         style: textTheme.titleSmall?.copyWith(
                                           fontWeight: FontWeight.w700,
@@ -508,21 +472,21 @@ class _CreateInspectionScreenState extends State<CreateInspectionScreen> {
                                       const SizedBox(height: 4),
 
                                       if (_isLoadingLocation)
-                                        Text(
+                                        AppText(
                                           'Konumunuz belirleniyor...',
                                           style: textTheme.bodyMedium?.copyWith(
                                             color: colorScheme.onSurfaceVariant,
                                           ),
                                         )
                                       else if (_locationError != null)
-                                        Text(
+                                        AppText(
                                           _locationError!,
                                           style: textTheme.bodyMedium?.copyWith(
                                             color: colorScheme.error,
                                           ),
                                         )
                                       else if (_detectedCity != null)
-                                        Text(
+                                        AppText(
                                           '$_detectedCity\n',
                                           style: textTheme.bodyMedium?.copyWith(
                                             color: colorScheme.onSurfaceVariant,
@@ -530,7 +494,7 @@ class _CreateInspectionScreenState extends State<CreateInspectionScreen> {
                                           ),
                                         )
                                       else
-                                        Text(
+                                        AppText(
                                           'Konum bilgisi bekleniyor...',
                                           style: textTheme.bodyMedium?.copyWith(
                                             color: colorScheme.onSurfaceVariant,
@@ -542,7 +506,7 @@ class _CreateInspectionScreenState extends State<CreateInspectionScreen> {
 
                                 if (!_isLoadingLocation)
                                   IconButton(
-                                    tooltip: 'Konumu yenile',
+                                    tooltip: 'Konumu yenile'.tr,
                                     onPressed: _isCreating
                                         ? null
                                         : _loadCurrentLocation,
@@ -576,7 +540,7 @@ class _CreateInspectionScreenState extends State<CreateInspectionScreen> {
                                 const SizedBox(width: 10),
 
                                 Expanded(
-                                  child: Text(
+                                  child: AppText(
                                     'Şehir bilgisi, AI tarafından oluşturulan tahmini onarım maliyetinin bölgesel fiyatlara göre hazırlanmasında kullanılır.',
                                     style: textTheme.bodySmall?.copyWith(
                                       color: colorScheme.onSurfaceVariant,
@@ -613,7 +577,7 @@ class _CreateInspectionScreenState extends State<CreateInspectionScreen> {
                               child: CircularProgressIndicator(strokeWidth: 2),
                             ),
                             const SizedBox(width: 10),
-                            Expanded(child: Text(_creationProgressMessage!)),
+                            Expanded(child: AppText(_creationProgressMessage!)),
                           ],
                         ),
                       ),
@@ -636,8 +600,6 @@ class _CreateInspectionScreenState extends State<CreateInspectionScreen> {
     );
   }
 }
-
-enum _QuotaAction { watchAd, upgrade }
 
 class _VehicleSelectionCard extends StatelessWidget {
   const _VehicleSelectionCard({
@@ -710,7 +672,7 @@ class _VehicleSelectionCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    AppText(
                       vehicle.displayName,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -721,7 +683,7 @@ class _VehicleSelectionCard extends StatelessWidget {
 
                     const SizedBox(height: 5),
 
-                    Text(
+                    AppText(
                       '${vehicle.plate} • ${vehicle.modelYear}',
                       style: textTheme.bodyMedium?.copyWith(
                         color: colorScheme.onSurfaceVariant,

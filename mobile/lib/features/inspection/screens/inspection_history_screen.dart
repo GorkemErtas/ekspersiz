@@ -1,3 +1,4 @@
+import 'package:mobile/core/localization/app_text.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/network/api_exception.dart';
@@ -145,7 +146,7 @@ class _InspectionHistoryScreenState extends State<InspectionHistoryScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
+        title: AppText(
           widget.businessAccount == null ? 'Analizler' : 'Şirket Analizleri',
         ),
       ),
@@ -295,7 +296,7 @@ class _HistoryHeader extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
+        AppText(
           businessAccount == null
               ? 'Analiz geçmişiniz'
               : '${businessAccount!.companyName} analizleri',
@@ -304,7 +305,7 @@ class _HistoryHeader extends StatelessWidget {
 
         const SizedBox(height: 7),
 
-        Text(
+        AppText(
           businessAccount == null
               ? 'Tamamlanan araç hasar analizlerinizi ve AI raporlarınızı inceleyin.'
               : 'Tüm şirket üyelerinin tamamladığı ortak analizleri ve AI raporlarını inceleyin. Aylık ortak sınır 100 analizdir.',
@@ -386,7 +387,7 @@ class _InspectionHistoryCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    AppText(
                       inspection.vehiclePlate,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -408,7 +409,7 @@ class _InspectionHistoryCard extends StatelessWidget {
                         const SizedBox(width: 4),
 
                         Expanded(
-                          child: Text(
+                          child: AppText(
                             inspection.locationCity,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -452,7 +453,7 @@ class _InspectionHistoryCard extends StatelessWidget {
 
               const SizedBox(width: 5),
 
-              Text(
+              AppText(
                 date,
                 style: textTheme.bodySmall?.copyWith(
                   color: colorScheme.onSurfaceVariant,
@@ -481,7 +482,7 @@ class _InspectionHistoryCard extends StatelessWidget {
                 const SizedBox(width: 8),
 
                 Expanded(
-                  child: Text(
+                  child: AppText(
                     affectedParts.join(' • '),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,

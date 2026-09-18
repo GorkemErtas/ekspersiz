@@ -1,3 +1,4 @@
+import 'package:mobile/core/localization/app_text.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/network/api_exception.dart';
@@ -91,10 +92,10 @@ class _NotificationCenterScreenState extends State<NotificationCenterScreen> {
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(
-      title: const Text('Bildirimler'),
+      title: const AppText('Bildirimler'),
       actions: [
         if (_items.any((item) => !item.read))
-          TextButton(onPressed: _markAllRead, child: const Text('Tümünü oku')),
+          TextButton(onPressed: _markAllRead, child: const AppText('Tümünü oku')),
       ],
     ),
     body: SafeArea(
@@ -104,11 +105,11 @@ class _NotificationCenterScreenState extends State<NotificationCenterScreen> {
           ? Center(
               child: FilledButton(
                 onPressed: _load,
-                child: const Text('Tekrar Dene'),
+                child: const AppText('Tekrar Dene'),
               ),
             )
           : _items.isEmpty
-          ? const Center(child: Text('Henüz bildiriminiz yok.'))
+          ? const Center(child: AppText('Henüz bildiriminiz yok.'))
           : RefreshIndicator(
               onRefresh: _load,
               child: ListView.separated(
@@ -144,7 +145,7 @@ class _NotificationCenterScreenState extends State<NotificationCenterScreen> {
                               Row(
                                 children: [
                                   Expanded(
-                                    child: Text(
+                                    child: AppText(
                                       item.title,
                                       style: const TextStyle(
                                         fontWeight: FontWeight.w800,
@@ -163,9 +164,9 @@ class _NotificationCenterScreenState extends State<NotificationCenterScreen> {
                                 ],
                               ),
                               const SizedBox(height: 5),
-                              Text(item.body),
+                              AppText(item.body),
                               const SizedBox(height: 8),
-                              Text(
+                              AppText(
                                 _date(item.createdAt),
                                 style: Theme.of(context).textTheme.labelSmall,
                               ),

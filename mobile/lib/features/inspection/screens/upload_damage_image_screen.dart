@@ -1,3 +1,4 @@
+import 'package:mobile/core/localization/app_text.dart';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -244,7 +245,7 @@ class _UploadDamageImageScreenState extends State<UploadDamageImageScreen> {
   void _showMessage(String message) {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
+      ..showSnackBar(SnackBar(content: AppText(message)));
   }
 
   void _showImageSourceSheet() {
@@ -267,7 +268,7 @@ class _UploadDamageImageScreenState extends State<UploadDamageImageScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
+              AppText(
                 'Fotoğraf kaynağı',
                 style: textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.w900,
@@ -276,7 +277,7 @@ class _UploadDamageImageScreenState extends State<UploadDamageImageScreen> {
 
               const SizedBox(height: 6),
 
-              Text(
+              AppText(
                 'Hasarlı bölgenin fotoğrafını nasıl eklemek istediğinizi seçin.',
                 style: textTheme.bodyMedium?.copyWith(
                   color: colorScheme.onSurfaceVariant,
@@ -342,7 +343,7 @@ class _UploadDamageImageScreenState extends State<UploadDamageImageScreen> {
     final hasImage = _selectedImageBytes != null;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Hasar Fotoğrafı')),
+      appBar: AppBar(title: const AppText('Hasar Fotoğrafı')),
 
       body: SafeArea(
         child: Center(
@@ -360,7 +361,7 @@ class _UploadDamageImageScreenState extends State<UploadDamageImageScreen> {
                       'Hasarın net göründüğü tek bir fotoğraf yükleyin. '
                       'AI modeli fotoğrafı inceleyerek hasar tipini, '
                       'etkilenen parçaları ve hasar seviyesini belirleyecek.',
-                  badge: 'AI IMAGE ANALYSIS',
+                  badge: 'YAPAY ZEKÂ GÖRÜNTÜ ANALİZİ',
                 ),
 
                 const SizedBox(height: 24),
@@ -383,7 +384,7 @@ class _UploadDamageImageScreenState extends State<UploadDamageImageScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
+                            AppText(
                               widget.inspection.vehiclePlate,
                               style: textTheme.titleMedium?.copyWith(
                                 fontWeight: FontWeight.w900,
@@ -403,7 +404,7 @@ class _UploadDamageImageScreenState extends State<UploadDamageImageScreen> {
                                 const SizedBox(width: 4),
 
                                 Expanded(
-                                  child: Text(
+                                  child: AppText(
                                     widget.inspection.locationCity,
                                     style: textTheme.bodyMedium?.copyWith(
                                       color: colorScheme.onSurfaceVariant,
@@ -496,7 +497,7 @@ class _ImageQualityIssueCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                AppText(
                   'Fotoğrafı yeniden çekin',
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
                     color: colorScheme.error,
@@ -504,7 +505,7 @@ class _ImageQualityIssueCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 5),
-                Text(message, style: Theme.of(context).textTheme.bodyMedium),
+                AppText(message, style: Theme.of(context).textTheme.bodyMedium),
               ],
             ),
           ),
@@ -590,7 +591,7 @@ class _PhotoUploadArea extends StatelessWidget {
                               size: 16,
                             ),
                             SizedBox(width: 5),
-                            Text(
+                            AppText(
                               'Hazır',
                               style: TextStyle(
                                 color: Colors.white,
@@ -619,7 +620,7 @@ class _PhotoUploadArea extends StatelessWidget {
 
                       const SizedBox(height: 20),
 
-                      Text(
+                      AppText(
                         'Hasar fotoğrafı ekleyin',
                         textAlign: TextAlign.center,
                         style: textTheme.titleMedium?.copyWith(
@@ -629,7 +630,7 @@ class _PhotoUploadArea extends StatelessWidget {
 
                       const SizedBox(height: 7),
 
-                      Text(
+                      AppText(
                         'Kamera ile çekin veya galerinizden seçin',
                         textAlign: TextAlign.center,
                         style: textTheme.bodyMedium?.copyWith(
@@ -650,7 +651,7 @@ class _PhotoUploadArea extends StatelessWidget {
                             AppTheme.radiusPill,
                           ),
                         ),
-                        child: Text(
+                        child: AppText(
                           'JPG • PNG • WEBP • Maks. 10 MB',
                           style: textTheme.labelSmall?.copyWith(
                             color: colorScheme.onSurfaceVariant,
@@ -698,7 +699,7 @@ class _SelectedFileInfo extends StatelessWidget {
               const SizedBox(width: 8),
 
               Expanded(
-                child: Text(
+                child: AppText(
                   '$filename • $fileSize',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -717,7 +718,7 @@ class _SelectedFileInfo extends StatelessWidget {
         TextButton.icon(
           onPressed: onChange,
           icon: const Icon(Icons.refresh_rounded, size: 18),
-          label: const Text('Değiştir'),
+          label: const AppText('Değiştir'),
         ),
       ],
     );
@@ -753,7 +754,7 @@ class _PhotoTipsCard extends StatelessWidget {
               SizedBox(width: 11),
 
               Expanded(
-                child: Text(
+                child: AppText(
                   'Daha iyi sonuç için',
                   style: TextStyle(fontWeight: FontWeight.w900),
                 ),
@@ -807,7 +808,7 @@ class _PhotoTip extends StatelessWidget {
         const SizedBox(width: 10),
 
         Expanded(
-          child: Text(
+          child: AppText(
             text,
             style: textTheme.bodyMedium?.copyWith(
               color: colorScheme.onSurfaceVariant,
@@ -859,7 +860,7 @@ class _ImageSourceOption extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    AppText(
                       title,
                       style: textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w800,
@@ -868,7 +869,7 @@ class _ImageSourceOption extends StatelessWidget {
 
                     const SizedBox(height: 3),
 
-                    Text(
+                    AppText(
                       subtitle,
                       style: textTheme.bodySmall?.copyWith(
                         color: colorScheme.onSurfaceVariant,

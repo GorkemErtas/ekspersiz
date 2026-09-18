@@ -1,3 +1,4 @@
+import 'package:mobile/core/localization/app_text.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -196,7 +197,7 @@ class _NearbyServicesScreenState extends State<NearbyServicesScreen> {
           ..hideCurrentSnackBar()
           ..showSnackBar(
             const SnackBar(
-              content: Text(
+              content: AppText(
                 'Yol tarifi için cihaz konumunu açmanız gerekiyor.',
               ),
             ),
@@ -217,7 +218,7 @@ class _NearbyServicesScreenState extends State<NearbyServicesScreen> {
           ..hideCurrentSnackBar()
           ..showSnackBar(
             const SnackBar(
-              content: Text('Yol tarifi için konum izni gerekiyor.'),
+              content: AppText('Yol tarifi için konum izni gerekiyor.'),
             ),
           );
         return;
@@ -230,7 +231,7 @@ class _NearbyServicesScreenState extends State<NearbyServicesScreen> {
           ..hideCurrentSnackBar()
           ..showSnackBar(
             SnackBar(
-              content: const Text(
+              content: const AppText(
                 'Konum izni kalıcı olarak kapatılmış. Ayarlardan izin vermelisiniz.',
               ),
               action: SnackBarAction(
@@ -261,7 +262,7 @@ class _NearbyServicesScreenState extends State<NearbyServicesScreen> {
         ScaffoldMessenger.of(context)
           ..hideCurrentSnackBar()
           ..showSnackBar(
-            const SnackBar(content: Text('Google Maps açılamadı.')),
+            const SnackBar(content: AppText('Google Maps açılamadı.')),
           );
       }
     } catch (_) {
@@ -271,7 +272,7 @@ class _NearbyServicesScreenState extends State<NearbyServicesScreen> {
         ..hideCurrentSnackBar()
         ..showSnackBar(
           const SnackBar(
-            content: Text('Konum alınamadı veya yol tarifi açılamadı.'),
+            content: AppText('Konum alınamadı veya yol tarifi açılamadı.'),
           ),
         );
     }
@@ -307,7 +308,7 @@ class _NearbyServicesScreenState extends State<NearbyServicesScreen> {
     final selectedService = _selectedService;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Yakındaki Servisler')),
+      appBar: AppBar(title: const AppText('Yakındaki Servisler')),
       body: Stack(
         children: [
           GoogleMap(
@@ -421,7 +422,7 @@ class _ServiceCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: Text(
+                  child: AppText(
                     service.name.isEmpty ? 'Otomotiv Servisi' : service.name,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -431,14 +432,14 @@ class _ServiceCard extends StatelessWidget {
                   ),
                 ),
                 IconButton(
-                  tooltip: 'Kapat',
+                  tooltip: 'Kapat'.tr,
                   onPressed: onClose,
                   icon: const Icon(Icons.close_rounded),
                 ),
               ],
             ),
             const SizedBox(height: 10),
-            Text(
+            AppText(
               service.address,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
@@ -453,9 +454,9 @@ class _ServiceCard extends StatelessWidget {
                   color: theme.colorScheme.primary,
                 ),
                 const SizedBox(width: 4),
-                Text(distance),
+                AppText(distance),
                 const SizedBox(width: 16),
-                Expanded(child: Text(rating, overflow: TextOverflow.ellipsis)),
+                Expanded(child: AppText(rating, overflow: TextOverflow.ellipsis)),
               ],
             ),
             const SizedBox(height: 12),
@@ -464,7 +465,7 @@ class _ServiceCard extends StatelessWidget {
               child: FilledButton.tonalIcon(
                 onPressed: onDirections,
                 icon: const Icon(Icons.directions_rounded, size: 18),
-                label: const Text('Yol Tarifi Al'),
+                label: const AppText('Yol Tarifi Al'),
               ),
             ),
           ],
@@ -509,12 +510,12 @@ class _ErrorCard extends StatelessWidget {
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: Text(
+              child: AppText(
                 message,
                 style: TextStyle(color: theme.colorScheme.onErrorContainer),
               ),
             ),
-            TextButton(onPressed: onRetry, child: const Text('Tekrar Dene')),
+            TextButton(onPressed: onRetry, child: const AppText('Tekrar Dene')),
           ],
         ),
       ),
@@ -535,7 +536,7 @@ class _EmptyServicesCard extends StatelessWidget {
             const Icon(Icons.location_off_outlined),
             const SizedBox(width: 12),
             Expanded(
-              child: Text(
+              child: AppText(
                 'Bu araç ve hasar için '
                 'yakında uygun servis bulunamadı.',
                 style: Theme.of(context).textTheme.bodyMedium,

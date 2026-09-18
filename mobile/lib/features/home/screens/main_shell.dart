@@ -1,3 +1,4 @@
+import 'package:mobile/core/localization/app_text.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -322,7 +323,7 @@ class _NavigationItem extends StatelessWidget {
                 ),
                 const SizedBox(height: 3),
                 Flexible(
-                  child: Text(
+                  child: AppText(
                     label,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -401,22 +402,22 @@ class _DesktopShell extends StatelessWidget {
                     NavigationRailDestination(
                       icon: Icon(Icons.home_outlined),
                       selectedIcon: Icon(Icons.home_rounded),
-                      label: Text('Ana Sayfa'),
+                      label: AppText('Ana Sayfa'),
                     ),
                     NavigationRailDestination(
                       icon: Icon(Icons.directions_car_outlined),
                       selectedIcon: Icon(Icons.directions_car_rounded),
-                      label: Text('Araçlar'),
+                      label: AppText('Araçlar'),
                     ),
                     NavigationRailDestination(
                       icon: Icon(Icons.description_outlined),
                       selectedIcon: Icon(Icons.description_rounded),
-                      label: Text('Analizler'),
+                      label: AppText('Analizler'),
                     ),
                     NavigationRailDestination(
                       icon: Icon(Icons.person_outline_rounded),
                       selectedIcon: Icon(Icons.person_rounded),
-                      label: Text('Profil'),
+                      label: AppText('Profil'),
                     ),
                   ],
                 ),

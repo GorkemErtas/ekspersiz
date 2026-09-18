@@ -6,6 +6,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:share_plus/share_plus.dart';
 
+import '../../../core/localization/app_locale_controller.dart';
 import '../models/damage_inspection.dart';
 import 'inspection_service.dart';
 
@@ -57,9 +58,9 @@ class InspectionPdfService {
     await SharePlus.instance.share(
       ShareParams(
         files: [XFile(file.path, mimeType: 'application/pdf')],
-        subject: 'EksperSiz Araç İnceleme Raporu',
+        subject: 'EksperSiz Araç İnceleme Raporu'.tr,
         text:
-            '${inspection.vehiclePlate} plakalı araç için EksperSiz AI inceleme raporu.',
+            '${inspection.vehiclePlate} ${'plakalı araç için EksperSiz AI inceleme raporu.'.tr}',
         sharePositionOrigin: sharePositionOrigin,
       ),
     );
@@ -89,7 +90,7 @@ class InspectionPdfService {
           mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
           children: [
             pw.Text(
-              'EksperSiz • AI destekli görünür hasar analizi',
+              'EksperSiz • AI destekli görünür hasar analizi'.tr,
               style: _muted(8),
             ),
             pw.Text(
@@ -101,15 +102,18 @@ class InspectionPdfService {
         build: (_) => [
           pw.SizedBox(height: 18),
           pw.Text(
-            noDamage ? 'Görünür Hasar Tespit Edilmedi' : 'Araç İnceleme Raporu',
+            (noDamage
+                    ? 'Görünür Hasar Tespit Edilmedi'
+                    : 'Araç İnceleme Raporu')
+                .tr,
             style: pw.TextStyle(font: bold, fontSize: 24, color: _ink),
           ),
           pw.SizedBox(height: 6),
-          pw.Text('Rapor No: EXP-${inspection.id}', style: _muted(10)),
+          pw.Text('${'Rapor No'.tr}: EXP-${inspection.id}', style: _muted(10)),
           pw.SizedBox(height: 20),
           _infoGrid(inspection),
           pw.SizedBox(height: 20),
-          _sectionTitle('İnceleme Fotoğrafı'),
+          _sectionTitle('İnceleme Fotoğrafı'.tr),
           pw.SizedBox(height: 8),
           pw.Container(
             height: 245,
@@ -129,21 +133,21 @@ class InspectionPdfService {
           if (!noDamage && inspection.damageTypes.isNotEmpty) ...[
             pw.SizedBox(height: 18),
             _listSection(
-              'Tespit Edilen Hasarlar',
+              'Tespit Edilen Hasarlar'.tr,
               inspection.damageTypes.map(_damageLabel).toList(),
             ),
           ],
           if (!noDamage && inspection.affectedParts.isNotEmpty) ...[
             pw.SizedBox(height: 14),
             _listSection(
-              'Etkilenen Parçalar',
+              'Etkilenen Parçalar'.tr,
               inspection.affectedParts.map(_partLabel).toList(),
             ),
           ],
           if (!noDamage && inspection.repairRecommendations.isNotEmpty) ...[
             pw.SizedBox(height: 14),
             _listSection(
-              'Onarım Önerileri',
+              'Onarım Önerileri'.tr,
               inspection.repairRecommendations
                   .map((item) => _repairLabel(item.recommendedAction))
                   .toSet()
@@ -152,7 +156,7 @@ class InspectionPdfService {
           ],
           if (report != null) ...[
             pw.SizedBox(height: 18),
-            _sectionTitle('AI Rapor Özeti'),
+            _sectionTitle('AI Rapor Özeti'.tr),
             pw.SizedBox(height: 8),
             _textCard(
               [
@@ -173,12 +177,13 @@ class InspectionPdfService {
             ),
           ],
           pw.SizedBox(height: 18),
-          _sectionTitle('Bilgilendirme'),
+          _sectionTitle('Bilgilendirme'.tr),
           pw.SizedBox(height: 8),
           _textCard(
             report?.disclaimer.trim().isNotEmpty == true
                 ? report!.disclaimer
-                : 'Bu rapor yalnızca yüklenen fotoğraftaki görünür alanların yapay zekâ ile değerlendirilmesine dayanır. Mekanik kontrol veya profesyonel ekspertiz garantisi değildir.',
+                : 'Bu rapor yalnızca yüklenen fotoğraftaki görünür alanların yapay zekâ ile değerlendirilmesine dayanır. Mekanik kontrol veya profesyonel ekspertiz garantisi değildir.'
+                    .tr,
             accent: _warning,
           ),
         ],
@@ -214,7 +219,7 @@ class InspectionPdfService {
         ],
       ),
       pw.Text(
-        'ARAÇ İNCELEME RAPORU',
+        'ARAÇ İNCELEME RAPORU'.tr,
         style: pw.TextStyle(
           fontSize: 9,
           fontWeight: pw.FontWeight.bold,
@@ -230,18 +235,23 @@ class InspectionPdfService {
       border: pw.TableBorder.all(color: _border, width: .7),
       children: [
         _infoRow(
-          'Araç',
+          'Araç'.tr,
           '${inspection.vehicleBrand} ${inspection.vehicleModel}',
-          'Plaka',
+          'Plaka'.tr,
           inspection.vehiclePlate,
         ),
         _infoRow(
-          'Model Yılı',
+          'Model Yılı'.tr,
           '${inspection.vehicleModelYear}',
-          'Kilometre',
+          'Kilometre'.tr,
           '${inspection.vehicleMileage} km',
         ),
-        _infoRow('Tarih', _formatDate(date), 'Konum', inspection.locationCity),
+        _infoRow(
+          'Tarih'.tr,
+          _formatDate(date),
+          'Konum'.tr,
+          inspection.locationCity,
+        ),
       ],
     );
   }
@@ -294,7 +304,8 @@ class InspectionPdfService {
         pw.Text(
           noDamage
               ? 'Gönderilen görüntüde görünür hasar tespit edilmedi. Bu sonuç mekanik veya profesyonel ekspertiz garantisi değildir.'
-              : (inspection.analysisMessage ?? 'Görsel analiz tamamlandı.'),
+                  .tr
+              : (inspection.analysisMessage ?? 'Görsel analiz tamamlandı.').tr,
           style: const pw.TextStyle(fontSize: 10, lineSpacing: 3),
         ),
       ],
@@ -364,7 +375,7 @@ class InspectionPdfService {
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
             pw.Text(
-              'Tahmini Onarım Aralığı',
+              'Tahmini Onarım Aralığı'.tr,
               style: pw.TextStyle(
                 fontSize: 10,
                 fontWeight: pw.FontWeight.bold,
@@ -393,14 +404,14 @@ class InspectionPdfService {
       .round()
       .toString()
       .replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (_) => '.');
-  static String _severityLabel(String? value) => switch (value) {
+  static String _severityLabel(String? value) => (switch (value) {
     'NONE' => 'Görünür Hasar Tespit Edilmedi',
     'MINOR' => 'Hafif Seviye Hasar',
     'MODERATE' => 'Orta Seviye Hasar',
     'SEVERE' => 'Ağır Seviye Hasar',
     _ => 'Hasar Seviyesi Belirsiz',
-  };
-  static String _damageLabel(String value) => switch (value) {
+  }).tr;
+  static String _damageLabel(String value) => (switch (value) {
     'SCRATCH' => 'Çizik',
     'PAINT_DAMAGE' => 'Boya Hasarı',
     'DENT' => 'Göçük',
@@ -409,8 +420,8 @@ class InspectionPdfService {
     'BROKEN_GLASS' => 'Kırık Cam',
     'DEFORMATION' => 'Deformasyon',
     _ => value,
-  };
-  static String _partLabel(String value) => switch (value) {
+  }).tr;
+  static String _partLabel(String value) => (switch (value) {
     'FRONT_BUMPER' => 'Ön Tampon',
     'REAR_BUMPER' => 'Arka Tampon',
     'FRONT_DOOR' => 'Ön Kapı',
@@ -433,8 +444,8 @@ class InspectionPdfService {
     'MIRROR' => 'Yan Ayna',
     'LICENSE_PLATE' => 'Plaka',
     _ => value,
-  };
-  static String _repairLabel(String value) => switch (value) {
+  }).tr;
+  static String _repairLabel(String value) => (switch (value) {
     'NO_ACTION' => 'İşlem Gerekmiyor',
     'POLISHING' => 'Pasta / Cila',
     'PAINT_TOUCH_UP' => 'Lokal Boya Rötuşu',
@@ -449,7 +460,7 @@ class InspectionPdfService {
     'HEADLIGHT_REPAIR' => 'Far Onarımı',
     'HEADLIGHT_REPLACEMENT' => 'Far Değişimi',
     _ => value,
-  };
+  }).tr;
 
   static final _brand = PdfColor.fromHex('#7C3AED');
   static final _ink = PdfColor.fromHex('#17131F');

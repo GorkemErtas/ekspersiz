@@ -1,7 +1,7 @@
+import 'package:mobile/core/localization/app_text.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 
-import '../../../core/ads/free_plan_banner.dart';
 import '../../../core/notifications/push_notification_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_card.dart';
@@ -243,13 +243,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Row(
                     children: [
                       Expanded(
-                        child: Text(
+                        child: AppText(
                           'Ana Aracı Seç',
                           style: Theme.of(sheetContext).textTheme.titleLarge
                               ?.copyWith(fontWeight: FontWeight.w900),
                         ),
                       ),
-                      Text(
+                      AppText(
                         '${_vehicles.length} araç',
                         style: Theme.of(sheetContext).textTheme.bodySmall
                             ?.copyWith(
@@ -308,7 +308,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      Text(
+                                      AppText(
                                         vehicle.displayName,
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
@@ -320,7 +320,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                             ),
                                       ),
                                       const SizedBox(height: 3),
-                                      Text(
+                                      AppText(
                                         '${vehicle.plate} • ${vehicle.modelYear}',
                                         style: Theme.of(context)
                                             .textTheme
@@ -405,7 +405,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ..hideCurrentSnackBar()
         ..showSnackBar(
           SnackBar(
-            content: Text(
+            content: AppText(
               '${updatedVehicle.displayName} ana araç olarak seçildi.',
             ),
           ),
@@ -421,7 +421,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ..hideCurrentSnackBar()
         ..showSnackBar(
           const SnackBar(
-            content: Text('Ana araç değiştirilemedi. Lütfen tekrar deneyin.'),
+            content: AppText('Ana araç değiştirilemedi. Lütfen tekrar deneyin.'),
           ),
         );
     }
@@ -597,11 +597,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(height: AppTheme.spacingM),
                     _TrackingOverviewCard(overview: _vehicleOverview!),
                   ],
-                  if (widget.subscriptionPlan == 'FREE' &&
-                      widget.businessAccount == null) ...[
-                    const SizedBox(height: AppTheme.spacingM),
-                    const FreePlanBanner(),
-                  ],
                   const SizedBox(height: AppTheme.spacingXL),
                   AppFadeSlideIn(
                     delay: const Duration(milliseconds: 120),
@@ -701,7 +696,7 @@ class _TrackingOverviewCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                AppText(
                   'Araç takibi',
                   style: Theme.of(
                     context,
@@ -709,12 +704,12 @@ class _TrackingOverviewCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 if (upcoming.isEmpty)
-                  Text(status)
+                  AppText(status)
                 else
                   ...upcoming.map(
                     (reminder) => Padding(
                       padding: const EdgeInsets.only(top: 2),
-                      child: Text(
+                      child: AppText(
                         reminder.title ??
                             reminder.reminderType.replaceAll('_', ' '),
                         maxLines: 1,
@@ -752,14 +747,14 @@ class _BusinessContextCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                AppText(
                   businessAccount.companyName,
                   style: textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w900,
                   ),
                 ),
                 const SizedBox(height: 3),
-                Text(
+                AppText(
                   'Şirketin ortak araçları ve analiz geçmişi gösteriliyor.',
                   style: textTheme.bodySmall?.copyWith(
                     color: colorScheme.onSurfaceVariant,
@@ -835,7 +830,7 @@ class _DashboardHeader extends StatelessWidget {
               ),
             ),
             alignment: Alignment.center,
-            child: Text(
+            child: AppText(
               _initials(fullName),
               style: const TextStyle(
                 color: Colors.white,
@@ -850,7 +845,7 @@ class _DashboardHeader extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
+              AppText(
                 'Merhaba $firstName',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -892,7 +887,7 @@ class _DashboardHeader extends StatelessWidget {
                         borderRadius: BorderRadius.all(Radius.circular(9)),
                       ),
                       alignment: Alignment.center,
-                      child: Text(
+                      child: AppText(
                         unreadCount > 99 ? '99+' : '$unreadCount',
                         style: const TextStyle(
                           color: Colors.white,
@@ -962,7 +957,7 @@ class _HeroAnalysisCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 16),
-                Text(
+                AppText(
                   'AI Hasar Analizi',
                   style: textTheme.headlineSmall?.copyWith(
                     color: Colors.white,
@@ -970,7 +965,7 @@ class _HeroAnalysisCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 7),
-                Text(
+                AppText(
                   'Hasarlı bölgenin fotoğrafını yükleyin, AI destekli raporunuzu oluşturun.',
                   style: textTheme.bodyMedium?.copyWith(
                     color: Colors.white.withValues(alpha: 0.82),
@@ -980,7 +975,7 @@ class _HeroAnalysisCard extends StatelessWidget {
                 const SizedBox(height: 18),
                 Row(
                   children: [
-                    Text(
+                    AppText(
                       'Yeni Analiz Başlat',
                       style: textTheme.labelLarge?.copyWith(
                         color: Colors.white,
@@ -1045,7 +1040,7 @@ class _MainVehicleCard extends StatelessWidget {
                 Row(
                   children: [
                     Flexible(
-                      child: Text(
+                      child: AppText(
                         vehicle.displayName,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -1063,7 +1058,7 @@ class _MainVehicleCard extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 7),
-                Text(
+                AppText(
                   '${vehicle.plate} • ${vehicle.modelYear}',
                   style: textTheme.bodyMedium?.copyWith(
                     color: colorScheme.onSurfaceVariant,
@@ -1071,7 +1066,7 @@ class _MainVehicleCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 5),
-                Text(
+                AppText(
                   '$mileage km',
                   style: textTheme.bodySmall?.copyWith(
                     color: colorScheme.onSurfaceVariant,
@@ -1116,14 +1111,14 @@ class _EmptyVehicleCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                AppText(
                   'Henüz araç yok',
                   style: textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w900,
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(
+                AppText(
                   'İlk aracınızı ekleyerek analize başlayın.',
                   style: textTheme.bodySmall?.copyWith(
                     color: colorScheme.onSurfaceVariant,
@@ -1184,12 +1179,12 @@ class _LatestInspectionCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 18),
-          Text(
+          AppText(
             title,
             style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
           ),
           const SizedBox(height: 7),
-          Text(
+          AppText(
             summary,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
@@ -1205,7 +1200,7 @@ class _LatestInspectionCard extends StatelessWidget {
               ),
               const SizedBox(width: 6),
               Expanded(
-                child: Text(
+                child: AppText(
                   inspection.vehiclePlate,
                   style: textTheme.bodySmall?.copyWith(
                     fontWeight: FontWeight.w700,
@@ -1218,7 +1213,7 @@ class _LatestInspectionCard extends StatelessWidget {
                 color: colorScheme.onSurfaceVariant,
               ),
               const SizedBox(width: 6),
-              Text(date, style: textTheme.bodySmall),
+              AppText(date, style: textTheme.bodySmall),
             ],
           ),
         ],
@@ -1255,14 +1250,14 @@ class _EmptyAnalysisCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                AppText(
                   'Henüz analiz yok',
                   style: textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w900,
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(
+                AppText(
                   'İlk AI hasar analizini başlatın.',
                   style: textTheme.bodySmall?.copyWith(
                     color: colorScheme.onSurfaceVariant,
