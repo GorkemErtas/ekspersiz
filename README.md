@@ -216,14 +216,13 @@ Vehicle Detection
   → Structured Result
 ```
 
-The reviewed Detection V2 model is active, while the segmentation work remains isolated:
-
-1. **Damage Detection V2 — ACTIVE** uses the reviewed CarDD five-class checkpoint at `ai-service/models/candidates/damage_detection_v2_cardd_5class.pt`: `SCRATCH`, `DENT`, `CRACK`, `BROKEN_PART`, and `BROKEN_GLASS`.
-2. **Damage Segmentation V1 — EXPERIMENTAL** uses a separate polygon dataset and segmentation checkpoint. Its future target is vehicle detection → damage mask → vehicle-part localization → mask/part intersection → structured result.
+The reviewed Detection V2 model is active. It uses the CarDD five-class
+checkpoint at `ai-service/models/candidates/damage_detection_v2_cardd_5class.pt`:
+`SCRATCH`, `DENT`, `CRACK`, `BROKEN_PART`, and `BROKEN_GLASS`.
 
 The application retains the canonical `SCRATCH`, `DENT`, `PAINT_DAMAGE`, `CRACK`, `BROKEN_PART`, `BROKEN_GLASS`, and `DEFORMATION` taxonomy. Individual experiments declare a validated subset of these classes; the CarDD baseline does not output `PAINT_DAMAGE` or `DEFORMATION`. `NO_VISIBLE_DAMAGE` remains a deterministic domain result represented by clean negative images, never a learned object or mask class.
 
-The production service maps checkpoint class names to canonical application values at startup instead of relying on numeric class order. It rejects invalid model schemas and preserves `ai-service/models/best.pt` as the rollback checkpoint. Dataset population, training commands, independent test comparison, real-world error analysis, future mask-area signals, production selection, and rollback are documented in [`ai-service/README.md`](ai-service/README.md).
+The production service maps checkpoint class names to canonical application values at startup instead of relying on numeric class order. It rejects invalid model schemas. Dataset population, training commands, evaluation, and real-world error analysis are documented in [`ai-service/README.md`](ai-service/README.md).
 
 ---
 

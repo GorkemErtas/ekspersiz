@@ -1,6 +1,5 @@
 import unittest
 from io import BytesIO
-import os
 from unittest.mock import Mock, patch
 
 from PIL import Image
@@ -8,7 +7,6 @@ from app.damage_analyzer import (
     DEFAULT_DAMAGE_MODEL_PATH,
     PROJECT_ROOT,
     DamageAnalyzer,
-    resolve_damage_model_path,
 )
 from app.schemas import BoundingBox, DetectedObject
 
@@ -162,23 +160,12 @@ class DamageAnalyzerResultTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "malformed name"):
             DamageAnalyzer._build_damage_class_mapping({0: ""})
 
-    def test_damage_model_path_defaults_to_promoted_candidate(self) -> None:
-        with patch.dict(os.environ, {}, clear=True):
-            self.assertEqual(
-                DEFAULT_DAMAGE_MODEL_PATH,
-                resolve_damage_model_path(),
-            )
-
-    def test_relative_damage_model_override_is_resolved_from_ai_service(self) -> None:
-        with patch.dict(
-                os.environ,
-                {"DAMAGE_MODEL_PATH": "models/best.pt"},
-                clear=True,
-        ):
-            self.assertEqual(
-                PROJECT_ROOT / "models" / "best.pt",
-                resolve_damage_model_path(),
-            )
+    def test_damage_model_path_uses_promoted_checkpoint(self) -> None:
+        self.assertEqual(
+            PROJECT_ROOT / "models" / "candidates"
+            / "damage_detection_v2_cardd_5class.pt",
+            DEFAULT_DAMAGE_MODEL_PATH,
+        )
 
     def test_image_without_a_recognizable_vehicle_is_rejected(self) -> None:
         image_bytes = BytesIO()

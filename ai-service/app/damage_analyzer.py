@@ -1,5 +1,4 @@
 from io import BytesIO
-import os
 from pathlib import Path
 import re
 from typing import Any
@@ -32,8 +31,6 @@ DEFAULT_DAMAGE_MODEL_PATH = (
         / "damage_detection_v2_cardd_5class.pt"
 )
 
-DAMAGE_MODEL_PATH_ENV = "DAMAGE_MODEL_PATH"
-
 SUPPORTED_DAMAGE_MODEL_CLASSES = frozenset({
     "SCRATCH",
     "DENT",
@@ -53,25 +50,6 @@ DEFAULT_VEHICLE_PART_MODEL_PATH = (
         / "models"
         / "vehicle_part_best.pt"
 )
-
-
-def resolve_damage_model_path(
-        configured_path: str | Path | None = None,
-) -> Path:
-    """Resolve an explicit or environment-provided damage model path."""
-    raw_path = configured_path
-
-    if raw_path is None:
-        raw_path = os.getenv(DAMAGE_MODEL_PATH_ENV)
-
-    if raw_path is None or not str(raw_path).strip():
-        return DEFAULT_DAMAGE_MODEL_PATH
-
-    model_path = Path(raw_path).expanduser()
-    if not model_path.is_absolute():
-        model_path = PROJECT_ROOT / model_path
-
-    return model_path
 
 
 class DamageAnalyzer:
@@ -120,7 +98,6 @@ class DamageAnalyzer:
             vehicle_model_path: str | Path = (
                     DEFAULT_VEHICLE_MODEL_PATH
             ),
-            damage_model_path: str | Path | None = None,
             vehicle_part_model_path: str | Path = (
                     DEFAULT_VEHICLE_PART_MODEL_PATH
             ),
@@ -139,9 +116,7 @@ class DamageAnalyzer:
             vehicle_model_path
         )
 
-        self.damage_model_path = resolve_damage_model_path(
-            damage_model_path,
-        )
+        self.damage_model_path = DEFAULT_DAMAGE_MODEL_PATH
 
         self.vehicle_part_model_path = Path(
             vehicle_part_model_path
