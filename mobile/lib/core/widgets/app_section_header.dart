@@ -1,3 +1,4 @@
+import 'package:mobile/core/localization/app_text.dart';
 import 'package:flutter/material.dart';
 
 import 'app_icon_box.dart';
@@ -35,7 +36,7 @@ class AppSectionHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
 
             children: [
-              Text(
+              AppText(
                 title,
 
                 style: textTheme.titleMedium?.copyWith(
@@ -46,7 +47,7 @@ class AppSectionHeader extends StatelessWidget {
               if (subtitle != null) ...[
                 const SizedBox(height: 3),
 
-                Text(
+                AppText(
                   subtitle!,
 
                   style: textTheme.bodySmall?.copyWith(

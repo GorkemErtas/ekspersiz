@@ -1,5 +1,7 @@
+import 'package:mobile/core/localization/app_text.dart';
 import 'package:flutter/material.dart';
 
+import '../../../core/localization/app_locale_controller.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_theme_controller.dart';
 import '../../../core/notifications/push_notification_service.dart';
@@ -43,10 +45,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   String get _subscriptionPlanLabel {
     return switch (widget.subscriptionPlan) {
-      'FREE' => 'Free',
+      'FREE' => 'Ücretsiz',
       'PLUS' => 'Plus',
       'PRO' => 'Pro',
-      'BUSINESS' => 'Business',
+      'BUSINESS' => 'Kurumsal',
       _ => widget.subscriptionPlan,
     };
   }
@@ -80,7 +82,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ..hideCurrentSnackBar()
       ..showSnackBar(
         const SnackBar(
-          content: Text('Şifreniz başarıyla güncellendi.'),
+          content: AppText('Şifreniz başarıyla güncellendi.'),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -127,8 +129,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('Çıkış yapılsın mı?'),
-          content: const Text(
+          title: const AppText('Çıkış yapılsın mı?'),
+          content: const AppText(
             'Hesabınızdan çıkış yapmak '
             'istediğinize emin misiniz?',
           ),
@@ -137,13 +139,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
               onPressed: () {
                 Navigator.of(dialogContext).pop(false);
               },
-              child: const Text('İptal'),
+              child: const AppText('İptal'),
             ),
             FilledButton(
               onPressed: () {
                 Navigator.of(dialogContext).pop(true);
               },
-              child: const Text('Çıkış Yap'),
+              child: const AppText('Çıkış Yap'),
             ),
           ],
         );
@@ -183,7 +185,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ..hideCurrentSnackBar()
         ..showSnackBar(
           const SnackBar(
-            content: Text('Çıkış işlemi tamamlanamadı.'),
+            content: AppText('Çıkış işlemi tamamlanamadı.'),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -220,7 +222,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         widget.subscriptionPlan != 'BUSINESS' && widget.businessAccount == null;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Profil')),
+      appBar: AppBar(title: const AppText('Profil')),
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -243,7 +245,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           borderRadius: BorderRadius.circular(30),
                         ),
                         alignment: Alignment.center,
-                        child: Text(
+                        child: AppText(
                           _initials(),
                           style: textTheme.headlineMedium?.copyWith(
                             color: Colors.white,
@@ -252,7 +254,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      Text(
+                      AppText(
                         widget.fullName,
                         textAlign: TextAlign.center,
                         style: textTheme.headlineSmall?.copyWith(
@@ -333,6 +335,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     children: [
                       const _ThemeModeProfileItem(),
                       const Divider(height: 1, indent: 82),
+                      const _LanguageProfileItem(),
+                      const Divider(height: 1, indent: 82),
                       _ActionProfileItem(
                         icon: Icons.workspace_premium_outlined,
                         title: 'Abonelik ve Ödeme',
@@ -392,14 +396,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
+                            AppText(
                               'EksperSiz',
                               style: textTheme.titleSmall?.copyWith(
                                 fontWeight: FontWeight.w900,
                               ),
                             ),
                             const SizedBox(height: 4),
-                            Text(
+                            AppText(
                               'Araç hasarlarını yapay zekâ destekli '
                               'görüntü analizi ile inceleyin.',
                               style: textTheme.bodySmall?.copyWith(
@@ -428,7 +432,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                           )
                         : const Icon(Icons.logout_rounded),
-                    label: Text(
+                    label: AppText(
                       _isLoggingOut ? 'Çıkış yapılıyor...' : 'Çıkış Yap',
                     ),
                     style: OutlinedButton.styleFrom(
@@ -506,7 +510,7 @@ class _ThemeModeProfileItem extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
+                      AppText(
                         'Görünüm',
                         style: textTheme.bodyLarge?.copyWith(
                           fontWeight: FontWeight.w800,
@@ -515,7 +519,7 @@ class _ThemeModeProfileItem extends StatelessWidget {
                       const SizedBox(height: 4),
                       AnimatedSwitcher(
                         duration: const Duration(milliseconds: 220),
-                        child: Text(
+                        child: AppText(
                           isDark ? 'Koyu tema' : 'Açık tema',
                           key: ValueKey(isDark),
                           style: textTheme.bodySmall?.copyWith(
@@ -547,6 +551,70 @@ class _ThemeModeProfileItem extends StatelessWidget {
   }
 }
 
+class _LanguageProfileItem extends StatelessWidget {
+  const _LanguageProfileItem();
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = AppLocaleController.instance;
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return AnimatedBuilder(
+      animation: controller,
+      builder: (context, _) => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+        child: Row(
+          children: [
+            AppIconBox(
+              icon: Icons.language_rounded,
+              size: 46,
+              iconSize: 22,
+              borderRadius: 14,
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  AppText(
+                    'Dil',
+                    style: textTheme.bodyLarge?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  AppText(
+                    controller.isTurkish ? 'Türkçe' : 'İngilizce',
+                    style: textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SegmentedButton<String>(
+              segments: const [
+                ButtonSegment(value: 'tr', label: AppText('TR')),
+                ButtonSegment(value: 'en', label: AppText('EN')),
+              ],
+              selected: {controller.locale.languageCode},
+              onSelectionChanged: (selection) {
+                controller.setLanguage(selection.first);
+              },
+              showSelectedIcon: false,
+              style: const ButtonStyle(
+                visualDensity: VisualDensity.compact,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _ProfileItem extends StatelessWidget {
   const _ProfileItem({
     required this.icon,
@@ -573,7 +641,7 @@ class _ProfileItem extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                AppText(
                   title,
                   style: textTheme.bodySmall?.copyWith(
                     color: colorScheme.onSurfaceVariant,
@@ -581,7 +649,7 @@ class _ProfileItem extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(
+                AppText(
                   value,
                   style: textTheme.bodyLarge?.copyWith(
                     fontWeight: FontWeight.w800,
@@ -627,14 +695,14 @@ class _ActionProfileItem extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
+                  AppText(
                     title,
                     style: textTheme.bodyLarge?.copyWith(
                       fontWeight: FontWeight.w800,
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Text(
+                  AppText(
                     subtitle,
                     style: textTheme.bodySmall?.copyWith(
                       color: colorScheme.onSurfaceVariant,

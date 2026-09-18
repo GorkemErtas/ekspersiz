@@ -1,3 +1,4 @@
+import 'package:mobile/core/localization/app_text.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_theme.dart';
@@ -76,7 +77,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(message)));
+        ..showSnackBar(SnackBar(content: AppText(message)));
     } finally {
       if (mounted) {
         setState(() {
@@ -90,13 +91,13 @@ class _LoginScreenState extends State<LoginScreen> {
     final email = value?.trim() ?? '';
 
     if (email.isEmpty) {
-      return 'E-posta adresinizi girin.';
+      return 'E-posta adresinizi girin.'.tr;
     }
 
     final emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
 
     if (!emailRegex.hasMatch(email)) {
-      return 'Geçerli bir e-posta adresi girin.';
+      return 'Geçerli bir e-posta adresi girin.'.tr;
     }
 
     return null;
@@ -104,7 +105,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   String? _validatePassword(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Şifrenizi girin.';
+      return 'Şifrenizi girin.'.tr;
     }
 
     return null;
@@ -145,7 +146,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
+                      AppText(
                         'EksperSiz',
                         style: textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.w900,
@@ -154,7 +155,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                       const SizedBox(height: 2),
 
-                      Text(
+                      AppText(
                         'AI destekli araç hasar analizi',
                         style: textTheme.bodySmall?.copyWith(
                           color: colorScheme.onSurfaceVariant,
@@ -168,7 +169,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
             const SizedBox(height: 30),
 
-            Text(
+            AppText(
               'Tekrar hoş geldiniz',
               style: textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.w900,
@@ -177,7 +178,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
             const SizedBox(height: 8),
 
-            Text(
+            AppText(
               'Hesabınıza giriş yaparak araç '
               'analizlerinize devam edin.',
               style: textTheme.bodyMedium?.copyWith(
@@ -195,9 +196,9 @@ class _LoginScreenState extends State<LoginScreen> {
               autocorrect: false,
               enableSuggestions: false,
               autofillHints: const [AutofillHints.email],
-              decoration: const InputDecoration(
-                labelText: 'E-posta',
-                hintText: 'ornek@email.com',
+              decoration: InputDecoration(
+                labelText: 'E-posta'.tr,
+                hintText: 'ornek@email.com'.tr,
                 prefixIcon: Icon(Icons.mail_outline_rounded),
               ),
               validator: _validateEmail,
@@ -216,13 +217,11 @@ class _LoginScreenState extends State<LoginScreen> {
                 }
               },
               decoration: InputDecoration(
-                labelText: 'Şifre',
-                hintText: 'Şifrenizi girin',
+                labelText: 'Şifre'.tr,
+                hintText: 'Şifrenizi girin'.tr,
                 prefixIcon: const Icon(Icons.lock_outline_rounded),
                 suffixIcon: IconButton(
-                  tooltip: _obscurePassword
-                      ? 'Şifreyi göster'
-                      : 'Şifreyi gizle',
+                  tooltip: (_obscurePassword ? 'Şifreyi göster' : 'Şifreyi gizle').tr,
                   onPressed: _isLoading
                       ? null
                       : () {
@@ -257,7 +256,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: Text(
+                  child: AppText(
                     'veya',
                     style: textTheme.bodySmall?.copyWith(
                       color: colorScheme.onSurfaceVariant,
@@ -284,7 +283,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         );
                       },
                 icon: const Icon(Icons.person_add_alt_1_rounded),
-                label: const Text('Yeni Hesap Oluştur'),
+                label: const AppText('Yeni Hesap Oluştur'),
               ),
             ),
           ],

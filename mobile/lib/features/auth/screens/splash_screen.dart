@@ -1,3 +1,4 @@
+import 'package:mobile/core/localization/app_text.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 
@@ -122,8 +123,8 @@ class _SplashScreenState extends State<SplashScreen> {
       barrierDismissible: false,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('Bağlantı Hatası'),
-          content: Text(message),
+          title: const AppText('Bağlantı Hatası'),
+          content: AppText(message),
           actions: [
             TextButton(
               onPressed: () {
@@ -131,7 +132,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
                 _restoreSession();
               },
-              child: const Text('Tekrar Dene'),
+              child: const AppText('Tekrar Dene'),
             ),
             TextButton(
               onPressed: () async {
@@ -145,7 +146,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
                 _goToLogin();
               },
-              child: const Text('Giriş Yap'),
+              child: const AppText('Giriş Yap'),
             ),
           ],
         );
@@ -201,7 +202,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
                   const SizedBox(height: 26),
 
-                  Text(
+                  AppText(
                     'EksperSiz',
                     textAlign: TextAlign.center,
                     style: textTheme.headlineMedium?.copyWith(
@@ -212,7 +213,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
                   const SizedBox(height: 8),
 
-                  Text(
+                  AppText(
                     'AI destekli araç hasar analizi',
                     textAlign: TextAlign.center,
                     style: textTheme.bodyMedium?.copyWith(
@@ -233,7 +234,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
                   const SizedBox(height: 16),
 
-                  Text(
+                  AppText(
                     'Oturum kontrol ediliyor...',
                     textAlign: TextAlign.center,
                     style: textTheme.bodySmall?.copyWith(

@@ -1,3 +1,4 @@
+import 'package:mobile/core/localization/app_text.dart';
 import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
@@ -71,7 +72,7 @@ class AppPageHeader extends StatelessWidget {
                   borderRadius: BorderRadius.circular(AppTheme.radiusPill),
                 ),
 
-                child: Text(
+                child: AppText(
                   badge!,
 
                   style: textTheme.labelSmall?.copyWith(
@@ -87,7 +88,7 @@ class AppPageHeader extends StatelessWidget {
               const SizedBox(height: 10),
             ],
 
-            Text(
+            AppText(
               title,
 
               style: textTheme.headlineSmall?.copyWith(
@@ -97,7 +98,7 @@ class AppPageHeader extends StatelessWidget {
 
             const SizedBox(height: 7),
 
-            Text(
+            AppText(
               subtitle,
 
               style: textTheme.bodyLarge?.copyWith(

@@ -1,3 +1,4 @@
+import 'package:mobile/core/localization/app_text.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -157,7 +158,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
-        SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
+        SnackBar(content: AppText(message), behavior: SnackBarBehavior.floating),
       );
   }
 
@@ -178,7 +179,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
         }
       },
       child: Scaffold(
-        appBar: AppBar(title: const Text('Abonelik ve Ödeme')),
+        appBar: AppBar(title: const AppText('Abonelik ve Ödeme')),
         body: SafeArea(child: _buildBody()),
       ),
     );
@@ -196,12 +197,12 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(_error ?? 'Abonelik bilgisi alınamadı.'),
+              AppText(_error ?? 'Abonelik bilgisi alınamadı.'),
               const SizedBox(height: 16),
               FilledButton.icon(
                 onPressed: _load,
                 icon: const Icon(Icons.refresh_rounded),
-                label: const Text('Tekrar Dene'),
+                label: const AppText('Tekrar Dene'),
               ),
             ],
           ),
@@ -231,7 +232,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                     ),
                     const SizedBox(width: 12),
                     const Expanded(
-                      child: Text(
+                      child: AppText(
                         'Satın alma anahtarı bu sürümde tanımlı değil. '
                         'Planları inceleyebilirsiniz; ödeme düğmeleri mağaza '
                         'yapılandırması tamamlandığında açılır.',
@@ -242,7 +243,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
               ),
             ],
             const SizedBox(height: 24),
-            Text(
+            AppText(
               'Planlar',
               style: Theme.of(
                 context,
@@ -272,18 +273,18 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.restore_rounded),
-                label: const Text('Satın Alımları Geri Yükle'),
+                label: const AppText('Satın Alımları Geri Yükle'),
               ),
             if (data.overview.status.managementUrl != null) ...[
               const SizedBox(height: 10),
               TextButton.icon(
                 onPressed: _manageSubscription,
                 icon: const Icon(Icons.open_in_new_rounded),
-                label: const Text('Aboneliği Mağazada Yönet'),
+                label: const AppText('Aboneliği Mağazada Yönet'),
               ),
             ],
             const SizedBox(height: 16),
-            Text(
+            AppText(
               'Ödeme Apple App Store veya Google Play tarafından güvenli '
               'şekilde alınır. Abonelik iptal edilmediği sürece aylık yenilenir. '
               'İptalden sonra mevcut fatura döneminin sonuna kadar erişim sürer.',
@@ -322,14 +323,14 @@ class _CurrentSubscriptionCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    AppText(
                       'Mevcut plan',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Text(
+                    AppText(
                       plan?.title ?? status.currentPlan,
                       style: Theme.of(context).textTheme.headlineSmall
                           ?.copyWith(fontWeight: FontWeight.w900),
@@ -351,7 +352,7 @@ class _CurrentSubscriptionCard extends StatelessWidget {
           ),
           if (status.currentPeriodEndsAt != null) ...[
             const SizedBox(height: 14),
-            Text(
+            AppText(
               status.autoRenewing
                   ? 'Sonraki yenileme: ${_date(status.currentPeriodEndsAt!)}'
                   : 'Erişim bitişi: ${_date(status.currentPeriodEndsAt!)}',
@@ -360,7 +361,7 @@ class _CurrentSubscriptionCard extends StatelessWidget {
           ],
           if (status.sandbox) ...[
             const SizedBox(height: 8),
-            Text(
+            AppText(
               'Test mağazası işlemi',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -421,7 +422,7 @@ class _PlanCard extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: Text(
+                child: AppText(
                   plan.title,
                   style: Theme.of(
                     context,
@@ -440,14 +441,14 @@ class _PlanCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 6),
-          Text(
+          AppText(
             plan.description,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
           const SizedBox(height: 16),
-          Text(
+          AppText(
             _price(),
             style: Theme.of(
               context,
@@ -465,7 +466,7 @@ class _PlanCard extends StatelessWidget {
                     color: AppTheme.successColorFor(context),
                   ),
                   const SizedBox(width: 9),
-                  Expanded(child: Text(feature)),
+                  Expanded(child: AppText(feature)),
                 ],
               ),
             ),
@@ -475,7 +476,7 @@ class _PlanCard extends StatelessWidget {
             child: isCurrent
                 ? OutlinedButton(
                     onPressed: null,
-                    child: const Text('Mevcut Plan'),
+                    child: const AppText('Mevcut Plan'),
                   )
                 : FilledButton(
                     onPressed: canPurchase ? onPurchase : null,
@@ -488,7 +489,7 @@ class _PlanCard extends StatelessWidget {
                               color: Colors.white,
                             ),
                           )
-                        : Text(
+                        : AppText(
                             plan.plan == 'FREE'
                                 ? 'Ücretsiz Plan'
                                 : 'Mağazadan Abone Ol',

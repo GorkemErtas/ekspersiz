@@ -1,3 +1,4 @@
+import 'package:mobile/core/localization/app_text.dart';
 import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
@@ -136,7 +137,7 @@ class AppStateView extends StatelessWidget {
 
                 const SizedBox(height: 24),
 
-                Text(
+                AppText(
                   title,
 
                   textAlign: TextAlign.center,
@@ -148,7 +149,7 @@ class AppStateView extends StatelessWidget {
 
                 const SizedBox(height: 9),
 
-                Text(
+                AppText(
                   message,
 
                   textAlign: TextAlign.center,
@@ -166,7 +167,7 @@ class AppStateView extends StatelessWidget {
                   FilledButton.tonalIcon(
                     onPressed: onActionPressed,
                     icon: Icon(actionIcon ?? Icons.arrow_forward_rounded),
-                    label: Text(actionLabel!),
+                    label: AppText(actionLabel!),
                   ),
                 ],
               ],
