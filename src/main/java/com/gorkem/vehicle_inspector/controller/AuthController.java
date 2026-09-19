@@ -8,6 +8,9 @@ import com.gorkem.vehicle_inspector.dto.request.VerifyEmailRequest;
 import com.gorkem.vehicle_inspector.dto.response.AuthResponse;
 import com.gorkem.vehicle_inspector.dto.response.UserResponse;
 import com.gorkem.vehicle_inspector.service.AuthService;
+import com.gorkem.vehicle_inspector.dto.request.ForgotPasswordRequest;
+import com.gorkem.vehicle_inspector.dto.request.ResetPasswordRequest;
+import com.gorkem.vehicle_inspector.service.PasswordResetService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,8 +23,14 @@ public class AuthController {
 
     private final AuthService authService;
 
-    public AuthController(AuthService authService) {
+    private final PasswordResetService passwordResetService;
+
+    public AuthController(
+            AuthService authService,
+            PasswordResetService passwordResetService
+    ) {
         this.authService = authService;
+        this.passwordResetService = passwordResetService;
     }
 
     @PostMapping("/register")
@@ -60,6 +69,24 @@ public class AuthController {
         return ResponseEntity.ok(
                 authService.login(request)
         );
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<Void> forgotPassword(
+            @Valid @RequestBody ForgotPasswordRequest request
+    ) {
+        passwordResetService.requestReset(request);
+
+        return ResponseEntity.accepted().build();
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<Void> resetPassword(
+            @Valid @RequestBody ResetPasswordRequest request
+    ) {
+        passwordResetService.resetPassword(request);
+
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/change-password")
