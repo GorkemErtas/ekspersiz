@@ -88,6 +88,38 @@ class AuthService {
     );
   }
 
+  Future<void> forgotPassword({
+    required String email,
+  }) async {
+    await apiClient.post(
+      '/auth/forgot-password',
+      includeAuth: false,
+      clearTokenOnUnauthorized: false,
+      body: {
+        'email': email.trim().toLowerCase(),
+      },
+    );
+  }
+
+  Future<void> resetPassword({
+    required String email,
+    required String code,
+    required String newPassword,
+    required String confirmNewPassword,
+  }) async {
+    await apiClient.post(
+      '/auth/reset-password',
+      includeAuth: false,
+      clearTokenOnUnauthorized: false,
+      body: {
+        'email': email.trim().toLowerCase(),
+        'code': code.trim(),
+        'newPassword': newPassword,
+        'confirmNewPassword': confirmNewPassword,
+      },
+    );
+  }
+
   Future<void> changePassword({
     required String currentPassword,
     required String newPassword,

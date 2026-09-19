@@ -9,6 +9,7 @@ import '../../../core/widgets/primary_button.dart';
 import '../../home/screens/main_shell.dart';
 import '../services/auth_service.dart';
 import 'register_screen.dart';
+import 'forgot_password_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -239,7 +240,28 @@ class _LoginScreenState extends State<LoginScreen> {
               validator: _validatePassword,
             ),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: 8),
+
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: _isLoading
+                    ? null
+                    : () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) =>
+                      const ForgotPasswordScreen(),
+                    ),
+                  );
+                },
+                child: const AppText(
+                  'Şifremi unuttum?',
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 12),
 
             PrimaryButton(
               label: 'Giriş Yap',
