@@ -87,7 +87,7 @@ class VehicleTrackingInitializerTest {
         VehicleTrackingRequest request = new VehicleTrackingRequest(
                 LocalDate.of(2026, 8, 31), null,
                 null, null, null, null, null, null, null,
-                6, null, null, null);
+                6, null, null);
 
         initializer.initialize(vehicle, user, request);
 
@@ -103,7 +103,7 @@ class VehicleTrackingInitializerTest {
         VehicleTrackingRequest request = new VehicleTrackingRequest(
                 null, 48_000,
                 null, null, null, null, null, null, null,
-                null, 10_000, null, null);
+                null, 10_000, null);
 
         initializer.initialize(vehicle, user, request);
 

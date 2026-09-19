@@ -2,9 +2,7 @@ package com.gorkem.vehicle_inspector.service;
 
 import com.gorkem.vehicle_inspector.dto.request.ReminderRequest;
 import com.gorkem.vehicle_inspector.dto.request.MaintenanceRequest;
-import com.gorkem.vehicle_inspector.entity.ReminderType;
 import com.gorkem.vehicle_inspector.entity.Vehicle;
-import com.gorkem.vehicle_inspector.entity.VehicleCategory;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -44,38 +42,44 @@ public class ReminderScheduleCalculator {
 
     private Schedule inspection(Vehicle vehicle, ReminderRequest request) {
         rejectMileage(request, "Araç muayenesi");
-        boolean calculated = Boolean.TRUE.equals(request.firstInspection())
-                || request.sourceDate() != null;
-        rejectMixedManualAndCalculated(request, calculated);
-        if (!calculated) {
-            if (request.dueDate() == null) {
+        if (request.sourceDate() != null) {
+            if (request.dueDate() != null) {
                 throw new IllegalArgumentException(
-                        "İlk muayene, son muayene tarihi veya resmî son geçerlilik tarihi girilmelidir.");
+                        "Son muayene tarihi ile manuel muayene tarihi aynı anda girilemez."
+                );
             }
+
+            boolean firstInspection =
+                    Boolean.TRUE.equals(request.firstInspection());
+
+            LocalDate nextInspectionDate = firstInspection
+                    ? request.sourceDate().plusYears(3)
+                    : request.sourceDate().plusYears(2);
+
+            return new Schedule(
+                    nextInspectionDate,
+                    null,
+                    request.sourceDate(),
+                    null,
+                    null,
+                    null,
+                    firstInspection
+            );
+        }
+
+        if (Boolean.TRUE.equals(request.firstInspection())) {
+            throw new IllegalArgumentException(
+                    "İlk muayene seçildiyse son araç muayene tarihi girilmelidir."
+            );
+        }
+
+        if (request.dueDate() != null) {
             return manual(request);
         }
 
-        VehicleCategory category = vehicle.getVehicleCategory();
-        if (category == null) {
-            throw new IllegalArgumentException(
-                    "Muayene tarihi hesaplanabilmesi için araç kategorisi gereklidir.");
-        }
-        if (Boolean.TRUE.equals(request.firstInspection())) {
-            if (request.sourceDate() != null) {
-                throw new IllegalArgumentException("İlk muayene için son muayene tarihi girilmemelidir.");
-            }
-            if (vehicle.getConformityDate() == null) {
-                throw new IllegalArgumentException(
-                        "İlk muayene tarihi için uygunluk belgesindeki imal tarihi gereklidir.");
-            }
-            return new Schedule(vehicle.getConformityDate()
-                    .plusYears(category.getFirstInspectionYears()), null,
-                    vehicle.getConformityDate(), null, null, null, true);
-        }
-
-        return new Schedule(request.sourceDate()
-                .plusYears(category.getRecurringInspectionYears()), null,
-                request.sourceDate(), null, null, null, false);
+        throw new IllegalArgumentException(
+                "Son araç muayene tarihi girilmelidir."
+        );
     }
 
     private Schedule policy(ReminderRequest request) {

@@ -90,18 +90,36 @@ public class VehicleTrackingInitializer {
                     null, null, null, null, null, now);
         }
 
-        if (request.vehicleInspectionDate() != null || request.inspectionReferenceDate() != null
-                || Boolean.TRUE.equals(request.firstInspection())) {
+        if (request.vehicleInspectionDate() != null) {
             ReminderRequest inspectionRequest = new ReminderRequest(
-                    ReminderType.VEHICLE_INSPECTION, null,
-                    request.vehicleInspectionDate(), null, null,
-                    request.inspectionReferenceDate(), null, null, null,
-                    request.firstInspection());
+                    ReminderType.VEHICLE_INSPECTION,
+                    null,
+                    null,
+                    null,
+                    null,
+                    request.vehicleInspectionDate(),
+                    null,
+                    null,
+                    null,
+                    Boolean.TRUE.equals(request.firstInspection())
+            );
+
             ReminderScheduleCalculator.Schedule inspection =
                     calculator.calculate(vehicle, inspectionRequest);
-            saveReminder(vehicle, user, ReminderType.VEHICLE_INSPECTION,
-                    inspection.dueDate(), null, inspection.sourceDate(), null,
-                    null, null, inspection.firstInspection(), now);
+
+            saveReminder(
+                    vehicle,
+                    user,
+                    ReminderType.VEHICLE_INSPECTION,
+                    inspection.dueDate(),
+                    null,
+                    inspection.sourceDate(),
+                    null,
+                    null,
+                    null,
+                    inspection.firstInspection(),
+                    now
+            );
         }
         saveReminder(vehicle, user, ReminderType.TRAFFIC_INSURANCE,
                 request.trafficInsuranceExpiryDate(), null,

@@ -89,22 +89,52 @@ class ReminderServiceTest {
 
     @Test
     void createShouldPersistCalculatedInspectionDueDateAndItsSource() {
-        vehicle.setVehicleCategory(com.gorkem.vehicle_inspector.entity.VehicleCategory.PRIVATE_OR_OFFICIAL_CAR);
-        vehicle.setConformityDate(LocalDate.of(2025, 5, 10));
         when(user.getId()).thenReturn(1L);
         when(user.getFullName()).thenReturn("Test User");
-        when(businessContext.requireUser("user@example.com")).thenReturn(user);
-        when(vehicleAccess.requireActiveVehicle(5L, user)).thenReturn(vehicle);
-        when(reminders.save(any())).thenAnswer(call -> call.getArgument(0));
-        ReminderRequest request = new ReminderRequest(ReminderType.VEHICLE_INSPECTION,
-                null, null, null, null, null, null,
-                null, null, true);
+        when(businessContext.requireUser("user@example.com"))
+                .thenReturn(user);
+        when(vehicleAccess.requireActiveVehicle(5L, user))
+                .thenReturn(vehicle);
+        when(reminders.save(any()))
+                .thenAnswer(call -> call.getArgument(0));
 
-        ReminderResponse response = service.create(5L, request, "user@example.com");
+        LocalDate lastInspectionDate =
+                LocalDate.of(2026, 5, 10);
 
-        assertEquals(LocalDate.of(2028, 5, 10), response.dueDate());
-        assertEquals(LocalDate.of(2025, 5, 10), response.sourceDate());
-        assertEquals(true, response.firstInspection());
+        ReminderRequest request = new ReminderRequest(
+                ReminderType.VEHICLE_INSPECTION,
+                null,
+                null,
+                null,
+                null,
+                lastInspectionDate,
+                null,
+                null,
+                null,
+                true
+        );
+
+        ReminderResponse response =
+                service.create(
+                        5L,
+                        request,
+                        "user@example.com"
+                );
+
+        assertEquals(
+                LocalDate.of(2029, 5, 10),
+                response.dueDate()
+        );
+
+        assertEquals(
+                lastInspectionDate,
+                response.sourceDate()
+        );
+
+        assertEquals(
+                true,
+                response.firstInspection()
+        );
     }
 
     private VehicleReminder reminder(LocalDate dueDate, Integer dueMileage) {

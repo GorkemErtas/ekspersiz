@@ -13,7 +13,7 @@ public final class VehicleMapper {
     }
 
     public static Vehicle toEntity(CreateVehicleRequest request, User user) {
-        Vehicle vehicle = new Vehicle(
+        return new Vehicle(
                 request.getPlate().trim().toUpperCase(),
                 request.getBrand().trim(),
                 request.getModel().trim(),
@@ -21,15 +21,13 @@ public final class VehicleMapper {
                 request.getMileage(),
                 user
         );
-        applyTrackingProfile(vehicle, request.getVehicleCategory(), request.getConformityDate());
-        return vehicle;
     }
 
     public static Vehicle toEntity(
             CreateVehicleRequest request,
             BusinessAccount businessAccount
     ) {
-        Vehicle vehicle = new Vehicle(
+        return new Vehicle(
                 request.getPlate().trim().toUpperCase(),
                 request.getBrand().trim(),
                 request.getModel().trim(),
@@ -37,8 +35,6 @@ public final class VehicleMapper {
                 request.getMileage(),
                 businessAccount
         );
-        applyTrackingProfile(vehicle, request.getVehicleCategory(), request.getConformityDate());
-        return vehicle;
     }
 
     public static VehicleResponse toResponse(Vehicle vehicle) {
@@ -49,8 +45,6 @@ public final class VehicleMapper {
                 vehicle.getModel(),
                 vehicle.getModelYear(),
                 vehicle.getMileage(),
-                vehicle.getVehicleCategory(),
-                vehicle.getConformityDate(),
                 vehicle.isPrimaryVehicle(),
                 vehicle.getNotes(),
                 vehicle.getCreatedAt()
@@ -63,21 +57,8 @@ public final class VehicleMapper {
         vehicle.setModel(request.getModel().trim());
         vehicle.setModelYear(request.getModelYear());
         vehicle.setMileage(request.getMileage());
-        if (request.getVehicleCategory() != null) {
-            vehicle.setVehicleCategory(request.getVehicleCategory());
-        }
-        if (request.getConformityDate() != null) {
-            vehicle.setConformityDate(request.getConformityDate());
-        }
         if (request.getNotes() != null) {
             vehicle.setNotes(request.getNotes());
         }
-    }
-
-    private static void applyTrackingProfile(Vehicle vehicle,
-                                             com.gorkem.vehicle_inspector.entity.VehicleCategory category,
-                                             java.time.LocalDate conformityDate) {
-        vehicle.setVehicleCategory(category);
-        vehicle.setConformityDate(conformityDate);
     }
 }
