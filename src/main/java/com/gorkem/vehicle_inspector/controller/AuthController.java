@@ -11,6 +11,7 @@ import com.gorkem.vehicle_inspector.service.AuthService;
 import com.gorkem.vehicle_inspector.dto.request.ForgotPasswordRequest;
 import com.gorkem.vehicle_inspector.dto.request.ResetPasswordRequest;
 import com.gorkem.vehicle_inspector.service.PasswordResetService;
+import com.gorkem.vehicle_inspector.dto.request.GoogleLoginRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -68,6 +69,15 @@ public class AuthController {
     ) {
         return ResponseEntity.ok(
                 authService.login(request)
+        );
+    }
+
+    @PostMapping("/google")
+    public ResponseEntity<AuthResponse> googleLogin(
+            @Valid @RequestBody GoogleLoginRequest request
+    ) {
+        return ResponseEntity.ok(
+                authService.googleLogin(request)
         );
     }
 

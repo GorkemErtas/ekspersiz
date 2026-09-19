@@ -13,10 +13,13 @@ import com.gorkem.vehicle_inspector.exception.ResourceNotFoundException;
 import com.gorkem.vehicle_inspector.mapper.UserMapper;
 import com.gorkem.vehicle_inspector.repository.UserRepository;
 import com.gorkem.vehicle_inspector.security.JwtService;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.gorkem.vehicle_inspector.dto.request.GoogleLoginRequest;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import java.util.UUID;
 
 @Service
 public class AuthService {
@@ -28,6 +31,7 @@ public class AuthService {
     private final RegistrationService registrationService;
     private final BusinessContextService businessContextService;
     private final SubscriptionService subscriptionService;
+    private final GoogleAuthService googleAuthService;
 
     public AuthService(
             UserRepository userRepository,
@@ -36,7 +40,8 @@ public class AuthService {
             JwtService jwtService,
             RegistrationService registrationService,
             BusinessContextService businessContextService,
-            SubscriptionService subscriptionService
+            SubscriptionService subscriptionService,
+            GoogleAuthService googleAuthService
     ) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
@@ -45,6 +50,7 @@ public class AuthService {
         this.registrationService = registrationService;
         this.businessContextService = businessContextService;
         this.subscriptionService = subscriptionService;
+        this.googleAuthService = googleAuthService;
     }
 
     public void register(RegisterRequest request) {
@@ -72,6 +78,54 @@ public class AuthService {
             throw new IllegalStateException(
                     "E-posta adresinizi doğrulamadan giriş yapamazsınız."
             );
+        }
+
+        String token = jwtService.generateToken(user);
+
+        return new AuthResponse(
+                token,
+                "Bearer",
+                jwtService.getExpiration(),
+                user.getId(),
+                user.getFullName(),
+                user.getEmail(),
+                subscriptionService.getEffectivePlan(user),
+                getBusinessAccount(user)
+        );
+    }
+
+    public AuthResponse googleLogin(GoogleLoginRequest request) {
+        GoogleIdToken.Payload payload =
+                googleAuthService.verifyIdToken(request.getIdToken());
+
+        String normalizedEmail =
+                normalizeEmail(payload.getEmail());
+
+        User user = userRepository.findByEmail(normalizedEmail)
+                .orElseGet(() -> {
+                    String fullName =
+                            (String) payload.get("name");
+
+                    if (fullName == null || fullName.isBlank()) {
+                        fullName = normalizedEmail.split("@")[0];
+                    }
+
+                    String randomPassword = UUID.randomUUID().toString();
+
+                    User newUser = new User(
+                            fullName.trim(),
+                            normalizedEmail,
+                            passwordEncoder.encode(randomPassword)
+                    );
+
+                    newUser.markEmailVerified();
+
+                    return userRepository.save(newUser);
+                });
+
+        if (!user.isEmailVerified()) {
+            user.markEmailVerified();
+            user = userRepository.save(user);
         }
 
         String token = jwtService.generateToken(user);

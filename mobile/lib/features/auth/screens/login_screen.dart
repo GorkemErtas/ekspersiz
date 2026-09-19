@@ -88,6 +88,55 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  Future<void> _googleLogin() async {
+    FocusScope.of(context).unfocus();
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final authResponse = await _authService.loginWithGoogle();
+
+      if (!mounted) {
+        return;
+      }
+
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute<void>(
+          builder: (_) => MainShell(
+            fullName: authResponse.fullName,
+            email: authResponse.email,
+            subscriptionPlan: authResponse.subscriptionPlan,
+            businessAccount: authResponse.businessAccount,
+          ),
+        ),
+      );
+    } catch (exception) {
+      if (!mounted) {
+        return;
+      }
+
+      final message = exception
+          .toString()
+          .replaceFirst('Exception: ', '');
+
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            content: AppText(message),
+          ),
+        );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
   String? _validateEmail(String? value) {
     final email = value?.trim() ?? '';
 
@@ -125,50 +174,8 @@ class _LoginScreenState extends State<LoginScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                const AppIconBox(
-                  icon: Icons.directions_car_filled_rounded,
-                  size: 54,
-                  iconSize: 27,
-                  borderRadius: 18,
-                  iconColor: Colors.white,
-                  gradient: LinearGradient(
-                    colors: [AppTheme.primaryColor, AppTheme.secondaryColor],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  showShadow: true,
-                ),
 
-                const SizedBox(width: 14),
-
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      AppText(
-                        'EksperSiz',
-                        style: textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-
-                      const SizedBox(height: 2),
-
-                      AppText(
-                        'AI destekli araç hasar analizi',
-                        style: textTheme.bodySmall?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 30),
+            const SizedBox(height: 10),
 
             AppText(
               'Tekrar hoş geldiniz',
@@ -295,15 +302,26 @@ class _LoginScreenState extends State<LoginScreen> {
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
+                onPressed: _isLoading ? null : _googleLogin,
+                icon: const Icon(Icons.g_mobiledata_rounded),
+                label: const AppText('Google ile Devam Et'),
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
                 onPressed: _isLoading
                     ? null
                     : () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute<void>(
-                            builder: (_) => const RegisterScreen(),
-                          ),
-                        );
-                      },
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const RegisterScreen(),
+                    ),
+                  );
+                },
                 icon: const Icon(Icons.person_add_alt_1_rounded),
                 label: const AppText('Yeni Hesap Oluştur'),
               ),

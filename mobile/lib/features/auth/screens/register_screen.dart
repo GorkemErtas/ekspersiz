@@ -175,51 +175,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
 
           children: [
-            Row(
-              children: [
-                const AppIconBox(
-                  icon: Icons.person_add_alt_1_rounded,
-                  size: 54,
-                  iconSize: 27,
-                  borderRadius: 18,
-                  iconColor: Colors.white,
-                  gradient: LinearGradient(
-                    colors: [AppTheme.primaryColor, AppTheme.secondaryColor],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  showShadow: true,
-                ),
 
-                const SizedBox(width: 14),
-
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-
-                    children: [
-                      AppText(
-                        'EksperSiz',
-                        style: textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-
-                      const SizedBox(height: 2),
-
-                      AppText(
-                        'AI destekli araç hasar analizi',
-                        style: textTheme.bodySmall?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 30),
+            const SizedBox(height: 10),
 
             AppText(
               'Hesabını oluştur',

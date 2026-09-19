@@ -1,3 +1,4 @@
+import 'package:google_sign_in/google_sign_in.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/storage/token_storage.dart';
@@ -48,6 +49,57 @@ class AuthService {
 
       rethrow;
     }
+  }
+
+  Future<AuthResponse> loginWithGoogle() async {
+    final googleSignIn = GoogleSignIn.instance;
+
+    await googleSignIn.initialize();
+
+    final GoogleSignInAccount account =
+    await googleSignIn.authenticate();
+
+    final GoogleSignInAuthentication authentication =
+        account.authentication;
+
+    final String? idToken = authentication.idToken;
+
+    if (idToken == null || idToken.trim().isEmpty) {
+      throw const FormatException(
+        'Google kimlik doğrulama tokenı alınamadı.',
+      );
+    }
+
+    final response = await apiClient.post(
+      '/auth/google',
+      includeAuth: false,
+      clearTokenOnUnauthorized: false,
+      body: {
+        'idToken': idToken,
+      },
+    );
+
+    if (response is! Map) {
+      throw const FormatException(
+        'Sunucudan geçersiz Google giriş yanıtı alındı.',
+      );
+    }
+
+    final authResponse = AuthResponse.fromJson(
+      Map<String, dynamic>.from(response),
+    );
+
+    if (authResponse.accessToken.trim().isEmpty) {
+      throw const FormatException(
+        'Sunucudan geçerli bir erişim anahtarı alınamadı.',
+      );
+    }
+
+    await TokenStorage.saveAccessToken(
+      authResponse.accessToken,
+    );
+
+    return authResponse;
   }
 
   Future<void> register({

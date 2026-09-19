@@ -14,6 +14,7 @@ import com.gorkem.vehicle_inspector.service.AuthService;
 import com.gorkem.vehicle_inspector.service.BusinessContextService;
 import com.gorkem.vehicle_inspector.service.RegistrationService;
 import com.gorkem.vehicle_inspector.service.SubscriptionService;
+import com.gorkem.vehicle_inspector.service.GoogleAuthService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -53,6 +54,9 @@ class AuthServiceTest {
     @Mock
     private SubscriptionService subscriptionService;
 
+    @Mock
+    private GoogleAuthService googleAuthService;
+
     private AuthService authService;
 
     @BeforeEach
@@ -64,7 +68,8 @@ class AuthServiceTest {
                 jwtService,
                 registrationService,
                 businessContextService,
-                subscriptionService
+                subscriptionService,
+                googleAuthService
         );
 
         lenient().when(subscriptionService.getEffectivePlan(any(User.class)))

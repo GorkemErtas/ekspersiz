@@ -12,7 +12,20 @@
           "package_name": "com.gorkem.ekspersiz"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "129219400982-n90up7htndvd69gk5musjjlvltvfotcp.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.gorkem.ekspersiz",
+            "certificate_hash": "404f0176ced219fcfc8b0f7e3943b2098cff0c66"
+          }
+        },
+        {
+          "client_id": "129219400982-1chf92l387m073bcv2pievlg8okv2nec.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyCBkmphAjEjg6BIwLDIt_j1iif8p9_PjSs"
@@ -20,7 +33,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "129219400982-1chf92l387m073bcv2pievlg8okv2nec.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "129219400982-86bn5t58k9mr22k3731ki9n7deo1pjml.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.mobile"
+              }
+            }
+          ]
         }
       }
     }
