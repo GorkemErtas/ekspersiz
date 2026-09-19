@@ -33,7 +33,7 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
   final _intervalMileage = TextEditingController();
   final _note = TextEditingController();
   late String _type;
-  late String _inspectionMode;
+  bool _firstInspection = false;
   late bool _manualMaintenance;
   DateTime? _dueDate;
   DateTime? _sourceDate;
@@ -53,11 +53,7 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
     _intervalMonths.text = reminder?.intervalMonths?.toString() ?? '';
     _intervalMileage.text = reminder?.intervalMileage?.toString() ?? '';
     _note.text = reminder?.note ?? '';
-    _inspectionMode = reminder?.firstInspection == true
-        ? 'FIRST'
-        : reminder?.sourceDate != null
-        ? 'LAST'
-        : 'EXPLICIT';
+    _firstInspection = reminder?.firstInspection ?? false;
     _manualMaintenance =
         reminder != null &&
         reminder.sourceDate == null &&
@@ -96,13 +92,8 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
 
   Future<void> _save() async {
     if (!(_form.currentState?.validate() ?? false)) return;
-    if (_type == 'VEHICLE_INSPECTION' &&
-        _inspectionMode == 'FIRST' &&
-        (widget.vehicle.vehicleCategory == null ||
-            widget.vehicle.conformityDate == null)) {
-      _message(
-        'İlk muayene hesabı için araç kategorisini ve uygunluk belgesindeki imal tarihini araç bilgilerinden girin.',
-      );
+    if (_type == 'VEHICLE_INSPECTION' && _sourceDate == null) {
+      _message('Son araç muayene tarihini girin.');
       return;
     }
     if (_type == 'PERIODIC_MAINTENANCE' && !_manualMaintenance) {
@@ -125,14 +116,8 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
       if (_note.text.trim().isNotEmpty) 'note': _note.text.trim(),
     };
     if (_type == 'VEHICLE_INSPECTION') {
-      if (_inspectionMode == 'FIRST') {
-        body['firstInspection'] = true;
-      } else if (_inspectionMode == 'LAST' && _sourceDate != null) {
-        body['sourceDate'] = _iso(_sourceDate!);
-        body['firstInspection'] = false;
-      } else if (_inspectionMode == 'EXPLICIT' && _dueDate != null) {
-        body['dueDate'] = _iso(_dueDate!);
-      }
+      body['sourceDate'] = _iso(_sourceDate!);
+      body['firstInspection'] = _firstInspection;
     } else if (_type == 'PERIODIC_MAINTENANCE' && !_manualMaintenance) {
       if (_sourceDate != null) body['sourceDate'] = _iso(_sourceDate!);
       if (_sourceMileage.text.trim().isNotEmpty) {
@@ -265,51 +250,28 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
   }
 
   List<Widget> _inspectionFields() => [
-    DropdownButtonFormField<String>(
-      initialValue: _inspectionMode,
-      decoration: InputDecoration(labelText: 'Muayene bilgisi'.tr),
-      items: const [
-        DropdownMenuItem(value: 'FIRST', child: AppText('İlk muayene')),
-        DropdownMenuItem(
-          value: 'LAST',
-          child: AppText('Son onaylanan muayene tarihi'),
-        ),
-        DropdownMenuItem(
-          value: 'EXPLICIT',
-          child: AppText('Resmî son geçerlilik tarihi'),
-        ),
-      ],
-      onChanged: (value) => setState(() => _inspectionMode = value!),
+    _dateTile(
+      'Son araç muayene tarihi',
+      _sourceDate,
+          (value) => _sourceDate = value,
     ),
-    const SizedBox(height: 12),
-    if (_inspectionMode == 'FIRST')
-      ListTile(
-        contentPadding: EdgeInsets.zero,
-        leading: const Icon(Icons.calculate_outlined),
-        title: const AppText('İlk muayene tarihi otomatik hesaplanacak'),
-        subtitle: AppText(
-          widget.vehicle.vehicleCategory == null ||
-                  widget.vehicle.conformityDate == null
-              ? 'Araç kategorisi veya uygunluk belgesi tarihi eksik.'
-              : 'Araç profilindeki kategori ve uygunluk belgesi tarihi kullanılacak.',
-        ),
-      ),
-    if (_inspectionMode == 'LAST')
-      _dateTile(
-        'Son onaylanan muayene tarihi',
-        _sourceDate,
-        (value) => _sourceDate = value,
-      ),
-    if (_inspectionMode == 'EXPLICIT')
-      _dateTile(
-        'Resmî son geçerlilik tarihi',
-        _dueDate,
-        (value) => _dueDate = value,
-      ),
-    const Padding(
-      padding: EdgeInsets.only(bottom: 16),
+    CheckboxListTile(
+      contentPadding: EdgeInsets.zero,
+      value: _firstInspection,
+      onChanged: (value) {
+        setState(() {
+          _firstInspection = value ?? false;
+        });
+      },
+      title: const AppText('Bu ilk muayeneydi'),
+      controlAffinity: ListTileControlAffinity.leading,
+    ),
+    Padding(
+      padding: const EdgeInsets.only(bottom: 16),
       child: AppText(
-        'Kategoriye göre yasal periyot backend tarafından uygulanır. Emin değilseniz muayene raporundaki son geçerlilik tarihini girin.',
+        _firstInspection
+            ? 'Sonraki muayene tarihi, son muayene tarihinden 3 yıl sonrası olarak hesaplanır.'
+            : 'Sonraki muayene tarihi, son muayene tarihinden 2 yıl sonrası olarak hesaplanır.',
       ),
     ),
   ];

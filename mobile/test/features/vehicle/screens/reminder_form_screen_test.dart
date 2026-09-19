@@ -13,7 +13,6 @@ void main() {
     modelYear: 2025,
     mileage: 50000,
     primaryVehicle: true,
-    vehicleCategory: 'PRIVATE_OR_OFFICIAL_CAR',
   );
 
   testWidgets('periodic maintenance asks for source values and intervals', (

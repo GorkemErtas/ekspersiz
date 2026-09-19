@@ -6,8 +6,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
-import com.gorkem.vehicle_inspector.entity.VehicleCategory;
-import java.time.LocalDate;
 
 public class UpdateVehicleRequest {
 
@@ -36,10 +34,6 @@ public class UpdateVehicleRequest {
     @Min(value = 0, message = "Kilometre negatif olamaz.")
     @Max(value = 2_000_000, message = "Kilometre değeri çok yüksek.")
     private Integer mileage;
-
-    private VehicleCategory vehicleCategory;
-
-    private LocalDate conformityDate;
 
     @Size(max = 1000, message = "Notlar en fazla 1000 karakter olabilir.")
     private String notes;
@@ -86,8 +80,4 @@ public class UpdateVehicleRequest {
 
     public String getNotes() { return notes; }
     public void setNotes(String notes) { this.notes = notes; }
-    public VehicleCategory getVehicleCategory() { return vehicleCategory; }
-    public void setVehicleCategory(VehicleCategory vehicleCategory) { this.vehicleCategory = vehicleCategory; }
-    public LocalDate getConformityDate() { return conformityDate; }
-    public void setConformityDate(LocalDate conformityDate) { this.conformityDate = conformityDate; }
 }
