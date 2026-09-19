@@ -318,23 +318,32 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Icon(Icons.health_and_safety_outlined, color: c),
-              const SizedBox(width: 9),
-              AppText(
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.health_and_safety_outlined,
+              color: c,
+            ),
+            const SizedBox(width: 9),
+            Expanded(
+              child: AppText(
                 'Araç takip durumu',
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
               ),
-              const Spacer(),
-              AppText(
+            ),
+            const SizedBox(width: 8),
+            Flexible(
+              child: AppText(
                 _status(o.trackingStatus),
-                style: TextStyle(color: c, fontWeight: FontWeight.w800),
+                  style: TextStyle(color: c, fontWeight: FontWeight.w800),
+                textAlign: TextAlign.end,
               ),
-            ],
-          ),
+            ),
+          ],
+        ),
           if (o.latestMaintenance != null) ...[
             const SizedBox(height: 14),
             AppText(
