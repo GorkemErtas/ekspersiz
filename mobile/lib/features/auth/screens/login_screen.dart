@@ -1,8 +1,6 @@
 import 'package:mobile/core/localization/app_text.dart';
 import 'package:flutter/material.dart';
 
-import '../../../core/theme/app_theme.dart';
-import '../../../core/widgets/app_icon_box.dart';
 import '../../../core/widgets/auth_shell.dart';
 import '../../../core/widgets/primary_button.dart';
 
