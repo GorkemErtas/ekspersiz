@@ -1,6 +1,6 @@
 package com.gorkem.vehicle_inspector.client;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 import com.gorkem.vehicle_inspector.exception.BillingConfigurationException;
 import com.gorkem.vehicle_inspector.exception.BillingProviderException;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,7 +15,6 @@ import org.springframework.web.client.RestTemplate;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -82,11 +81,7 @@ public class RevenueCatClient {
         JsonNode subscriptionNodes = subscriber.path("subscriptions");
 
         if (subscriptionNodes.isObject()) {
-            Iterator<Map.Entry<String, JsonNode>> fields =
-                    subscriptionNodes.fields();
-
-            while (fields.hasNext()) {
-                Map.Entry<String, JsonNode> field = fields.next();
+            for (Map.Entry<String, JsonNode> field : subscriptionNodes.properties()) {
                 JsonNode value = field.getValue();
 
                 subscriptions.add(new RevenueCatSubscription(
