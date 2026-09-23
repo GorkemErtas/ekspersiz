@@ -16,9 +16,14 @@ FROM eclipse-temurin:21-jre
 
 WORKDIR /app
 
-RUN mkdir -p /data/uploads
+RUN groupadd --system ekspersiz && \
+    useradd --system --gid ekspersiz --home-dir /app --no-create-home ekspersiz && \
+    mkdir -p /data/uploads && \
+    chown -R ekspersiz:ekspersiz /app /data/uploads
 
-COPY --from=build /app/target/*.jar app.jar
+COPY --from=build --chown=ekspersiz:ekspersiz /app/target/*.jar app.jar
+
+USER ekspersiz
 
 EXPOSE 8080
 

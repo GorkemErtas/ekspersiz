@@ -25,6 +25,13 @@ COPY yolo11n.pt ./yolo11n.pt
 COPY models/vehicle_part_best.pt ./models/vehicle_part_best.pt
 COPY models/candidates/damage_detection_v2_cardd_5class.pt ./models/candidates/damage_detection_v2_cardd_5class.pt
 
+RUN groupadd --system ekspersiz && \
+    useradd --system --gid ekspersiz --home-dir /app --no-create-home ekspersiz && \
+    mkdir -p /tmp/Ultralytics && \
+    chown -R ekspersiz:ekspersiz /app /tmp/Ultralytics
+
+USER ekspersiz
+
 EXPOSE 8000
 
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
