@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "129219400982-i29n1p1bsd52a88icmu438q3gkmhth69.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.gorkem.ekspersiz",
+            "certificate_hash": "d1f196f6a47e60d04ea90d61ee42c11d309e6e00"
+          }
+        },
+        {
           "client_id": "129219400982-mu583q7imbqcdrklrp4sk2v7mlpngfrv.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {

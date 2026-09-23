@@ -52,9 +52,21 @@ class AuthService {
   }
 
   Future<AuthResponse> loginWithGoogle() async {
+    const googleServerClientId = String.fromEnvironment(
+      'GOOGLE_SERVER_CLIENT_ID',
+    );
+
+    if (googleServerClientId.isEmpty) {
+      throw const FormatException(
+        'Google Sign-In yapılandırması bulunamadı.',
+      );
+    }
+
     final googleSignIn = GoogleSignIn.instance;
 
-    await googleSignIn.initialize();
+    await googleSignIn.initialize(
+      serverClientId: googleServerClientId,
+    );
 
     final GoogleSignInAccount account =
     await googleSignIn.authenticate();
