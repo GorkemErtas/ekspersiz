@@ -6,11 +6,16 @@ import com.google.firebase.FirebaseOptions;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 import java.io.FileInputStream;
 import java.io.IOException;
 
 @Configuration
+@ConditionalOnProperty(
+        name = "application.notifications.fcm.enabled",
+        havingValue = "true"
+)
 public class FirebaseConfig {
 
     private final String credentialsPath;

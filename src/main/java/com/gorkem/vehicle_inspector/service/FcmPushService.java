@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.ObjectProvider;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
@@ -26,18 +27,22 @@ public class FcmPushService {
     public FcmPushService(
             DeviceTokenRepository tokens,
             Clock clock,
-            FirebaseApp firebaseApp,
+            ObjectProvider<FirebaseApp> firebaseAppProvider,
             @Value("${application.notifications.fcm.enabled:false}")
             boolean enabled
     ) {
         this.tokens = tokens;
         this.clock = clock;
         this.enabled = enabled;
-        this.messaging = FirebaseMessaging.getInstance(firebaseApp);
+
+        FirebaseApp firebaseApp = firebaseAppProvider.getIfAvailable();
+        this.messaging = firebaseApp == null
+                ? null
+                : FirebaseMessaging.getInstance(firebaseApp);
     }
 
     public void send(AppNotification notification) {
-        if (!enabled) {
+        if (!enabled || messaging == null) {
             return;
         }
         Map<String, String> data = new HashMap<>();
