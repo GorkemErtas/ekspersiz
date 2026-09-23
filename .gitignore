@@ -88,3 +88,6 @@ ai-service/*.pt
 .env
 .env.*
 !.env.example
+
+### Local database backups ###
+*.backup
