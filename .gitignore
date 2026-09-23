@@ -83,3 +83,8 @@ firebase-admin.json
 
 ### YOLO Weights ###
 ai-service/*.pt
+
+### Environment / Secrets ###
+.env
+.env.*
+!.env.example
