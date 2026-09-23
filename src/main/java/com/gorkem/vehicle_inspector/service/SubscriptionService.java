@@ -5,6 +5,8 @@ import com.gorkem.vehicle_inspector.entity.User;
 import com.gorkem.vehicle_inspector.entity.BusinessAccount;
 import com.gorkem.vehicle_inspector.repository.DamageInspectionRepository;
 import com.gorkem.vehicle_inspector.repository.VehicleRepository;
+import com.gorkem.vehicle_inspector.entity.AnalysisUsage;
+import com.gorkem.vehicle_inspector.repository.AnalysisUsageRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -23,22 +25,18 @@ public class SubscriptionService {
     private static final int PRO_VEHICLE_LIMIT = 10;
     private static final int BUSINESS_VEHICLE_LIMIT = 50;
 
-    private final DamageInspectionRepository
-            inspectionRepository;
+    private final AnalysisUsageRepository analysisUsageRepository;
 
     private final VehicleRepository
             vehicleRepository;
     private final Clock clock;
     public SubscriptionService(
-            DamageInspectionRepository inspectionRepository,
+            AnalysisUsageRepository analysisUsageRepository,
             VehicleRepository vehicleRepository,
             Clock clock
     ) {
-        this.inspectionRepository =
-                inspectionRepository;
-
-        this.vehicleRepository =
-                vehicleRepository;
+        this.analysisUsageRepository = analysisUsageRepository;
+        this.vehicleRepository = vehicleRepository;
         this.clock = clock;
     }
 
@@ -87,8 +85,8 @@ public class SubscriptionService {
         LocalDateTime end = start.plusMonths(1);
 
         long used =
-                inspectionRepository
-                        .countPersonalAnalysesBetween(
+                analysisUsageRepository
+                        .countByUser_IdAndStartedAtGreaterThanEqualAndStartedAtLessThan(
                                 user.getId(),
                                 start,
                                 end
@@ -120,17 +118,43 @@ public class SubscriptionService {
                 .withDayOfMonth(1)
                 .atStartOfDay();
 
-        long used = inspectionRepository.countBusinessAnalysesBetween(
-                businessAccount.getId(),
-                start,
-                start.plusMonths(1)
-        );
+        long used =
+                analysisUsageRepository
+                        .countByBusinessAccount_IdAndStartedAtGreaterThanEqualAndStartedAtLessThan(
+                                businessAccount.getId(),
+                                start,
+                                start.plusMonths(1)
+                        );
         if (used >= BUSINESS_MONTHLY_ANALYSIS_LIMIT) {
             throw new IllegalStateException(
                     "Şirketin aylık analiz limitine ulaşıldı. Aylık ortak limit: "
                             + BUSINESS_MONTHLY_ANALYSIS_LIMIT + "."
             );
         }
+    }
+
+    public void recordPersonalAnalysisUsage(
+            User user,
+            LocalDateTime startedAt
+    ) {
+        analysisUsageRepository.save(
+                AnalysisUsage.personal(
+                        user,
+                        startedAt
+                )
+        );
+    }
+
+    public void recordBusinessAnalysisUsage(
+            BusinessAccount businessAccount,
+            LocalDateTime startedAt
+    ) {
+        analysisUsageRepository.save(
+                AnalysisUsage.business(
+                        businessAccount,
+                        startedAt
+                )
+        );
     }
 
     public void validateVehicleLimit(

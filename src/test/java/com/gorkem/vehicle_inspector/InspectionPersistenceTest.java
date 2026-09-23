@@ -77,6 +77,7 @@ class InspectionPersistenceTest {
     private BusinessAccount business;
     private Vehicle firstVehicle;
     private Vehicle secondVehicle;
+    private AnalysisUsageRepository usages;
 
     @BeforeAll
     void startContext() {
@@ -98,6 +99,7 @@ class InspectionPersistenceTest {
         ai = app.getBean(AiAnalysisClient.class);
         reports = app.getBean(GeminiInspectionReportService.class);
         storage = app.getBean(FileStorageService.class);
+        usages = app.getBean(AnalysisUsageRepository.class);
     }
 
     @AfterAll
@@ -169,49 +171,258 @@ class InspectionPersistenceTest {
     }
 
     @Test
-    void companyCountUsesVehicleScopeDateBoundariesAndIncludesArchivedVehicles() {
+    void personalAccountKeepsOnlyLatestTwentyInspections() {
         tx.executeWithoutResult(status -> {
-            secondVehicle.setArchived(true);
-            vehicles.save(secondVehicle);
-            saveInspection(firstVehicle, owner, START, InspectionStatus.COMPLETED);
-            saveInspection(secondVehicle, member, NOW, InspectionStatus.FAILED);
-            saveInspection(firstVehicle, member, START.plusDays(1).minusNanos(1000), InspectionStatus.PROCESSING);
-            saveInspection(firstVehicle, owner, START.minusNanos(1000), InspectionStatus.COMPLETED);
-            saveInspection(firstVehicle, owner, START.plusDays(1), InspectionStatus.COMPLETED);
-            saveInspection(firstVehicle, member, null, InspectionStatus.PENDING);
+            Vehicle personalVehicle =
+                    vehicles.save(
+                            new Vehicle(
+                                    "35RETENTION",
+                                    "Brand",
+                                    "Model",
+                                    2022,
+                                    0,
+                                    personal
+                            )
+                    );
 
-            BusinessAccount other = businesses.save(new BusinessAccount("Other Company"));
-            Vehicle otherVehicle = vehicles.save(new Vehicle("35OTHER", "Brand", "Model", 2022, 0, other));
-            saveInspection(otherVehicle, owner, NOW, InspectionStatus.COMPLETED);
-            Vehicle personalVehicle = vehicles.save(new Vehicle("35OWN", "Brand", "Model", 2022, 0, owner));
-            saveInspection(personalVehicle, owner, NOW, InspectionStatus.COMPLETED);
+            for (int i = 0; i < 20; i++) {
+                saveInspection(
+                        personalVehicle,
+                        personal,
+                        NOW,
+                        InspectionStatus.COMPLETED
+                );
+            }
         });
 
-        assertEquals(3L, inspections.countBusinessAnalysesBetween(business.getId(), START, START.plusDays(1)));
-        assertEquals(1L, inspections.countPersonalAnalysesBetween(owner.getId(), START, START.plusDays(1)));
+        DamageInspection newestPending =
+                tx.execute(status -> {
+                    Vehicle personalVehicle =
+                            vehicles.findAll().stream()
+                                    .filter(vehicle ->
+                                            vehicle.getUser() != null
+                                                    && vehicle.getUser()
+                                                    .getId()
+                                                    .equals(personal.getId()))
+                                    .findFirst()
+                                    .orElseThrow();
+
+                    return saveInspection(
+                            personalVehicle,
+                            personal,
+                            null,
+                            InspectionStatus.PENDING
+                    );
+                });
+
+        Long newestId = newestPending.getId();
+
+        service.analyzeInspection(
+                newestId,
+                personal.getEmail()
+        );
+
+        List<DamageInspection> remaining =
+                inspections
+                        .findAllByVehicleUserIdAndVehicleBusinessAccountIsNullOrderByCreatedAtDesc(
+                                personal.getId()
+                        );
+
+        assertEquals(
+                20,
+                remaining.size()
+        );
+
+        assertTrue(
+                inspections.findById(newestId).isPresent()
+        );
+
+        verify(
+                storage,
+                times(1)
+        ).deleteStoredFile(
+                "test.jpg"
+        );
+    }
+
+    @Test
+    void businessAccountKeepsLatestTwentyFinishedInspectionsAndPreservesProcessing() {
+        Long processingId =
+                tx.execute(status -> {
+                    for (int i = 0; i < 20; i++) {
+                        saveInspection(
+                                i % 2 == 0 ? firstVehicle : secondVehicle,
+                                i % 2 == 0 ? owner : member,
+                                NOW,
+                                InspectionStatus.COMPLETED
+                        );
+                    }
+
+                    return saveInspection(
+                            firstVehicle,
+                            owner,
+                            NOW,
+                            InspectionStatus.PROCESSING
+                    ).getId();
+                });
+
+        DamageInspection newestPending =
+                tx.execute(status ->
+                        saveInspection(
+                                secondVehicle,
+                                member,
+                                null,
+                                InspectionStatus.PENDING
+                        )
+                );
+
+        Long newestId = newestPending.getId();
+
+        service.analyzeInspection(
+                newestId,
+                member.getEmail()
+        );
+
+        List<DamageInspection> remaining =
+                inspections
+                        .findAllByVehicleBusinessAccountIdOrderByCreatedAtDesc(
+                                business.getId()
+                        );
+
+        assertEquals(
+                21,
+                remaining.size()
+        );
+
+        assertTrue(
+                inspections.findById(newestId).isPresent()
+        );
+
+        assertTrue(
+                inspections.findById(processingId).isPresent()
+        );
+
+        long nonProcessingCount =
+                remaining.stream()
+                        .filter(item ->
+                                item.getStatus()
+                                        != InspectionStatus.PROCESSING)
+                        .count();
+
+        assertEquals(
+                20L,
+                nonProcessingCount
+        );
+
+        verify(
+                storage,
+                times(1)
+        ).deleteStoredFile(
+                "test.jpg"
+        );
     }
 
     @Test
     void memberCreatesAndSharesInspectionWhileCreatorRemainsOwnerAfterAnalysisAndReportRetry() {
-        var created = service.createInspection(firstVehicle.getId(), "İzmir", 38.4, 27.1, owner.getEmail());
-        tx.executeWithoutResult(status -> inspections.findById(created.getId()).orElseThrow().setImagePath("test.jpg"));
+        var created = service.createInspection(
+                firstVehicle.getId(),
+                "İzmir",
+                38.4,
+                27.1,
+                owner.getEmail()
+        );
 
-        assertEquals(owner.getId(), service.getMyInspectionById(created.getId(), member.getEmail()).getUserId());
-        assertEquals(owner.getId(), service.analyzeInspection(created.getId(), member.getEmail()).getUserId());
-        assertEquals(ReportStatus.COMPLETED,
-                service.regenerateReport(created.getId(), member.getEmail()).getReportStatus());
-        assertEquals(1L, inspections.countBusinessAnalysesBetween(business.getId(), START, START.plusDays(1)));
+        tx.executeWithoutResult(status ->
+                inspections.findById(created.getId())
+                        .orElseThrow()
+                        .setImagePath("test.jpg")
+        );
 
-        tx.executeWithoutResult(status -> vehicles.findById(firstVehicle.getId()).orElseThrow().setArchived(true));
-        assertEquals(1, service.getMyInspections(member.getEmail()).size());
-        assertThrows(ResourceNotFoundException.class,
-                () -> service.createInspection(firstVehicle.getId(), "İzmir", 38.4, 27.1, member.getEmail()));
-        assertThrows(ResourceNotFoundException.class,
-                () -> service.getMyInspectionById(created.getId(), personal.getEmail()));
-        tx.executeWithoutResult(status -> members.delete(members.findByUserId(owner.getId()).orElseThrow()));
-        assertThrows(ResourceNotFoundException.class,
-                () -> service.getMyInspectionById(created.getId(), owner.getEmail()));
-        assertEquals(owner.getId(), service.getMyInspectionById(created.getId(), member.getEmail()).getUserId());
+        assertEquals(
+                owner.getId(),
+                service.getMyInspectionById(
+                        created.getId(),
+                        member.getEmail()
+                ).getUserId()
+        );
+
+        assertEquals(
+                owner.getId(),
+                service.analyzeInspection(
+                        created.getId(),
+                        member.getEmail()
+                ).getUserId()
+        );
+
+        assertEquals(
+                ReportStatus.COMPLETED,
+                service.regenerateReport(
+                        created.getId(),
+                        member.getEmail()
+                ).getReportStatus()
+        );
+
+        assertEquals(
+                1L,
+                usages.countByBusinessAccount_IdAndStartedAtGreaterThanEqualAndStartedAtLessThan(
+                        business.getId(),
+                        START,
+                        START.plusDays(1)
+                )
+        );
+
+        tx.executeWithoutResult(status ->
+                vehicles.findById(firstVehicle.getId())
+                        .orElseThrow()
+                        .setArchived(true)
+        );
+
+        assertEquals(
+                1,
+                service.getMyInspections(member.getEmail()).size()
+        );
+
+        assertThrows(
+                ResourceNotFoundException.class,
+                () -> service.createInspection(
+                        firstVehicle.getId(),
+                        "İzmir",
+                        38.4,
+                        27.1,
+                        member.getEmail()
+                )
+        );
+
+        assertThrows(
+                ResourceNotFoundException.class,
+                () -> service.getMyInspectionById(
+                        created.getId(),
+                        personal.getEmail()
+                )
+        );
+
+        tx.executeWithoutResult(status ->
+                members.delete(
+                        members.findByUserId(owner.getId())
+                                .orElseThrow()
+                )
+        );
+
+        assertThrows(
+                ResourceNotFoundException.class,
+                () -> service.getMyInspectionById(
+                        created.getId(),
+                        owner.getEmail()
+                )
+        );
+
+        assertEquals(
+                owner.getId(),
+                service.getMyInspectionById(
+                        created.getId(),
+                        member.getEmail()
+                ).getUserId()
+        );
     }
 
     @Test
@@ -253,8 +464,12 @@ class InspectionPersistenceTest {
     void twoMembersCannotConsumeTheLastCompanySlotTogether() throws Exception {
         Long[] ids = tx.execute(status -> {
             for (int i = 0; i < 99; i++) {
-                saveInspection(i % 2 == 0 ? firstVehicle : secondVehicle,
-                        i % 2 == 0 ? owner : member, NOW, InspectionStatus.COMPLETED);
+                usages.save(
+                        AnalysisUsage.business(
+                                business,
+                                NOW
+                        )
+                );
             }
             return new Long[]{
                     saveInspection(firstVehicle, owner, null, InspectionStatus.PENDING).getId(),
@@ -285,7 +500,15 @@ class InspectionPersistenceTest {
                     () -> secondRequest.get(10, TimeUnit.SECONDS));
             assertInstanceOf(IllegalStateException.class, failure.getCause());
             assertTrue(failure.getCause().getMessage().contains("100"));
-            assertEquals(100L, inspections.countBusinessAnalysesBetween(business.getId(), START, START.plusDays(1)));
+            assertEquals(
+                    100L,
+                    usages
+                            .countByBusinessAccount_IdAndStartedAtGreaterThanEqualAndStartedAtLessThan(
+                                    business.getId(),
+                                    START,
+                                    START.plusDays(1)
+                            )
+            );
             assertNull(inspections.findById(ids[1]).orElseThrow().getAnalysisStartedAt());
             verify(ai, times(1)).analyze(any());
         } finally {
@@ -409,8 +632,17 @@ class InspectionPersistenceTest {
         @Bean JavaMailSender mailSender() { return mock(JavaMailSender.class); }
 
         @Bean
-        SubscriptionService subscriptionService(DamageInspectionRepository inspections, VehicleRepository vehicles) {
-            return spy(new SubscriptionService(inspections, vehicles, CLOCK));
+        SubscriptionService subscriptionService(
+                AnalysisUsageRepository usages,
+                VehicleRepository vehicles
+        ) {
+            return spy(
+                    new SubscriptionService(
+                            usages,
+                            vehicles,
+                            CLOCK
+                    )
+            );
         }
     }
 }

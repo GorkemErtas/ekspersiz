@@ -1,3 +1,4 @@
+
 package com.gorkem.vehicle_inspector;
 
 import com.gorkem.vehicle_inspector.client.AiAnalysisClient;
@@ -49,6 +50,7 @@ class DamageInspectionServiceTest {
     @Mock private AiAnalysisClient ai;
     @Mock private GeminiInspectionReportService reports;
     @Mock private PlatformTransactionManager transactions;
+    @Mock private AnalysisUsageRepository analysisUsageRepository;
 
     private DamageInspectionService service;
     private User creator;
@@ -91,16 +93,25 @@ class DamageInspectionServiceTest {
         service = new DamageInspectionService(inspections, vehicles, context,
                 new InspectionAccessService(inspections, context), businesses, users, CLOCK,
                 storage, ai, reports, transactions,
-                new SubscriptionService(inspections, vehicles, CLOCK));
+                new SubscriptionService(
+                        analysisUsageRepository,
+                        vehicles,
+                        CLOCK
+                ));
     }
 
     @ParameterizedTest
     @EnumSource(SubscriptionPlan.class)
     void memberUsesSharedQuotaRegardlessOfPersonalPlanAndPreservesCreator(SubscriptionPlan plan) {
         actor.setSubscriptionPlan(plan);
-        when(inspections.countBusinessAnalysesBetween(10L,
-                NOW.toLocalDate().withDayOfMonth(1).atStartOfDay(),
-                NOW.toLocalDate().withDayOfMonth(1).plusMonths(1).atStartOfDay())).thenReturn(99L);
+        when(
+                analysisUsageRepository
+                        .countByBusinessAccount_IdAndStartedAtGreaterThanEqualAndStartedAtLessThan(
+                                10L,
+                                NOW.toLocalDate().withDayOfMonth(1).atStartOfDay(),
+                                NOW.toLocalDate().withDayOfMonth(1).plusMonths(1).atStartOfDay()
+                        )
+        ).thenReturn(99L);
         successfulAnalysis();
 
         var result = service.analyzeInspection(30L, actor.getEmail());
@@ -110,13 +121,27 @@ class DamageInspectionServiceTest {
         assertEquals(creator.getId(), result.getUserId());
         assertSame(creator, inspection.getUser());
         assertEquals(NOW, inspection.getAnalysisStartedAt());
-        verify(inspections, never()).countPersonalAnalysesBetween(any(), any(), any());
+        verify(
+                analysisUsageRepository,
+                never()
+        ).countByUser_IdAndStartedAtGreaterThanEqualAndStartedAtLessThan(
+                any(),
+                any(),
+                any()
+        );
         verify(businesses).findByIdForUpdate(10L);
     }
 
     @Test
     void hundredCompanyAnalysesBlockBeforeExternalCallsOrReservation() {
-        when(inspections.countBusinessAnalysesBetween(eq(10L), any(), any())).thenReturn(100L);
+        when(
+                analysisUsageRepository
+                        .countByBusinessAccount_IdAndStartedAtGreaterThanEqualAndStartedAtLessThan(
+                                eq(10L),
+                                any(LocalDateTime.class),
+                                any(LocalDateTime.class)
+                        )
+        ).thenReturn(100L);
 
         assertThrows(IllegalStateException.class, () -> service.analyzeInspection(30L, actor.getEmail()));
 
@@ -138,7 +163,7 @@ class DamageInspectionServiceTest {
         assertEquals(actor.getId(), result.getUserId());
         assertEquals(20L, result.getVehicleId());
         verify(vehicles, never()).findByIdAndUserIdAndArchivedFalse(any(), any());
-        verify(inspections, never()).countBusinessAnalysesBetween(any(), any(), any());
+        verifyNoInteractions(analysisUsageRepository);
     }
 
     @Test
@@ -182,7 +207,7 @@ class DamageInspectionServiceTest {
         assertThrows(ResourceNotFoundException.class, () -> service.uploadInspectionImage(30L, image(), actor.getEmail()));
         assertThrows(ResourceNotFoundException.class, () -> service.regenerateReport(30L, actor.getEmail()));
         verifyNoInteractions(ai, reports, storage, businesses);
-        verify(inspections, never()).countBusinessAnalysesBetween(any(), any(), any());
+        verifyNoInteractions(analysisUsageRepository);
     }
 
     @Test
@@ -207,8 +232,14 @@ class DamageInspectionServiceTest {
         successfulAnalysis();
 
         assertEquals(InspectionStatus.COMPLETED, service.analyzeInspection(30L, actor.getEmail()).getStatus());
-        verify(inspections).countPersonalAnalysesBetween(eq(actor.getId()), any(), any());
-        verify(inspections, never()).countBusinessAnalysesBetween(any(), any(), any());
+        verify(analysisUsageRepository)
+                .countByUser_IdAndStartedAtGreaterThanEqualAndStartedAtLessThan(
+                        eq(actor.getId()),
+                        any(LocalDateTime.class),
+                        any(LocalDateTime.class)
+                );
+        verify(analysisUsageRepository)
+                .save(any(AnalysisUsage.class));
         verifyNoInteractions(businesses);
     }
 
@@ -217,7 +248,7 @@ class DamageInspectionServiceTest {
         inspection.setImagePath(null);
         assertThrows(IllegalStateException.class, () -> service.analyzeInspection(30L, actor.getEmail()));
         verifyNoInteractions(businesses, ai);
-        verify(inspections, never()).countBusinessAnalysesBetween(any(), any(), any());
+        verifyNoInteractions(analysisUsageRepository);
     }
 
     @Test
@@ -229,7 +260,14 @@ class DamageInspectionServiceTest {
 
         service.analyzeInspection(30L, actor.getEmail());
 
-        verify(inspections, times(1)).countBusinessAnalysesBetween(eq(10L), any(), any());
+        verify(analysisUsageRepository, times(1))
+                .countByBusinessAccount_IdAndStartedAtGreaterThanEqualAndStartedAtLessThan(
+                        eq(10L),
+                        any(LocalDateTime.class),
+                        any(LocalDateTime.class)
+                );
+        verify(analysisUsageRepository, times(1))
+                .save(any(AnalysisUsage.class));
         verify(ai, times(2)).analyze(any());
     }
 
@@ -237,7 +275,14 @@ class DamageInspectionServiceTest {
     void previousMonthFailedInspectionNeedsCurrentMonthQuota() {
         inspection.setAnalysisStartedAt(NOW.minusMonths(1));
         inspection.setStatus(InspectionStatus.FAILED);
-        when(inspections.countBusinessAnalysesBetween(eq(10L), any(), any())).thenReturn(100L);
+        when(
+                analysisUsageRepository
+                        .countByBusinessAccount_IdAndStartedAtGreaterThanEqualAndStartedAtLessThan(
+                                eq(10L),
+                                any(LocalDateTime.class),
+                                any(LocalDateTime.class)
+                        )
+        ).thenReturn(100L);
         assertThrows(IllegalStateException.class, () -> service.analyzeInspection(30L, actor.getEmail()));
         assertEquals(NOW.minusMonths(1), inspection.getAnalysisStartedAt());
         verify(ai).validateImage(Path.of("image.jpg"));
@@ -295,7 +340,7 @@ class DamageInspectionServiceTest {
         assertEquals(creator.getId(), result.getUserId());
         assertEquals(NOW, inspection.getAnalysisStartedAt());
         verifyNoInteractions(ai, reports, businesses);
-        verify(inspections, never()).countBusinessAnalysesBetween(any(), any(), any());
+        verifyNoInteractions(analysisUsageRepository);
     }
 
     @Test
@@ -331,7 +376,14 @@ class DamageInspectionServiceTest {
         assertEquals("Görünür Hasar Tespit Edilmedi", result.getReport().title());
         assertTrue(result.getReport().disclaimer().contains("profesyonel ekspertiz garantisi değildir"));
         assertEquals(NOW, inspection.getAnalysisStartedAt());
-        verify(inspections).countBusinessAnalysesBetween(eq(10L), any(), any());
+        verify(analysisUsageRepository)
+                .countByBusinessAccount_IdAndStartedAtGreaterThanEqualAndStartedAtLessThan(
+                        eq(10L),
+                        any(LocalDateTime.class),
+                        any(LocalDateTime.class)
+                );
+        verify(analysisUsageRepository)
+                .save(any(AnalysisUsage.class));
         verifyNoInteractions(reports);
     }
 
@@ -395,7 +447,7 @@ class DamageInspectionServiceTest {
         assertEquals(InspectionStatus.PENDING, inspection.getStatus());
         assertNull(inspection.getAnalysisStartedAt());
         verify(ai, never()).analyze(any());
-        verify(inspections, never()).countBusinessAnalysesBetween(any(), any(), any());
+        verifyNoInteractions(analysisUsageRepository);
     }
 
     @Test
@@ -413,7 +465,7 @@ class DamageInspectionServiceTest {
         assertNull(inspection.getAnalysisStartedAt());
         assertTrue(inspection.getAnalysisMessage().contains("unavailable"));
         verify(ai, never()).analyze(any());
-        verify(inspections, never()).countBusinessAnalysesBetween(any(), any(), any());
+        verifyNoInteractions(analysisUsageRepository);
     }
 
     private void successfulAnalysis() {

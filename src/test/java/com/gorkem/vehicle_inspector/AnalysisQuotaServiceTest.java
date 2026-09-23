@@ -6,7 +6,7 @@ import com.gorkem.vehicle_inspector.entity.BusinessMember;
 import com.gorkem.vehicle_inspector.entity.BusinessRole;
 import com.gorkem.vehicle_inspector.entity.SubscriptionPlan;
 import com.gorkem.vehicle_inspector.entity.User;
-import com.gorkem.vehicle_inspector.repository.DamageInspectionRepository;
+import com.gorkem.vehicle_inspector.repository.AnalysisUsageRepository;
 import com.gorkem.vehicle_inspector.service.AnalysisQuotaService;
 import com.gorkem.vehicle_inspector.service.BusinessContextService;
 import com.gorkem.vehicle_inspector.service.SubscriptionService;
@@ -29,9 +29,14 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class AnalysisQuotaServiceTest {
 
-    @Mock private BusinessContextService businessContext;
-    @Mock private SubscriptionService subscriptions;
-    @Mock private DamageInspectionRepository inspections;
+    @Mock
+    private BusinessContextService businessContext;
+
+    @Mock
+    private SubscriptionService subscriptions;
+
+    @Mock
+    private AnalysisUsageRepository usages;
 
     private AnalysisQuotaService service;
     private User user;
@@ -46,11 +51,22 @@ class AnalysisQuotaServiceTest {
         service = new AnalysisQuotaService(
                 businessContext,
                 subscriptions,
-                inspections,
+                usages,
                 clock
         );
-        user = new User("Test User", "user@example.com", "password");
-        ReflectionTestUtils.setField(user, "id", 42L);
+
+        user = new User(
+                "Test User",
+                "user@example.com",
+                "password"
+        );
+
+        ReflectionTestUtils.setField(
+                user,
+                "id",
+                42L
+        );
+
         when(businessContext.requireUser("user@example.com"))
                 .thenReturn(user);
     }
@@ -59,54 +75,102 @@ class AnalysisQuotaServiceTest {
     void personalQuotaContainsOnlySubscriptionLimit() {
         when(businessContext.findMembership(user))
                 .thenReturn(Optional.empty());
+
         when(subscriptions.getEffectivePlan(user))
                 .thenReturn(SubscriptionPlan.FREE);
+
         when(subscriptions.monthlyAnalysisLimit(SubscriptionPlan.FREE))
                 .thenReturn(1);
-        when(inspections.countPersonalAnalysesBetween(
-                42L,
-                LocalDateTime.of(2026, 9, 1, 0, 0),
-                LocalDateTime.of(2026, 10, 1, 0, 0)
-        )).thenReturn(1L);
+
+        when(
+                usages.countByUser_IdAndStartedAtGreaterThanEqualAndStartedAtLessThan(
+                        42L,
+                        LocalDateTime.of(2026, 9, 1, 0, 0),
+                        LocalDateTime.of(2026, 10, 1, 0, 0)
+                )
+        ).thenReturn(1L);
 
         AnalysisQuotaResponse result =
                 service.getQuota("user@example.com");
 
-        assertEquals(SubscriptionPlan.FREE, result.plan());
-        assertEquals(1, result.used());
-        assertEquals(1, result.limit());
-        assertEquals(0, result.remaining());
+        assertEquals(
+                SubscriptionPlan.FREE,
+                result.plan()
+        );
+
+        assertEquals(
+                1,
+                result.used()
+        );
+
+        assertEquals(
+                1,
+                result.limit()
+        );
+
+        assertEquals(
+                0,
+                result.remaining()
+        );
     }
 
     @Test
     void businessQuotaIsSharedAcrossTheAccount() {
-        BusinessAccount business = new BusinessAccount("Test Company");
-        ReflectionTestUtils.setField(business, "id", 10L);
-        when(businessContext.findMembership(user)).thenReturn(
-                Optional.of(
-                        new BusinessMember(
-                                business,
-                                user,
-                                BusinessRole.MEMBER
-                        )
-                )
+        BusinessAccount business =
+                new BusinessAccount("Test Company");
+
+        ReflectionTestUtils.setField(
+                business,
+                "id",
+                10L
         );
+
+        when(businessContext.findMembership(user))
+                .thenReturn(
+                        Optional.of(
+                                new BusinessMember(
+                                        business,
+                                        user,
+                                        BusinessRole.MEMBER
+                                )
+                        )
+                );
+
         when(businessContext.requireBusinessAccount(user))
                 .thenReturn(business);
+
         when(subscriptions.businessMonthlyAnalysisLimit())
                 .thenReturn(100);
-        when(inspections.countBusinessAnalysesBetween(
-                10L,
-                LocalDateTime.of(2026, 9, 1, 0, 0),
-                LocalDateTime.of(2026, 10, 1, 0, 0)
-        )).thenReturn(99L);
+
+        when(
+                usages.countByBusinessAccount_IdAndStartedAtGreaterThanEqualAndStartedAtLessThan(
+                        10L,
+                        LocalDateTime.of(2026, 9, 1, 0, 0),
+                        LocalDateTime.of(2026, 10, 1, 0, 0)
+                )
+        ).thenReturn(99L);
 
         AnalysisQuotaResponse result =
                 service.getQuota("user@example.com");
 
-        assertEquals(SubscriptionPlan.BUSINESS, result.plan());
-        assertEquals(99, result.used());
-        assertEquals(100, result.limit());
-        assertEquals(1, result.remaining());
+        assertEquals(
+                SubscriptionPlan.BUSINESS,
+                result.plan()
+        );
+
+        assertEquals(
+                99,
+                result.used()
+        );
+
+        assertEquals(
+                100,
+                result.limit()
+        );
+
+        assertEquals(
+                1,
+                result.remaining()
+        );
     }
 }

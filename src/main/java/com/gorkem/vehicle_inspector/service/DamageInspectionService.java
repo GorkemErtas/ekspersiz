@@ -19,15 +19,13 @@ import com.gorkem.vehicle_inspector.service.report.GeminiInspectionReportService
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import org.springframework.stereotype.Service;
-
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.transaction.support.TransactionTemplate;
-
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
@@ -60,6 +58,7 @@ public class DamageInspectionService {
             geminiInspectionReportService;
     private final TransactionTemplate transactionTemplate;
     private final SubscriptionService subscriptionService;
+    private static final int MAX_STORED_INSPECTIONS = 20;
 
     public DamageInspectionService(
             DamageInspectionRepository inspectionRepository,
@@ -374,6 +373,42 @@ public class DamageInspectionService {
 
                                     deleteImageSafely(
                                             newImagePath
+                                    );
+                                }
+                            }
+                        }
+                );
+    }
+
+    private void registerImageDeletionAfterCommit(
+            String imagePath
+    ) {
+        if (imagePath == null || imagePath.isBlank()) {
+            return;
+        }
+
+        if (!TransactionSynchronizationManager
+                .isSynchronizationActive()) {
+
+            throw new IllegalStateException(
+                    "Fotoğraf silme işlemi aktif bir transaction gerektiriyor."
+            );
+        }
+
+        TransactionSynchronizationManager
+                .registerSynchronization(
+                        new TransactionSynchronization() {
+
+                            @Override
+                            public void afterCompletion(
+                                    int status
+                            ) {
+                                if (status ==
+                                        TransactionSynchronization
+                                                .STATUS_COMMITTED) {
+
+                                    deleteImageSafely(
+                                            imagePath
                                     );
                                 }
                             }
@@ -886,6 +921,10 @@ public class DamageInspectionService {
                     inspectionRepository.save(
                             inspection
                     );
+
+                    pruneOldInspections(
+                            inspection
+                    );
                 }
         );
     }
@@ -912,6 +951,10 @@ public class DamageInspectionService {
                     );
 
                     inspectionRepository.save(
+                            inspection
+                    );
+
+                    pruneOldInspections(
                             inspection
                     );
                 }
@@ -1280,8 +1323,20 @@ public class DamageInspectionService {
         if (businessAccount == null) {
             User lockedUser = userRepository.findByIdForUpdate(user.getId())
                     .orElseThrow(() -> new ResourceNotFoundException("Kullanıcı bulunamadı."));
-            subscriptionService.validatePersonalMonthlyAnalysisLimit(lockedUser, startedAt);
-            inspection.setAnalysisStartedAt(startedAt);
+            subscriptionService.validatePersonalMonthlyAnalysisLimit(
+                    lockedUser,
+                    startedAt
+            );
+
+            subscriptionService.recordPersonalAnalysisUsage(
+                    lockedUser,
+                    startedAt
+            );
+
+            inspection.setAnalysisStartedAt(
+                    startedAt
+            );
+
             return;
         }
 
@@ -1293,10 +1348,30 @@ public class DamageInspectionService {
         }
 
         // Serialize count and reservation across every member of the company.
-        businessAccountRepository.findByIdForUpdate(businessAccount.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Şirket bulunamadı."));
-        subscriptionService.validateBusinessMonthlyAnalysisLimit(businessAccount, startedAt);
-        inspection.setAnalysisStartedAt(startedAt);
+        BusinessAccount lockedBusinessAccount =
+                businessAccountRepository
+                        .findByIdForUpdate(
+                                businessAccount.getId()
+                        )
+                        .orElseThrow(
+                                () -> new ResourceNotFoundException(
+                                        "Şirket bulunamadı."
+                                )
+                        );
+
+        subscriptionService.validateBusinessMonthlyAnalysisLimit(
+                lockedBusinessAccount,
+                startedAt
+        );
+
+        subscriptionService.recordBusinessAnalysisUsage(
+                lockedBusinessAccount,
+                startedAt
+        );
+
+        inspection.setAnalysisStartedAt(
+                startedAt
+        );
     }
 
     private String normalizeCity(
@@ -1335,5 +1410,49 @@ public class DamageInspectionService {
             User user,
             InspectionLlmRequest request
     ) {
+    }
+
+    private void pruneOldInspections(
+            DamageInspection currentInspection
+    ) {
+        Vehicle vehicle = currentInspection.getVehicle();
+
+        List<DamageInspection> inspections;
+
+        if (vehicle.getBusinessAccount() == null) {
+            inspections =
+                    inspectionRepository.findPersonalInspectionsForRetention(
+                            currentInspection.getUser().getId(),
+                            InspectionStatus.PROCESSING,
+                            Pageable.unpaged()
+                    );
+        } else {
+            inspections =
+                    inspectionRepository.findBusinessInspectionsForRetention(
+                            vehicle.getBusinessAccount().getId(),
+                            InspectionStatus.PROCESSING,
+                            Pageable.unpaged()
+                    );
+        }
+
+        if (inspections.size() <= MAX_STORED_INSPECTIONS) {
+            return;
+        }
+
+        List<DamageInspection> obsoleteInspections =
+                inspections.subList(
+                        MAX_STORED_INSPECTIONS,
+                        inspections.size()
+                );
+
+        obsoleteInspections.stream()
+                .map(DamageInspection::getImagePath)
+                .filter(Objects::nonNull)
+                .filter(path -> !path.isBlank())
+                .forEach(this::registerImageDeletionAfterCommit);
+
+        inspectionRepository.deleteAll(
+                obsoleteInspections
+        );
     }
 }

@@ -6,9 +6,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.data.domain.Pageable;
 import jakarta.persistence.LockModeType;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -35,27 +35,27 @@ public interface DamageInspectionRepository
     Optional<DamageInspection> findByIdForUpdate(@Param("id") Long id);
 
     @Query("""
-            select count(i) from DamageInspection i
-            where i.vehicle.user.id = :userId
-              and i.vehicle.businessAccount is null
-              and i.analysisStartedAt >= :start
-              and i.analysisStartedAt < :end
-            """)
-    long countPersonalAnalysesBetween(
+        select i from DamageInspection i
+        where i.vehicle.user.id = :userId
+          and i.vehicle.businessAccount is null
+          and i.status <> :processingStatus
+        order by i.createdAt desc, i.id desc
+        """)
+    List<DamageInspection> findPersonalInspectionsForRetention(
             @Param("userId") Long userId,
-            @Param("start") LocalDateTime start,
-            @Param("end") LocalDateTime end
+            @Param("processingStatus") InspectionStatus processingStatus,
+            Pageable pageable
     );
 
     @Query("""
-            select count(i) from DamageInspection i
-            where i.vehicle.businessAccount.id = :businessAccountId
-              and i.analysisStartedAt >= :start
-              and i.analysisStartedAt < :end
-            """)
-    long countBusinessAnalysesBetween(
+        select i from DamageInspection i
+        where i.vehicle.businessAccount.id = :businessAccountId
+          and i.status <> :processingStatus
+        order by i.createdAt desc, i.id desc
+        """)
+    List<DamageInspection> findBusinessInspectionsForRetention(
             @Param("businessAccountId") Long businessAccountId,
-            @Param("start") LocalDateTime start,
-            @Param("end") LocalDateTime end
+            @Param("processingStatus") InspectionStatus processingStatus,
+            Pageable pageable
     );
 }
