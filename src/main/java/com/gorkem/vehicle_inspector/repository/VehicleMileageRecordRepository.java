@@ -6,4 +6,5 @@ import java.util.List;
 
 public interface VehicleMileageRecordRepository extends JpaRepository<VehicleMileageRecord, Long> {
     List<VehicleMileageRecord> findAllByVehicleIdOrderByRecordedAtDesc(Long vehicleId);
+    void deleteAllByVehicleId(Long vehicleId);
 }

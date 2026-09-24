@@ -10,4 +10,5 @@ public interface VehicleReminderRepository extends JpaRepository<VehicleReminder
     List<VehicleReminder> findAllByVehicleIdOrderByCompletedAtAscDueDateAscIdDesc(Long vehicleId);
     List<VehicleReminder> findAllByVehicleIdAndCompletedAtIsNullOrderByDueDateAscIdAsc(Long vehicleId);
     Optional<VehicleReminder> findByIdAndVehicleId(Long id, Long vehicleId);
+    void deleteAllByVehicleId(Long vehicleId);
 }

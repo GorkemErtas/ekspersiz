@@ -9,4 +9,6 @@ public interface BillingSubscriptionRepository
         extends JpaRepository<BillingSubscription, Long> {
 
     Optional<BillingSubscription> findByUserId(Long userId);
+
+    void deleteByUserId(Long userId);
 }

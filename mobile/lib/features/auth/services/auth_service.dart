@@ -209,6 +209,11 @@ class AuthService {
     return UserProfile.fromJson(Map<String, dynamic>.from(response));
   }
 
+  Future<void> deleteAccount() async {
+    await apiClient.delete('/auth/account');
+    await TokenStorage.deleteAccessToken();
+  }
+
   Future<void> logout() async {
     await TokenStorage.deleteAccessToken();
   }

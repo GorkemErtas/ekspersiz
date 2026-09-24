@@ -19,4 +19,6 @@ public interface AnalysisUsageRepository
             LocalDateTime start,
             LocalDateTime end
     );
+
+    void deleteAllByUserId(Long userId);
 }

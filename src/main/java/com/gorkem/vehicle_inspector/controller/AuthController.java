@@ -12,6 +12,7 @@ import com.gorkem.vehicle_inspector.dto.request.ForgotPasswordRequest;
 import com.gorkem.vehicle_inspector.dto.request.ResetPasswordRequest;
 import com.gorkem.vehicle_inspector.service.PasswordResetService;
 import com.gorkem.vehicle_inspector.dto.request.GoogleLoginRequest;
+import com.gorkem.vehicle_inspector.service.AccountDeletionService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,12 +27,16 @@ public class AuthController {
 
     private final PasswordResetService passwordResetService;
 
+    private final AccountDeletionService accountDeletionService;
+
     public AuthController(
             AuthService authService,
-            PasswordResetService passwordResetService
+            PasswordResetService passwordResetService,
+            AccountDeletionService accountDeletionService
     ) {
         this.authService = authService;
         this.passwordResetService = passwordResetService;
+        this.accountDeletionService = accountDeletionService;
     }
 
     @PostMapping("/register")
@@ -120,5 +125,16 @@ public class AuthController {
                 authService.getCurrentUser(authentication.getName());
 
         return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/account")
+    public ResponseEntity<Void> deleteAccount(
+            Authentication authentication
+    ) {
+        accountDeletionService.deleteAccount(
+                authentication.getName()
+        );
+
+        return ResponseEntity.noContent().build();
     }
 }

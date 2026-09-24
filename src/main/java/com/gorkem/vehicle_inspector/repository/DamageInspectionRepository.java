@@ -58,4 +58,10 @@ public interface DamageInspectionRepository
             @Param("processingStatus") InspectionStatus processingStatus,
             Pageable pageable
     );
+
+    List<DamageInspection> findAllByUserId(Long userId);
+
+    void deleteAllByUserId(Long userId);
+
+    void deleteAllByVehicleId(Long vehicleId);
 }

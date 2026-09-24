@@ -7,6 +7,7 @@ import '../../../core/notifications/push_notification_service.dart';
 import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/app_icon_box.dart';
 import '../../../core/widgets/app_status_badge.dart';
+import '../../../core/network/api_exception.dart';
 
 import '../../auth/screens/change_password_screen.dart';
 import '../../auth/models/business_account.dart';
@@ -41,6 +42,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final AuthService _authService = const AuthService();
 
   bool _isLoggingOut = false;
+  bool _isDeletingAccount = false;
 
   String get _subscriptionPlanLabel {
     return switch (widget.subscriptionPlan) {
@@ -123,6 +125,94 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  Future<void> _deleteAccount() async {
+    final shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const AppText('Hesabınızı silmek istiyor musunuz?'),
+          content: const AppText(
+            'Bu işlem geri alınamaz. Hesabınız ve hesabınıza ait '
+                'kişisel veriler kalıcı olarak silinecektir.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop(false);
+              },
+              child: const AppText('İptal'),
+            ),
+            FilledButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop(true);
+              },
+              child: const AppText('Hesabımı Sil'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldDelete != true || !mounted) {
+      return;
+    }
+
+    setState(() {
+      _isDeletingAccount = true;
+    });
+
+    try {
+      await _authService.deleteAccount();
+
+      if (!mounted) {
+        return;
+      }
+
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute<void>(
+          builder: (_) => const LoginScreen(),
+        ),
+            (route) => false,
+      );
+    } on ApiException catch (exception) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _isDeletingAccount = false;
+      });
+
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            content: AppText(exception.message),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _isDeletingAccount = false;
+      });
+
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: AppText(
+              'Hesap silme işlemi tamamlanamadı.',
+            ),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+    }
+  }
+
   Future<void> _logout() async {
     final shouldLogout = await showDialog<bool>(
       context: context,
@@ -140,6 +230,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
               },
               child: const AppText('İptal'),
             ),
+            FilledButton.tonalIcon(
+              onPressed:
+              _isDeletingAccount || _isLoggingOut
+                  ? null
+                  : _deleteAccount,
+              icon: _isDeletingAccount
+                  ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                ),
+              )
+                  : const Icon(Icons.delete_outline_rounded),
+              label: AppText(
+                _isDeletingAccount
+                    ? 'Hesap siliniyor...'
+                    : 'Hesabımı Sil',
+              ),
+              style: FilledButton.styleFrom(
+                foregroundColor: Theme.of(context).colorScheme.error,
+                minimumSize: const Size(
+                  double.infinity,
+                  52,
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
             FilledButton(
               onPressed: () {
                 Navigator.of(dialogContext).pop(true);
@@ -418,7 +536,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton.icon(
-                    onPressed: _isLoggingOut ? null : _logout,
+                    onPressed:
+                    _isLoggingOut || _isDeletingAccount
+                        ? null
+                        : _logout,
                     icon: _isLoggingOut
                         ? SizedBox(
                             width: 18,
@@ -433,7 +554,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       _isLoggingOut ? 'Çıkış yapılıyor...' : 'Çıkış Yap',
                     ),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: colorScheme.error,
+                      foregroundColor: Theme.of(context).colorScheme.error,
                       side: BorderSide(
                         color: colorScheme.error.withValues(alpha: 0.55),
                       ),

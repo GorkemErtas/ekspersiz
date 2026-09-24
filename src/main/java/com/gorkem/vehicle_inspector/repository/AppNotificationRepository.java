@@ -29,4 +29,6 @@ public interface AppNotificationRepository extends JpaRepository<AppNotification
             "set notification.reminderId = null " +
             "where notification.reminderId = :reminderId")
     int detachReminder(@Param("reminderId") Long reminderId);
+
+    void deleteAllByUserId(Long userId);
 }
