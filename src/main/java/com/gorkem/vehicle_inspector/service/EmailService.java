@@ -18,12 +18,11 @@ public class EmailService {
     private final String senderName;
 
     public EmailService(
-            RestClient.Builder restClientBuilder,
             @Value("${application.email.brevo.api-key}") String apiKey,
             @Value("${application.email.sender-email}") String senderEmail,
             @Value("${application.email.sender-name}") String senderName
     ) {
-        this.restClient = restClientBuilder
+        this.restClient = RestClient.builder()
                 .baseUrl("https://api.brevo.com/v3")
                 .build();
 
