@@ -8,6 +8,7 @@ import com.gorkem.vehicle_inspector.exception.DuplicateResourceException;
 import com.gorkem.vehicle_inspector.repository.BusinessInvitationRepository;
 import com.gorkem.vehicle_inspector.repository.PendingRegistrationRepository;
 import com.gorkem.vehicle_inspector.repository.UserRepository;
+import com.gorkem.vehicle_inspector.service.EmailService;
 import com.gorkem.vehicle_inspector.service.RegistrationService;
 import com.gorkem.vehicle_inspector.service.VerificationCodeService;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,10 +17,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -56,7 +54,7 @@ class RegistrationServiceTest {
     private VerificationCodeService verificationCodeService;
 
     @Mock
-    private JavaMailSender mailSender;
+    private EmailService emailService;
 
     private RegistrationService service;
 
@@ -68,10 +66,9 @@ class RegistrationServiceTest {
                 businessInvitationRepository,
                 passwordEncoder,
                 verificationCodeService,
-                mailSender,
+                emailService,
                 CLOCK
         );
-        ReflectionTestUtils.setField(service, "mailFrom", "test@example.com");
     }
 
     @Test
@@ -99,13 +96,16 @@ class RegistrationServiceTest {
         assertEquals("code-hash", pending.getVerificationCodeHash());
         assertEquals(NOW.plusMinutes(5), pending.getVerificationCodeExpiresAt());
         verify(userRepository, never()).save(any(User.class));
-        verify(mailSender).send(any(SimpleMailMessage.class));
+        verify(emailService).send(
+                eq("new@example.com"),
+                eq("EksperSiz - E-posta Doğrulama Kodu"),
+                contains("123456")
+        );
     }
 
     @Test
     void validVerificationShouldCreateVerifiedUserAndDeletePendingRecord() {
         PendingRegistration pending = mock(PendingRegistration.class);
-        when(pending.getFullName()).thenReturn("Test User");
         when(pending.getEmail()).thenReturn("new@example.com");
         when(pending.getPasswordHash()).thenReturn("password-hash");
         when(pending.getVerificationCodeHash()).thenReturn("code-hash");
@@ -144,7 +144,6 @@ class RegistrationServiceTest {
         when(verificationCodeService.hash("654321"))
                 .thenReturn("new-code-hash");
         when(pending.getEmail()).thenReturn("new@example.com");
-        when(pending.getFullName()).thenReturn("Test User");
 
         service.start(registerRequest("new@example.com"));
 
@@ -171,7 +170,7 @@ class RegistrationServiceTest {
                 () -> service.start(registerRequest("existing@example.com"))
         );
 
-        verifyNoInteractions(pendingRegistrationRepository, mailSender);
+        verifyNoInteractions(pendingRegistrationRepository, emailService);
     }
 
     @Test

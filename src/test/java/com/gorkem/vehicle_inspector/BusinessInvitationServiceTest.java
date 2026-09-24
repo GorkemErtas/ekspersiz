@@ -6,6 +6,7 @@ import com.gorkem.vehicle_inspector.repository.BusinessInvitationRepository;
 import com.gorkem.vehicle_inspector.repository.BusinessMemberRepository;
 import com.gorkem.vehicle_inspector.repository.UserRepository;
 import com.gorkem.vehicle_inspector.service.BusinessInvitationService;
+import com.gorkem.vehicle_inspector.service.EmailService;
 import com.gorkem.vehicle_inspector.service.VerificationCodeService;
 import com.gorkem.vehicle_inspector.service.SubscriptionService;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,7 +14,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.mockito.ArgumentCaptor;
 
@@ -40,7 +40,7 @@ class BusinessInvitationServiceTest {
     private VerificationCodeService verificationCodeService;
 
     @Mock
-    private JavaMailSender mailSender;
+    private EmailService emailService;
 
     @Mock
     private SubscriptionService subscriptionService;
@@ -54,7 +54,7 @@ class BusinessInvitationServiceTest {
                 businessMemberRepository,
                 businessInvitationRepository,
                 verificationCodeService,
-                mailSender,
+                emailService,
                 subscriptionService
         );
 
@@ -63,11 +63,6 @@ class BusinessInvitationServiceTest {
                         ((User) invocation.getArgument(0)).getSubscriptionPlan()
                 );
 
-        ReflectionTestUtils.setField(
-                service,
-                "mailFrom",
-                "test@example.com"
-        );
     }
 
     @Test
@@ -125,9 +120,11 @@ class BusinessInvitationServiceTest {
         verify(businessInvitationRepository)
                 .save(any(BusinessInvitation.class));
 
-        verify(mailSender).send(any(
-                org.springframework.mail.SimpleMailMessage.class
-        ));
+        verify(emailService).send(
+                eq("worker@example.com"),
+                eq("EksperSiz - Şirket Daveti"),
+                contains("123456")
+        );
     }
 
     @Test
@@ -158,7 +155,7 @@ class BusinessInvitationServiceTest {
         );
 
         verify(businessInvitationRepository, never()).save(any());
-        verifyNoInteractions(mailSender);
+        verifyNoInteractions(emailService);
     }
 
     @Test
@@ -202,11 +199,9 @@ class BusinessInvitationServiceTest {
         ).save(any());
 
         verify(
-                mailSender,
+                emailService,
                 never()
-        ).send(any(
-                org.springframework.mail.SimpleMailMessage.class
-        ));
+        ).send(anyString(), anyString(), anyString());
     }
 
     @Test

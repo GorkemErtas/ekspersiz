@@ -21,7 +21,6 @@ import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
@@ -67,7 +66,7 @@ class InspectionPersistenceTest {
     private RegistrationService registrationService;
     private PasswordEncoder passwordEncoder;
     private VerificationCodeService verificationCodes;
-    private JavaMailSender mailSender;
+    private EmailService emailService;
     private AiAnalysisClient ai;
     private GeminiInspectionReportService reports;
     private FileStorageService storage;
@@ -95,7 +94,7 @@ class InspectionPersistenceTest {
         registrationService = app.getBean(RegistrationService.class);
         passwordEncoder = app.getBean(PasswordEncoder.class);
         verificationCodes = app.getBean(VerificationCodeService.class);
-        mailSender = app.getBean(JavaMailSender.class);
+        emailService = app.getBean(EmailService.class);
         ai = app.getBean(AiAnalysisClient.class);
         reports = app.getBean(GeminiInspectionReportService.class);
         storage = app.getBean(FileStorageService.class);
@@ -112,7 +111,7 @@ class InspectionPersistenceTest {
     @BeforeEach
     void seed() {
         reset(ai, reports, storage, subscriptions, passwordEncoder,
-                verificationCodes, mailSender,
+                verificationCodes, emailService,
                 app.getBean(GeminiNearbyServiceSearchService.class), app.getBean(GooglePlacesClient.class));
         lenient().when(ai.validateImage(any())).thenReturn(
                 new ImageQualityResponse(true, "SUITABLE", "Fotoğraf analiz için uygun."));
@@ -589,9 +588,7 @@ class InspectionPersistenceTest {
         static PropertySourcesPlaceholderConfigurer properties() {
             PropertySourcesPlaceholderConfigurer configurer =
                     new PropertySourcesPlaceholderConfigurer();
-            Properties properties = new Properties();
-            properties.setProperty("spring.mail.username", "test@example.com");
-            configurer.setProperties(properties);
+            configurer.setProperties(new Properties());
             return configurer;
         }
 
@@ -629,7 +626,7 @@ class InspectionPersistenceTest {
         @Bean GooglePlacesClient googlePlacesClient() { return mock(GooglePlacesClient.class); }
         @Bean PasswordEncoder passwordEncoder() { return mock(PasswordEncoder.class); }
         @Bean VerificationCodeService verificationCodeService() { return mock(VerificationCodeService.class); }
-        @Bean JavaMailSender mailSender() { return mock(JavaMailSender.class); }
+        @Bean EmailService emailService() { return mock(EmailService.class); }
 
         @Bean
         SubscriptionService subscriptionService(

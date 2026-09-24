@@ -6,9 +6,6 @@ import com.gorkem.vehicle_inspector.exception.ResourceNotFoundException;
 import com.gorkem.vehicle_inspector.repository.BusinessInvitationRepository;
 import com.gorkem.vehicle_inspector.repository.BusinessMemberRepository;
 import com.gorkem.vehicle_inspector.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,25 +16,22 @@ public class BusinessInvitationService {
     private final BusinessMemberRepository businessMemberRepository;
     private final BusinessInvitationRepository businessInvitationRepository;
     private final VerificationCodeService verificationCodeService;
-    private final JavaMailSender mailSender;
+    private final EmailService emailService;
     private final SubscriptionService subscriptionService;
-
-    @Value("${spring.mail.username}")
-    private String mailFrom;
 
     public BusinessInvitationService(
             UserRepository userRepository,
             BusinessMemberRepository businessMemberRepository,
             BusinessInvitationRepository businessInvitationRepository,
             VerificationCodeService verificationCodeService,
-            JavaMailSender mailSender,
+            EmailService emailService,
             SubscriptionService subscriptionService
     ) {
         this.userRepository = userRepository;
         this.businessMemberRepository = businessMemberRepository;
         this.businessInvitationRepository = businessInvitationRepository;
         this.verificationCodeService = verificationCodeService;
-        this.mailSender = mailSender;
+        this.emailService = emailService;
         this.subscriptionService = subscriptionService;
     }
 
@@ -185,23 +179,24 @@ public class BusinessInvitationService {
             BusinessAccount businessAccount,
             String code
     ) {
-        SimpleMailMessage message = new SimpleMailMessage();
+        String subject = "EksperSiz - Şirket Daveti";
 
-        message.setFrom(mailFrom);
-        message.setTo(user.getEmail());
-        message.setSubject(
-                "EksperSiz - Şirket Daveti"
+        String content = """
+                Merhaba %s,
+
+                %s sizi EksperSiz şirket hesabına davet etti.
+
+                Davet kodunuz:
+
+                %s
+
+                Bu kod 15 dakika boyunca geçerlidir.
+                """.formatted(
+                user.getFullName(),
+                businessAccount.getCompanyName(),
+                code
         );
 
-        message.setText(
-                "Merhaba " + user.getFullName() + ",\n\n"
-                        + businessAccount.getCompanyName()
-                        + " sizi EksperSiz şirket hesabına davet etti.\n\n"
-                        + "Davet kodunuz:\n\n"
-                        + code
-                        + "\n\nBu kod 15 dakika boyunca geçerlidir."
-        );
-
-        mailSender.send(message);
+        emailService.send(user.getEmail(), subject, content);
     }
 }

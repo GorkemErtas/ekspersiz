@@ -10,9 +10,6 @@ import com.gorkem.vehicle_inspector.exception.ResourceNotFoundException;
 import com.gorkem.vehicle_inspector.repository.BusinessInvitationRepository;
 import com.gorkem.vehicle_inspector.repository.PendingRegistrationRepository;
 import com.gorkem.vehicle_inspector.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,11 +28,8 @@ public class RegistrationService {
     private final BusinessInvitationRepository businessInvitationRepository;
     private final PasswordEncoder passwordEncoder;
     private final VerificationCodeService verificationCodeService;
-    private final JavaMailSender mailSender;
+    private final EmailService emailService;
     private final Clock clock;
-
-    @Value("${spring.mail.username}")
-    private String mailFrom;
 
     public RegistrationService(
             UserRepository userRepository,
@@ -43,7 +37,7 @@ public class RegistrationService {
             BusinessInvitationRepository businessInvitationRepository,
             PasswordEncoder passwordEncoder,
             VerificationCodeService verificationCodeService,
-            JavaMailSender mailSender,
+            EmailService emailService,
             Clock clock
     ) {
         this.userRepository = userRepository;
@@ -51,7 +45,7 @@ public class RegistrationService {
         this.businessInvitationRepository = businessInvitationRepository;
         this.passwordEncoder = passwordEncoder;
         this.verificationCodeService = verificationCodeService;
-        this.mailSender = mailSender;
+        this.emailService = emailService;
         this.clock = clock;
     }
 
@@ -99,7 +93,6 @@ public class RegistrationService {
         pendingRegistrationRepository.save(pendingRegistration);
         sendVerificationEmail(
                 pendingRegistration.getEmail(),
-                pendingRegistration.getFullName(),
                 code
         );
     }
@@ -170,7 +163,6 @@ public class RegistrationService {
 
         sendVerificationEmail(
                 registration.getEmail(),
-                registration.getFullName(),
                 code
         );
     }
@@ -222,30 +214,23 @@ public class RegistrationService {
                 expiresAt(now)
         );
         userRepository.save(user);
-        sendVerificationEmail(user.getEmail(), user.getFullName(), code);
+        sendVerificationEmail(user.getEmail(), code);
     }
 
-    private void sendVerificationEmail(
-            String email,
-            String fullName,
-            String verificationCode
-    ) {
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom(mailFrom);
-        message.setTo(email);
-        message.setSubject("Vehicle Inspector - E-posta Doğrulama Kodu");
-        message.setText(
-                "Merhaba " + fullName + ",\n\n"
-                        + "Vehicle Inspector hesabınızı doğrulamak için "
-                        + "aşağıdaki kodu kullanın:\n\n"
-                        + verificationCode
-                        + "\n\nBu kod "
-                        + VERIFICATION_CODE_EXPIRATION_MINUTES
-                        + " dakika boyunca geçerlidir.\n\n"
-                        + "Bu kaydı siz oluşturmadıysanız "
-                        + "bu e-postayı görmezden gelebilirsiniz."
-        );
-        mailSender.send(message);
+    private void sendVerificationEmail(String email, String code) {
+        String subject = "EksperSiz - E-posta Doğrulama Kodu";
+
+        String content = """
+            EksperSiz e-posta doğrulama kodunuz:
+
+            %s
+
+            Bu kod 5 dakika boyunca geçerlidir.
+
+            Bu işlemi siz başlatmadıysanız bu e-postayı dikkate almayabilirsiniz.
+            """.formatted(code);
+
+        emailService.send(email, subject, content);
     }
 
     private LocalDateTime expiresAt(LocalDateTime now) {

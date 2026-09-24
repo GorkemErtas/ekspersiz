@@ -71,12 +71,6 @@
 			<artifactId>spring-boot-starter-validation</artifactId>
 		</dependency>
 
-		<!-- E-posta gönderimi -->
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-mail</artifactId>
-		</dependency>
-
 		<!-- Getter, setter gibi kodları azaltır -->
 		<dependency>
 			<groupId>org.projectlombok</groupId>

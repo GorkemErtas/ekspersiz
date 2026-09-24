@@ -6,9 +6,6 @@ import com.gorkem.vehicle_inspector.entity.PasswordResetCode;
 import com.gorkem.vehicle_inspector.entity.User;
 import com.gorkem.vehicle_inspector.repository.PasswordResetCodeRepository;
 import com.gorkem.vehicle_inspector.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,25 +23,22 @@ public class PasswordResetService {
     private final PasswordResetCodeRepository passwordResetCodeRepository;
     private final VerificationCodeService verificationCodeService;
     private final PasswordEncoder passwordEncoder;
-    private final JavaMailSender mailSender;
+    private final EmailService emailService;
     private final Clock clock;
-
-    @Value("${spring.mail.username}")
-    private String mailFrom;
 
     public PasswordResetService(
             UserRepository userRepository,
             PasswordResetCodeRepository passwordResetCodeRepository,
             VerificationCodeService verificationCodeService,
             PasswordEncoder passwordEncoder,
-            JavaMailSender mailSender,
+            EmailService emailService,
             Clock clock
     ) {
         this.userRepository = userRepository;
         this.passwordResetCodeRepository = passwordResetCodeRepository;
         this.verificationCodeService = verificationCodeService;
         this.passwordEncoder = passwordEncoder;
-        this.mailSender = mailSender;
+        this.emailService = emailService;
         this.clock = clock;
     }
 
@@ -154,26 +148,25 @@ public class PasswordResetService {
             User user,
             String code
     ) {
-        SimpleMailMessage message = new SimpleMailMessage();
+        String subject = "EksperSiz - Şifre Sıfırlama Kodu";
 
-        message.setFrom(mailFrom);
-        message.setTo(user.getEmail());
-        message.setSubject(
-                "Vehicle Inspector - Şifre Sıfırlama Kodu"
+        String content = """
+                Merhaba %s,
+
+                Şifrenizi sıfırlamak için aşağıdaki kodu kullanın:
+
+                %s
+
+                Bu kod %d dakika boyunca geçerlidir.
+
+                Bu işlemi siz başlatmadıysanız bu e-postayı görmezden gelebilirsiniz.
+                """.formatted(
+                user.getFullName(),
+                code,
+                RESET_CODE_EXPIRATION_MINUTES
         );
 
-        message.setText(
-                "Merhaba " + user.getFullName() + ",\n\n"
-                        + "Şifrenizi sıfırlamak için aşağıdaki kodu kullanın:\n\n"
-                        + code
-                        + "\n\nBu kod "
-                        + RESET_CODE_EXPIRATION_MINUTES
-                        + " dakika boyunca geçerlidir.\n\n"
-                        + "Bu işlemi siz başlatmadıysanız "
-                        + "bu e-postayı görmezden gelebilirsiniz."
-        );
-
-        mailSender.send(message);
+        emailService.send(user.getEmail(), subject, content);
     }
 
     private String normalizeEmail(String email) {
