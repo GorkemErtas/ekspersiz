@@ -22,9 +22,10 @@ RUN groupadd --system ekspersiz && \
     chown -R ekspersiz:ekspersiz /app /data/uploads
 
 COPY --from=build --chown=ekspersiz:ekspersiz /app/target/*.jar app.jar
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
-USER ekspersiz
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 EXPOSE 8080
 
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
