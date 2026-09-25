@@ -1,571 +1,409 @@
-# 🚗 EksperSiz — Vehicle Inspector
+# 🚗 EksperSiz — AI-Powered Vehicle Inspector
 
-EksperSiz is an AI-powered mobile vehicle damage inspection application built with **Flutter**, **Spring Boot**, **FastAPI**, **YOLO**, **Google Gemini**, **PostgreSQL**, **Google Maps**, and **Google Places**.
+EksperSiz is a production-deployed Android application for AI-assisted vehicle damage analysis and vehicle management. It combines a **Flutter** mobile client, **Spring Boot** backend, **FastAPI/YOLO** computer-vision service, **Google Gemini**, **PostgreSQL**, **Google Maps / Places**, **RevenueCat**, **Firebase Cloud Messaging**, and **Brevo** transactional email.
 
-The application analyzes vehicle images, detects visible damage, identifies affected vehicle parts, recommends repair actions, generates an AI-assisted inspection report, estimates a repair price range, and helps users discover nearby automotive repair services based on the inspection location.
+The application analyzes vehicle photos, detects visible damage and affected parts, recommends repair actions, generates an AI-assisted inspection report with an estimated repair price range, and helps users manage vehicles, maintenance, reminders, inspections, subscriptions, and nearby automotive services.
 
----
-
-# ✨ Features
-
-* 🔐 JWT Authentication & Authorization
-* ✉️ Email Verification Before Account Creation
-* 🔑 Password Change Support
-* 🔄 Persistent Login & Automatic Session Restoration
-* 👤 User Profile & Secure Logout
-* 🌗 Persistent Dark and Light Themes (Dark by Default)
-* 🌐 Persistent Turkish and English Interface (Turkish by Default)
-* 🛡 Business Membership Permissions (`OWNER`, `MEMBER`)
-* 🚙 Vehicle Management
-* ⭐ Main Vehicle Selection
-* 🗃 Vehicle Archiving While Preserving Inspection History
-* 🔧 Vehicle Maintenance Records and Optional Cost Tracking
-* 🔔 Date- and Mileage-Based Vehicle Reminders
-* 🔔 Persistent In-App Notification Center and FCM Push Delivery
-* 📋 Vehicle Condition Overview and Unified History Timeline
-* 📍 GPS-Based Inspection Location
-* 🗺 Google Maps Integration
-* 📷 Camera / Gallery Vehicle Image Upload
-* 🤖 YOLO-Based Damage Detection
-* 🧩 Multiple Affected Vehicle Part Detection
-* ⚠️ Damage Severity Classification
-* 🎯 Model Confidence Scoring
-* 🔧 Repair Action Recommendation
-* 🧠 Gemini-Powered Inspection Reports
-* 💰 Location-Aware Repair Cost Estimation
-* 🔄 Retryable AI Report Generation Without Re-running YOLO
-* 🔎 Nearby Automotive Service Discovery
-* 🏷 Vehicle-Brand-Aware Service Recommendations
-* ⭐ Google Places Ratings & Distance Information
-* 🧭 Google Maps Directions to Selected Services
-* 📊 Inspection History
-* 💳 Subscription Plans (`FREE`, `PLUS`, `PRO`, `BUSINESS`)
-* 🏢 Business Accounts, Employee Invitations, Employee Management, and Shared Vehicles
-* 📉 Shared Monthly Inspection Limits for Personal and Business Usage
-* 🗄 PostgreSQL Persistence
-* 🌐 RESTful API
-* 🔒 Secure Mobile Token Storage
+> AI-generated damage findings and repair-price estimates are informational. They are not a replacement for a physical inspection or a binding repair quote.
 
 ---
 
-# 🏗 Architecture
+## ✨ Highlights
+
+- 🔐 Email/password authentication with JWT
+- 🔑 Google Sign-In with server-side Google ID-token verification
+- ✉️ Email verification and password reset through the Brevo API
+- 🗑 Authenticated account deletion with related personal-data cleanup
+- 🔒 Secure mobile token storage and persistent sessions
+- 🚙 Personal and shared business vehicle management
+- 🔧 Maintenance records, mileage tracking, and reminders
+- 🔔 Persistent notifications and Firebase Cloud Messaging
+- 📷 Camera/gallery vehicle image upload with pre-analysis validation
+- 🤖 YOLO-based vehicle damage and affected-part detection
+- ⚠️ Damage severity and repair-action recommendations
+- 🧠 Gemini-powered inspection reports
+- 💰 Location-aware AI repair-cost estimation
+- 📄 Branded PDF inspection reports and native sharing
+- 🗺 Google Maps and Google Places nearby-service discovery
+- 💳 FREE, PLUS, PRO, and BUSINESS subscription plans
+- 🏢 Business accounts, invitations, members, and shared vehicles
+- 🧾 RevenueCat server-side subscription verification and webhooks
+- 🌐 Turkish and English interface
+- 🌗 Persistent light/dark theme support
+
+---
+
+## 🏗 Production Architecture
 
 ```text
-Flutter Mobile Application
-            │
-            ▼
-     Spring Boot REST API
-            │
-     ┌──────┼───────────────┬────────────────┐
-     │      │               │                │
-     ▼      ▼               ▼                ▼
-PostgreSQL  FastAPI       Gemini API     Google Places
-              │               │                │
-         YOLO Models      AI Report       Nearby Services
-              │          + Price Range        │
-              ▼                               ▼
-      Damage / Part Analysis             Google Maps
+Flutter Android App
+        │
+        │ HTTPS
+        ▼
+Spring Boot REST API ───────────────► Brevo API
+        │                              Transactional Email
+        │
+        ├────────────► PostgreSQL
+        │
+        ├────────────► Persistent Upload Storage
+        │
+        ├────────────► FastAPI / YOLO
+        │                 Private Service
+        │
+        ├────────────► Google Gemini API
+        │
+        ├────────────► Google Places API
+        │
+        ├────────────► RevenueCat
+        │
+        └────────────► Firebase Cloud Messaging
 ```
 
-* **Flutter** provides the mobile application and complete end-to-end inspection experience.
-* **Spring Boot** acts as the orchestration layer for authentication, vehicles, inspections, subscriptions, persistence, AI requests, nearby service discovery, and report lifecycle management.
-* **FastAPI** performs computer-vision inference using YOLO models.
-* **YOLO** detects visible damage types and affected vehicle parts.
-* **Gemini** converts structured ML results into a user-friendly inspection report and estimates a repair price range based on vehicle and inspection context.
-* **Google Places** is used to discover nearby automotive repair services.
-* **Google Maps** visualizes service locations and opens driving directions from the user's current location.
-* **PostgreSQL** stores pending registrations, verified users, business accounts, memberships, invitations, vehicles, inspections, detections, repair recommendations, report status, generated reports, subscription state, notifications, device tokens, and processed billing webhook events.
+The backend and AI service are containerized and deployed on **Railway**. The Spring Boot API is the public application backend; PostgreSQL and the FastAPI/YOLO service are accessed through the deployment environment. Uploaded inspection images use persistent storage.
+
+The backend container runs the Java application as a non-root application user. Runtime secrets and service credentials are supplied through environment variables and are not committed to the repository.
 
 ---
 
-# 🛠 Tech Stack
+## 🛠 Tech Stack
 
-## Mobile
+### Mobile
+- Flutter / Dart
+- Google Sign-In
+- Google Maps Flutter
+- Geolocator / Geocoding
+- Flutter Secure Storage
+- RevenueCat Flutter SDK
+- Firebase Cloud Messaging
+- PDF generation and native sharing
 
-* Flutter
-* Dart
-* Google Maps Flutter
-* Geolocator
-* Flutter Secure Storage
-* RevenueCat Flutter SDK
-* Firebase Cloud Messaging
+### Backend
+- Java 21
+- Spring Boot
+- Spring Security
+- Spring Data JPA
+- Flyway
+- JWT
+- PostgreSQL
+- Brevo REST API
+- Firebase Admin SDK
+- RevenueCat REST API / webhooks
+- Maven
 
-## Backend
+### AI / Computer Vision
+- Python
+- FastAPI
+- Ultralytics YOLO
+- PyTorch
+- Google Gemini API
 
-* Java 21
-* Spring Boot
-* Spring Security
-* Spring Data JPA
-* JWT
-* Spring Mail
-* Maven
-
-## AI & LLM
-
-* Python
-* FastAPI
-* Ultralytics YOLO
-* PyTorch
-* Google Gemini API
-
-## Maps & Location
-
-* Google Maps SDK
-* Google Places API
-* Device GPS / Geolocation
-
-## Database
-
-* PostgreSQL
-
-## Tools
-
-* IntelliJ IDEA
-* Android Studio
-* Visual Studio Code
-* Postman
-* Git
-* GitHub
+### Infrastructure
+- Docker
+- Railway
+- PostgreSQL
+- Persistent upload volume
+- Google Play Console
 
 ---
 
-# 🔄 Inspection Workflow
+## 🔄 Inspection Workflow
 
 ```text
-Submit Registration Details
-     │
-     ▼
-Email Verification
-     │
-     ▼
-Create User Account / Login
-     │
-     ▼
 Create / Select Vehicle
-     │
-     ▼
-Create Inspection
-+ Capture GPS Location
-     │
-     ▼
-Upload Vehicle Image
-     │
-     ▼
-Pre-Analysis Image Quality Check
-     │
-     ├── Vehicle Visibility / Framing
-     ├── Excessive Blur
-     └── Unusable Darkness
-     │
-     ├── Unsuitable → Retake (no quota reservation)
-     │
-     ▼
+        │
+        ▼
+Capture or Select Vehicle Photo
+        │
+        ▼
+Image Suitability Validation
+        │
+        ├── excessive blur
+        ├── unusable darkness
+        └── invalid vehicle framing
+        │
+        ▼
 FastAPI / YOLO Analysis
-     │
-     ├── Damage Detection
-     ├── Affected Part Detection
-     ├── Damage Severity
-     └── Repair Recommendation
-     │
-     ▼
-Persist ML Results
-     │
-     ▼
+        │
+        ├── damage detection
+        ├── affected-part detection
+        ├── severity classification
+        └── repair recommendation
+        │
+        ▼
+Persist Structured ML Result
+        │
+        ▼
 Gemini Report Generation
-     │
-     ├── Human-Readable Damage Report
-     ├── Repair Recommendation Explanation
-     └── Location-Aware Estimated Price Range
-     │
-     ▼
-Save Inspection Report
-     │
-     ▼
-Display Complete Inspection Result
-     │
-     ├── Generate / Share Branded PDF
-     │
-     ▼
-Explore Nearby Automotive Services
-     │
-     ├── Google Places Search
-     ├── Rating / Distance Information
-     ├── Map Visualization
-     └── Google Maps Directions
+        │
+        ├── damage summary
+        ├── repair explanation
+        └── estimated price range
+        │
+        ▼
+Inspection Result
+        │
+        ├── PDF export / sharing
+        └── nearby service discovery
 ```
 
-The ML inspection result and the Gemini report use separate statuses. If Gemini report generation temporarily fails, the completed ML analysis remains available and the report can be regenerated without running YOLO again.
+ML analysis and Gemini report generation have separate statuses. If report generation temporarily fails, the completed ML result remains available and the report can be regenerated without running YOLO again.
 
-A successful inference with no visible damage is stored as a completed inspection with `DamageSeverity.NONE`, `DamageType.NO_VISIBLE_DAMAGE`, and `RepairAction.NO_ACTION`. It still consumes monthly analysis quota because inference was performed. Spring Boot creates its explanatory report deterministically without calling Gemini. `InspectionStatus.FAILED` is reserved for technical failures such as an unavailable AI service, timeout, invalid image, invalid AI response, or an unexpected processing error. A valid minor detection remains `MINOR` and follows the normal report flow.
-
-Before Spring Boot reserves analysis quota, FastAPI performs a lightweight suitability check using image brightness, blur, recognizable-vehicle detection, and the detected vehicle's share of the frame. An unsuitable photo remains retryable, does not reserve quota, and does not create a failed analysis. Flutter keeps the user on the photo step with a specific retake message.
-
-Completed results can be exported as a branded PDF and shared through the device's native share sheet. The PDF uses the stored inspection, vehicle, report, and image data. No-visible-damage PDFs omit damage and repair-price sections and retain the visible-image-only disclaimer.
+A valid analysis with no visible damage is stored as a completed inspection using `NO_VISIBLE_DAMAGE`, `NONE`, and `NO_ACTION`. Unsuitable photos are rejected before analysis quota is reserved.
 
 ---
 
-# 🧪 AI/ML Experimentation Pipeline
+## 🧪 AI / ML Pipeline
 
-The current production AI path remains:
+The current computer-vision path is:
 
 ```text
 Vehicle Detection
   → Damage Object Detection
   → Vehicle Part Detection
-  → Bounding-Box Overlap Matching
-  → Structured Result
+  → Bounding-Box Matching
+  → Canonical Structured Result
 ```
 
-The reviewed Detection V2 model is active. It uses the CarDD five-class
-checkpoint at `ai-service/models/candidates/damage_detection_v2_cardd_5class.pt`:
-`SCRATCH`, `DENT`, `CRACK`, `BROKEN_PART`, and `BROKEN_GLASS`.
+The reviewed Detection V2 checkpoint is stored at:
 
-The application retains the canonical `SCRATCH`, `DENT`, `PAINT_DAMAGE`, `CRACK`, `BROKEN_PART`, `BROKEN_GLASS`, and `DEFORMATION` taxonomy. Individual experiments declare a validated subset of these classes; the CarDD baseline does not output `PAINT_DAMAGE` or `DEFORMATION`. `NO_VISIBLE_DAMAGE` remains a deterministic domain result represented by clean negative images, never a learned object or mask class.
-
-The production service maps checkpoint class names to canonical application values at startup instead of relying on numeric class order. It rejects invalid model schemas. Dataset population, training commands, evaluation, and real-world error analysis are documented in [`ai-service/README.md`](ai-service/README.md).
-
----
-
-# 🤖 Example Inspection Response
-
-```json
-{
-  "status": "COMPLETED",
-  "reportStatus": "COMPLETED",
-  "reportMessage": null,
-  "damageSeverity": "SEVERE",
-  "damageTypes": [
-    "BROKEN_PART",
-    "DENT"
-  ],
-  "affectedParts": [
-    "HEADLIGHT",
-    "GRILLE",
-    "FRONT_BUMPER"
-  ],
-  "confidenceScore": 0.9212,
-  "locationCity": "Izmir",
-  "repairRecommendations": [
-    {
-      "damageType": "BROKEN_PART",
-      "recommendedAction": "PART_REPLACEMENT",
-      "partReplacementRequired": true,
-      "affectedParts": [
-        "HEADLIGHT",
-        "GRILLE",
-        "FRONT_BUMPER"
-      ]
-    }
-  ],
-  "report": {
-    "title": "Honda City Hasar Tespiti ve Onarım Raporu",
-    "estimatedMinimumPrice": 27000.00,
-    "estimatedMaximumPrice": 34000.00,
-    "currency": "TRY",
-    "priceInformation": "Estimated repair cost based on the vehicle, detected damage, repair requirements, and inspection location.",
-    "disclaimer": "The price range is an AI-generated market estimate and is not a final service quote."
-  }
-}
+```text
+ai-service/models/candidates/damage_detection_v2_cardd_5class.pt
 ```
 
----
+Its damage classes are:
 
-# 🧠 AI Inspection Report & Price Estimation
+- `SCRATCH`
+- `DENT`
+- `CRACK`
+- `BROKEN_PART`
+- `BROKEN_GLASS`
 
-After YOLO completes the vehicle damage analysis, Spring Boot sends structured inspection information to Gemini, including:
+The application domain also supports `PAINT_DAMAGE`, `DEFORMATION`, and the deterministic `NO_VISIBLE_DAMAGE` result. Model class names are mapped to canonical application values rather than relying on numeric class ordering.
 
-* Vehicle brand and model
-* Model year
-* Mileage
-* Inspection location
-* Damage severity
-* Detected damage types
-* Affected vehicle parts
-* Recommended repair actions
-* Part replacement requirements
-* Model confidence information
-
-Gemini uses this context to generate:
-
-* A readable damage summary
-* Detailed damage description
-* Repair recommendation explanation
-* Estimated minimum repair price
-* Estimated maximum repair price
-* Price reasoning
-* A user-facing disclaimer
-
-The current demo does **not** use live repair-shop pricing. Repair prices are AI-generated estimates based on the available vehicle, damage, repair, and location context and should not be treated as final quotations.
+Dataset preparation, model evaluation, training commands, and error analysis are documented in [`ai-service/README.md`](ai-service/README.md).
 
 ---
 
-# 📍 Nearby Service Discovery
+## 🧠 AI Report & Repair-Cost Estimation
 
-After an inspection is completed, users can explore nearby automotive services relevant to the vehicle and detected damage.
+After computer-vision inference, the backend can provide Gemini with structured context such as vehicle information, mileage, inspection location, detected damage, affected parts, severity, confidence, recommended repair actions, and replacement requirements.
 
-The backend integrates with **Google Places API** and returns information such as:
-
-* Service name
-* Address
-* Latitude and longitude
-* Google rating
-* Number of user ratings
-* Primary place type
-* Distance from the inspection location
-* Google Maps information
-
-The Flutter application displays these services on a Google Map. Users can select a service, view its information, and open driving directions in Google Maps using their current device location.
+Gemini generates a user-readable report and estimated repair-price range. The application does **not** treat this estimate as live repair-shop pricing or a final quotation.
 
 ---
 
-# 🔧 Vehicle Companion
+## 🚙 Vehicle Management
 
-Each active vehicle has a detail screen for its maintenance records, reminders, current overview, and history. Maintenance entries store the maintenance type, date, mileage, optional cost and note, and calculated next recommended date or mileage. Reminders can use a date, mileage, or both and are classified as `OVERDUE`, `DUE_SOON`, `UPCOMING`, or `COMPLETED` from the current date and vehicle mileage.
+Users can manage:
 
-Reminder inputs are type-specific and the backend owns every deterministic calculation:
+- Vehicles and a main vehicle
+- Vehicle archiving while preserving history
+- Maintenance records and optional costs
+- Mileage records
+- Date- and mileage-based reminders
+- Inspection history
+- Unified vehicle history
+- Vehicle condition overview
 
-* **Periodic inspection:** Turkey's Ministry of Transport rules use the conformity document's manufacture date for a new vehicle's first inspection and the approved inspection date for later periods. Private/official cars and two/three-wheeled vehicles use 3 years for the first inspection and 2 years thereafter; wheeled tractors use 3 years for both; other motor vehicles, trailers, and semi-trailers use 1 year. When category or source data is unknown, users enter the official expiry date instead of the application guessing. See the Ministry's [Vehicle Inspection Stations Regulation, Article 14](https://uhdgm.uab.gov.tr/uploads/pages/yonetmelikler/yonetmelik.pdf).
-* **Traffic insurance and comprehensive insurance:** the policy's actual expiry date is stored as the due date. The application does not assume a universal one-year term because the SEDDK general conditions define coverage through the start and end dates written in the policy: [traffic insurance general conditions](https://seddk.gov.tr/upload/Sigortac%C4%B1l%C4%B1k%20Mevzuat%C4%B1/Genel%20%C5%9Eartlar/Sorumluluk%20Sigortalar%C4%B1/Karayollar%C4%B1%20Motorlu%20Ara%C3%A7lar%20Zorunlu%20Mali%20Sorumluluk%20Trafik%20Sigortas%C4%B1%20Genel%20%C5%9Eartlar%C4%B1.pdf) and [comprehensive insurance general conditions](https://seddk.gov.tr/upload/Sigortac%C4%B1l%C4%B1k%20Mevzuat%C4%B1/Genel%20%C5%9Eartlar/Mal%20Sigortalar%C4%B1/Kara%20Ara%C3%A7lar%C4%B1%20Kasko%20Sigortas%C4%B1%20Genel%20%C5%9Eartlar%C4%B1.pdf).
-* **Maintenance:** users provide the last maintenance date/mileage and the manufacturer or service interval in months and/or kilometres. The backend calculates the next target. No universal maintenance interval is assumed.
-
-The persisted source fields remain separate from the calculated due fields. The existing notification scheduler continues to use the calculated due date/mileage and its 30/7/1/0-day and mileage thresholds.
-
-The overview combines the latest maintenance, active reminders, and latest completed AI damage inspection. Its condition label is a practical summary of stored data and is not a mechanical inspection. The history timeline combines vehicle creation, mileage updates, maintenance, and completed AI inspections without duplicating inspection records.
-
-Tracking fields are optional during vehicle creation. Users can create a vehicle with only its core details and add maintenance or reminders later. Company members automatically read and update the same vehicle records through their shared `BusinessAccount`; the creator user is retained for audit information.
-
-Archived vehicles remain available to history and maintenance/reminder reads, while new changes require an active vehicle.
+Tracking fields are optional during vehicle creation. The backend owns deterministic reminder calculations, while the mobile client focuses on data entry and presentation.
 
 ---
 
-# 💳 Subscription Architecture
+## 🏢 Business Accounts
 
-The application currently includes the following plan types:
+EksperSiz uses a single `User` identity model. A `BusinessAccount` contains shared company data and `BusinessMember` connects a user to a company with an `OWNER` or `MEMBER` role.
 
-* **FREE**
-* **PLUS**
-* **PRO**
-* **BUSINESS**
+Business functionality includes:
 
-Subscription plans belong to `User`. Current personal limits are:
+- Company creation for BUSINESS subscribers
+- Registered-user invitations
+- Owner/member permissions
+- Shared company vehicles
+- Company-scoped inspection history
+- Shared monthly analysis limits
+- Employee listing and membership removal
+
+A vehicle belongs either to a personal user or a business account.
+
+Account deletion is intentionally blocked while a user still has a business membership. The membership/ownership relationship must first be resolved so shared company data is not accidentally deleted.
+
+---
+
+## 💳 Subscriptions & Billing
+
+Supported plans:
 
 | Plan | Active vehicles | Monthly AI analyses |
-| --- | --- | --- |
+| --- | ---: | ---: |
 | FREE | 1 | 1 |
 | PLUS | 3 | 5 |
 | PRO | 10 | 20 |
 
-Monthly usage counts inspections with `analysisStartedAt` inside the server's current calendar month. Pending inspections that have not started analysis do not count. Retrying the same inspection in its reserved month does not consume another slot, while a retry from an earlier month requires capacity in the current month. A completed inspection cannot be analyzed again.
+The BUSINESS plan uses company-level limits and shared resources.
 
-The authenticated mobile quota precheck is available at `GET /api/v1/analysis-quota`. It reports the effective personal or shared company allowance before the user starts an analysis. The backend remains authoritative and validates the limit again when analysis begins.
+Android subscriptions are integrated through **Google Play + RevenueCat**. The mobile client does not authoritatively choose a plan. After purchase or restore, the backend verifies RevenueCat state and synchronizes the user's subscription.
 
-### Business membership
+Current Android product IDs:
 
-There is one user identity: `User`. `BusinessAccount` stores shared company data, and `BusinessMember` connects a user to a company with an `OWNER` or `MEMBER` role. A user can belong to at most one company for the MVP.
+| Plan | Product ID | RevenueCat package |
+| --- | --- | --- |
+| PLUS | `eksper_plus_monthly` | `plus_monthly` |
+| PRO | `eksper_pro_monthly` | `pro_monthly` |
+| BUSINESS | `eksper_business_monthly` | `business_monthly` |
 
-A user with the BUSINESS subscription can create a company and becomes its OWNER. Invited members can retain their personal FREE, PLUS, or PRO subscription. Subscription plans are stored only on users.
+RevenueCat webhook requests are protected by a private authorization value. Optional webhook-signing support is configuration-driven; secrets remain server-side.
 
-Vehicle access follows membership automatically: users without membership use personal vehicles; members use their company's shared vehicles. A vehicle belongs to either a user or a company. Each company has a shared limit of **50 active vehicles**, regardless of its member count.
+---
 
-Company inspection history and access are scoped through the inspection vehicle's `BusinessAccount`. `DamageInspection.user` records the member who created the inspection for audit purposes. Each company shares a limit of **100 analyses per server calendar month**, regardless of its member count. Report regeneration does not consume another analysis slot.
+## 🔔 Notifications
 
-The mobile application receives this membership context through login and session restoration responses. Members automatically see the shared company vehicles and inspections; there is no personal/company workspace switch. Only BUSINESS subscribers receive company-management controls and can create a company. Owners can invite registered users, list employees by name and email, and remove employee memberships. Users without a company can accept an invitation through the separate company-invitation action, including invited FREE, PLUS, and PRO users. Regular company members do not receive company-management controls. The BUSINESS plan does not have a personal quota fallback before company membership is established.
+Spring Boot stores persistent notification records and can deliver push notifications through Firebase Cloud Messaging.
 
-### Registration and email verification
+The reminder scheduler is configurable through environment variables and defaults to the `Europe/Istanbul` time zone. Notification event keys make scheduled reminder creation idempotent.
 
-Submitting the registration form creates or replaces a short-lived pending registration and sends a verification code. It does not create a `User` row. A successful email verification creates the user as verified and removes the pending registration. Reopening registration with the same unverified email is therefore allowed, while an email that already belongs to a verified user cannot be registered again.
+For shared company vehicles, current company members receive their own notification records and independent read state.
 
-Paid plans use native Apple App Store and Google Play subscriptions through RevenueCat. The mobile application never sends a plan choice that the backend trusts. After a purchase or restore, Spring Boot reads the customer's verified RevenueCat subscription and updates the plan stored on `User`. RevenueCat webhooks keep renewals, cancellations, billing issues, refunds, product changes, and expirations synchronized. A cancellation retains access through the paid period; a refund or expiration returns the user to `FREE`.
+---
 
-The suggested monthly launch prices are shown below. The store console remains the source of truth for the actual localized price displayed at checkout.
+## 🔐 Authentication & Account Lifecycle
 
-| Plan | Suggested monthly price | Store product ID | RevenueCat package ID |
-| --- | ---: | --- | --- |
-| PLUS | ₺149.99 | `eksper_plus_monthly` | `plus_monthly` |
-| PRO | ₺349.99 | `eksper_pro_monthly` | `pro_monthly` |
-| BUSINESS | ₺1,499.99 | `eksper_business_monthly` | `business_monthly` |
+EksperSiz supports two authentication paths:
 
-### Payment configuration
+### Email / Password
+Registration first creates a short-lived pending registration. A verification code is sent through **Brevo**. The permanent user is created only after successful email verification.
 
-1. Register the Android application ID and iOS bundle ID `com.gorkem.ekspersiz` in Google Play Console and App Store Connect. Update any Google Maps key restrictions to use these production identifiers.
-2. Create the three auto-renewing monthly products above. Keep them in the same subscription group so customers can change tiers.
-3. Connect both store applications to RevenueCat. Create one current Offering with the three custom package IDs shown above and attach each package to its matching store product.
-4. Configure a RevenueCat webhook for `POST /api/v1/billing/revenuecat/webhook`. Set a private Authorization header and enable HMAC signing.
-5. Supply the backend secrets as environment variables:
+Password reset codes are also delivered through the Brevo HTTPS API.
+
+### Google Sign-In
+Flutter uses Google Sign-In and sends the returned Google ID token to the backend. Spring Boot verifies the token's signature/audience and requires a verified Google email before establishing an EksperSiz session.
+
+The application never receives or stores the user's Google password.
+
+### Account Deletion
+Authenticated users can request account deletion from the application. Personal vehicles and dependent personal records are removed transactionally, and stored inspection images are cleaned up after the database transaction commits.
+
+Business members must first resolve their company membership to protect shared business records.
+
+---
+
+## 🔒 Security
+
+Security measures currently include:
+
+- JWT-based stateless authentication
+- BCrypt password hashing
+- Server-side Google ID-token verification
+- Verified-email requirement
+- Role and business-membership authorization
+- Secure mobile token storage
+- Authenticated inspection/resource access
+- Upload size and MIME-type validation
+- Image file-signature validation
+- UUID-based stored filenames
+- Path-traversal protection
+- Non-root backend container runtime
+- HTTPS production API
+- Environment-based secrets
+- RevenueCat server-side subscription verification
+- Authenticated account deletion
+
+No API keys, private credentials, signing passwords, Firebase service-account JSON, database passwords, or billing secrets should be committed to the repository.
+
+---
+
+## ⚙️ Configuration
+
+Production configuration is supplied through environment variables. Important categories include:
 
 ```text
-REVENUECAT_SECRET_API_KEY=<RevenueCat secret API key>
-REVENUECAT_WEBHOOK_AUTHORIZATION=Bearer <long random webhook token>
-REVENUECAT_WEBHOOK_SIGNING_SECRET=<RevenueCat webhook HMAC secret>
+DATABASE_URL / DB_USERNAME / DB_PASSWORD
+JWT_SECRET
+UPLOAD_DIR
+AI_SERVICE_BASE_URL
+GEMINI_API_KEY
+GOOGLE_PLACES_API_KEY
+GOOGLE_AUTH_CLIENT_ID
+FCM_ENABLED / FIREBASE_CREDENTIALS_JSON
+REVENUECAT_SECRET_API_KEY
+REVENUECAT_WEBHOOK_AUTHORIZATION
+BREVO_API_KEY
+BREVO_SENDER_EMAIL
+BREVO_SENDER_NAME
 ```
 
-6. Supply only RevenueCat's public, app-specific SDK keys to Flutter:
-
-```bash
-flutter run \
-  --dart-define=REVENUECAT_ANDROID_PUBLIC_KEY=<public Android key> \
-  --dart-define=REVENUECAT_IOS_PUBLIC_KEY=<public iOS key>
-```
-
-7. Configure production signing before uploading store builds. Android reads the standard ignored `mobile/android/key.properties` file with `storeFile`, `storePassword`, `keyAlias`, and `keyPassword`; configure the matching Apple signing team and provisioning profile in Xcode.
-
-The secret RevenueCat API key and webhook secrets belong only on the Spring Boot server. The mobile app receives a random billing customer ID from the authenticated backend and uses it as the RevenueCat App User ID. Store purchase prices are loaded from RevenueCat, StoreKit, or Google Play at runtime; the TRY values in the API are display fallbacks for builds without store configuration.
-
-The authenticated billing API is available at `GET /api/v1/billing` and `POST /api/v1/billing/sync`. The sync endpoint re-fetches the provider state instead of accepting subscription claims from the device. Webhook event IDs are persisted to make retry delivery idempotent, and webhook HMAC signatures are checked against the raw request body with a five-minute replay tolerance.
+Flutter production values such as the API base URL, Google OAuth client ID, and RevenueCat public Android SDK key are supplied at build time. Private backend secrets must never be placed in Flutter `dart-define` files.
 
 ---
 
-# Notification Center and FCM
+## 🐳 Backend Container
 
-Spring Boot evaluates incomplete vehicle reminders every day at 09:00 in `Europe/Istanbul` by default. It writes persistent, idempotent notification records first; FCM is only the delivery channel. Date reminders are evaluated at 30, 7, 1, and 0 days, while mileage reminders use 2,000 km, 500 km, and due thresholds. Vehicle inspection, compulsory traffic insurance, and kasko reminders also send push notifications at 7 days, 1 day, and the due date. Each reminder/recipient/threshold combination has one unique event key, so repeated scheduler runs do not create duplicate notifications.
+The root `Dockerfile` uses a multi-stage Java 21 build. The runtime image:
 
-For a personal vehicle, the owner receives the notification. For a shared company vehicle, every current `BusinessMember` receives one personal notification record for the threshold. This gives each member independent read state and avoids duplicate records for the same member.
+- contains only the packaged application and required runtime
+- prepares the persistent upload directory
+- runs the Spring Boot process as the `ekspersiz` system user
 
-The authenticated notification API supports listing, unread count, marking one or all as read, and registering or removing device tokens under `/api/v1/notifications`. Flutter refreshes FCM tokens, registers them against the authenticated user, and removes the current token on logout.
-
-Firebase console and credential setup must be completed separately before push delivery works:
-
-1. Create or select a Firebase project, register Android and iOS apps with bundle/application ID `com.gorkem.ekspersiz`, and enable Cloud Messaging. Configure APNs credentials and Push Notifications/Background Modes for iOS.
-2. Give the backend Firebase Admin credentials through Application Default Credentials or `GOOGLE_APPLICATION_CREDENTIALS`, then set `FCM_ENABLED=true`. Keep the service-account JSON outside the repository.
-3. Supply the Flutter Firebase client values at build or run time:
-
-```bash
-flutter run \
-  --dart-define=FIREBASE_API_KEY=<firebase-api-key> \
-  --dart-define=FIREBASE_ANDROID_APP_ID=<android-app-id> \
-  --dart-define=FIREBASE_MESSAGING_SENDER_ID=<sender-id> \
-  --dart-define=FIREBASE_PROJECT_ID=<project-id>
-```
-
-For iOS, use `FIREBASE_IOS_APP_ID` and optionally `FIREBASE_IOS_BUNDLE_ID`. Without these client values or enabled backend credentials, the application continues to provide its persistent in-app notification center while push delivery remains disabled.
-
-The schedule can be overridden with `NOTIFICATION_SCHEDULE_CRON` and `NOTIFICATION_TIME_ZONE`.
+The AI service has its own deployment configuration under `ai-service/`.
 
 ---
 
-# 🔄 AI Report Retry Flow
+## 🧪 Testing
 
-ML analysis and LLM report generation are handled independently.
+The project contains unit and persistence/integration coverage for core backend behavior including authentication, billing, business rules, reminders, inspections, and account deletion.
+
+Useful local checks:
+
+```bash
+./mvnw test
+```
+
+```bash
+cd mobile
+flutter analyze
+flutter test
+```
+
+A production Android App Bundle can be built with the project's ignored production dart-define file:
+
+```bash
+flutter build appbundle --release --dart-define-from-file=dart_defines.prod.json
+```
+
+Do not commit that environment-specific file if it contains deployment configuration that should remain local.
+
+---
+
+## 📱 Android Release Status
+
+Current mobile version:
 
 ```text
-ML Analysis
-    │
-    ├── Success → InspectionStatus.COMPLETED
-    │
-    ▼
-Gemini Report
-    │
-    ├── Success → ReportStatus.COMPLETED
-    │
-    └── Failure → ReportStatus.FAILED
+1.0.0+9
 ```
 
-If Gemini fails because of a temporary API, connectivity, or quota issue, the inspection itself is not marked as failed.
-
-The existing ML result can be reused through:
-
-```http
-POST /api/v1/inspections/{inspectionId}/report
-```
-
-This regenerates only the AI report and does not rerun the YOLO image analysis.
+EksperSiz has been deployed to the **Google Play closed-testing track**. The production backend, PostgreSQL database, persistent image storage, private AI service, Google authentication, subscription flow, maps/places integration, push-notification infrastructure, and transactional-email flow have been configured for the deployed environment.
 
 ---
 
-# 🔒 Security
+## 🚀 Current Focus
 
-* JWT Authentication
-* BCrypt Password Hashing
-* Stateless Authorization
-* Business Membership Role Checks (`OWNER`, `MEMBER`)
-* Email Verification
-* Secure Mobile Token Storage
-* Authenticated Inspection Access
-* File Size and MIME-Type Validation
-* Image File Signature Validation
-* UUID-Based Stored File Names
-* Path Traversal Protection for Uploaded Files
-* Sensitive configuration values loaded through environment variables
+The core end-to-end application is implemented and deployed for closed testing. Current work focuses on:
+
+- Real-device closed testing and feedback
+- ML model quality and dataset improvements
+- Reliability and security hardening
+- Automated test coverage
+- Production-release preparation after closed testing
 
 ---
 
-# 🚀 Future Improvements
+## 👨‍💻 Author
 
-* 🎯 Larger and More Diverse Damage Detection Dataset
-* 🎯 Improved Vehicle-Part Classification
-* 🌐 Optional Live Repair Pricing / Search Grounding
-* 🐳 Docker / Docker Compose Support
-* ☁️ Cloud Deployment
-* 🧪 Expanded Automated Test Coverage
-* ⚙️ CI/CD Pipeline
-
----
-
-# 👨‍💻 Author
-
-**Görkem Ertaş**
-
+**Görkem Ertaş**  
 Software Engineer
 
 ---
 
-# ⭐ Project Status
+## ⚠️ Disclaimer
 
-🚧 **Actively under development**
-
-## Completed
-
-* ✅ JWT Authentication & Authorization
-* ✅ User Registration & Login
-* ✅ Email Verification
-* ✅ Password Change
-* ✅ Persistent Mobile Sessions
-* ✅ Automatic Session Restoration
-* ✅ User Profile & Logout
-* ✅ Vehicle Management
-* ✅ Main Vehicle Selection
-* ✅ Vehicle Archiving
-* ✅ Inspection Management
-* ✅ GPS-Based Inspection Location
-* ✅ AI Damage Detection
-* ✅ Multiple Affected Part Detection
-* ✅ Damage Severity Classification
-* ✅ Repair Recommendation
-* ✅ Gemini AI Report Generation
-* ✅ Location-Aware Repair Price Estimation
-* ✅ Persistent Inspection Reports
-* ✅ AI Report Status Management
-* ✅ Retryable AI Report Generation
-* ✅ Google Maps Integration
-* ✅ Google Places Nearby Service Search
-* ✅ Vehicle-Brand-Aware Nearby Service Recommendations
-* ✅ Service Ratings & Distance Display
-* ✅ Google Maps Directions
-* ✅ Subscription Plan Architecture
-* ✅ Monthly FREE, PLUS, and PRO Plan Inspection Limits
-* ✅ Business Accounts and Member Invitations
-* ✅ Shared Business Vehicles and Company Vehicle Limit
-* ✅ Company-Scoped Inspection Access and Shared Monthly Inspection Limit
-* ✅ Mobile Company Creation and Invitation Flow
-* ✅ Owner Employee List and Membership Removal
-* ✅ Vehicle Maintenance Records and Optional Cost Tracking
-* ✅ Date- and Mileage-Based Reminders
-* ✅ Persistent In-App Notification Center
-* ✅ Scheduled, Idempotent FCM Reminder Delivery
-* ✅ Vehicle Condition Overview and Unified History Timeline
-* ✅ Flutter Mobile Application
-* ✅ Inspection Result Screen
-* ✅ Inspection History
-* ✅ End-to-End Mobile Inspection Flow
-* ✅ Apple App Store / Google Play Subscription Purchase Flow
-* ✅ RevenueCat Server-Side Subscription Verification and Webhooks
-* ✅ Subscription Restore and Store Management Flow
-* ✅ Pre-Analysis Image Quality and Retake Validation
-* ✅ Branded PDF Inspection Reports and Native Sharing
-* ✅ Persistent Turkish / English Language Selection
-
-## In Progress
-
-* 🔄 ML Model Improvements
-* 🔄 Increase AI output accuracy
-* 🔄 Production deployment preparation
+EksperSiz performs AI-assisted analysis of visible vehicle images. Results can be incomplete or inaccurate and do not constitute a mechanical inspection, expert appraisal, insurance assessment, or guaranteed repair quote. For safety-critical or financial decisions, the vehicle should be evaluated by a qualified professional.
