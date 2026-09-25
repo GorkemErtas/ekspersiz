@@ -63,7 +63,7 @@ class ReminderNotificationSchedulerTest {
     }
 
     @Test
-    void mileageThresholdShouldCreateInAppNotificationWithoutPush() {
+    void mileageThresholdShouldCreateInAppAndPushNotification() {
         VehicleReminder reminder = reminder(ReminderType.PERIODIC_MAINTENANCE,
                 null, 101_500);
         when(reminders.findAllByCompletedAtIsNull()).thenReturn(List.of(reminder));
@@ -73,7 +73,7 @@ class ReminderNotificationSchedulerTest {
         scheduler.evaluateDueReminders();
 
         verify(notifications).save(any(AppNotification.class));
-        verifyNoInteractions(push);
+        verify(push).send(any(AppNotification.class));
     }
 
     @Test
@@ -94,7 +94,7 @@ class ReminderNotificationSchedulerTest {
         scheduler.evaluateDueReminders();
 
         verify(notifications, times(2)).save(any(AppNotification.class));
-        verifyNoInteractions(push);
+        verify(push, times(2)).send(any(AppNotification.class));
     }
 
     private VehicleReminder reminder(ReminderType type, LocalDate date, Integer mileage) {
