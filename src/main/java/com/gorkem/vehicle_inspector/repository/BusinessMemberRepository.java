@@ -37,6 +37,4 @@ public interface BusinessMemberRepository
     );
 
     boolean existsByUserId(Long userId);
-
-    void deleteByUserId(Long userId);
 }

@@ -59,9 +59,5 @@ public interface DamageInspectionRepository
             Pageable pageable
     );
 
-    List<DamageInspection> findAllByUserId(Long userId);
-
-    void deleteAllByUserId(Long userId);
-
     void deleteAllByVehicleId(Long vehicleId);
 }

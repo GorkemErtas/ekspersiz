@@ -64,6 +64,7 @@ class InspectionPersistenceTest {
     private DamageInspectionService service;
     private SubscriptionService subscriptions;
     private RegistrationService registrationService;
+    private AccountDeletionService accountDeletionService;
     private PasswordEncoder passwordEncoder;
     private VerificationCodeService verificationCodes;
     private EmailService emailService;
@@ -92,6 +93,7 @@ class InspectionPersistenceTest {
         service = app.getBean(DamageInspectionService.class);
         subscriptions = app.getBean(SubscriptionService.class);
         registrationService = app.getBean(RegistrationService.class);
+        accountDeletionService = app.getBean(AccountDeletionService.class);
         passwordEncoder = app.getBean(PasswordEncoder.class);
         verificationCodes = app.getBean(VerificationCodeService.class);
         emailService = app.getBean(EmailService.class);
@@ -167,6 +169,56 @@ class InspectionPersistenceTest {
         assertTrue(verifiedUser.isEmailVerified());
         assertEquals("encoded-password", verifiedUser.getPassword());
         assertTrue(pendingRegistrations.findByEmail("pending@example.com").isEmpty());
+    }
+
+    @Test
+    void accountDeletionRemovesPersonalVehicleAndInspectionData() {
+        Long userId = personal.getId();
+
+        Long vehicleId = tx.execute(status -> {
+            Vehicle vehicle = vehicles.save(
+                    new Vehicle(
+                            "35DELETE01",
+                            "Brand",
+                            "Model",
+                            2022,
+                            1000,
+                            personal
+                    )
+            );
+
+            saveInspection(
+                    vehicle,
+                    personal,
+                    NOW,
+                    InspectionStatus.COMPLETED
+            );
+
+            return vehicle.getId();
+        });
+
+        assertNotNull(vehicleId);
+        assertTrue(users.findById(userId).isPresent());
+        assertTrue(vehicles.findById(vehicleId).isPresent());
+        assertFalse(
+                inspections
+                        .findAllByVehicleIdOrderByCreatedAtDesc(vehicleId)
+                        .isEmpty()
+        );
+
+        accountDeletionService.deleteAccount(
+                personal.getEmail()
+        );
+
+        assertTrue(users.findById(userId).isEmpty());
+        assertTrue(vehicles.findById(vehicleId).isEmpty());
+        assertTrue(
+                inspections
+                        .findAllByVehicleIdOrderByCreatedAtDesc(vehicleId)
+                        .isEmpty()
+        );
+
+        verify(storage).deleteStoredFile("test.jpg");
     }
 
     @Test
@@ -580,9 +632,14 @@ class InspectionPersistenceTest {
     @Configuration
     @EnableTransactionManagement
     @EnableJpaRepositories(basePackageClasses = DamageInspectionRepository.class)
-    @Import({BusinessContextService.class, InspectionAccessService.class,
-            DamageInspectionService.class, NearbyServiceService.class,
-            RegistrationService.class})
+    @Import({
+            BusinessContextService.class,
+            InspectionAccessService.class,
+            DamageInspectionService.class,
+            NearbyServiceService.class,
+            RegistrationService.class,
+            AccountDeletionService.class
+    })
     static class PersistenceConfig {
         @Bean
         static PropertySourcesPlaceholderConfigurer properties() {
