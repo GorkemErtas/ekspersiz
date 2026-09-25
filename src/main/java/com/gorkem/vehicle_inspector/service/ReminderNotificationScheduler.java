@@ -50,13 +50,10 @@ public class ReminderNotificationScheduler {
             if (days < 0) {
                 createForRecipients(reminder, "date:overdue",
                         NotificationSeverity.CRITICAL, title(reminder),
-                        reminder.getVehicle().getPlate() + " için tarih geçti.",
-                        isImportantDate(reminder.getReminderType()));
+                        reminder.getVehicle().getPlate() + " için tarih geçti.");
             } else if (DATE_THRESHOLDS.contains((int) days)) {
-                boolean importantPush = isImportantDate(reminder.getReminderType())
-                        && (days == 7 || days == 1 || days == 0);
                 createForRecipients(reminder, "date:" + days,
-                        severity(days), title(reminder), dateBody(reminder, days), importantPush);
+                        severity(days), title(reminder), dateBody(reminder, days));
             }
         }
 
@@ -67,14 +64,14 @@ public class ReminderNotificationScheduler {
             if (threshold != null) {
                 createForRecipients(reminder, "mileage:" + threshold,
                         threshold == 0 ? NotificationSeverity.CRITICAL : NotificationSeverity.WARNING,
-                        title(reminder), mileageBody(reminder, remaining), false);
+                        title(reminder), mileageBody(reminder, remaining));
             }
         }
     }
 
     private void createForRecipients(VehicleReminder reminder, String thresholdKey,
                                      NotificationSeverity severity, String title,
-                                     String body, boolean sendPush) {
+                                     String body) {
         for (User recipient : recipients(reminder.getVehicle())) {
             String eventKey = "reminder:" + reminder.getId() + ":" + thresholdKey;
             if (notifications.existsByUserIdAndEventKey(recipient.getId(), eventKey)) continue;
@@ -83,11 +80,9 @@ public class ReminderNotificationScheduler {
                     recipient, reminder.getVehicle(), reminder, eventKey,
                     NotificationType.VEHICLE_REMINDER, severity, title, body,
                     "vehicle:" + reminder.getVehicle().getId(), now));
-            if (sendPush) {
-                notification.markPushAttempted(now);
-                notifications.saveAndFlush(notification);
-                push.send(notification);
-            }
+            notification.markPushAttempted(now);
+            notifications.saveAndFlush(notification);
+            push.send(notification);
         }
     }
 
@@ -97,12 +92,6 @@ public class ReminderNotificationScheduler {
         }
         return members.findByBusinessAccountId(vehicle.getBusinessAccount().getId())
                 .stream().map(BusinessMember::getUser).toList();
-    }
-
-    private boolean isImportantDate(ReminderType type) {
-        return type == ReminderType.VEHICLE_INSPECTION
-                || type == ReminderType.TRAFFIC_INSURANCE
-                || type == ReminderType.COMPREHENSIVE_INSURANCE;
     }
 
     private NotificationSeverity severity(long days) {
