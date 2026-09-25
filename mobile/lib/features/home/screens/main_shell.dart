@@ -2,6 +2,7 @@ import 'package:mobile/core/localization/app_text.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 
 import '../../../core/auth/session_manager.dart';
 import '../../../core/notifications/push_notification_service.dart';
@@ -91,11 +92,27 @@ class _MainShellState extends State<MainShell> {
     _businessAccount = widget.businessAccount;
     _subscriptionPlan = widget.subscriptionPlan;
     _buildScreen(0);
-    PushNotificationService.instance.registerAuthenticatedDevice();
+    _initializeDevicePermissions();
 
     _sessionSubscription = SessionManager.unauthorizedStream.listen((_) {
       _handleSessionExpired();
     });
+  }
+
+  Future<void> _initializeDevicePermissions() async {
+    await PushNotificationService.instance.registerAuthenticatedDevice();
+    await _requestLocationPermission();
+  }
+
+  Future<void> _requestLocationPermission() async {
+    try {
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+    } catch (_) {
+      // Location is optional. A denied/unavailable permission must not block login.
+    }
   }
 
   void _selectTab(int index) {
