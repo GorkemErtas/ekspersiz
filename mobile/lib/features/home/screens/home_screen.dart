@@ -8,6 +8,7 @@ import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/app_motion.dart';
 import '../../../core/widgets/app_status_badge.dart';
 import '../../../core/widgets/section_title.dart';
+import '../../../core/widgets/theme_toggle_button.dart';
 import '../../auth/models/business_account.dart';
 import '../../vehicle/screens/vehicle_detail_screen.dart';
 
@@ -895,7 +896,9 @@ class _DashboardHeader extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 8),
+        const ThemeToggleButton(),
+        const SizedBox(width: 8),
         AppPressScale(
           onTap: onNotificationTap,
           borderRadius: BorderRadius.circular(16),
