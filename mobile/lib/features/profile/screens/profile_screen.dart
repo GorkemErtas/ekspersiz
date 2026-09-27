@@ -1,7 +1,8 @@
 import 'package:mobile/core/localization/app_text.dart';
 import 'package:flutter/material.dart';
 
-import '../../../core/theme/app_theme.dart';\nimport '../../../core/widgets/theme_toggle_button.dart';
+import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/theme_toggle_button.dart';
 import '../../../core/notifications/push_notification_service.dart';
 import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/app_icon_box.dart';
