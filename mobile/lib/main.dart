@@ -39,7 +39,7 @@ class VehicleInspectorApp extends StatelessWidget {
         builder: (context, child) {
           return Stack(
             children: [
-              if (child != null) child,
+              ?child,
               const Positioned(
                 top: 8,
                 right: 12,
