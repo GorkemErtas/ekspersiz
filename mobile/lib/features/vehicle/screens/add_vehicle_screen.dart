@@ -565,7 +565,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                         const SizedBox(height: 16),
 
                         DropdownButtonFormField<String>(
-                          value: _selectedBrand,
+                          initialValue: _selectedBrand,
                           isExpanded: true,
                           decoration: InputDecoration(
                             labelText: 'Marka'.tr,
@@ -593,7 +593,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                         const SizedBox(height: 16),
 
                         DropdownButtonFormField<String>(
-                          value: _selectedModel,
+                          initialValue: _selectedModel,
                           isExpanded: true,
                           decoration: InputDecoration(
                             labelText: 'Model'.tr,
