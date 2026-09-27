@@ -35,7 +35,7 @@ void main() {
           theme: ThemeData.light(useMaterial3: true),
           darkTheme: ThemeData.dark(useMaterial3: true),
           themeMode: controller.themeMode,
-          home: const Scaffold(
+          home: Scaffold(
             appBar: AppBar(
               actions: [ThemeToggleButton()],
             ),
