@@ -2,7 +2,8 @@ import 'package:mobile/core/localization/app_text.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/network/api_exception.dart';
-import '../../../core/theme/app_theme.dart';\nimport '../../../core/widgets/theme_toggle_button.dart';
+import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/theme_toggle_button.dart';
 import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/app_state_view.dart';
 import '../../../core/widgets/app_status_badge.dart';
