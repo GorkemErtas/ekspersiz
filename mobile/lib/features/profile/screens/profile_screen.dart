@@ -1,7 +1,7 @@
 import 'package:mobile/core/localization/app_text.dart';
 import 'package:flutter/material.dart';
 
-import '../../../core/theme/app_theme.dart';
+import '../../../core/theme/app_theme.dart';\nimport '../../../core/widgets/theme_toggle_button.dart';
 import '../../../core/notifications/push_notification_service.dart';
 import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/app_icon_box.dart';
@@ -338,7 +338,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
         widget.subscriptionPlan != 'BUSINESS' && widget.businessAccount == null;
 
     return Scaffold(
-      appBar: AppBar(title: const AppText('Profil')),
+      appBar: AppBar(
+        title: const AppText('Profil'),
+        actions: const [ThemeToggleButton(), SizedBox(width: 8)],
+      ),
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
