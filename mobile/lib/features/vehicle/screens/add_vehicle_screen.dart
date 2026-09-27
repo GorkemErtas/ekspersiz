@@ -1,5 +1,6 @@
 import 'package:mobile/core/localization/app_text.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_theme.dart';
@@ -10,6 +11,7 @@ import '../../../core/widgets/primary_button.dart';
 import '../../auth/models/business_account.dart';
 
 import '../models/vehicle.dart';
+import '../models/vehicle_catalog.dart';
 import '../services/vehicle_service.dart';
 
 class AddVehicleScreen extends StatefulWidget {
@@ -28,8 +30,8 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
   final _formKey = GlobalKey<FormState>();
 
   final _plateController = TextEditingController();
-  final _brandController = TextEditingController();
-  final _modelController = TextEditingController();
+  String? _selectedBrand;
+  String? _selectedModel;
   final _modelYearController = TextEditingController();
   final _mileageController = TextEditingController();
 
@@ -61,8 +63,8 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
 
     if (vehicle != null) {
       _plateController.text = vehicle.plate;
-      _brandController.text = vehicle.brand;
-      _modelController.text = vehicle.model;
+      _selectedBrand = vehicle.brand;
+      _selectedModel = vehicle.model;
       _modelYearController.text = vehicle.modelYear.toString();
       _mileageController.text = vehicle.mileage.toString();
       _notesController.text = vehicle.notes ?? '';
@@ -72,8 +74,6 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
   @override
   void dispose() {
     _plateController.dispose();
-    _brandController.dispose();
-    _modelController.dispose();
     _modelYearController.dispose();
     _mileageController.dispose();
     _lastMaintenanceMileageController.dispose();
@@ -175,8 +175,8 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
         vehicle = await _vehicleService.updateVehicle(
           vehicleId: widget.vehicle!.id,
           plate: _plateController.text,
-          brand: _brandController.text,
-          model: _modelController.text,
+          brand: _selectedBrand!,
+          model: _selectedModel!,
           modelYear: modelYear,
           mileage: mileage,
 
@@ -185,8 +185,8 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
       } else {
         vehicle = await _vehicleService.createVehicle(
           plate: _plateController.text,
-          brand: _brandController.text,
-          model: _modelController.text,
+          brand: _selectedBrand!,
+          model: _selectedModel!,
           modelYear: modelYear,
           mileage: mileage,
 
@@ -397,38 +397,47 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
     );
 
     if (!pattern.hasMatch(plate)) {
-      return 'Geçerli bir plaka girin. Örnek: 35 ABC 123'.tr;
+      return 'Geçerli bir plaka girin. Örnek: 35ABC123'.tr;
     }
 
     return null;
   }
 
   String? _validateBrand(String? value) {
-    final brand = value?.trim() ?? '';
-
-    if (brand.isEmpty) {
-      return 'Marka girin.'.tr;
+    if (value == null || value.isEmpty) {
+      return 'Marka seçin.'.tr;
     }
-
-    if (brand.length > 50) {
-      return 'Marka en fazla 50 karakter olabilir.'.tr;
-    }
-
     return null;
   }
 
   String? _validateModel(String? value) {
-    final model = value?.trim() ?? '';
-
-    if (model.isEmpty) {
-      return 'Model girin.'.tr;
+    if (value == null || value.isEmpty) {
+      return 'Model seçin.'.tr;
     }
-
-    if (model.length > 50) {
-      return 'Model en fazla 50 karakter olabilir.'.tr;
-    }
-
     return null;
+  }
+
+  List<String> get _availableBrands {
+    final brands = [...VehicleCatalog.brands];
+    final current = _selectedBrand;
+    if (current != null && current.isNotEmpty && !brands.contains(current)) {
+      brands.add(current);
+    }
+    return brands;
+  }
+
+  List<String> get _availableModels {
+    final brand = _selectedBrand;
+    if (brand == null) {
+      return const [];
+    }
+
+    final models = [...VehicleCatalog.modelsFor(brand)];
+    final current = _selectedModel;
+    if (current != null && current.isNotEmpty && !models.contains(current)) {
+      models.add(current);
+    }
+    return models;
   }
 
   String? _validateModelYear(String? value) {
@@ -535,43 +544,81 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                           enableSuggestions: false,
                           decoration: InputDecoration(
                             labelText: 'Plaka'.tr,
-                            hintText: '35 ABC 123'.tr,
+                            hintText: '35ABC123'.tr,
+                            helperText: 'Boşluksuz girin. Örnek: 35ABC123'.tr,
                             prefixIcon:
                             const Icon(Icons.badge_outlined),
                           ),
+                          inputFormatters: [
+                            FilteringTextInputFormatter.allow(
+                              RegExp(r'[0-9A-Za-z]'),
+                            ),
+                            TextInputFormatter.withFunction(
+                              (oldValue, newValue) => newValue.copyWith(
+                                text: newValue.text.toUpperCase(),
+                              ),
+                            ),
+                          ],
                           validator: _validatePlate,
                         ),
 
                         const SizedBox(height: 16),
 
-                        TextFormField(
-                          controller: _brandController,
-                          textCapitalization:
-                          TextCapitalization.words,
-                          textInputAction: TextInputAction.next,
+                        DropdownButtonFormField<String>(
+                          value: _selectedBrand,
+                          isExpanded: true,
                           decoration: InputDecoration(
                             labelText: 'Marka'.tr,
-                            hintText: 'Honda'.tr,
+                            hintText: 'Marka seçin'.tr,
                             prefixIcon:
-                            const Icon(Icons.factory_outlined),
+                                const Icon(Icons.factory_outlined),
                           ),
+                          items: _availableBrands
+                              .map(
+                                (brand) => DropdownMenuItem(
+                                  value: brand,
+                                  child: Text(brand),
+                                ),
+                              )
+                              .toList(),
+                          onChanged: (brand) {
+                            setState(() {
+                              _selectedBrand = brand;
+                              _selectedModel = null;
+                            });
+                          },
                           validator: _validateBrand,
                         ),
 
                         const SizedBox(height: 16),
 
-                        TextFormField(
-                          controller: _modelController,
-                          textCapitalization:
-                          TextCapitalization.words,
-                          textInputAction: TextInputAction.next,
+                        DropdownButtonFormField<String>(
+                          value: _selectedModel,
+                          isExpanded: true,
                           decoration: InputDecoration(
                             labelText: 'Model'.tr,
-                            hintText: 'Civic'.tr,
+                            hintText: _selectedBrand == null
+                                ? 'Önce marka seçin'.tr
+                                : 'Model seçin'.tr,
                             prefixIcon: const Icon(
                               Icons.directions_car_outlined,
                             ),
                           ),
+                          items: _availableModels
+                              .map(
+                                (model) => DropdownMenuItem(
+                                  value: model,
+                                  child: Text(model),
+                                ),
+                              )
+                              .toList(),
+                          onChanged: _selectedBrand == null
+                              ? null
+                              : (model) {
+                                  setState(() {
+                                    _selectedModel = model;
+                                  });
+                                },
                           validator: _validateModel,
                         ),
                       ],
