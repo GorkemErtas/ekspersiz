@@ -71,12 +71,12 @@ void main() {
       ),
     );
 
+    expect(find.text('Son araç muayene tarihi'), findsOneWidget);
+    expect(find.text('Bu ilk muayeneydi'), findsOneWidget);
     expect(
-      find.text('İlk muayene tarihi otomatik hesaplanacak'),
-      findsOneWidget,
-    );
-    expect(
-      find.text('Araç kategorisi veya uygunluk belgesi tarihi eksik.'),
+      find.text(
+        'Sonraki muayene tarihi, son muayene tarihinden 3 yıl sonrası olarak hesaplanır.',
+      ),
       findsOneWidget,
     );
     expect(find.text('Hedef kilometre'), findsNothing);
