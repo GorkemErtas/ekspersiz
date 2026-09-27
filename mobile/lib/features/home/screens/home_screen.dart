@@ -563,16 +563,6 @@ class _HomeScreenState extends State<HomeScreen> {
     return buffer.toString();
   }
 
-  String _firstName() {
-    final value = widget.fullName.trim();
-
-    if (value.isEmpty) {
-      return 'Kullanıcı';
-    }
-
-    return value.split(RegExp(r'\s+')).first;
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -593,7 +583,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     delay: const Duration(milliseconds: 20),
                     child: _DashboardHeader(
                       fullName: widget.fullName,
-                      firstName: _firstName(),
                       onProfileTap: widget.onOpenProfile,
                       onNotificationTap: _openNotifications,
                       unreadCount: _unreadNotificationCount,
@@ -815,14 +804,12 @@ class _BusinessContextCard extends StatelessWidget {
 class _DashboardHeader extends StatelessWidget {
   const _DashboardHeader({
     required this.fullName,
-    required this.firstName,
     required this.onProfileTap,
     required this.onNotificationTap,
     required this.unreadCount,
   });
 
   final String fullName;
-  final String firstName;
   final VoidCallback onProfileTap;
   final VoidCallback onNotificationTap;
   final int unreadCount;
@@ -884,7 +871,7 @@ class _DashboardHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               AppText(
-                'Merhaba $firstName',
+                'EksperSiz',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: textTheme.titleLarge?.copyWith(
@@ -892,7 +879,16 @@ class _DashboardHeader extends StatelessWidget {
                   letterSpacing: -0.4,
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 2),
+              AppText(
+                'AI destekli araç asistanınız',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: textTheme.bodySmall?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ],
           ),
         ),
