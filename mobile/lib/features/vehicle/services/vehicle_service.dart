@@ -43,7 +43,10 @@ class VehicleService {
     final response = await apiClient.post(
       '/vehicles',
       body: {
-        'plate': plate.trim().toUpperCase(),
+        'plate': plate.trim().toUpperCase().replaceAll(
+          RegExp(r'[^0-9A-Z]'),
+          '',
+        ),
         'brand': brand.trim(),
         'model': model.trim(),
         'modelYear': modelYear,
