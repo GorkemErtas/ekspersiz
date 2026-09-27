@@ -2,7 +2,7 @@ import 'package:mobile/core/localization/app_text.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/network/api_exception.dart';
-import '../../../core/theme/app_theme.dart';
+import '../../../core/theme/app_theme.dart';\nimport '../../../core/widgets/theme_toggle_button.dart';
 import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/app_icon_box.dart';
 import '../../../core/widgets/app_state_view.dart';
@@ -266,7 +266,8 @@ class _VehicleListScreenState extends State<VehicleListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+        appBar: AppBar(
+        actions: const [ThemeToggleButton(), SizedBox(width: 8)],
         title: AppText(
           widget.businessAccount == null ? 'Araçlarım' : 'Şirket Araçları',
         ),
