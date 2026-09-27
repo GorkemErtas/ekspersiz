@@ -4,7 +4,6 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'core/notifications/push_notification_service.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/app_theme_controller.dart';
-import 'core/widgets/theme_toggle_button.dart';
 import 'features/auth/screens/splash_screen.dart';
 
 Future<void> main() async {
@@ -36,20 +35,6 @@ class VehicleInspectorApp extends StatelessWidget {
         ],
         themeAnimationDuration: const Duration(milliseconds: 420),
         themeAnimationCurve: Curves.easeInOutCubic,
-        builder: (context, child) {
-          return Stack(
-            children: [
-              ?child,
-              const Positioned(
-                top: 8,
-                right: 12,
-                child: SafeArea(
-                  child: ThemeToggleButton(),
-                ),
-              ),
-            ],
-          );
-        },
         home: const SplashScreen(),
       ),
     );
