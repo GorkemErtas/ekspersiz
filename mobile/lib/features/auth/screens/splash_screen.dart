@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 
 import '../../../core/network/api_exception.dart';
+import '../../../core/update/app_update_service.dart';
 import '../../../core/storage/token_storage.dart';
 
 import '../services/auth_service.dart';
@@ -18,14 +19,52 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen> {
   final AuthService _authService = const AuthService();
+  final AppUpdateService _appUpdateService = const AppUpdateService();
 
   @override
   void initState() {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _restoreSession();
+      _checkVersionAndRestoreSession();
     });
+  }
+
+  Future<void> _checkVersionAndRestoreSession() async {
+    final updateRequired = await _appUpdateService.isUpdateRequired();
+
+    if (!mounted) {
+      return;
+    }
+
+    if (updateRequired) {
+      await _showForceUpdateDialog();
+      return;
+    }
+
+    await _restoreSession();
+  }
+
+  Future<void> _showForceUpdateDialog() async {
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => PopScope(
+        canPop: false,
+        child: AlertDialog(
+          title: const AppText('Güncelleme Gerekli'),
+          content: const AppText(
+            'EksperSiz’in bu sürümü artık desteklenmiyor. Devam etmek için uygulamayı güncelleyin.',
+          ),
+          actions: [
+            FilledButton(
+              onPressed: _appUpdateService.openStore,
+              child: const AppText('Güncelle'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _restoreSession() async {
