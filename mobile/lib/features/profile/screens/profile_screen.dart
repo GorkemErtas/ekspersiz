@@ -2,7 +2,6 @@ import 'package:mobile/core/localization/app_text.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_theme.dart';
-import '../../../core/theme/app_theme_controller.dart';
 import '../../../core/notifications/push_notification_service.dart';
 import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/app_icon_box.dart';
@@ -450,8 +449,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   padding: EdgeInsets.zero,
                   child: Column(
                     children: [
-                      const _ThemeModeProfileItem(),
-                      const Divider(height: 1, indent: 82),
                       _ActionProfileItem(
                         icon: Icons.workspace_premium_outlined,
                         title: 'Abonelik ve Ödeme',
@@ -567,104 +564,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _ThemeModeProfileItem extends StatelessWidget {
-  const _ThemeModeProfileItem();
-
-  @override
-  Widget build(BuildContext context) {
-    final controller = AppThemeController.instance;
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-
-    return AnimatedBuilder(
-      animation: controller,
-      builder: (context, _) {
-        final isDark = controller.isDarkMode;
-        return InkWell(
-          onTap: () => controller.setDarkMode(!isDark),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-            child: Row(
-              children: [
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 360),
-                  curve: Curves.easeInOutCubic,
-                  width: 46,
-                  height: 46,
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? colorScheme.primaryContainer
-                        : AppTheme.warningSoftFor(context),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 280),
-                    transitionBuilder: (child, animation) => RotationTransition(
-                      turns: Tween<double>(begin: 0.7, end: 1).animate(
-                        CurvedAnimation(
-                          parent: animation,
-                          curve: Curves.easeOutBack,
-                        ),
-                      ),
-                      child: FadeTransition(opacity: animation, child: child),
-                    ),
-                    child: Icon(
-                      isDark
-                          ? Icons.dark_mode_rounded
-                          : Icons.light_mode_rounded,
-                      key: ValueKey(isDark),
-                      color: isDark
-                          ? colorScheme.secondary
-                          : AppTheme.warningColorFor(context),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      AppText(
-                        'Görünüm',
-                        style: textTheme.bodyLarge?.copyWith(
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 220),
-                        child: AppText(
-                          isDark ? 'Koyu tema' : 'Açık tema',
-                          key: ValueKey(isDark),
-                          style: textTheme.bodySmall?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Switch(
-                  value: isDark,
-                  onChanged: controller.setDarkMode,
-                  thumbIcon: WidgetStateProperty.resolveWith(
-                    (states) => Icon(
-                      states.contains(WidgetState.selected)
-                          ? Icons.nightlight_round
-                          : Icons.wb_sunny_rounded,
-                      size: 16,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
     );
   }
 }
