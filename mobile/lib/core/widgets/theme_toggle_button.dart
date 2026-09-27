@@ -16,16 +16,19 @@ class ThemeToggleButton extends StatelessWidget {
         final colorScheme = Theme.of(context).colorScheme;
 
         return Material(
-          color: colorScheme.surface.withValues(alpha: 0.92),
-          shape: const CircleBorder(),
-          elevation: 2,
-          shadowColor: colorScheme.shadow.withValues(alpha: 0.18),
+          color: colorScheme.surface,
+          borderRadius: BorderRadius.circular(16),
           child: InkWell(
-            customBorder: const CircleBorder(),
+            borderRadius: BorderRadius.circular(16),
             onTap: () => controller.setDarkMode(!isDark),
-            child: SizedBox(
-              width: 40,
-              height: 40,
+            child: Container(
+              width: 46,
+              height: 46,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: colorScheme.outlineVariant),
+              ),
+              alignment: Alignment.center,
               child: AnimatedSwitcher(
                 duration: const Duration(milliseconds: 220),
                 transitionBuilder: (child, animation) => RotationTransition(
@@ -35,7 +38,7 @@ class ThemeToggleButton extends StatelessWidget {
                 child: Icon(
                   isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
                   key: ValueKey(isDark),
-                  size: 21,
+                  size: 23,
                   color: colorScheme.onSurface,
                 ),
               ),
