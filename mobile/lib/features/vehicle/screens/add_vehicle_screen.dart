@@ -320,6 +320,62 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
     );
   }
 
+  Widget _trackingSectionTitle({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+  }) {
+    final theme = Theme.of(context);
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 8, bottom: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primaryContainer.withValues(alpha: 0.55),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              icon,
+              size: 20,
+              color: theme.colorScheme.primary,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                AppText(
+                  title,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                AppText(
+                  subtitle,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _trackingDivider() => const Padding(
+    padding: EdgeInsets.symmetric(vertical: 12),
+    child: Divider(height: 1),
+  );
+
   Widget _inspectionSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -770,21 +826,25 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                       ),
                       children: [
                         if (!_isEditing) ...[
+                          _trackingSectionTitle(
+                            icon: Icons.build_outlined,
+                            title: 'Periyodik bakım',
+                            subtitle:
+                                'Son bakım bilgilerini ve bakım aralığını girin.',
+                          ),
+
                           _dateTile(
                             'Son bakım tarihi',
                             _lastMaintenanceDate,
-                                (value) =>
-                            _lastMaintenanceDate = value,
+                            (value) => _lastMaintenanceDate = value,
                           ),
 
                           TextFormField(
                             controller:
-                            _lastMaintenanceMileageController,
-                            keyboardType:
-                            TextInputType.number,
+                                _lastMaintenanceMileageController,
+                            keyboardType: TextInputType.number,
                             decoration: InputDecoration(
-                              labelText:
-                              'Son bakım kilometresi'.tr,
+                              labelText: 'Son bakım kilometresi'.tr,
                               suffixText: 'km',
                             ),
                           ),
@@ -793,12 +853,12 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
 
                           TextFormField(
                             controller:
-                            _maintenanceIntervalMonthsController,
-                            keyboardType:
-                            TextInputType.number,
+                                _maintenanceIntervalMonthsController,
+                            keyboardType: TextInputType.number,
                             decoration: InputDecoration(
-                              labelText:
-                              'Bakım aralığı (ay)'.tr,
+                              labelText: 'Bakım aralığı (ay)'.tr,
+                              helperText:
+                                  'Örn. her 12 ayda bir bakım'.tr,
                             ),
                           ),
 
@@ -806,51 +866,81 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
 
                           TextFormField(
                             controller:
-                            _maintenanceIntervalMileageController,
-                            keyboardType:
-                            TextInputType.number,
+                                _maintenanceIntervalMileageController,
+                            keyboardType: TextInputType.number,
                             decoration: InputDecoration(
-                              labelText:
-                              'Bakım aralığı (km)'.tr,
+                              labelText: 'Bakım aralığı (km)'.tr,
+                              helperText:
+                                  'Örn. her 10.000 km’de bir bakım'.tr,
                               suffixText: 'km',
                             ),
                           ),
 
-                          const SizedBox(height: 10),
+                          _trackingDivider(),
+
+                          _trackingSectionTitle(
+                            icon: Icons.fact_check_outlined,
+                            title: 'Araç muayenesi',
+                            subtitle:
+                                'Son muayene tarihine göre bir sonraki muayeneyi hesaplayalım.',
+                          ),
 
                           _inspectionSection(),
 
-                          const SizedBox(height: 6),
+                          _trackingDivider(),
+
+                          _trackingSectionTitle(
+                            icon: Icons.shield_outlined,
+                            title: 'Sigorta ve kasko',
+                            subtitle:
+                                'Poliçelerinizin bitiş tarihlerini takip edin.',
+                          ),
 
                           _dateTile(
-                            'Trafik sigortası bitişi',
+                            'Trafik sigortası bitiş tarihi',
                             _trafficInsuranceDate,
-                                (value) =>
-                            _trafficInsuranceDate = value,
+                            (value) => _trafficInsuranceDate = value,
                           ),
 
                           _dateTile(
-                            'Kasko bitişi',
+                            'Kasko bitiş tarihi',
                             _comprehensiveInsuranceDate,
-                                (value) =>
-                            _comprehensiveInsuranceDate =
-                                value,
+                            (value) =>
+                                _comprehensiveInsuranceDate = value,
+                          ),
+
+                          _trackingDivider(),
+
+                          _trackingSectionTitle(
+                            icon: Icons.tire_repair_outlined,
+                            title: 'Lastik kontrolü',
+                            subtitle:
+                                'Bir sonraki lastik kontrol tarihini belirleyin.',
                           ),
 
                           _dateTile(
-                            'Lastik kontrolü',
+                            'Lastik kontrol tarihi',
                             _tireCheckDate,
-                                (value) =>
-                            _tireCheckDate = value,
+                            (value) => _tireCheckDate = value,
                           ),
+
+                          _trackingDivider(),
                         ],
+
+                        _trackingSectionTitle(
+                          icon: Icons.notes_outlined,
+                          title: 'Araç notları',
+                          subtitle:
+                              'Araçla ilgili eklemek istediğiniz diğer bilgiler.',
+                        ),
 
                         TextFormField(
                           controller: _notesController,
                           maxLines: 3,
                           maxLength: 1000,
                           decoration: InputDecoration(
-                            labelText: 'Araç notları'.tr,
+                            hintText:
+                                'Örn. servis, parça veya kullanım notları'.tr,
                             alignLabelWithHint: true,
                           ),
                         ),
