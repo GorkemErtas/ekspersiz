@@ -63,8 +63,10 @@ class _SplashScreenState extends State<SplashScreen> {
                   final completed =
                       await _appUpdateService.performImmediateUpdate();
 
-                  if (completed && mounted) {
+                  if (completed && dialogContext.mounted) {
                     Navigator.of(dialogContext).pop();
+
+                    if (!mounted) return;
                     await _checkVersionAndRestoreSession();
                     return;
                   }
