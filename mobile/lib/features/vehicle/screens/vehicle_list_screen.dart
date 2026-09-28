@@ -510,6 +510,13 @@ class _VehicleCard extends StatelessWidget {
                       icon: Icons.calendar_today_outlined,
                       label: '${vehicle.modelYear}',
                     ),
+
+                    if (vehicle.primaryVehicle)
+                      _InfoBadge(
+                        icon: Icons.star_rounded,
+                        label: 'Ana araç',
+                        emphasized: true,
+                      ),
                   ],
                 ),
 
@@ -602,10 +609,15 @@ class _VehicleActionsMenu extends StatelessWidget {
 }
 
 class _InfoBadge extends StatelessWidget {
-  const _InfoBadge({required this.icon, required this.label});
+  const _InfoBadge({
+    required this.icon,
+    required this.label,
+    this.emphasized = false,
+  });
 
   final IconData icon;
   final String label;
+  final bool emphasized;
 
   @override
   Widget build(BuildContext context) {
@@ -616,20 +628,26 @@ class _InfoBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.55),
+        color: emphasized
+            ? colorScheme.primaryContainer.withValues(alpha: 0.72)
+            : colorScheme.surfaceContainerHighest.withValues(alpha: 0.55),
         borderRadius: BorderRadius.circular(AppTheme.radiusPill),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: colorScheme.onSurfaceVariant),
+          Icon(
+            icon,
+            size: 14,
+            color: emphasized ? colorScheme.primary : colorScheme.onSurfaceVariant,
+          ),
 
           const SizedBox(width: 5),
 
           AppText(
             label,
             style: textTheme.labelMedium?.copyWith(
-              color: colorScheme.onSurfaceVariant,
+              color: emphasized ? colorScheme.primary : colorScheme.onSurfaceVariant,
               fontWeight: FontWeight.w700,
             ),
           ),
