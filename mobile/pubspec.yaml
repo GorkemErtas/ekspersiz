@@ -53,6 +53,7 @@ dependencies:
   path_provider: ^2.1.6
   google_sign_in: ^7.2.0
   package_info_plus: ^10.2.1
+  in_app_update: ^5.0.0
 
 dev_dependencies:
 
