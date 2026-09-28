@@ -117,7 +117,7 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
       context,
       MaterialPageRoute(
         builder: (_) =>
-            ReminderFormScreen(vehicle: widget.vehicle, reminder: reminder),
+            ReminderFormScreen(vehicle: _vehicle, reminder: reminder),
       ),
     );
     if (result != null) await _load();
