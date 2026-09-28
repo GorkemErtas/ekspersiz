@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_card.dart';
+import '../../../core/widgets/theme_toggle_button.dart';
 import '../../auth/models/business_account.dart';
 import '../../inspection/screens/create_inspection_screen.dart';
 import '../models/maintenance_record.dart';
@@ -12,6 +13,7 @@ import '../models/vehicle_history_item.dart';
 import '../models/vehicle_overview.dart';
 import '../models/vehicle_reminder.dart';
 import '../services/vehicle_tracking_service.dart';
+import 'add_vehicle_screen.dart';
 import 'maintenance_form_screen.dart';
 import 'reminder_form_screen.dart';
 
@@ -29,6 +31,7 @@ class VehicleDetailScreen extends StatefulWidget {
 
 class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
   final _service = const VehicleTrackingService();
+  late Vehicle _vehicle;
   bool _loading = true;
   String? _error;
   VehicleOverview? _overview;
@@ -39,7 +42,26 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
   @override
   void initState() {
     super.initState();
+    _vehicle = widget.vehicle;
     _load();
+  }
+
+  Future<void> _openEditVehicle() async {
+    final updatedVehicle = await Navigator.of(context).push<Vehicle>(
+      MaterialPageRoute<Vehicle>(
+        builder: (_) => AddVehicleScreen(
+          vehicle: _vehicle,
+          businessAccount: widget.businessAccount,
+        ),
+      ),
+    );
+
+    if (!mounted || updatedVehicle == null) return;
+
+    setState(() {
+      _vehicle = updatedVehicle;
+    });
+    await _load();
   }
 
   Future<void> _load() async {
@@ -49,10 +71,10 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
     });
     try {
       final r = await Future.wait([
-        _service.getOverview(widget.vehicle.id),
-        _service.getMaintenance(widget.vehicle.id),
-        _service.getReminders(widget.vehicle.id),
-        _service.getHistory(widget.vehicle.id),
+        _service.getOverview(_vehicle.id),
+        _service.getMaintenance(_vehicle.id),
+        _service.getReminders(_vehicle.id),
+        _service.getHistory(_vehicle.id),
       ]);
       if (!mounted) {
         return;
@@ -81,8 +103,8 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
       context,
       MaterialPageRoute(
         builder: (_) => MaintenanceFormScreen(
-          vehicleId: widget.vehicle.id,
-          currentMileage: widget.vehicle.mileage,
+          vehicleId: _vehicle.id,
+          currentMileage: _vehicle.mileage,
           record: record,
         ),
       ),
@@ -122,13 +144,13 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
       false;
   Future<void> _deleteMaintenance(MaintenanceRecord item) async {
     if (!await _confirm('Bu bakım kaydı kalıcı olarak silinecek.')) return;
-    await _service.deleteMaintenance(widget.vehicle.id, item.id);
+    await _service.deleteMaintenance(_vehicle.id, item.id);
     await _load();
   }
 
   Future<void> _deleteReminder(VehicleReminder item) async {
     if (!await _confirm('Bu hatırlatma kalıcı olarak silinecek.')) return;
-    await _service.deleteReminder(widget.vehicle.id, item.id);
+    await _service.deleteReminder(_vehicle.id, item.id);
     await _load();
   }
 
@@ -178,7 +200,18 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: AppText(widget.vehicle.displayName)),
+    appBar: AppBar(
+      title: AppText(_vehicle.displayName),
+      actions: [
+        IconButton(
+          tooltip: 'Araç bilgilerini düzenle',
+          onPressed: _openEditVehicle,
+          icon: const Icon(Icons.edit_outlined),
+        ),
+        const ThemeToggleButton(),
+        const SizedBox(width: 8),
+      ],
+    ),
     body: SafeArea(
       child: _loading
           ? const Center(child: CircularProgressIndicator())
@@ -276,13 +309,13 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   AppText(
-                    widget.vehicle.displayName,
+                    _vehicle.displayName,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.w900,
                     ),
                   ),
                   AppText(
-                    '${widget.vehicle.modelYear} • ${widget.vehicle.mileage} km • ${widget.vehicle.plate}',
+                    '${_vehicle.modelYear} • ${_vehicle.mileage} km • ${_vehicle.plate}',
                   ),
                 ],
               ),
@@ -488,7 +521,7 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
               value: item.status == 'COMPLETED',
               onChanged: (v) async {
                 await _service.setReminderCompleted(
-                  widget.vehicle.id,
+                  _vehicle.id,
                   item.id,
                   v ?? false,
                 );
