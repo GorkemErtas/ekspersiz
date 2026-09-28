@@ -564,6 +564,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                 children: [
                   AppPageHeader(
                     icon: Icons.directions_car_filled_rounded,
+                    badge: _isEditing ? _plateController.text : null,
                     title: _isEditing
                         ? 'Araç bilgilerini düzenleyin'
                         : widget.businessAccount == null
@@ -812,11 +813,20 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                   AppCard(
                     padding: EdgeInsets.zero,
                     child: ExpansionTile(
-                      leading:
-                      const Icon(Icons.event_note_outlined),
-                      title:
-                      const AppText('Araç takip bilgileri'),
-                      subtitle: const AppText('İsteğe bağlı'),
+                      initiallyExpanded: _isEditing,
+                      leading: Icon(
+                        _isEditing
+                            ? Icons.notes_outlined
+                            : Icons.event_note_outlined,
+                      ),
+                      title: AppText(
+                        _isEditing ? 'Araç notları' : 'Araç takip bilgileri',
+                      ),
+                      subtitle: AppText(
+                        _isEditing
+                            ? 'Servis, parça veya kullanım notlarını güncelleyin.'
+                            : 'İsteğe bağlı',
+                      ),
                       childrenPadding:
                       const EdgeInsets.fromLTRB(
                         20,
@@ -927,12 +937,13 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                           _trackingDivider(),
                         ],
 
-                        _trackingSectionTitle(
-                          icon: Icons.notes_outlined,
-                          title: 'Araç notları',
-                          subtitle:
-                              'Araçla ilgili eklemek istediğiniz diğer bilgiler.',
-                        ),
+                        if (!_isEditing)
+                          _trackingSectionTitle(
+                            icon: Icons.notes_outlined,
+                            title: 'Araç notları',
+                            subtitle:
+                                'Araçla ilgili eklemek istediğiniz diğer bilgiler.',
+                          ),
 
                         TextFormField(
                           controller: _notesController,
