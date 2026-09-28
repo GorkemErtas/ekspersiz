@@ -31,21 +31,21 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _checkVersionAndRestoreSession() async {
-    final updateRequired = await _appUpdateService.isUpdateRequired();
+    final updateStatus = await _appUpdateService.checkForUpdate();
 
     if (!mounted) {
       return;
     }
 
-    if (updateRequired) {
-      await _showForceUpdateDialog();
+    if (updateStatus.updateRequired) {
+      await _showForceUpdateDialog(updateStatus);
       return;
     }
 
     await _restoreSession();
   }
 
-  Future<void> _showForceUpdateDialog() async {
+  Future<void> _showForceUpdateDialog(AppUpdateStatus updateStatus) async {
     await showDialog<void>(
       context: context,
       barrierDismissible: false,
@@ -58,7 +58,20 @@ class _SplashScreenState extends State<SplashScreen> {
           ),
           actions: [
             FilledButton(
-              onPressed: _appUpdateService.openStore,
+              onPressed: () async {
+                if (updateStatus.immediateUpdateAllowed) {
+                  final completed =
+                      await _appUpdateService.performImmediateUpdate();
+
+                  if (completed && mounted) {
+                    Navigator.of(dialogContext).pop();
+                    await _checkVersionAndRestoreSession();
+                    return;
+                  }
+                }
+
+                await _appUpdateService.openStore();
+              },
               child: const AppText('Güncelle'),
             ),
           ],
