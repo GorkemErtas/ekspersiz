@@ -129,6 +129,13 @@ public class DamageInspection {
     )
     private String reportMessage;
 
+    @Column(name = "report_access_granted", nullable = false)
+    private boolean reportAccessGranted;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "report_access_source", length = 30)
+    private ReportAccessSource reportAccessSource;
+
     protected DamageInspection() {
     }
 
@@ -212,6 +219,14 @@ public class DamageInspection {
         return reportMessage;
     }
 
+    public boolean isReportAccessGranted() {
+        return reportAccessGranted;
+    }
+
+    public ReportAccessSource getReportAccessSource() {
+        return reportAccessSource;
+    }
+
     public void setVehicle(Vehicle vehicle) {
         this.vehicle = vehicle;
     }
@@ -280,6 +295,11 @@ public class DamageInspection {
             String reportMessage
     ) {
         this.reportMessage = reportMessage;
+    }
+
+    public void grantReportAccess(ReportAccessSource source) {
+        this.reportAccessGranted = true;
+        this.reportAccessSource = source;
     }
 
     public void addRepairRecommendation(

@@ -19,17 +19,20 @@ public class AnalysisQuotaService {
     private final SubscriptionService subscriptions;
     private final AnalysisUsageRepository usages;
     private final Clock clock;
+    private final AnalysisCreditService analysisCreditService;
 
     public AnalysisQuotaService(
             BusinessContextService businessContext,
             SubscriptionService subscriptions,
             AnalysisUsageRepository usages,
-            Clock clock
+            Clock clock,
+            AnalysisCreditService analysisCreditService
     ) {
         this.businessContext = businessContext;
         this.subscriptions = subscriptions;
         this.usages = usages;
         this.clock = clock;
+        this.analysisCreditService = analysisCreditService;
     }
 
     @Transactional(readOnly = true)
@@ -59,20 +62,6 @@ public class AnalysisQuotaService {
             );
         }
 
-        SubscriptionPlan plan =
-                subscriptions.getEffectivePlan(user);
-
-        if (plan == SubscriptionPlan.BUSINESS) {
-            return response(
-                    plan,
-                    0,
-                    0
-            );
-        }
-
-        int limit =
-                subscriptions.monthlyAnalysisLimit(plan);
-
         long used =
                 usages.countByUser_IdAndStartedAtGreaterThanEqualAndStartedAtLessThan(
                         user.getId(),
@@ -80,10 +69,17 @@ public class AnalysisQuotaService {
                         end
                 );
 
-        return response(
-                plan,
+        int freeLimit = 1;
+        long freeRemaining = Math.max(0, freeLimit - used);
+        long purchasedCredits = analysisCreditService.getBalance(user);
+
+        return new AnalysisQuotaResponse(
+                SubscriptionPlan.FREE,
                 used,
-                limit
+                freeLimit,
+                freeRemaining + purchasedCredits,
+                freeRemaining,
+                purchasedCredits
         );
     }
 
@@ -92,11 +88,14 @@ public class AnalysisQuotaService {
             long used,
             int limit
     ) {
+        long remaining = Math.max(0, limit - used);
         return new AnalysisQuotaResponse(
                 plan,
                 used,
                 limit,
-                Math.max(0, limit - used)
+                remaining,
+                remaining,
+                0
         );
     }
 

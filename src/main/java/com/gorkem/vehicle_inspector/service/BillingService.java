@@ -42,6 +42,7 @@ public class BillingService {
     private final RevenueCatWebhookVerifier webhookVerifier;
     private final ObjectMapper objectMapper;
     private final Clock clock;
+    private final AnalysisCreditService analysisCreditService;
 
     public BillingService(
             UserRepository userRepository,
@@ -51,7 +52,8 @@ public class BillingService {
             RevenueCatClient revenueCatClient,
             RevenueCatWebhookVerifier webhookVerifier,
             ObjectMapper objectMapper,
-            Clock clock
+            Clock clock,
+            AnalysisCreditService analysisCreditService
     ) {
         this.userRepository = userRepository;
         this.subscriptionRepository = subscriptionRepository;
@@ -61,6 +63,7 @@ public class BillingService {
         this.webhookVerifier = webhookVerifier;
         this.objectMapper = objectMapper;
         this.clock = clock;
+        this.analysisCreditService = analysisCreditService;
     }
 
     @Transactional
@@ -96,7 +99,18 @@ public class BillingService {
         String appUserId = textOrNull(event.path("app_user_id"));
 
         if (!"TEST".equals(eventType)) {
-            findWebhookUsers(event).forEach(this::syncUser);
+            List<User> users = findWebhookUsers(event);
+            if ("NON_RENEWING_PURCHASE".equals(eventType)) {
+                String productId = requiredText(event, "product_id");
+                String transactionId = requiredText(event, "transaction_id");
+                users.forEach(user -> analysisCreditService.grantPurchase(
+                        user,
+                        productId,
+                        transactionId
+                ));
+            } else {
+                users.forEach(this::syncUser);
+            }
         }
 
         webhookEventRepository.save(new BillingWebhookEvent(
@@ -267,16 +281,19 @@ public class BillingService {
         plans.add(new BillingPlanResponse(
                 SubscriptionPlan.FREE,
                 "Ücretsiz",
-                "Temel bireysel kullanım",
+                "Araç takibi ve temel AI hasar tespiti ücretsiz",
                 null,
                 null,
                 BigDecimal.ZERO,
                 "TRY",
                 false,
-                List.of("1 aktif araç", "Ayda 1 AI hasar analizi")
+                List.of("1 aktif araç", "Temel AI hasar tespiti ücretsiz", "Ayda 1 detaylı AI raporu ücretsiz")
         ));
 
         for (BillingProduct product : BillingProduct.values()) {
+            if (product.getPlan() != SubscriptionPlan.BUSINESS) {
+                continue;
+            }
             plans.add(new BillingPlanResponse(
                     product.getPlan(),
                     product.getTitle(),

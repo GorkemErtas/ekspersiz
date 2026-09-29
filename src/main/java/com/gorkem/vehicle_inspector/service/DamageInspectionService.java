@@ -58,6 +58,7 @@ public class DamageInspectionService {
             geminiInspectionReportService;
     private final TransactionTemplate transactionTemplate;
     private final SubscriptionService subscriptionService;
+    private final AnalysisCreditService analysisCreditService;
     private static final int MAX_STORED_INSPECTIONS = 20;
 
     public DamageInspectionService(
@@ -72,7 +73,8 @@ public class DamageInspectionService {
             AiAnalysisClient aiAnalysisClient,
             GeminiInspectionReportService geminiInspectionReportService,
             PlatformTransactionManager transactionManager,
-            SubscriptionService subscriptionService
+            SubscriptionService subscriptionService,
+            AnalysisCreditService analysisCreditService
     ) {
         this.inspectionRepository =
                 inspectionRepository;
@@ -102,6 +104,7 @@ public class DamageInspectionService {
 
         this.subscriptionService =
                 subscriptionService;
+        this.analysisCreditService = analysisCreditService;
     }
 
     private DamageInspectionResponse buildResponse(
@@ -485,7 +488,14 @@ public class DamageInspectionService {
                             }
 
                             validateNotProcessing(inspection);
-                            validateAnalysisLimit(inspection, user);
+                            if (inspection.getStatus() == InspectionStatus.COMPLETED) {
+                                throw new IllegalStateException(
+                                        "Bu inceleme tamamlandı. Yeni fotoğraf analizi için yeni bir inceleme oluşturun."
+                                );
+                            }
+                            if (inspection.getAnalysisStartedAt() == null) {
+                                inspection.setAnalysisStartedAt(LocalDateTime.now(clock));
+                            }
 
                             inspection.setStatus(
                                     InspectionStatus.PROCESSING
@@ -738,11 +748,11 @@ public class DamageInspectionService {
                     );
 
                     inspection.setReportStatus(
-                            ReportStatus.PROCESSING
+                            ReportStatus.PENDING
                     );
 
                     inspection.setReportMessage(
-                            null
+                            "Temel hasar tespiti tamamlandı. Detaylı AI raporunu istediğinizde oluşturabilirsiniz."
                     );
 
                     inspectionRepository.save(
@@ -751,9 +761,6 @@ public class DamageInspectionService {
                 }
         );
 
-        generateReportOutsideTransaction(
-                context
-        );
 
         DamageInspectionResponse response =
                 transactionTemplate.execute(
@@ -1077,6 +1084,8 @@ public class DamageInspectionService {
                                                 + "bulunamadı."
                                 );
                             }
+
+                            analysisCreditService.grantReportAccess(inspection, user);
 
                             inspection.setReportStatus(
                                     ReportStatus.PROCESSING

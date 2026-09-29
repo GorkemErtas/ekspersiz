@@ -6,6 +6,8 @@ public record AnalysisQuotaResponse(
         SubscriptionPlan plan,
         long used,
         int limit,
-        long remaining
+        long remaining,
+        long freeRemaining,
+        long purchasedCredits
 ) {
 }
