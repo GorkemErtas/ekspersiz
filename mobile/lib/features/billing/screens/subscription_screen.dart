@@ -9,14 +9,21 @@ import '../services/billing_service.dart';
 import '../services/revenue_cat_gateway.dart';
 
 class SubscriptionScreen extends StatefulWidget {
-  const SubscriptionScreen({super.key});
+  const SubscriptionScreen({
+    super.key,
+    this.billingService = const BillingService(),
+    this.quotaService = const AnalysisQuotaService(),
+  });
+
+  final BillingService billingService;
+  final AnalysisQuotaService quotaService;
   @override
   State<SubscriptionScreen> createState() => _SubscriptionScreenState();
 }
 
 class _SubscriptionScreenState extends State<SubscriptionScreen> {
-  final BillingService _billing = const BillingService();
-  final AnalysisQuotaService _quotaService = const AnalysisQuotaService();
+  BillingService get _billing => widget.billingService;
+  AnalysisQuotaService get _quotaService => widget.quotaService;
   BillingPageData? _billingData;
   AnalysisQuota? _quota;
   String? _busyPack;

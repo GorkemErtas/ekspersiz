@@ -1,124 +1,116 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mobile/features/billing/models/analysis_quota.dart';
 import 'package:mobile/features/billing/models/billing_overview.dart';
 import 'package:mobile/features/billing/models/billing_plan.dart';
 import 'package:mobile/features/billing/models/billing_status.dart';
 import 'package:mobile/features/billing/screens/subscription_screen.dart';
+import 'package:mobile/features/billing/services/analysis_quota_service.dart';
 import 'package:mobile/features/billing/services/billing_service.dart';
 
 void main() {
-  testWidgets('shows backend plans and fallback prices without store keys', (
-    tester,
-  ) async {
+  testWidgets('shows free allowance and analysis credit packs', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
         home: SubscriptionScreen(
           billingService: FakeBillingService(storeConfigured: false),
+          quotaService: FakeQuotaService(),
         ),
       ),
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Abonelik ve Ödeme'), findsOneWidget);
-    expect(find.text('Ücretsiz'), findsWidgets);
-    expect(
-      find.textContaining('Satın alma anahtarı bu sürümde tanımlı değil'),
-      findsOneWidget,
-    );
-    await tester.drag(find.byType(ListView), const Offset(0, -500));
-    await tester.pumpAndSettle();
-    expect(find.text('Plus'), findsOneWidget);
-    expect(find.text('₺149,99 / ay'), findsOneWidget);
+    expect(find.text('AI Analiz Hakları'), findsOneWidget);
+    expect(find.textContaining('Bu ay ücretsiz: 1'), findsOneWidget);
+    expect(find.textContaining('Satın alınan: 0'), findsOneWidget);
+    expect(find.text('1 detaylı analiz'), findsOneWidget);
+    expect(find.text('₺20,00'), findsOneWidget);
+    expect(find.text('3 detaylı analiz'), findsOneWidget);
+    expect(find.text('₺49,99'), findsOneWidget);
   });
 
-  testWidgets('purchases a store package and refreshes current plan', (
-    tester,
-  ) async {
-    final service = FakeBillingService(storeConfigured: true);
+  testWidgets('purchases a credit pack', (tester) async {
+    final billing = FakeBillingService(storeConfigured: true);
+    final quota = FakeQuotaService();
 
     await tester.pumpWidget(
-      MaterialApp(home: SubscriptionScreen(billingService: service)),
+      MaterialApp(
+        home: SubscriptionScreen(
+          billingService: billing,
+          quotaService: quota,
+        ),
+      ),
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('₺159,99 / ay'), findsOneWidget);
-
-    final purchaseButton = find.widgetWithText(
-      FilledButton,
-      'Mağazadan Abone Ol',
-    );
-    await tester.drag(find.byType(ListView), const Offset(0, -600));
-    await tester.pumpAndSettle();
-    await tester.tap(purchaseButton.first);
+    await tester.tap(find.widgetWithText(FilledButton, '₺20,00'));
+    await tester.pump(const Duration(milliseconds: 800));
     await tester.pumpAndSettle();
 
-    expect(service.purchasedPlan, 'PLUS');
-    expect(find.text('Plus planınız aktif edildi.'), findsOneWidget);
-    await tester.drag(find.byType(ListView), const Offset(0, 800));
-    await tester.pumpAndSettle();
-    expect(find.text('Aktif'), findsOneWidget);
+    expect(billing.purchasedPackage, 'analysis_1');
   });
+}
+
+class FakeQuotaService extends AnalysisQuotaService {
+  FakeQuotaService();
+
+  int credits = 0;
+
+  @override
+  Future<AnalysisQuota> getQuota() async => AnalysisQuota(
+        plan: 'FREE',
+        used: 0,
+        limit: 1,
+        remaining: 1 + credits,
+        freeRemaining: 1,
+        purchasedCredits: credits,
+      );
 }
 
 class FakeBillingService extends BillingService {
   FakeBillingService({required this.storeConfigured});
 
   final bool storeConfigured;
-  String? purchasedPlan;
+  String? purchasedPackage;
 
   @override
   Future<BillingPageData> load() async {
     return BillingPageData(
-      overview: _overview('FREE'),
+      overview: _overview(),
       storeConfigured: storeConfigured,
       localizedPrices: storeConfigured
-          ? const {'plus_monthly': '₺159,99'}
+          ? const {
+              'analysis_1': '₺20,00',
+              'analysis_3': '₺49,99',
+              'analysis_10': '₺139,99',
+            }
           : const {},
     );
   }
 
   @override
-  Future<BillingOverview> purchase(
-    BillingPlan plan, {
-    String currentPlan = 'FREE',
-    String? currentProductId,
-  }) async {
-    purchasedPlan = plan.plan;
-    return _overview(plan.plan);
+  Future<void> purchaseCreditPack(String packageIdentifier) async {
+    purchasedPackage = packageIdentifier;
   }
 
-  BillingOverview _overview(String currentPlan) {
-    return BillingOverview(
-      status: BillingStatus(
-        billingCustomerId: 'billing-id',
-        currentPlan: currentPlan,
-        status: currentPlan == 'FREE' ? 'NONE' : 'ACTIVE',
-        productId: currentPlan == 'PLUS' ? 'eksper_plus_monthly' : null,
-        autoRenewing: currentPlan != 'FREE',
-        sandbox: true,
-      ),
-      plans: const [
-        BillingPlan(
-          plan: 'FREE',
-          title: 'Free',
-          description: 'Temel kullanım',
-          fallbackMonthlyPrice: 0,
-          currency: 'TRY',
-          highlighted: false,
-          features: ['1 aktif araç'],
+  BillingOverview _overview() => BillingOverview(
+        status: const BillingStatus(
+          billingCustomerId: 'billing-id',
+          currentPlan: 'FREE',
+          status: 'NONE',
+          autoRenewing: false,
+          sandbox: true,
         ),
-        BillingPlan(
-          plan: 'PLUS',
-          title: 'Plus',
-          description: 'Daha geniş kullanım',
-          productId: 'eksper_plus_monthly',
-          packageIdentifier: 'plus_monthly',
-          fallbackMonthlyPrice: 149.99,
-          currency: 'TRY',
-          highlighted: false,
-          features: ['5 aktif araç', 'Günde 15 hasar analizi'],
-        ),
-      ],
-    );
-  }
+        plans: const [
+          BillingPlan(
+            plan: 'FREE',
+            title: 'Ücretsiz',
+            description: 'Temel kullanım',
+            fallbackMonthlyPrice: 0,
+            currency: 'TRY',
+            highlighted: false,
+            features: ['Temel AI hasar tespiti ücretsiz'],
+          ),
+        ],
+      );
 }
