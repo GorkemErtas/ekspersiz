@@ -27,14 +27,16 @@ void main() {
       expect(find.text(entry.value), findsWidgets);
       expect(find.text('Bireysel'), findsNothing);
 
+      final accountLabel =
+          entry.key == 'BUSINESS' ? 'Hesap Türü' : 'Hesap Türü';
       await tester.scrollUntilVisible(
-        find.text('Abonelik Planı'),
+        find.text(accountLabel),
         150,
         scrollable: find.byType(Scrollable).first,
       );
 
       expect(find.text('user@example.com'), findsOneWidget);
-      expect(find.text('Abonelik Planı'), findsOneWidget);
+      expect(find.text(accountLabel), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
   }
