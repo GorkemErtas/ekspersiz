@@ -107,6 +107,27 @@ public class DamageInspectionService {
         this.analysisCreditService = analysisCreditService;
     }
 
+    DamageInspectionService(
+            DamageInspectionRepository inspectionRepository,
+            VehicleRepository vehicleRepository,
+            BusinessContextService businessContextService,
+            InspectionAccessService inspectionAccessService,
+            BusinessAccountRepository businessAccountRepository,
+            UserRepository userRepository,
+            Clock clock,
+            FileStorageService fileStorageService,
+            AiAnalysisClient aiAnalysisClient,
+            GeminiInspectionReportService geminiInspectionReportService,
+            PlatformTransactionManager transactionManager,
+            SubscriptionService subscriptionService
+    ) {
+        this(inspectionRepository, vehicleRepository, businessContextService,
+                inspectionAccessService, businessAccountRepository, userRepository,
+                clock, fileStorageService, aiAnalysisClient,
+                geminiInspectionReportService, transactionManager,
+                subscriptionService, null);
+    }
+
     private DamageInspectionResponse buildResponse(
             DamageInspection inspection
     ) {
@@ -1085,7 +1106,9 @@ public class DamageInspectionService {
                                 );
                             }
 
-                            analysisCreditService.grantReportAccess(inspection, user);
+                            if (analysisCreditService != null) {
+                                analysisCreditService.grantReportAccess(inspection, user);
+                            }
 
                             inspection.setReportStatus(
                                     ReportStatus.PROCESSING

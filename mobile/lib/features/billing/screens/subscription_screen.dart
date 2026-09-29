@@ -100,8 +100,8 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                               style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
                             const SizedBox(height: 14),
                             AppText(_quota!.plan == 'BUSINESS'
-                              ? '\${_quota!.remaining} / \${_quota!.limit} şirket analizi kaldı'
-                              : 'Bu ay ücretsiz: \${_quota!.freeRemaining}  •  Satın alınan: \${_quota!.purchasedCredits}'),
+                              ? '${_quota!.remaining} / ${_quota!.limit} şirket analizi kaldı'
+                              : 'Bu ay ücretsiz: ${_quota!.freeRemaining}  •  Satın alınan: ${_quota!.purchasedCredits}'),
                             const SizedBox(height: 8),
                             const AppText('Temel görsel hasar tespiti ücretsizdir. Detaylı rapor; AI açıklaması, onarım önerileri ve tahmini maliyet aralığını içerir.'),
                           ],
@@ -120,7 +120,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                                 Expanded(child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    AppText('\${pack.$2} detaylı analiz',
+                                    AppText('${pack.$2} detaylı analiz',
                                       style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900)),
                                     const SizedBox(height: 4),
                                     AppText(pack.$4),

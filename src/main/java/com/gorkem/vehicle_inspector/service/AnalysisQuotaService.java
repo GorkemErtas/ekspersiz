@@ -35,6 +35,15 @@ public class AnalysisQuotaService {
         this.analysisCreditService = analysisCreditService;
     }
 
+    AnalysisQuotaService(
+            BusinessContextService businessContext,
+            SubscriptionService subscriptions,
+            AnalysisUsageRepository usages,
+            Clock clock
+    ) {
+        this(businessContext, subscriptions, usages, clock, null);
+    }
+
     @Transactional(readOnly = true)
     public AnalysisQuotaResponse getQuota(String email) {
         User user = businessContext.requireUser(email);
@@ -71,7 +80,7 @@ public class AnalysisQuotaService {
 
         int freeLimit = 1;
         long freeRemaining = Math.max(0, freeLimit - used);
-        long purchasedCredits = analysisCreditService.getBalance(user);
+        long purchasedCredits = analysisCreditService == null ? 0 : analysisCreditService.getBalance(user);
 
         return new AnalysisQuotaResponse(
                 SubscriptionPlan.FREE,

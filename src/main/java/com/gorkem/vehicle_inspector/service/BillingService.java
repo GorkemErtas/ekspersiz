@@ -66,6 +66,21 @@ public class BillingService {
         this.analysisCreditService = analysisCreditService;
     }
 
+    BillingService(
+            UserRepository userRepository,
+            BillingSubscriptionRepository subscriptionRepository,
+            BillingWebhookEventRepository webhookEventRepository,
+            SubscriptionService subscriptionService,
+            RevenueCatClient revenueCatClient,
+            RevenueCatWebhookVerifier webhookVerifier,
+            ObjectMapper objectMapper,
+            Clock clock
+    ) {
+        this(userRepository, subscriptionRepository, webhookEventRepository,
+                subscriptionService, revenueCatClient, webhookVerifier,
+                objectMapper, clock, null);
+    }
+
     @Transactional
     public BillingOverviewResponse getOverview(String email) {
         User user = requireUser(email);
@@ -103,7 +118,7 @@ public class BillingService {
             if ("NON_RENEWING_PURCHASE".equals(eventType)) {
                 String productId = requiredText(event, "product_id");
                 String transactionId = requiredText(event, "transaction_id");
-                users.forEach(user -> analysisCreditService.grantPurchase(
+                if (analysisCreditService != null) users.forEach(user -> analysisCreditService.grantPurchase(
                         user,
                         productId,
                         transactionId
