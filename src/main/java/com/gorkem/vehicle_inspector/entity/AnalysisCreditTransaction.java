@@ -89,4 +89,16 @@ public class AnalysisCreditTransaction {
                 -1, null, null, inspection, createdAt
         );
     }
+
+    public int getAmount() {
+        return amount;
+    }
+
+    public AnalysisCreditTransactionType getType() {
+        return type;
+    }
+
+    public String getExternalTransactionId() {
+        return externalTransactionId;
+    }
 }
