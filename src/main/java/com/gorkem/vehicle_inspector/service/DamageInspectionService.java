@@ -1116,7 +1116,8 @@ public class DamageInspectionService {
                                 );
                             }
 
-                            if (analysisCreditService != null) {
+                            if (analysisCreditService != null
+                                    && inspection.getDamageSeverity() != DamageSeverity.NONE) {
                                 analysisCreditService.grantReportAccess(inspection, user);
                             }
 

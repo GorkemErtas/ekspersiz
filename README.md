@@ -229,27 +229,28 @@ Account deletion is intentionally blocked while a user still has a business memb
 
 ---
 
-## 💳 Subscriptions & Billing
+## 💳 AI Analysis Credits & Billing
 
-Supported plans:
+Personal accounts use a freemium, pay-per-report model:
 
-| Plan | Active vehicles | Monthly AI analyses |
-| --- | ---: | ---: |
-| FREE | 1 | 1 |
-| PLUS | 3 | 5 |
-| PRO | 10 | 20 |
+| Capability | Personal account |
+| --- | --- |
+| Vehicle tracking, maintenance and reminders | Free |
+| Basic ML/YOLO visible-damage detection | Free |
+| Detailed Gemini AI report | 1 free report / month |
+| Extra detailed reports | One-time consumable credits |
 
-The BUSINESS plan uses company-level limits and shared resources.
+Recommended Android one-time products:
 
-Android subscriptions are integrated through **Google Play + RevenueCat**. The mobile client does not authoritatively choose a plan. After purchase or restore, the backend verifies RevenueCat state and synchronizes the user's subscription.
+| Credits | Product ID | RevenueCat package | Fallback price |
+| ---: | --- | --- | ---: |
+| 1 | `analysis_1` | `analysis_1` | ₺20.00 |
+| 3 | `analysis_3` | `analysis_3` | ₺49.99 |
+| 10 | `analysis_10` | `analysis_10` | ₺139.99 |
 
-Current Android product IDs:
+Purchased credits do not expire. Credit grants are written server-side from RevenueCat `NON_RENEWING_PURCHASE` webhooks and are idempotent by store transaction ID. A detailed report reserves its free allowance or purchased credit atomically before Gemini generation; retrying a failed report for the same inspection does not consume another credit.
 
-| Plan | Product ID | RevenueCat package |
-| --- | --- | --- |
-| PLUS | `eksper_plus_monthly` | `plus_monthly` |
-| PRO | `eksper_pro_monthly` | `pro_monthly` |
-| BUSINESS | `eksper_business_monthly` | `business_monthly` |
+The BUSINESS plan remains subscription-based and uses a shared company-level monthly report quota. Existing personal PLUS/PRO subscriptions remain understood by the backend for backwards compatibility, but they are no longer offered in the personal billing catalog.
 
 RevenueCat webhook requests are protected by a private authorization value. Optional webhook-signing support is configuration-driven; secrets remain server-side.
 

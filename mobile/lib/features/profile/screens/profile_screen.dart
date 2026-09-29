@@ -427,7 +427,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       const Divider(height: 1, indent: 82),
                       _ProfileItem(
                         icon: Icons.workspace_premium_outlined,
-                        title: 'Abonelik Planı',
+                        title: widget.businessAccount != null ? 'Abonelik Planı' : 'Hesap Türü',
                         value: _subscriptionPlanLabel,
                       ),
                       if (widget.businessAccount != null) ...[
@@ -455,9 +455,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     children: [
                       _ActionProfileItem(
                         icon: Icons.workspace_premium_outlined,
-                        title: 'Abonelik ve Ödeme',
-                        subtitle:
-                            'Planları karşılaştırın, satın alımları geri yükleyin ve aboneliğinizi yönetin.',
+                        title: widget.businessAccount != null
+                            ? 'Abonelik ve Ödeme'
+                            : 'AI Analiz Hakları',
+                        subtitle: widget.businessAccount != null
+                            ? 'Business planınızı ve şirket analiz kotasını yönetin.'
+                            : 'Ücretsiz aylık hakkınızı görün veya tek seferlik analiz hakkı ekleyin.',
                         onTap: _openSubscription,
                       ),
                       const Divider(height: 1, indent: 82),
