@@ -40,6 +40,12 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    await tester.scrollUntilVisible(
+      find.text('EksperSiz Business'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+
     expect(find.text('EksperSiz Business'), findsOneWidget);
     expect(find.text('50 ortak aktif araç'), findsOneWidget);
     expect(find.text('Şirket genelinde ayda 100 AI analizi'), findsOneWidget);
