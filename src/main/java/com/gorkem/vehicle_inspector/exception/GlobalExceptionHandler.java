@@ -142,6 +142,17 @@ public class GlobalExceptionHandler {
         );
     }
 
+    @ExceptionHandler(InsufficientAnalysisCreditException.class)
+    public ResponseEntity<ApiErrorResponse>
+    handleInsufficientAnalysisCreditException(
+            InsufficientAnalysisCreditException exception
+    ) {
+        return buildResponse(
+                HttpStatus.PAYMENT_REQUIRED,
+                exception.getMessage()
+        );
+    }
+
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<ApiErrorResponse>
     handleIllegalStateException(
