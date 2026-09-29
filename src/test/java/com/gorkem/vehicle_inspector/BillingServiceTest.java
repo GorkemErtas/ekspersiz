@@ -198,7 +198,7 @@ class BillingServiceTest {
                 .thenReturn(Optional.of(destination));
         when(subscriptions.findByUserId(8L)).thenReturn(Optional.empty());
         when(revenueCatClient.getCustomer(user.getBillingCustomerId()))
-                .thenReturn(new RevenueCatCustomer(List.of(), null));
+                .thenReturn(new RevenueCatCustomer(List.of(), List.of(), null));
         when(revenueCatClient.getCustomer(destination.getBillingCustomerId()))
                 .thenReturn(customer(subscription(
                         "eksper_plus_monthly",
@@ -219,6 +219,7 @@ class BillingServiceTest {
     private RevenueCatCustomer customer(RevenueCatSubscription subscription) {
         return new RevenueCatCustomer(
                 List.of(subscription),
+                List.of(),
                 "https://apps.apple.com/account/subscriptions"
         );
     }
