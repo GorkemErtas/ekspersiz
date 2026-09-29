@@ -1,6 +1,7 @@
 package com.gorkem.vehicle_inspector.service;
 
 import com.gorkem.vehicle_inspector.entity.*;
+import com.gorkem.vehicle_inspector.exception.InsufficientAnalysisCreditException;
 import com.gorkem.vehicle_inspector.exception.ResourceNotFoundException;
 import com.gorkem.vehicle_inspector.repository.*;
 import org.springframework.stereotype.Service;
@@ -140,7 +141,7 @@ public class AnalysisCreditService {
         }
 
         if (credits.balanceByUserId(lockedUser.getId()) <= 0) {
-            throw new IllegalStateException(
+            throw new InsufficientAnalysisCreditException(
                     "Detaylı AI raporu için analiz hakkınız bulunmuyor. Tek analiz veya avantajlı paket satın alabilirsiniz."
             );
         }
