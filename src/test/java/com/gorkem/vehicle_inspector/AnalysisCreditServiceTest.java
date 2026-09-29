@@ -38,7 +38,9 @@ class AnalysisCreditServiceTest {
         Vehicle vehicle = new Vehicle("35TEST01", "Test", "Car", 2024, 1000, user);
         inspection = new DamageInspection(vehicle, user, InspectionStatus.COMPLETED);
         ReflectionTestUtils.setField(inspection, "id", 11L);
-        when(users.findByIdForUpdate(7L)).thenReturn(Optional.of(user));
+        lenient()
+                .when(users.findByIdForUpdate(7L))
+                .thenReturn(Optional.of(user));
     }
 
     @Test
