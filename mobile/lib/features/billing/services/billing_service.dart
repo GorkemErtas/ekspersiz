@@ -96,6 +96,7 @@ class BillingService {
       throw StateError('Bu analiz paketi mağazada henüz yayınlanmadı.');
     }
     await revenueCatGateway.purchase(package);
+    await sync();
   }
 
   Future<BillingOverview> restore() async {

@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gorkem.vehicle_inspector.client.RevenueCatClient;
 import com.gorkem.vehicle_inspector.client.RevenueCatCustomer;
 import com.gorkem.vehicle_inspector.client.RevenueCatSubscription;
+import com.gorkem.vehicle_inspector.client.RevenueCatPurchase;
 import com.gorkem.vehicle_inspector.dto.response.BillingOverviewResponse;
 import com.gorkem.vehicle_inspector.dto.response.BillingPlanResponse;
 import com.gorkem.vehicle_inspector.dto.response.BillingStatusResponse;

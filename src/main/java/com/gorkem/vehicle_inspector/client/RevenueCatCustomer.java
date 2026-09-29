@@ -4,6 +4,7 @@ import java.util.List;
 
 public record RevenueCatCustomer(
         List<RevenueCatSubscription> subscriptions,
+        List<RevenueCatPurchase> purchases,
         String managementUrl
 ) {
 }

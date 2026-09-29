@@ -99,8 +99,33 @@ public class RevenueCatClient {
             }
         }
 
+        List<RevenueCatPurchase> purchases = new ArrayList<>();
+        JsonNode nonSubscriptionNodes = subscriber.path("non_subscriptions");
+
+        if (nonSubscriptionNodes.isObject()) {
+            for (Map.Entry<String, JsonNode> field : nonSubscriptionNodes.properties()) {
+                if (!field.getValue().isArray()) {
+                    continue;
+                }
+                for (JsonNode value : field.getValue()) {
+                    String transactionId = textOrNull(value.path("id"));
+                    if (transactionId == null) {
+                        continue;
+                    }
+                    purchases.add(new RevenueCatPurchase(
+                            field.getKey(),
+                            transactionId,
+                            parseInstant(value.path("purchase_date")),
+                            value.path("is_sandbox").asBoolean(false),
+                            textOrNull(value.path("store"))
+                    ));
+                }
+            }
+        }
+
         return new RevenueCatCustomer(
                 List.copyOf(subscriptions),
+                List.copyOf(purchases),
                 textOrNull(subscriber.path("management_url"))
         );
     }
