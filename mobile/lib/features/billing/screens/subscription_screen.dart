@@ -258,7 +258,7 @@ class _BusinessPlanCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final fallbackPrice =
-        '₺' + plan.fallbackMonthlyPrice.toStringAsFixed(2).replaceAll('.', ',');
+        '₺${plan.fallbackMonthlyPrice.toStringAsFixed(2).replaceAll('.', ',')}';
 
     return Container(
       padding: const EdgeInsets.all(22),
