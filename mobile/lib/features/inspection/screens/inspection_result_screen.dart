@@ -9,6 +9,9 @@ import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/app_icon_box.dart';
 import '../../../core/widgets/app_section_header.dart';
 import '../../../core/widgets/app_status_badge.dart';
+import '../../billing/services/analysis_quota_service.dart';
+import '../../billing/services/billing_service.dart';
+import '../../billing/services/revenue_cat_gateway.dart';
 
 import '../models/damage_inspection.dart';
 import '../services/inspection_pdf_service.dart';
@@ -37,6 +40,8 @@ class _InspectionResultScreenState extends State<InspectionResultScreen> {
 
   bool _isRegeneratingReport = false;
   bool _isSharingPdf = false;
+  final AnalysisQuotaService _quotaService = const AnalysisQuotaService();
+  final BillingService _billingService = const BillingService();
 
   @override
   void initState() {
@@ -71,6 +76,13 @@ class _InspectionResultScreenState extends State<InspectionResultScreen> {
     });
 
     try {
+      final quota = await _quotaService.getQuota();
+      if (quota.plan != 'BUSINESS' && quota.remaining <= 0) {
+        if (mounted) setState(() => _isRegeneratingReport = false);
+        final purchased = await _showCreditPurchaseSheet();
+        if (!purchased || !mounted) return;
+        setState(() => _isRegeneratingReport = true);
+      }
       final updated = await _inspectionService.regenerateReport(_inspection.id);
 
       if (!mounted) {
@@ -98,6 +110,75 @@ class _InspectionResultScreenState extends State<InspectionResultScreen> {
           _isRegeneratingReport = false;
         });
       }
+    }
+  }
+
+  Future<bool> _showCreditPurchaseSheet() async {
+    final data = await _billingService.load();
+    if (!mounted) return false;
+    const packs = [
+      ('analysis_1', 1, '₺20,00', 'Tek analiz'),
+      ('analysis_3', 3, '₺49,99', 'Avantajlı'),
+      ('analysis_10', 10, '₺139,99', 'En avantajlı'),
+    ];
+    final selected = await showModalBottomSheet<String>(
+      context: context,
+      useSafeArea: true,
+      showDragHandle: true,
+      builder: (sheetContext) => Padding(
+        padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            AppText('Detaylı AI raporunu oluştur',
+              style: Theme.of(sheetContext).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
+            const SizedBox(height: 8),
+            const AppText('Temel hasar tespiti ücretsizdir. Detaylı rapor; AI açıklaması, onarım önerileri ve tahmini maliyet aralığını içerir.'),
+            const SizedBox(height: 18),
+            for (final pack in packs)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: ListTile(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+                    side: BorderSide(color: Theme.of(sheetContext).colorScheme.outlineVariant),
+                  ),
+                  leading: const Icon(Icons.auto_awesome_rounded),
+                  title: AppText('${pack.$2} detaylı analiz hakkı'),
+                  subtitle: AppText(pack.$4),
+                  trailing: AppText(data.localizedPrices[pack.$1] ?? pack.$3,
+                    style: Theme.of(sheetContext).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900)),
+                  onTap: data.storeConfigured ? () => Navigator.of(sheetContext).pop(pack.$1) : null,
+                ),
+              ),
+            const AppText('Tek seferlik ödeme. Abonelik değildir. Satın alınan hakların süresi dolmaz.'),
+          ],
+        ),
+      ),
+    );
+    if (selected == null) return false;
+    try {
+      final before = await _quotaService.getQuota();
+      await _billingService.purchaseCreditPack(selected);
+      for (var attempt = 0; attempt < 8; attempt++) {
+        await Future<void>.delayed(const Duration(milliseconds: 750));
+        final current = await _quotaService.getQuota();
+        if (current.purchasedCredits > before.purchasedCredits) return true;
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: AppText('Ödeme alındı. Analiz hakkı hesabınıza işleniyor; birkaç saniye sonra tekrar deneyin.')));
+      }
+      return false;
+    } on BillingPurchaseCancelled {
+      return false;
+    } catch (exception) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: AppText(exception.toString().replaceFirst('Exception: ', '').replaceFirst('Bad state: ', ''))));
+      }
+      return false;
     }
   }
 

@@ -4,17 +4,23 @@ class AnalysisQuota {
     required this.used,
     required this.limit,
     required this.remaining,
+    required this.freeRemaining,
+    required this.purchasedCredits,
   });
 
   final String plan;
   final int used;
   final int limit;
   final int remaining;
+  final int freeRemaining;
+  final int purchasedCredits;
 
   factory AnalysisQuota.fromJson(Map<String, dynamic> json) => AnalysisQuota(
     plan: json['plan'] as String? ?? 'FREE',
     used: (json['used'] as num?)?.toInt() ?? 0,
     limit: (json['limit'] as num?)?.toInt() ?? 0,
     remaining: (json['remaining'] as num?)?.toInt() ?? 0,
+    freeRemaining: (json['freeRemaining'] as num?)?.toInt() ?? 0,
+    purchasedCredits: (json['purchasedCredits'] as num?)?.toInt() ?? 0,
   );
 }

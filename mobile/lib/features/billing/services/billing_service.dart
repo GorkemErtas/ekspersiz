@@ -83,6 +83,21 @@ class BillingService {
     return sync();
   }
 
+  Future<void> purchaseCreditPack(String packageIdentifier) async {
+    final configured = await revenueCatGateway.configure(
+      (await getOverview()).status.billingCustomerId,
+    );
+    if (!configured) {
+      throw StateError('Ödeme sistemi bu sürümde yapılandırılmadı.');
+    }
+    final packages = await revenueCatGateway.getPackages();
+    final package = packages[packageIdentifier];
+    if (package == null) {
+      throw StateError('Bu analiz paketi mağazada henüz yayınlanmadı.');
+    }
+    await revenueCatGateway.purchase(package);
+  }
+
   Future<BillingOverview> restore() async {
     await revenueCatGateway.restorePurchases();
     return sync();
