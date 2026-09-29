@@ -76,14 +76,26 @@ class _InspectionResultScreenState extends State<InspectionResultScreen> {
     });
 
     try {
-      final quota = await _quotaService.getQuota();
-      if (quota.plan != 'BUSINESS' && quota.remaining <= 0) {
-        if (mounted) setState(() => _isRegeneratingReport = false);
+      DamageInspection updated;
+      try {
+        updated = await _inspectionService.regenerateReport(_inspection.id);
+      } on ApiException catch (exception) {
+        if (exception.statusCode != 402) {
+          rethrow;
+        }
+
+        if (mounted) {
+          setState(() => _isRegeneratingReport = false);
+        }
+
         final purchased = await _showCreditPurchaseSheet();
-        if (!purchased || !mounted) return;
+        if (!purchased || !mounted) {
+          return;
+        }
+
         setState(() => _isRegeneratingReport = true);
+        updated = await _inspectionService.regenerateReport(_inspection.id);
       }
-      final updated = await _inspectionService.regenerateReport(_inspection.id);
 
       if (!mounted) {
         return;
