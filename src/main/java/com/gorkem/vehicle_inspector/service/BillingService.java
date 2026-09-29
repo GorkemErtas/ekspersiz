@@ -18,6 +18,7 @@ import com.gorkem.vehicle_inspector.repository.UserRepository;
 import com.gorkem.vehicle_inspector.service.billing.BillingProduct;
 import com.gorkem.vehicle_inspector.service.billing.RevenueCatWebhookVerifier;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -44,6 +45,7 @@ public class BillingService {
     private final Clock clock;
     private final AnalysisCreditService analysisCreditService;
 
+    @Autowired
     public BillingService(
             UserRepository userRepository,
             BillingSubscriptionRepository subscriptionRepository,
@@ -66,7 +68,7 @@ public class BillingService {
         this.analysisCreditService = analysisCreditService;
     }
 
-    BillingService(
+    public BillingService(
             UserRepository userRepository,
             BillingSubscriptionRepository subscriptionRepository,
             BillingWebhookEventRepository webhookEventRepository,

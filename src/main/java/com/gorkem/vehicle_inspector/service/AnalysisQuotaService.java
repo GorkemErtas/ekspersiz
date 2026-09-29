@@ -6,6 +6,7 @@ import com.gorkem.vehicle_inspector.entity.SubscriptionPlan;
 import com.gorkem.vehicle_inspector.entity.User;
 import com.gorkem.vehicle_inspector.repository.AnalysisUsageRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
@@ -21,6 +22,7 @@ public class AnalysisQuotaService {
     private final Clock clock;
     private final AnalysisCreditService analysisCreditService;
 
+    @Autowired
     public AnalysisQuotaService(
             BusinessContextService businessContext,
             SubscriptionService subscriptions,
@@ -35,7 +37,7 @@ public class AnalysisQuotaService {
         this.analysisCreditService = analysisCreditService;
     }
 
-    AnalysisQuotaService(
+    public AnalysisQuotaService(
             BusinessContextService businessContext,
             SubscriptionService subscriptions,
             AnalysisUsageRepository usages,

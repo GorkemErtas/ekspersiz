@@ -1628,7 +1628,7 @@ class _ReportStatusCard extends StatelessWidget {
           const SizedBox(height: 18),
 
           AppText(
-            isFailed ? 'AI raporu oluşturulamadı' : 'AI raporu hazırlanıyor',
+            isFailed ? 'Detaylı AI raporu oluşturulamadı' : 'Detaylı AI raporu hazır',
             textAlign: TextAlign.center,
             style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
           ),
@@ -1673,7 +1673,7 @@ class _ReportStatusCard extends StatelessWidget {
                       )
                     : const Icon(Icons.refresh_rounded),
 
-                label: const AppText('AI Raporunu Tekrar Oluştur'),
+                label: AppText(inspection.report == null ? 'Detaylı AI Raporu Oluştur' : 'AI Raporunu Tekrar Oluştur'),
               ),
             ),
           ],
