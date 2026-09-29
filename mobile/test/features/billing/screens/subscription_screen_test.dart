@@ -20,13 +20,29 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('AI Analiz Hakları'), findsOneWidget);
+    expect(find.text('Planlar ve AI Hakları'), findsOneWidget);
     expect(find.textContaining('Bu ay ücretsiz: 1'), findsOneWidget);
     expect(find.textContaining('Satın alınan: 0'), findsOneWidget);
     expect(find.text('1 detaylı analiz'), findsOneWidget);
     expect(find.text('₺20,00'), findsOneWidget);
     expect(find.text('3 detaylı analiz'), findsOneWidget);
     expect(find.text('₺49,99'), findsOneWidget);
+  });
+
+  testWidgets('shows Business plan separately from credit packs', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: SubscriptionScreen(
+          billingService: FakeBillingService(storeConfigured: false),
+          quotaService: FakeQuotaService(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('EksperSiz Business'), findsOneWidget);
+    expect(find.text('50 ortak aktif araç'), findsOneWidget);
+    expect(find.text('Şirket genelinde ayda 100 AI analizi'), findsOneWidget);
   });
 
   testWidgets('purchases a credit pack', (tester) async {
@@ -110,6 +126,21 @@ class FakeBillingService extends BillingService {
             currency: 'TRY',
             highlighted: false,
             features: ['Temel AI hasar tespiti ücretsiz'],
+          ),
+          BillingPlan(
+            plan: 'BUSINESS',
+            title: 'Kurumsal',
+            description: 'Ekipler ve ortak şirket araçları için',
+            productId: 'eksper_business_monthly',
+            packageIdentifier: 'business_monthly',
+            fallbackMonthlyPrice: 1499.99,
+            currency: 'TRY',
+            highlighted: false,
+            features: [
+              '50 ortak aktif araç',
+              'Şirket genelinde ayda 100 AI analizi',
+              'Çalışan daveti ve ortak geçmiş',
+            ],
           ),
         ],
       );
