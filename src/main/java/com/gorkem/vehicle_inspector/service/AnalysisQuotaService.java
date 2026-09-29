@@ -73,6 +73,14 @@ public class AnalysisQuotaService {
             );
         }
 
+        if (analysisCreditService == null) {
+            SubscriptionPlan plan = subscriptions.getEffectivePlan(user);
+            int limit = subscriptions.monthlyAnalysisLimit(plan);
+            long used = usages.countByUser_IdAndStartedAtGreaterThanEqualAndStartedAtLessThan(
+                    user.getId(), start, end);
+            return response(plan, used, limit);
+        }
+
         long used =
                 usages.countByUser_IdAndStartedAtGreaterThanEqualAndStartedAtLessThan(
                         user.getId(),

@@ -511,6 +511,9 @@ public class DamageInspectionService {
                             }
 
                             validateNotProcessing(inspection);
+                            if (analysisCreditService == null) {
+                                validateAnalysisLimit(inspection, user);
+                            }
                             if (inspection.getStatus() == InspectionStatus.COMPLETED) {
                                 throw new IllegalStateException(
                                         "Bu inceleme tamamlandı. Yeni fotoğraf analizi için yeni bir inceleme oluşturun."
@@ -785,7 +788,8 @@ public class DamageInspectionService {
         );
 
 
-        if (aiResponse.getDamageSeverity() == DamageSeverity.NONE) {
+        if (analysisCreditService == null
+                || aiResponse.getDamageSeverity() == DamageSeverity.NONE) {
             generateReportOutsideTransaction(context);
         }
 
