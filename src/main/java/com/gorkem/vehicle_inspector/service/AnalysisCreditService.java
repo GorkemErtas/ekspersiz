@@ -74,6 +74,36 @@ public class AnalysisCreditService {
     }
 
     @Transactional
+    public void revokePurchase(
+            User user,
+            String productId,
+            String transactionId
+    ) {
+        int amount = creditsForProduct(productId);
+        String refundId = transactionId == null ? null : "refund:" + transactionId;
+        if (amount == 0 || refundId == null || transactionId.isBlank()
+                || credits.existsByExternalTransactionId(refundId)) {
+            return;
+        }
+
+        User lockedUser = users.findByIdForUpdate(user.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Kullanıcı bulunamadı."));
+
+        if (!credits.existsByExternalTransactionId(transactionId)
+                || credits.existsByExternalTransactionId(refundId)) {
+            return;
+        }
+
+        credits.save(AnalysisCreditTransaction.refund(
+                lockedUser,
+                amount,
+                productId,
+                transactionId,
+                LocalDateTime.now(clock)
+        ));
+    }
+
+    @Transactional
     public void grantReportAccess(DamageInspection inspection, User user) {
         if (inspection.isReportAccessGranted()) {
             return;

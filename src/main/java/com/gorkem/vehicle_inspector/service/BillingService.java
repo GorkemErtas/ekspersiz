@@ -121,11 +121,19 @@ public class BillingService {
             if ("NON_RENEWING_PURCHASE".equals(eventType)) {
                 String productId = requiredText(event, "product_id");
                 String transactionId = requiredText(event, "transaction_id");
-                if (analysisCreditService != null) users.forEach(user -> analysisCreditService.grantPurchase(
-                        user,
-                        productId,
-                        transactionId
-                ));
+                if (analysisCreditService != null) {
+                    users.forEach(user -> analysisCreditService.grantPurchase(
+                            user, productId, transactionId));
+                }
+            } else if ("CANCELLATION".equals(eventType)
+                    && textOrNull(event.path("product_id")) != null
+                    && textOrNull(event.path("product_id")).startsWith("analysis_")) {
+                String productId = requiredText(event, "product_id");
+                String transactionId = requiredText(event, "transaction_id");
+                if (analysisCreditService != null) {
+                    users.forEach(user -> analysisCreditService.revokePurchase(
+                            user, productId, transactionId));
+                }
             } else {
                 users.forEach(this::syncUser);
             }

@@ -81,6 +81,16 @@ public class AnalysisCreditTransaction {
         );
     }
 
+    public static AnalysisCreditTransaction refund(
+            User user, int amount, String productId,
+            String transactionId, LocalDateTime createdAt
+    ) {
+        return new AnalysisCreditTransaction(
+                user, AnalysisCreditTransactionType.REFUND,
+                -amount, productId, "refund:" + transactionId, null, createdAt
+        );
+    }
+
     public static AnalysisCreditTransaction consume(
             User user, DamageInspection inspection, LocalDateTime createdAt
     ) {
