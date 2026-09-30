@@ -25,6 +25,7 @@ The application also provides vehicle management, maintenance tracking, reminder
 ---
 
 ## ✨ Features
+
 ### AI Vehicle Inspection
 - YOLO-based vehicle damage and affected-part detection
 - Image suitability validation before analysis
