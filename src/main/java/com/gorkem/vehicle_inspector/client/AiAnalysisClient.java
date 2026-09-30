@@ -20,6 +20,13 @@ import java.nio.file.Path;
 @Component
 public class AiAnalysisClient {
 
+private static final int MAX_ATTEMPTS = 3;
+
+private static final long[] RETRY_DELAYS_MS = {
+        2_000L,
+        4_000L
+};
+
     private final RestTemplate restTemplate;
     private final String aiServiceBaseUrl;
 
@@ -144,10 +151,45 @@ public class AiAnalysisClient {
                 );
 
         try {
+                return executeWithRetry(
+                        request,
+                        endpoint,
+                        responseType
+                );
+
+                } catch (HttpStatusCodeException exception) {
+                throw new AiServiceException(
+                        "AI analiz servisi hata döndürdü. HTTP "
+                                + exception
+                                .getStatusCode()
+                                .value(),
+                        exception
+                );
+
+                } catch (RestClientException exception) {
+                throw new AiServiceException(
+                        "AI analiz servisi ile iletişim "
+                                + "sırasında hata oluştu.",
+                        exception
+                );
+        }
+    }
+
+    private <T> T executeWithRetry(
+        HttpEntity<MultiValueMap<String, Object>> request,
+        String endpoint,
+        Class<T> responseType
+) {
+    ResourceAccessException lastException = null;
+
+    for (int attempt = 1;
+         attempt <= MAX_ATTEMPTS;
+         attempt++) {
+
+        try {
             ResponseEntity<T> response =
                     restTemplate.postForEntity(
-                            aiServiceBaseUrl
-                                    + endpoint,
+                            aiServiceBaseUrl + endpoint,
                             request,
                             responseType
                     );
@@ -164,29 +206,42 @@ public class AiAnalysisClient {
             return responseBody;
 
         } catch (ResourceAccessException exception) {
-            throw new AiServiceException(
-                    "AI analiz servisi zaman aşımına uğradı "
-                            + "veya servise bağlanılamadı.",
-                    exception
-            );
 
-        } catch (HttpStatusCodeException exception) {
-            throw new AiServiceException(
-                    "AI analiz servisi hata döndürdü. HTTP "
-                            + exception
-                            .getStatusCode()
-                            .value(),
-                    exception
-            );
+            lastException = exception;
 
-        } catch (RestClientException exception) {
-            throw new AiServiceException(
-                    "AI analiz servisi ile iletişim "
-                            + "sırasında hata oluştu.",
-                    exception
+            if (attempt == MAX_ATTEMPTS) {
+                break;
+            }
+
+            waitBeforeRetry(
+                    RETRY_DELAYS_MS[attempt - 1]
             );
         }
     }
+
+    throw new AiServiceException(
+            "AI analiz servisi zaman aşımına uğradı "
+                    + "veya servise bağlanılamadı.",
+            lastException
+    );
+}
+
+        private void waitBeforeRetry(
+                long delayMillis
+        ) {
+        try {
+                Thread.sleep(delayMillis);
+
+        } catch (InterruptedException exception) {
+
+                Thread.currentThread().interrupt();
+
+                throw new AiServiceException(
+                        "AI servisi beklenirken işlem kesildi.",
+                        exception
+                );
+        }
+        }
 
     private static String normalizeBaseUrl(
             String baseUrl
