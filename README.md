@@ -17,9 +17,9 @@ The application also provides vehicle management, maintenance tracking, reminder
   &nbsp;
   <img src="docs/screenshots/tracking.jpeg" width="23%" />
   &nbsp;
-  <img src="docs/screenshots/ai-analysis.jpeg" width="23%" />
-  &nbsp;
   <img src="docs/screenshots/report.jpeg" width="23%" />
+  &nbsp;
+  <img src="docs/screenshots/ai-analysis.jpeg" width="23%" />
 </p>
 
 ---
