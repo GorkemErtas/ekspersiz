@@ -13,11 +13,10 @@ The application also provides vehicle management, maintenance tracking, reminder
 ## 📱 Screenshots
 
 <p align="center">
-  <img src="docs/screenshots/home.jpeg" width="15%" />
-  <img src="docs/screenshots/tracking.jpeg" width="15%" />
-  <img src="docs/screenshots/analyses.jpeg" width="15%" />
-  <img src="docs/screenshots/ai-analysis.jpeg" width="15%" />
-  <img src="docs/screenshots/report.jpeg" width="15%" />
+  <img src="docs/screenshots/home.jpeg" width="23%" />
+  <img src="docs/screenshots/tracking.jpeg" width="23%" />
+  <img src="docs/screenshots/ai-analysis.jpeg" width="23%" />
+  <img src="docs/screenshots/report.jpeg" width="23%" />
 </p>
 
 ---
