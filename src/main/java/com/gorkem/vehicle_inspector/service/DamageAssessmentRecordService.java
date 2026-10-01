@@ -154,8 +154,8 @@ public class DamageAssessmentRecordService {
         Map<String, Object> snapshot = new LinkedHashMap<>();
         snapshot.put("documentVersion", record.getDocumentVersion());
         snapshot.put("recordNumber", record.getRecordNumber());
-        snapshot.put("finalizedAt", finalizedAt);
-        snapshot.put("incidentDateTime", record.getIncidentDateTime());
+        snapshot.put("finalizedAt", toIsoDateTime(finalizedAt));
+        snapshot.put("incidentDateTime", toIsoDateTime(record.getIncidentDateTime()));
         snapshot.put("incidentCity", record.getIncidentCity());
         snapshot.put("incidentDistrict", record.getIncidentDistrict());
         snapshot.put("incidentAddress", record.getIncidentAddress());
@@ -176,7 +176,7 @@ public class DamageAssessmentRecordService {
         analysis.put("confidenceScore", inspection.getConfidenceScore());
         analysis.put("analysisMessage", inspection.getAnalysisMessage());
         analysis.put("imagePath", inspection.getImagePath());
-        analysis.put("completedAt", inspection.getCompletedAt());
+        analysis.put("completedAt", toIsoDateTime(inspection.getCompletedAt()));
         analysis.put("detections", inspection.getDetections().stream()
                 .map(detection -> Map.of(
                         "label", detection.getLabel(),
@@ -221,7 +221,7 @@ public class DamageAssessmentRecordService {
             reportSnapshot.put("priceSourceDescription",
                     report.getPriceSourceDescription());
             reportSnapshot.put("disclaimer", report.getDisclaimer());
-            reportSnapshot.put("generatedAt", report.getGeneratedAt());
+            reportSnapshot.put("generatedAt", toIsoDateTime(report.getGeneratedAt()));
             snapshot.put("report", reportSnapshot);
         } else {
             snapshot.put("report", null);
@@ -233,6 +233,10 @@ public class DamageAssessmentRecordService {
             throw new IllegalStateException(
                     "Tutanak içeriği oluşturulamadı.", exception);
         }
+    }
+
+    private String toIsoDateTime(LocalDateTime value) {
+        return value == null ? null : DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(value);
     }
 
     private String sha256(String value) {
