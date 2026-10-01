@@ -36,11 +36,11 @@ void main() {
     expect(find.text('Onarım Önerileri'), findsNothing);
     expect(find.text('Yakındaki Uygun Servisler'), findsNothing);
     await tester.scrollUntilVisible(
-      find.text('PDF Raporu Oluştur / Paylaş'),
+      find.text('Tutanak Oluştur / Görüntüle'),
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    expect(find.text('PDF Raporu Oluştur / Paylaş'), findsOneWidget);
+    expect(find.text('Tutanak Oluştur / Görüntüle'), findsOneWidget);
   });
 
   testWidgets('minor damage remains a normal detected damage result', (
