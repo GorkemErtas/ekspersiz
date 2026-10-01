@@ -18,6 +18,8 @@ public record DamageAssessmentRecordResponse(
         String declarantFullName,
         LocalDateTime createdAt,
         LocalDateTime updatedAt,
-        LocalDateTime finalizedAt
+        LocalDateTime finalizedAt,
+        String snapshotJson,
+        String contentHash
 ) {
 }

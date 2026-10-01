@@ -65,6 +65,13 @@ public class DamageAssessmentRecord {
     @Column(name = "finalized_at")
     private LocalDateTime finalizedAt;
 
+    @Lob
+    @Column(name = "snapshot_json")
+    private String snapshotJson;
+
+    @Column(name = "content_hash", length = 64)
+    private String contentHash;
+
     protected DamageAssessmentRecord() {
     }
 
@@ -107,8 +114,19 @@ public class DamageAssessmentRecord {
         this.updatedAt = now;
     }
 
-    public void finalizeRecord(LocalDateTime now) {
+    public void finalizeRecord(
+            LocalDateTime now,
+            String snapshotJson,
+            String contentHash
+    ) {
         requireDraft();
+        if (snapshotJson == null || snapshotJson.isBlank()
+                || contentHash == null || contentHash.isBlank()) {
+            throw new IllegalArgumentException(
+                    "Kesinleştirilen tutanak için belge özeti ve doğrulama değeri zorunludur.");
+        }
+        this.snapshotJson = snapshotJson;
+        this.contentHash = contentHash;
         this.status = DamageAssessmentRecordStatus.FINALIZED;
         this.finalizedAt = now;
         this.updatedAt = now;
@@ -145,4 +163,6 @@ public class DamageAssessmentRecord {
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public LocalDateTime getFinalizedAt() { return finalizedAt; }
+    public String getSnapshotJson() { return snapshotJson; }
+    public String getContentHash() { return contentHash; }
 }
