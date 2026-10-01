@@ -65,8 +65,7 @@ public class DamageAssessmentRecord {
     @Column(name = "finalized_at")
     private LocalDateTime finalizedAt;
 
-    @Lob
-    @Column(name = "snapshot_json")
+    @Column(name = "snapshot_json", columnDefinition = "TEXT")
     private String snapshotJson;
 
     @Column(name = "content_hash", length = 64)
