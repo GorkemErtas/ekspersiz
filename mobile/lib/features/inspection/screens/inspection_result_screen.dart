@@ -14,8 +14,8 @@ import '../../billing/services/billing_service.dart';
 import '../../billing/services/revenue_cat_gateway.dart';
 
 import '../models/damage_inspection.dart';
-import '../services/inspection_pdf_service.dart';
 import '../services/inspection_service.dart';
+import 'damage_assessment_record_screen.dart';
 import 'nearby_services_screen.dart';
 
 class InspectionResultScreen extends StatefulWidget {
@@ -33,13 +33,10 @@ class InspectionResultScreen extends StatefulWidget {
 }
 
 class _InspectionResultScreenState extends State<InspectionResultScreen> {
-  final InspectionPdfService _pdfService = const InspectionPdfService();
-
   late DamageInspection _inspection;
   Future<List<int>>? _inspectionImageFuture;
 
   bool _isRegeneratingReport = false;
-  bool _isSharingPdf = false;
   final AnalysisQuotaService _quotaService = const AnalysisQuotaService();
   final BillingService _billingService = const BillingService();
 
@@ -213,30 +210,14 @@ class _InspectionResultScreenState extends State<InspectionResultScreen> {
     );
   }
 
-  Future<void> _createAndSharePdf() async {
-    if (_isSharingPdf) return;
-
-    setState(() => _isSharingPdf = true);
-    try {
-      final box = context.findRenderObject() as RenderBox?;
-      final origin = box == null
-          ? null
-          : box.localToGlobal(Offset.zero) & box.size;
-      await _pdfService.createAndShare(
-        _inspection,
-        sharePositionOrigin: origin,
-      );
-    } catch (exception) {
-      if (!mounted) return;
-      final message = exception is ApiException
-          ? exception.message
-          : 'PDF raporu oluşturulamadı. Lütfen tekrar deneyin.';
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: AppText(message)));
-    } finally {
-      if (mounted) setState(() => _isSharingPdf = false);
-    }
+  Future<void> _openDamageRecord() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (context) => DamageAssessmentRecordScreen(
+          inspection: _inspection,
+        ),
+      ),
+    );
   }
 
   String _severityDisplayText(String? severity) {
@@ -613,19 +594,9 @@ class _InspectionResultScreenState extends State<InspectionResultScreen> {
                   SizedBox(
                     width: double.infinity,
                     child: FilledButton.icon(
-                      onPressed: _isSharingPdf ? null : _createAndSharePdf,
-                      icon: _isSharingPdf
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.picture_as_pdf_outlined),
-                      label: AppText(
-                        _isSharingPdf
-                            ? 'PDF hazırlanıyor...'
-                            : 'PDF Raporu Oluştur / Paylaş',
-                      ),
+                      onPressed: _openDamageRecord,
+                      icon: const Icon(Icons.assignment_outlined),
+                      label: const AppText('Tutanak Oluştur / Görüntüle'),
                     ),
                   ),
                 ],
