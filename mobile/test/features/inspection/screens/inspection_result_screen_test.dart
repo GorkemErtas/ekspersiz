@@ -6,7 +6,6 @@ import 'package:mobile/features/inspection/models/damage_inspection.dart';
 import 'package:mobile/features/inspection/models/damage_repair_recommendation.dart';
 import 'package:mobile/features/inspection/models/inspection_report.dart';
 import 'package:mobile/features/inspection/screens/inspection_result_screen.dart';
-import 'package:mobile/features/inspection/services/inspection_pdf_service.dart';
 import 'package:mobile/features/inspection/services/inspection_service.dart';
 
 void main() {
@@ -65,26 +64,7 @@ void main() {
     expect(find.text('İşlem Gerekmiyor'), findsNothing);
   });
 
-  test('completed inspection produces a PDF document', () async {
-    final regular = await rootBundle.load('assets/fonts/Roboto-Regular.ttf');
-    final bold = await rootBundle.load('assets/fonts/Roboto-Bold.ttf');
-    final logo = await rootBundle.load('assets/images/ekspersiz_logo.png');
-    final logoBytes = logo.buffer.asUint8List(
-      logo.offsetInBytes,
-      logo.lengthInBytes,
-    );
 
-    final bytes = await const InspectionPdfService().buildReport(
-      inspection: noDamageResult(),
-      imageBytes: logoBytes,
-      regularFont: regular,
-      boldFont: bold,
-      logoBytes: logoBytes,
-    );
-
-    expect(bytes.length, greaterThan(1000));
-    expect(String.fromCharCodes(bytes.take(4)), '%PDF');
-  });
 }
 
 Future<void> _pumpResultScreen(

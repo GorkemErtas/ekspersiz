@@ -6,6 +6,7 @@ import '../../../core/theme/app_theme.dart';
 import '../models/damage_assessment_record.dart';
 import '../models/damage_inspection.dart';
 import '../services/damage_assessment_record_service.dart';
+import '../services/damage_assessment_record_pdf_service.dart';
 
 class DamageAssessmentRecordScreen extends StatefulWidget {
   const DamageAssessmentRecordScreen({
@@ -35,6 +36,9 @@ class _DamageAssessmentRecordScreenState
   late DateTime _incidentDateTime;
   bool _loading = true;
   bool _saving = false;
+  bool _sharing = false;
+  final DamageAssessmentRecordPdfService _pdfService =
+      const DamageAssessmentRecordPdfService();
 
   bool get _readOnly => _record?.isFinalized == true;
 
@@ -181,6 +185,26 @@ class _DamageAssessmentRecordScreenState
     }
   }
 
+  Future<void> _sharePdf() async {
+    final record = _record;
+    if (record == null || !record.isFinalized || _sharing) return;
+    setState(() => _sharing = true);
+    try {
+      final box = context.findRenderObject() as RenderBox?;
+      final origin =
+          box == null ? null : box.localToGlobal(Offset.zero) & box.size;
+      await _pdfService.createAndShare(
+        inspection: widget.inspection,
+        record: record,
+        sharePositionOrigin: origin,
+      );
+    } catch (exception) {
+      if (mounted) _showError(exception, 'Tutanak PDF dosyası oluşturulamadı.');
+    } finally {
+      if (mounted) setState(() => _sharing = false);
+    }
+  }
+
   void _showError(Object exception, String fallback) {
     final message =
         exception is ApiException ? exception.message : fallback;
@@ -297,6 +321,25 @@ class _DamageAssessmentRecordScreenState
                                   )
                                 : const Icon(Icons.verified_outlined),
                             label: const AppText('Tutanağı Kesinleştir'),
+                          ),
+                        ,
+                        ] else ...[
+                          FilledButton.icon(
+                            onPressed: _sharing ? null : _sharePdf,
+                            icon: _sharing
+                                ? const SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Icon(Icons.picture_as_pdf_outlined),
+                            label: AppText(
+                              _sharing
+                                  ? 'PDF hazırlanıyor...'
+                                  : 'Tutanağı PDF Olarak Paylaş',
+                            ),
                           ),
                         ],
                       ],

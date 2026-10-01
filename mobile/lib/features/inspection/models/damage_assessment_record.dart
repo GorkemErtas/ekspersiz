@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 class DamageAssessmentRecord {
   const DamageAssessmentRecord({
     required this.id,
@@ -14,6 +16,8 @@ class DamageAssessmentRecord {
     required this.createdAt,
     required this.updatedAt,
     required this.finalizedAt,
+    required this.snapshot,
+    required this.contentHash,
   });
 
   final int id;
@@ -30,6 +34,8 @@ class DamageAssessmentRecord {
   final DateTime? createdAt;
   final DateTime? updatedAt;
   final DateTime? finalizedAt;
+  final Map<String, dynamic>? snapshot;
+  final String? contentHash;
 
   bool get isDraft => status == 'DRAFT';
   bool get isFinalized => status == 'FINALIZED';
@@ -50,6 +56,8 @@ class DamageAssessmentRecord {
       createdAt: _dateTime(json['createdAt']),
       updatedAt: _dateTime(json['updatedAt']),
       finalizedAt: _dateTime(json['finalizedAt']),
+      snapshot: _snapshot(json['snapshotJson']),
+      contentHash: _nullableString(json['contentHash']),
     );
   }
 
@@ -59,6 +67,16 @@ class DamageAssessmentRecord {
   static String? _nullableString(dynamic value) {
     final result = _string(value);
     return result.isEmpty ? null : result;
+  }
+
+  static Map<String, dynamic>? _snapshot(dynamic value) {
+    if (value is! String || value.trim().isEmpty) return null;
+    try {
+      final decoded = jsonDecode(value);
+      return decoded is Map ? Map<String, dynamic>.from(decoded) : null;
+    } catch (_) {
+      return null;
+    }
   }
 
   static DateTime? _dateTime(dynamic value) {
