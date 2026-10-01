@@ -322,7 +322,6 @@ class _DamageAssessmentRecordScreenState
                                 : const Icon(Icons.verified_outlined),
                             label: const AppText('Tutanağı Kesinleştir'),
                           ),
-                        ,
                         ] else ...[
                           FilledButton.icon(
                             onPressed: _sharing ? null : _sharePdf,
