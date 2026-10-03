@@ -367,6 +367,41 @@ public class DamageInspectionService {
         );
     }
 
+    @Transactional
+    public DamageInspectionResponse uploadInspectionContextImage(
+            Long inspectionId,
+            MultipartFile image,
+            String authenticatedEmail
+    ) {
+        User user = businessContextService.requireUser(authenticatedEmail);
+        DamageInspection inspection =
+                inspectionAccessService.requireInspectionForUpdate(
+                        inspectionId,
+                        user
+                );
+
+        validateNotProcessing(inspection);
+        if (inspection.getAnalysisStartedAt() != null) {
+            throw new IllegalStateException(
+                    "Analizi başlamış incelemenin fotoğrafı değiştirilemez. Yeni bir inceleme oluşturun."
+            );
+        }
+
+        String previousImagePath = inspection.getContextImagePath();
+        String newImagePath = fileStorageService.storeImage(image);
+
+        registerImageCleanup(previousImagePath, newImagePath);
+        inspection.setContextImagePath(newImagePath);
+
+        inspection.setStatus(InspectionStatus.PENDING);
+        inspection.setAnalysisMessage(null);
+        inspection.setCompletedAt(null);
+
+        return buildResponse(
+                inspectionRepository.save(inspection)
+        );
+    }
+
     private void registerImageCleanup(
             String previousImagePath,
             String newImagePath
@@ -474,11 +509,24 @@ public class DamageInspectionService {
         ImageValidationContext imageValidation =
                 validateInspectionImageInternal(
                         inspectionId,
-                        authenticatedEmail
+                        authenticatedEmail,
+                        false
                 );
         if (!imageValidation.quality().suitable()) {
             throw new UnsuitableInspectionImageException(
                     imageValidation.quality().message()
+            );
+        }
+
+        ImageValidationContext contextImageValidation =
+                validateInspectionImageInternal(
+                        inspectionId,
+                        authenticatedEmail,
+                        true
+                );
+        if (!contextImageValidation.quality().suitable()) {
+            throw new UnsuitableInspectionImageException(
+                    contextImageValidation.quality().message()
             );
         }
 
@@ -504,9 +552,12 @@ public class DamageInspectionService {
                             if (!Objects.equals(
                                     inspection.getImagePath(),
                                     imageValidation.imagePath()
+                            ) || !Objects.equals(
+                                    inspection.getContextImagePath(),
+                                    contextImageValidation.imagePath()
                             )) {
                                 throw new IllegalStateException(
-                                        "Fotoğraf değiştirildi. Lütfen analizi tekrar başlatın."
+                                        "Fotoğraflardan biri değiştirildi. Lütfen analizi tekrar başlatın."
                                 );
                             }
 
@@ -587,13 +638,26 @@ public class DamageInspectionService {
     ) {
         return validateInspectionImageInternal(
                 inspectionId,
-                authenticatedEmail
+                authenticatedEmail,
+                false
+        ).quality();
+    }
+
+    public ImageQualityResponse validateInspectionContextImage(
+            Long inspectionId,
+            String authenticatedEmail
+    ) {
+        return validateInspectionImageInternal(
+                inspectionId,
+                authenticatedEmail,
+                true
         ).quality();
     }
 
     private ImageValidationContext validateInspectionImageInternal(
             Long inspectionId,
-            String authenticatedEmail
+            String authenticatedEmail,
+            boolean contextImage
     ) {
         ImageValidationContext context = transactionTemplate.execute(
                 status -> {
@@ -605,7 +669,11 @@ public class DamageInspectionService {
                                     inspectionId,
                                     user
                             );
-                    validateImageExists(inspection);
+                    if (contextImage) {
+                        validateContextImageExists(inspection);
+                    } else {
+                        validateImageExists(inspection);
+                    }
                     validateNotProcessing(inspection);
                     if (inspection.getStatus() == InspectionStatus.COMPLETED) {
                         throw new IllegalStateException(
@@ -615,7 +683,9 @@ public class DamageInspectionService {
                     return new ImageValidationContext(
                             inspection.getId(),
                             user,
-                            inspection.getImagePath(),
+                            contextImage
+                                    ? inspection.getContextImagePath()
+                                    : inspection.getImagePath(),
                             null
                     );
                 }
@@ -633,7 +703,8 @@ public class DamageInspectionService {
                     context.imagePath()
             );
             quality = aiAnalysisClient.validateImage(
-                    storedImagePath
+                    storedImagePath,
+                    contextImage ? "context" : "damage"
             );
             if (quality == null
                     || quality.code() == null
@@ -1206,6 +1277,17 @@ public class DamageInspectionService {
         return response;
     }
 
+    private void validateContextImageExists(
+            DamageInspection inspection
+    ) {
+        if (inspection.getContextImagePath() == null
+                || inspection.getContextImagePath().isBlank()) {
+            throw new IllegalStateException(
+                    "Analizden önce geniş açı araç fotoğrafı yüklenmelidir."
+            );
+        }
+    }
+
     private void validateImageExists(
             DamageInspection inspection
     ) {
@@ -1490,6 +1572,12 @@ public class DamageInspectionService {
 
         obsoleteInspections.stream()
                 .map(DamageInspection::getImagePath)
+                .filter(Objects::nonNull)
+                .filter(path -> !path.isBlank())
+                .forEach(this::registerImageDeletionAfterCommit);
+
+        obsoleteInspections.stream()
+                .map(DamageInspection::getContextImagePath)
                 .filter(Objects::nonNull)
                 .filter(path -> !path.isBlank())
                 .forEach(this::registerImageDeletionAfterCommit);
