@@ -1,5 +1,6 @@
 from io import BytesIO
 from pathlib import Path
+import logging
 import re
 from typing import Any
 
@@ -7,6 +8,9 @@ from PIL import Image, UnidentifiedImageError
 import cv2
 import numpy as np
 from ultralytics import YOLO
+
+logger = logging.getLogger(__name__)
+
 
 from app.schemas import (
     BoundingBox,
@@ -476,6 +480,17 @@ class DamageAnalyzer:
             offset_y=context_offset_y,
         )
 
+        logger.info(
+            "Context vehicle-part detections: %s",
+            [
+                {
+                    "label": detection.label,
+                    "confidence": round(detection.confidence, 4),
+                }
+                for detection in context_part_detections
+            ],
+        )
+
         matched_context_damages = self._assign_parts_to_damage_detections(
             damage_detections=context_damage_detections,
             vehicle_part_detections=context_part_detections,
@@ -855,6 +870,15 @@ class DamageAnalyzer:
                 best_score = score
                 best_vehicle_part = (
                     mapped_vehicle_part
+                )
+                logger.info(
+                    "Part match candidate selected: damage=%s part=%s "
+                    "part_confidence=%.4f overlap=%.4f match_score=%.4f",
+                    damage.label,
+                    mapped_vehicle_part,
+                    vehicle_part.confidence,
+                    overlap_ratio,
+                    score,
                 )
 
         return best_vehicle_part
