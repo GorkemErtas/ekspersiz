@@ -177,7 +177,13 @@ class DamageAnalyzer:
     def validate_image_quality(
             self,
             file_content: bytes,
+            purpose: str = "context",
     ) -> ImageQualityResponse:
+        normalized_purpose = purpose.strip().lower()
+        if normalized_purpose not in {"damage", "context"}:
+            raise ValueError(
+                "Image validation purpose must be 'damage' or 'context'."
+            )
         image = self._load_image(file_content)
         grayscale = cv2.cvtColor(
             np.asarray(image),
@@ -196,7 +202,17 @@ class DamageAnalyzer:
             return ImageQualityResponse(
                 suitable=False,
                 code="TOO_BLURRY",
-                message="Araç net görünmüyor. Kamerayı sabit tutup tekrar çekin.",
+                message="Görüntü yeterince net değil. Kamerayı sabit tutup tekrar çekin.",
+            )
+
+        # The close damage photo is intentionally allowed to omit the full
+        # vehicle. Its job is to preserve fine damage detail; requiring a
+        # generic vehicle detector here rejects valid close-up photos.
+        if normalized_purpose == "damage":
+            return ImageQualityResponse(
+                suitable=True,
+                code="SUITABLE",
+                message="Yakın hasar fotoğrafı analiz için uygun.",
             )
 
         vehicle_results = self.vehicle_model.predict(
@@ -233,7 +249,10 @@ class DamageAnalyzer:
         return ImageQualityResponse(
             suitable=True,
             code="SUITABLE",
-            message="Fotoğraf analiz için uygun.",
+            message=(
+                "Geniş açı fotoğraf analiz için uygun. "
+                "Hasar ve çevresindeki araç parçaları görünür durumda olmalı."
+            ),
         )
 
     @staticmethod
