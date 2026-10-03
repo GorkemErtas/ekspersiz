@@ -188,12 +188,17 @@ public class DamageInspectionController {
     public ResponseEntity<DamageInspectionResponse>
     analyzeInspection(
             @PathVariable Long inspectionId,
+            @RequestParam(
+                    name = "requireContext",
+                    defaultValue = "false"
+            ) boolean requireContext,
             Authentication authentication
     ) {
         DamageInspectionResponse response =
                 inspectionService.analyzeInspection(
                         inspectionId,
-                        authentication.getName()
+                        authentication.getName(),
+                        requireContext
                 );
 
         return ResponseEntity.ok(response);
