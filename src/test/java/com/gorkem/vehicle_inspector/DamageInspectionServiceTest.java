@@ -329,12 +329,14 @@ class DamageInspectionServiceTest {
             var response = service.uploadInspectionImage(30L, image(), actor.getEmail());
             assertEquals(creator.getId(), response.getUserId());
             assertEquals("new.jpg", inspection.getImagePath());
+            assertNull(inspection.getContextImagePath());
             TransactionSynchronizationManager.getSynchronizations().forEach(
                     callback -> callback.afterCompletion(TransactionSynchronization.STATUS_COMMITTED));
         } finally {
             TransactionSynchronizationManager.clearSynchronization();
         }
         verify(storage).deleteStoredFile("image.jpg");
+        verify(storage).deleteStoredFile("context-image.jpg");
         when(storage.resolveStoredFile("new.jpg")).thenReturn(Path.of("new.jpg"));
         assertEquals(Path.of("new.jpg"), service.getInspectionImage(30L, actor.getEmail()));
     }
