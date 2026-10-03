@@ -3,6 +3,7 @@ import logging
 from fastapi import (
     FastAPI,
     File,
+    Form,
     HTTPException,
     Query,
     UploadFile,
@@ -65,6 +66,7 @@ def health_check():
 async def analyze_damage(
         image: UploadFile = File(...),
         context_image: UploadFile | None = File(default=None),
+        vehicle_region: str | None = Form(default=None),
 ) -> DamageAnalysisResponse:
     try:
         file_content = await read_valid_image(image)
@@ -76,10 +78,22 @@ async def analyze_damage(
             )
 
         context_file_content = await read_valid_image(context_image)
+        normalized_region = (
+            vehicle_region.upper()
+            if vehicle_region is not None
+            else None
+        )
+        if normalized_region not in {None, "FRONT", "REAR"}:
+            raise HTTPException(
+                status_code=400,
+                detail="vehicle_region must be FRONT or REAR.",
+            )
+
         return damage_analyzer.analyze_pair(
             damage_file_content=file_content,
             context_file_content=context_file_content,
             filename=image.filename or "vehicle.jpg",
+            vehicle_region=normalized_region,
         )
 
     except HTTPException:
