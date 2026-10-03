@@ -70,6 +70,7 @@ class DamageInspectionServiceTest {
         inspection = new DamageInspection(vehicle, creator, InspectionStatus.PENDING);
         ReflectionTestUtils.setField(inspection, "id", 30L);
         inspection.setImagePath("image.jpg");
+        inspection.setContextImagePath("context-image.jpg");
         inspection.setLocationCity("İzmir");
         inspection.setLocationLatitude(38.4);
         inspection.setLocationLongitude(27.1);
@@ -87,7 +88,9 @@ class DamageInspectionServiceTest {
 
         lenient().when(users.findByIdForUpdate(actor.getId())).thenReturn(Optional.of(actor));
         lenient().when(storage.resolveStoredFile("image.jpg")).thenReturn(Path.of("image.jpg"));
-        lenient().when(ai.validateImage(any())).thenReturn(
+        lenient().when(storage.resolveStoredFile("context-image.jpg"))
+                .thenReturn(Path.of("context-image.jpg"));
+        lenient().when(ai.validateImage(any(), anyString())).thenReturn(
                 new ImageQualityResponse(true, "SUITABLE", "Fotoğraf analiz için uygun."));
 
         service = new DamageInspectionService(inspections, vehicles, context,
@@ -148,7 +151,8 @@ class DamageInspectionServiceTest {
         assertNull(inspection.getAnalysisStartedAt());
         assertEquals(InspectionStatus.PENDING, inspection.getStatus());
         verify(inspections, never()).save(any());
-        verify(ai).validateImage(Path.of("image.jpg"));
+        verify(ai).validateImage(Path.of("image.jpg"), "damage");
+        verify(ai).validateImage(Path.of("context-image.jpg"), "context");
         verify(ai, never()).analyze(any());
         verifyNoInteractions(reports);
     }
@@ -285,7 +289,8 @@ class DamageInspectionServiceTest {
         ).thenReturn(100L);
         assertThrows(IllegalStateException.class, () -> service.analyzeInspection(30L, actor.getEmail()));
         assertEquals(NOW.minusMonths(1), inspection.getAnalysisStartedAt());
-        verify(ai).validateImage(Path.of("image.jpg"));
+        verify(ai).validateImage(Path.of("image.jpg"), "damage");
+        verify(ai).validateImage(Path.of("context-image.jpg"), "context");
         verify(ai, never()).analyze(any());
     }
 
@@ -432,7 +437,7 @@ class DamageInspectionServiceTest {
 
     @Test
     void unsuitableImageDoesNotReserveQuotaOrCreateFailedAnalysis() {
-        when(ai.validateImage(any())).thenReturn(new ImageQualityResponse(
+        when(ai.validateImage(any(), anyString())).thenReturn(new ImageQualityResponse(
                 false,
                 "TOO_DARK",
                 "Fotoğraf çok karanlık. Daha aydınlık bir ortamda tekrar çekin."
@@ -452,7 +457,7 @@ class DamageInspectionServiceTest {
 
     @Test
     void technicalQualityValidationFailureIsFailedWithoutReservingQuota() {
-        when(ai.validateImage(any())).thenThrow(
+        when(ai.validateImage(any(), anyString())).thenThrow(
                 new IllegalStateException("AI quality service unavailable")
         );
 
