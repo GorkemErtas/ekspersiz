@@ -4,6 +4,7 @@ from fastapi import (
     FastAPI,
     File,
     HTTPException,
+    Query,
     UploadFile,
 )
 
@@ -103,10 +104,17 @@ async def analyze_damage(
 )
 async def validate_image_quality(
         image: UploadFile = File(...),
+        purpose: str = Query(
+            default="context",
+            pattern="^(damage|context)$",
+        ),
 ) -> ImageQualityResponse:
     try:
         file_content = await read_valid_image(image)
-        return damage_analyzer.validate_image_quality(file_content)
+        return damage_analyzer.validate_image_quality(
+            file_content,
+            purpose=purpose,
+        )
     except HTTPException:
         raise
     except ValueError as exc:
