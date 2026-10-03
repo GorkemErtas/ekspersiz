@@ -165,6 +165,25 @@ public class DamageInspectionController {
         return ResponseEntity.ok(response);
     }
 
+    @PostMapping(
+            value = "/{inspectionId}/context-image",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
+    public ResponseEntity<DamageInspectionResponse>
+    uploadInspectionContextImage(
+            @PathVariable Long inspectionId,
+            @RequestPart("image") MultipartFile image,
+            Authentication authentication
+    ) {
+        return ResponseEntity.ok(
+                inspectionService.uploadInspectionContextImage(
+                        inspectionId,
+                        image,
+                        authentication.getName()
+                )
+        );
+    }
+
     @PostMapping("/{inspectionId}/analyze")
     public ResponseEntity<DamageInspectionResponse>
     analyzeInspection(
@@ -187,6 +206,20 @@ public class DamageInspectionController {
     ) {
         return ResponseEntity.ok(
                 inspectionService.validateInspectionImage(
+                        inspectionId,
+                        authentication.getName()
+                )
+        );
+    }
+
+    @PostMapping("/{inspectionId}/context-image-quality")
+    public ResponseEntity<ImageQualityResponse>
+    validateInspectionContextImage(
+            @PathVariable Long inspectionId,
+            Authentication authentication
+    ) {
+        return ResponseEntity.ok(
+                inspectionService.validateInspectionContextImage(
                         inspectionId,
                         authentication.getName()
                 )
