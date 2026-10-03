@@ -267,6 +267,20 @@ class _UploadDamageImageScreenState extends State<UploadDamageImageScreen> {
     }
   }
 
+  void _returnToDamagePhoto() {
+    if (_isUploading || !_isContextStep) {
+      return;
+    }
+
+    setState(() {
+      _photoStep = 1;
+      _selectedImageBytes = null;
+      _selectedContentType = null;
+      _selectedFilename = null;
+      _qualityIssue = null;
+    });
+  }
+
   void _showMessage(String message) {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
@@ -491,6 +505,15 @@ class _UploadDamageImageScreenState extends State<UploadDamageImageScreen> {
                 const SizedBox(height: 18),
 
                 _PhotoTipsCard(isContextStep: _isContextStep),
+
+                if (_isContextStep) ...[
+                  const SizedBox(height: 18),
+                  TextButton.icon(
+                    onPressed: _isUploading ? null : _returnToDamagePhoto,
+                    icon: const Icon(Icons.arrow_back_rounded),
+                    label: const AppText('İlk fotoğrafı değiştir'),
+                  ),
+                ],
 
                 const SizedBox(height: 26),
 
