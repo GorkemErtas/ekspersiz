@@ -548,6 +548,9 @@ public class DamageInspectionService {
                             validateImageExists(
                                     inspection
                             );
+                            validateContextImageExists(
+                                    inspection
+                            );
 
                             if (!Objects.equals(
                                     inspection.getImagePath(),
@@ -593,7 +596,8 @@ public class DamageInspectionService {
                             return new AnalysisContext(
                                     inspection.getId(),
                                     user,
-                                    inspection.getImagePath()
+                                    inspection.getImagePath(),
+                                    inspection.getContextImagePath()
                             );
                         }
                 );
@@ -611,9 +615,15 @@ public class DamageInspectionService {
                                     context.imagePath()
                             );
 
+            Path storedContextImagePath =
+                    fileStorageService.resolveStoredFile(
+                            context.contextImagePath()
+                    );
+
             AiAnalysisResponse aiResponse =
                     aiAnalysisClient.analyze(
-                            storedImagePath
+                            storedImagePath,
+                            storedContextImagePath
                     );
 
             normalizeAndValidateAnalysisResponse(aiResponse);
@@ -1518,7 +1528,8 @@ public class DamageInspectionService {
     private record AnalysisContext(
             Long inspectionId,
             User user,
-            String imagePath
+            String imagePath,
+            String contextImagePath
     ) {
     }
 
