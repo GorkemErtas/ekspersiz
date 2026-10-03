@@ -663,9 +663,7 @@ class _PhotoUploadArea extends StatelessWidget {
                       const SizedBox(height: 20),
 
                       AppText(
-                        _isContextStep
-                            ? 'Geniş açı fotoğrafı ekleyin'
-                            : 'Hasar fotoğrafı ekleyin',
+                        'Fotoğraf ekleyin',
                         textAlign: TextAlign.center,
                         style: textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.w900,
