@@ -401,6 +401,7 @@ class DamageAnalyzer:
             damage_file_content: bytes,
             context_file_content: bytes,
             filename: str,
+            vehicle_region: str | None = None,
     ) -> DamageAnalysisResponse:
         safe_filename = Path(filename or "vehicle.jpg").name.lower()
         damage_image = self._load_image(damage_file_content)
@@ -500,6 +501,10 @@ class DamageAnalyzer:
             close_damage_detections=close_damage_detections,
             context_damage_detections=matched_context_damages,
         )
+        self._apply_vehicle_region_constraint(
+            close_damage_detections,
+            vehicle_region,
+        )
 
         primary_damage = max(
             close_damage_detections,
@@ -536,6 +541,44 @@ class DamageAnalyzer:
                 key=lambda detection: detection.confidence,
             )
             close_damage.affectedPart = best_match.affectedPart
+
+    @staticmethod
+    def _apply_vehicle_region_constraint(
+            damage_detections: list[DetectedObject],
+            vehicle_region: str | None,
+    ) -> None:
+        if vehicle_region not in {"FRONT", "REAR"}:
+            return
+
+        paired_parts = {
+            "FRONT_BUMPER": ("FRONT_BUMPER", "REAR_BUMPER"),
+            "REAR_BUMPER": ("FRONT_BUMPER", "REAR_BUMPER"),
+            "FRONT_DOOR": ("FRONT_DOOR", "REAR_DOOR"),
+            "REAR_DOOR": ("FRONT_DOOR", "REAR_DOOR"),
+            "FRONT_WHEEL": ("FRONT_WHEEL", "REAR_WHEEL"),
+            "REAR_WHEEL": ("FRONT_WHEEL", "REAR_WHEEL"),
+            "FRONT_WINDOW": ("FRONT_WINDOW", "REAR_WINDOW"),
+            "REAR_WINDOW": ("FRONT_WINDOW", "REAR_WINDOW"),
+        }
+
+        for detection in damage_detections:
+            part_value = (
+                detection.affectedPart.value
+                if hasattr(detection.affectedPart, "value")
+                else str(detection.affectedPart)
+            )
+            pair = paired_parts.get(part_value)
+            if pair is None:
+                continue
+
+            corrected_part = pair[0] if vehicle_region == "FRONT" else pair[1]
+            detection.affectedPart = corrected_part
+            logger.info(
+                "Vehicle region constraint: region=%s original=%s corrected=%s",
+                vehicle_region,
+                part_value,
+                corrected_part,
+            )
 
     def _extract_affected_parts(
             self,
