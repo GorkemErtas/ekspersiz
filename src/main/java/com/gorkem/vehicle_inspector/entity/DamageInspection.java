@@ -75,6 +75,9 @@ public class DamageInspection {
     @Column(name = "image_path", length = 500)
     private String imagePath;
 
+    @Column(name = "context_image_path", length = 500)
+    private String contextImagePath;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
     private InspectionStatus status;
@@ -183,6 +186,10 @@ public class DamageInspection {
         return imagePath;
     }
 
+    public String getContextImagePath() {
+        return contextImagePath;
+    }
+
     public InspectionStatus getStatus() {
         return status;
     }
@@ -243,6 +250,10 @@ public class DamageInspection {
 
     public void setImagePath(String imagePath) {
         this.imagePath = imagePath;
+    }
+
+    public void setContextImagePath(String contextImagePath) {
+        this.contextImagePath = contextImagePath;
     }
 
     public void setStatus(
