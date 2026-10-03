@@ -506,6 +506,18 @@ public class DamageInspectionService {
             Long inspectionId,
             String authenticatedEmail
     ) {
+        return analyzeInspection(
+                inspectionId,
+                authenticatedEmail,
+                false
+        );
+    }
+
+    public DamageInspectionResponse analyzeInspection(
+            Long inspectionId,
+            String authenticatedEmail,
+            boolean requireContextImage
+    ) {
         ImageValidationContext imageValidation =
                 validateInspectionImageInternal(
                         inspectionId,
@@ -518,13 +530,31 @@ public class DamageInspectionService {
             );
         }
 
-        ImageValidationContext contextImageValidation =
-                validateInspectionImageInternal(
+        DamageInspection currentInspection =
+                getInspectionEntity(
                         inspectionId,
-                        authenticatedEmail,
-                        true
+                        authenticatedEmail
                 );
-        if (!contextImageValidation.quality().suitable()) {
+        boolean hasContextImage =
+                currentInspection.getContextImagePath() != null
+                        && !currentInspection.getContextImagePath().isBlank();
+
+        if (requireContextImage && !hasContextImage) {
+            throw new IllegalStateException(
+                    "Analizden önce geniş açı araç fotoğrafı yüklenmelidir."
+            );
+        }
+
+        ImageValidationContext contextImageValidation =
+                hasContextImage
+                        ? validateInspectionImageInternal(
+                                inspectionId,
+                                authenticatedEmail,
+                                true
+                        )
+                        : null;
+        if (contextImageValidation != null
+                && !contextImageValidation.quality().suitable()) {
             throw new UnsuitableInspectionImageException(
                     contextImageValidation.quality().message()
             );
@@ -548,17 +578,20 @@ public class DamageInspectionService {
                             validateImageExists(
                                     inspection
                             );
-                            validateContextImageExists(
-                                    inspection
-                            );
+                            if (requireContextImage) {
+                                validateContextImageExists(
+                                        inspection
+                                );
+                            }
 
                             if (!Objects.equals(
                                     inspection.getImagePath(),
                                     imageValidation.imagePath()
-                            ) || !Objects.equals(
-                                    inspection.getContextImagePath(),
-                                    contextImageValidation.imagePath()
-                            )) {
+                            ) || (contextImageValidation != null
+                                    && !Objects.equals(
+                                            inspection.getContextImagePath(),
+                                            contextImageValidation.imagePath()
+                                    ))) {
                                 throw new IllegalStateException(
                                         "Fotoğraflardan biri değiştirildi. Lütfen analizi tekrar başlatın."
                                 );
@@ -615,16 +648,22 @@ public class DamageInspectionService {
                                     context.imagePath()
                             );
 
-            Path storedContextImagePath =
-                    fileStorageService.resolveStoredFile(
-                            context.contextImagePath()
-                    );
-
-            AiAnalysisResponse aiResponse =
-                    aiAnalysisClient.analyze(
-                            storedImagePath,
-                            storedContextImagePath
-                    );
+            AiAnalysisResponse aiResponse;
+            if (context.contextImagePath() == null
+                    || context.contextImagePath().isBlank()) {
+                aiResponse = aiAnalysisClient.analyze(
+                        storedImagePath
+                );
+            } else {
+                Path storedContextImagePath =
+                        fileStorageService.resolveStoredFile(
+                                context.contextImagePath()
+                        );
+                aiResponse = aiAnalysisClient.analyze(
+                        storedImagePath,
+                        storedContextImagePath
+                );
+            }
 
             normalizeAndValidateAnalysisResponse(aiResponse);
 
