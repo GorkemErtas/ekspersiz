@@ -67,6 +67,40 @@ class InspectionService {
     return _parseInspection(response, 'Hasar fotoğrafı yüklenemedi.');
   }
 
+  Future<DamageInspection> uploadContextImage({
+    required int inspectionId,
+    required List<int> imageBytes,
+    required String filename,
+    required String contentType,
+  }) async {
+    final response = await apiClient.postMultipart(
+      '/inspections/$inspectionId/context-image',
+      fileBytes: imageBytes,
+      filename: filename,
+      fileFieldName: 'image',
+      contentType: contentType,
+    );
+
+    return _parseInspection(response, 'Geniş açı fotoğrafı yüklenemedi.');
+  }
+
+  Future<ImageQualityResult> validateContextImageQuality(
+    int inspectionId,
+  ) async {
+    final response = await apiClient.post(
+      '/inspections/$inspectionId/context-image-quality',
+      timeout: _analysisTimeout,
+    );
+    if (response is! Map) {
+      throw const FormatException(
+        'Geniş açı fotoğraf uygunluk sonucu geçerli formatta alınamadı.',
+      );
+    }
+    return ImageQualityResult.fromJson(
+      Map<String, dynamic>.from(response),
+    );
+  }
+
   Future<DamageInspection> analyzeInspection(int inspectionId) async {
     final response = await apiClient.post(
       '/inspections/$inspectionId/analyze',
