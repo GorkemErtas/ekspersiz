@@ -40,6 +40,9 @@ class _UploadDamageImageScreenState extends State<UploadDamageImageScreen> {
 
   bool _isUploading = false;
   String? _qualityIssue;
+  int _photoStep = 1;
+
+  bool get _isContextStep => _photoStep == 2;
 
   Future<void> _pickImage(ImageSource source) async {
     try {
@@ -196,16 +199,27 @@ class _UploadDamageImageScreenState extends State<UploadDamageImageScreen> {
     });
 
     try {
-      final updatedInspection = await _inspectionService.uploadImage(
-        inspectionId: widget.inspection.id,
-        imageBytes: imageBytes,
-        filename: filename,
-        contentType: contentType,
-      );
+      final updatedInspection = _isContextStep
+          ? await _inspectionService.uploadContextImage(
+              inspectionId: widget.inspection.id,
+              imageBytes: imageBytes,
+              filename: filename,
+              contentType: contentType,
+            )
+          : await _inspectionService.uploadImage(
+              inspectionId: widget.inspection.id,
+              imageBytes: imageBytes,
+              filename: filename,
+              contentType: contentType,
+            );
 
-      final quality = await _inspectionService.validateImageQuality(
-        widget.inspection.id,
-      );
+      final quality = _isContextStep
+          ? await _inspectionService.validateContextImageQuality(
+              widget.inspection.id,
+            )
+          : await _inspectionService.validateImageQuality(
+              widget.inspection.id,
+            );
 
       if (!mounted) {
         return;
@@ -214,6 +228,17 @@ class _UploadDamageImageScreenState extends State<UploadDamageImageScreen> {
       if (!quality.suitable) {
         setState(() {
           _qualityIssue = quality.message;
+        });
+        return;
+      }
+
+      if (!_isContextStep) {
+        setState(() {
+          _photoStep = 2;
+          _selectedImageBytes = null;
+          _selectedContentType = null;
+          _selectedFilename = null;
+          _qualityIssue = null;
         });
         return;
       }
@@ -278,7 +303,9 @@ class _UploadDamageImageScreenState extends State<UploadDamageImageScreen> {
               const SizedBox(height: 6),
 
               AppText(
-                'Hasarlı bölgenin fotoğrafını nasıl eklemek istediğinizi seçin.',
+                _isContextStep
+                    ? 'Araç bölgesinin daha geniş fotoğrafını nasıl eklemek istediğinizi seçin.'
+                    : 'Hasarlı bölgenin fotoğrafını nasıl eklemek istediğinizi seçin.',
                 style: textTheme.bodyMedium?.copyWith(
                   color: colorScheme.onSurfaceVariant,
                 ),
@@ -343,7 +370,11 @@ class _UploadDamageImageScreenState extends State<UploadDamageImageScreen> {
     final hasImage = _selectedImageBytes != null;
 
     return Scaffold(
-      appBar: AppBar(title: const AppText('Hasar Fotoğrafı')),
+      appBar: AppBar(
+        title: AppText(
+          _isContextStep ? 'Araç Bölgesi Fotoğrafı' : 'Hasar Fotoğrafı',
+        ),
+      ),
 
       body: SafeArea(
         child: Center(
@@ -354,14 +385,21 @@ class _UploadDamageImageScreenState extends State<UploadDamageImageScreen> {
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 36),
 
               children: [
-                const AppPageHeader(
-                  icon: Icons.image_search_rounded,
-                  title: 'Hasarlı bölgeyi görüntüleyin',
-                  subtitle:
-                      'Hasarın net göründüğü tek bir fotoğraf yükleyin. '
-                      'AI modeli fotoğrafı inceleyerek hasar tipini, '
-                      'etkilenen parçaları ve hasar seviyesini belirleyecek.',
-                  badge: 'YAPAY ZEKÂ GÖRÜNTÜ ANALİZİ',
+                AppPageHeader(
+                  icon: _isContextStep
+                      ? Icons.zoom_out_map_rounded
+                      : Icons.image_search_rounded,
+                  title: _isContextStep
+                      ? 'Biraz geri çekilin'
+                      : 'Hasarı yakından görüntüleyin',
+                  subtitle: _isContextStep
+                      ? 'Hasar net görünmeye devam ederken çevresindeki araç '
+                            'parçalarını da kadraja alın. Bu fotoğraf, hasarın '
+                            'aracın hangi bölümünde olduğunu belirlemek için kullanılacak.'
+                      : 'Hasarlı bölgeyi yakından ve net şekilde görüntüleyin. '
+                            'Çizik, ezik, çatlak veya kırık bölgenin ayrıntıları '
+                            'belirgin olsun.',
+                  badge: _isContextStep ? '2 / 2 • GENİŞ AÇI' : '1 / 2 • HASAR',
                 ),
 
                 const SizedBox(height: 24),
@@ -452,14 +490,18 @@ class _UploadDamageImageScreenState extends State<UploadDamageImageScreen> {
 
                 const SizedBox(height: 18),
 
-                const _PhotoTipsCard(),
+                _PhotoTipsCard(isContextStep: _isContextStep),
 
                 const SizedBox(height: 26),
 
                 PrimaryButton(
-                  label: hasImage ? 'AI Analizini Başlat' : 'Fotoğraf Seç',
+                  label: hasImage
+                      ? (_isContextStep ? 'AI Analizini Başlat' : 'Devam Et')
+                      : 'Fotoğraf Seç',
                   icon: hasImage
-                      ? Icons.auto_awesome_rounded
+                      ? (_isContextStep
+                            ? Icons.auto_awesome_rounded
+                            : Icons.arrow_forward_rounded)
                       : Icons.add_a_photo_outlined,
                   isLoading: _isUploading,
                   onPressed: _isUploading
@@ -621,7 +663,9 @@ class _PhotoUploadArea extends StatelessWidget {
                       const SizedBox(height: 20),
 
                       AppText(
-                        'Hasar fotoğrafı ekleyin',
+                        _isContextStep
+                            ? 'Geniş açı fotoğrafı ekleyin'
+                            : 'Hasar fotoğrafı ekleyin',
                         textAlign: TextAlign.center,
                         style: textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.w900,
@@ -726,7 +770,9 @@ class _SelectedFileInfo extends StatelessWidget {
 }
 
 class _PhotoTipsCard extends StatelessWidget {
-  const _PhotoTipsCard();
+  const _PhotoTipsCard({required this.isContextStep});
+
+  final bool isContextStep;
 
   @override
   Widget build(BuildContext context) {
@@ -766,21 +812,25 @@ class _PhotoTipsCard extends StatelessWidget {
 
           const _PhotoTip(
             icon: Icons.wb_sunny_outlined,
-            text: 'Fotoğrafı yeterli ışıkta çekin.',
+            text: 'Fotoğrafı yeterli ışıkta ve net çekin.',
           ),
 
           const SizedBox(height: 10),
 
-          const _PhotoTip(
+          _PhotoTip(
             icon: Icons.center_focus_strong_outlined,
-            text: 'Hasarlı bölgenin tamamını kadraja alın.',
+            text: isContextStep
+                ? 'Hasar görünür kalırken çevresindeki araç parçalarını da kadraja alın.'
+                : 'Hasarlı bölgenin ayrıntıları net seçilebilsin.',
           ),
 
           const SizedBox(height: 10),
 
-          const _PhotoTip(
+          _PhotoTip(
             icon: Icons.zoom_out_map_rounded,
-            text: 'Aşırı yakın veya bulanık görüntülerden kaçının.',
+            text: isContextStep
+                ? 'İlk fotoğrafa göre biraz daha geri çekilin; aracı çok uzaktan çekmeyin.'
+                : 'Yakın çekim yapabilirsiniz; bulanık görüntülerden kaçının.',
           ),
         ],
       ),
