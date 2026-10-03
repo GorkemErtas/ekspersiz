@@ -191,6 +191,46 @@ class DamageAnalyzerResultTest(unittest.TestCase):
         self.assertEqual("TOO_DARK", result.code)
         self.analyzer.vehicle_model.predict.assert_not_called()
 
+    def test_damage_photo_does_not_require_full_vehicle_detection(self) -> None:
+        image_bytes = BytesIO()
+        Image.effect_noise((200, 200), 80).convert("RGB").save(
+            image_bytes,
+            format="JPEG",
+        )
+        self.analyzer.minimum_brightness = 1.0
+        self.analyzer.minimum_blur_score = 1.0
+        self.analyzer.vehicle_model = Mock()
+
+        result = self.analyzer.validate_image_quality(
+            image_bytes.getvalue(),
+            purpose="damage",
+        )
+
+        self.assertTrue(result.suitable)
+        self.assertEqual("SUITABLE", result.code)
+        self.analyzer.vehicle_model.predict.assert_not_called()
+
+    def test_context_photo_still_requires_vehicle_context(self) -> None:
+        image_bytes = BytesIO()
+        Image.effect_noise((200, 200), 80).convert("RGB").save(
+            image_bytes,
+            format="JPEG",
+        )
+        self.analyzer.minimum_brightness = 1.0
+        self.analyzer.minimum_blur_score = 1.0
+        self.analyzer.minimum_vehicle_area_ratio = 0.12
+        self.analyzer.vehicle_confidence_threshold = 0.40
+        self.analyzer.vehicle_model = Mock()
+        self.analyzer._extract_detections = Mock(return_value=[])
+
+        result = self.analyzer.validate_image_quality(
+            image_bytes.getvalue(),
+            purpose="context",
+        )
+
+        self.assertFalse(result.suitable)
+        self.assertEqual("NO_VEHICLE", result.code)
+
     def test_small_vehicle_is_rejected_with_retake_guidance(self) -> None:
         image_bytes = BytesIO()
         image = Image.effect_noise((200, 200), 80).convert("RGB")
