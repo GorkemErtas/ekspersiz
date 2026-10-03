@@ -192,13 +192,18 @@ public class DamageInspectionController {
                     name = "requireContext",
                     defaultValue = "false"
             ) boolean requireContext,
+            @RequestParam(
+                    name = "vehicleRegion",
+                    required = false
+            ) String vehicleRegion,
             Authentication authentication
     ) {
         DamageInspectionResponse response =
                 inspectionService.analyzeInspection(
                         inspectionId,
                         authentication.getName(),
-                        requireContext
+                        requireContext,
+                        vehicleRegion
                 );
 
         return ResponseEntity.ok(response);
