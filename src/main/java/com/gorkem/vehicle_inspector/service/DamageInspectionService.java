@@ -530,10 +530,14 @@ public class DamageInspectionService {
             );
         }
 
-        DamageInspection currentInspection =
-                getInspectionEntity(
-                        inspectionId,
+        User validationUser =
+                businessContextService.requireUser(
                         authenticatedEmail
+                );
+        DamageInspection currentInspection =
+                inspectionAccessService.requireInspection(
+                        inspectionId,
+                        validationUser
                 );
         boolean hasContextImage =
                 currentInspection.getContextImagePath() != null
