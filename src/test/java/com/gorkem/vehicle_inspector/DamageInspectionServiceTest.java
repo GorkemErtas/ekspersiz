@@ -153,7 +153,7 @@ class DamageInspectionServiceTest {
         verify(inspections, never()).save(any());
         verify(ai).validateImage(Path.of("image.jpg"), "damage");
         verify(ai).validateImage(Path.of("context-image.jpg"), "context");
-        verify(ai, never()).analyze(any());
+        verify(ai, never()).analyze(any(), any());
         verifyNoInteractions(reports);
     }
 
@@ -272,7 +272,7 @@ class DamageInspectionServiceTest {
                 );
         verify(analysisUsageRepository, times(1))
                 .save(any(AnalysisUsage.class));
-        verify(ai, times(2)).analyze(any());
+        verify(ai, times(2)).analyze(any(), any());
     }
 
     @Test
@@ -291,7 +291,7 @@ class DamageInspectionServiceTest {
         assertEquals(NOW.minusMonths(1), inspection.getAnalysisStartedAt());
         verify(ai).validateImage(Path.of("image.jpg"), "damage");
         verify(ai).validateImage(Path.of("context-image.jpg"), "context");
-        verify(ai, never()).analyze(any());
+        verify(ai, never()).analyze(any(), any());
     }
 
     @Test
@@ -451,7 +451,7 @@ class DamageInspectionServiceTest {
         assertTrue(exception.getMessage().contains("çok karanlık"));
         assertEquals(InspectionStatus.PENDING, inspection.getStatus());
         assertNull(inspection.getAnalysisStartedAt());
-        verify(ai, never()).analyze(any());
+        verify(ai, never()).analyze(any(), any());
         verifyNoInteractions(analysisUsageRepository);
     }
 
@@ -469,7 +469,7 @@ class DamageInspectionServiceTest {
         assertEquals(InspectionStatus.FAILED, inspection.getStatus());
         assertNull(inspection.getAnalysisStartedAt());
         assertTrue(inspection.getAnalysisMessage().contains("unavailable"));
-        verify(ai, never()).analyze(any());
+        verify(ai, never()).analyze(any(), any());
         verifyNoInteractions(analysisUsageRepository);
     }
 
