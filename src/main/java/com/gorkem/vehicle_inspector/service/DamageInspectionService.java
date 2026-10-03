@@ -728,7 +728,8 @@ public class DamageInspectionService {
                     new AnalysisContext(
                             context.inspectionId(),
                             context.user(),
-                            context.imagePath()
+                            context.imagePath(),
+                            null
                     ),
                     exception
             );
