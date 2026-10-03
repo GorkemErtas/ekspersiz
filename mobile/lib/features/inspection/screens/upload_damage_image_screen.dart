@@ -41,6 +41,7 @@ class _UploadDamageImageScreenState extends State<UploadDamageImageScreen> {
   bool _isUploading = false;
   String? _qualityIssue;
   int _photoStep = 1;
+  String? _vehicleRegion;
 
   bool get _isContextStep => _photoStep == 2;
 
@@ -245,7 +246,10 @@ class _UploadDamageImageScreenState extends State<UploadDamageImageScreen> {
 
       Navigator.of(context).pushReplacement(
         MaterialPageRoute<void>(
-          builder: (_) => AnalyzingScreen(inspection: updatedInspection),
+          builder: (_) => AnalyzingScreen(
+            inspection: updatedInspection,
+            vehicleRegion: _vehicleRegion!,
+          ),
         ),
       );
     } catch (exception) {
@@ -278,6 +282,7 @@ class _UploadDamageImageScreenState extends State<UploadDamageImageScreen> {
       _selectedContentType = null;
       _selectedFilename = null;
       _qualityIssue = null;
+      _vehicleRegion = null;
     });
   }
 
@@ -508,6 +513,14 @@ class _UploadDamageImageScreenState extends State<UploadDamageImageScreen> {
 
                 if (_isContextStep) ...[
                   const SizedBox(height: 18),
+                  _VehicleRegionSelector(
+                    value: _vehicleRegion,
+                    enabled: !_isUploading,
+                    onChanged: (value) {
+                      setState(() => _vehicleRegion = value);
+                    },
+                  ),
+                  const SizedBox(height: 8),
                   TextButton.icon(
                     onPressed: _isUploading ? null : _returnToDamagePhoto,
                     icon: const Icon(Icons.arrow_back_rounded),
@@ -530,13 +543,79 @@ class _UploadDamageImageScreenState extends State<UploadDamageImageScreen> {
                   onPressed: _isUploading
                       ? null
                       : hasImage
-                      ? _uploadImage
+                      ? (_isContextStep && _vehicleRegion == null
+                            ? null
+                            : _uploadImage)
                       : _showImageSourceSheet,
                 ),
               ],
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _VehicleRegionSelector extends StatelessWidget {
+  const _VehicleRegionSelector({
+    required this.value,
+    required this.enabled,
+    required this.onChanged,
+  });
+
+  final String? value;
+  final bool enabled;
+  final ValueChanged<String> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return AppCard(
+      showShadow: false,
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          AppText(
+            'Hasar aracın hangi yarısında?',
+            style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 4),
+          AppText(
+            'AI’ın ön ve arka parçaları doğru ayırmasına yardımcı olur.',
+            style: textTheme.bodySmall?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 12),
+          SegmentedButton<String>(
+            segments: const [
+              ButtonSegment<String>(
+                value: 'FRONT',
+                icon: Icon(Icons.arrow_upward_rounded),
+                label: AppText('Ön yarı'),
+              ),
+              ButtonSegment<String>(
+                value: 'REAR',
+                icon: Icon(Icons.arrow_downward_rounded),
+                label: AppText('Arka yarı'),
+              ),
+            ],
+            selected: value == null ? <String>{} : <String>{value!},
+            emptySelectionAllowed: true,
+            showSelectedIcon: false,
+            onSelectionChanged: enabled
+                ? (selection) {
+                    if (selection.isNotEmpty) {
+                      onChanged(selection.first);
+                    }
+                  }
+                : null,
+          ),
+        ],
       ),
     );
   }
