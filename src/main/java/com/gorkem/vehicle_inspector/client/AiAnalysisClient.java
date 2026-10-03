@@ -53,9 +53,23 @@ private static final long[] RETRY_DELAYS_MS = {
     public ImageQualityResponse validateImage(
             Path imagePath
     ) {
+        return validateImage(imagePath, "context");
+    }
+
+    public ImageQualityResponse validateImage(
+            Path imagePath,
+            String purpose
+    ) {
+        if (!"damage".equals(purpose)
+                && !"context".equals(purpose)) {
+            throw new IllegalArgumentException(
+                    "Fotoğraf doğrulama amacı damage veya context olmalıdır."
+            );
+        }
+
         return postImage(
                 imagePath,
-                "/api/v1/validate-image",
+                "/api/v1/validate-image?purpose=" + purpose,
                 ImageQualityResponse.class
         );
     }
