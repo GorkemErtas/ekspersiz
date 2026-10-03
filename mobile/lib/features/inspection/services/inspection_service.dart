@@ -103,7 +103,7 @@ class InspectionService {
 
   Future<DamageInspection> analyzeInspection(int inspectionId) async {
     final response = await apiClient.post(
-      '/inspections/$inspectionId/analyze',
+      '/inspections/$inspectionId/analyze?requireContext=true',
       timeout: _analysisTimeout,
     );
 
