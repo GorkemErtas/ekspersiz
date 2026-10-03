@@ -392,6 +392,136 @@ class DamageAnalyzer:
             affected_parts=affected_parts,
         )
 
+    def analyze_pair(
+            self,
+            damage_file_content: bytes,
+            context_file_content: bytes,
+            filename: str,
+    ) -> DamageAnalysisResponse:
+        safe_filename = Path(filename or "vehicle.jpg").name.lower()
+        damage_image = self._load_image(damage_file_content)
+        context_image = self._load_image(context_file_content)
+
+        close_damage_results = self.damage_model.predict(
+            source=damage_image,
+            conf=self.damage_confidence_threshold,
+            iou=self.damage_iou_threshold,
+            max_det=20,
+            agnostic_nms=False,
+            verbose=False,
+        )
+        close_damage_detections = self._extract_detections(
+            close_damage_results,
+            class_name_mapping=self.damage_class_mapping,
+        )
+
+        if not close_damage_detections:
+            return self._build_no_damage_response(
+                filename=safe_filename
+            )
+
+        vehicle_results = self.vehicle_model.predict(
+            source=context_image,
+            conf=self.vehicle_confidence_threshold,
+            verbose=False,
+        )
+        vehicle_detections = [
+            detection
+            for detection in self._extract_detections(vehicle_results)
+            if detection.label.lower() in self.VEHICLE_LABELS
+        ]
+        if not vehicle_detections:
+            raise ValueError(
+                "Context image does not contain a recognizable vehicle."
+            )
+
+        (
+            context_analysis_image,
+            context_offset_x,
+            context_offset_y,
+        ) = self._crop_primary_vehicle(
+            image=context_image,
+            vehicle_detections=vehicle_detections,
+        )
+
+        context_damage_results = self.damage_model.predict(
+            source=context_analysis_image,
+            conf=self.damage_confidence_threshold,
+            iou=self.damage_iou_threshold,
+            max_det=20,
+            agnostic_nms=False,
+            verbose=False,
+        )
+        context_part_results = self.vehicle_part_model.predict(
+            source=context_analysis_image,
+            conf=self.vehicle_part_confidence_threshold,
+            iou=0.50,
+            max_det=50,
+            verbose=False,
+        )
+
+        context_damage_detections = self._translate_detections(
+            detections=self._extract_detections(
+                context_damage_results,
+                class_name_mapping=self.damage_class_mapping,
+            ),
+            offset_x=context_offset_x,
+            offset_y=context_offset_y,
+        )
+        context_part_detections = self._translate_detections(
+            detections=self._extract_detections(
+                context_part_results
+            ),
+            offset_x=context_offset_x,
+            offset_y=context_offset_y,
+        )
+
+        matched_context_damages = self._assign_parts_to_damage_detections(
+            damage_detections=context_damage_detections,
+            vehicle_part_detections=context_part_detections,
+        )
+
+        self._transfer_context_parts(
+            close_damage_detections=close_damage_detections,
+            context_damage_detections=matched_context_damages,
+        )
+
+        primary_damage = max(
+            close_damage_detections,
+            key=lambda detection: detection.confidence,
+        )
+        affected_parts = self._extract_affected_parts(
+            close_damage_detections
+        )
+
+        return self._build_damage_response(
+            filename=safe_filename,
+            primary_damage=primary_damage,
+            damage_detections=close_damage_detections,
+            affected_parts=affected_parts,
+        )
+
+    @staticmethod
+    def _transfer_context_parts(
+            close_damage_detections: list[DetectedObject],
+            context_damage_detections: list[DetectedObject],
+    ) -> None:
+        for close_damage in close_damage_detections:
+            candidates = [
+                context_damage
+                for context_damage in context_damage_detections
+                if context_damage.label == close_damage.label
+                and context_damage.affectedPart != "UNKNOWN"
+            ]
+            if not candidates:
+                continue
+
+            best_match = max(
+                candidates,
+                key=lambda detection: detection.confidence,
+            )
+            close_damage.affectedPart = best_match.affectedPart
+
     def _extract_affected_parts(
             self,
             damage_detections: list[DetectedObject],
