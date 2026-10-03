@@ -64,6 +64,40 @@ class DamageAnalyzerResultTest(unittest.TestCase):
 
         self.assertEqual("UNKNOWN", close_scratch.affectedPart)
 
+    def test_vehicle_region_corrects_only_ambiguous_part_pairs(self) -> None:
+        bumper = DetectedObject(
+            label="SCRATCH",
+            confidence=0.91,
+            affectedPart="REAR_BUMPER",
+            boundingBox=BoundingBox(x1=1, y1=1, x2=10, y2=10),
+        )
+        headlight = DetectedObject(
+            label="SCRATCH",
+            confidence=0.88,
+            affectedPart="HEADLIGHT",
+            boundingBox=BoundingBox(x1=12, y1=1, x2=20, y2=10),
+        )
+
+        self.analyzer._apply_vehicle_region_constraint(
+            [bumper, headlight],
+            "FRONT",
+        )
+
+        self.assertEqual("FRONT_BUMPER", bumper.affectedPart)
+        self.assertEqual("HEADLIGHT", headlight.affectedPart)
+
+    def test_vehicle_region_can_correct_front_pair_to_rear(self) -> None:
+        wheel = DetectedObject(
+            label="DENT",
+            confidence=0.84,
+            affectedPart="FRONT_WHEEL",
+            boundingBox=BoundingBox(x1=1, y1=1, x2=10, y2=10),
+        )
+
+        self.analyzer._apply_vehicle_region_constraint([wheel], "REAR")
+
+        self.assertEqual("REAR_WHEEL", wheel.affectedPart)
+
     def test_no_damage_response_uses_canonical_domain_values(self) -> None:
         result = self.analyzer._build_no_damage_response("vehicle.jpg")
 
