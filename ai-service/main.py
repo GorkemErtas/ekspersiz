@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="Vehicle Damage Analysis API",
-    version="1.3.0",
+    version="1.4.0",
 )
 
 damage_analyzer = DamageAnalyzer()
@@ -64,12 +64,21 @@ def health_check():
 )
 async def analyze_damage(
         image: UploadFile = File(...),
+        context_image: UploadFile | None = File(default=None),
 ) -> DamageAnalysisResponse:
     try:
         file_content = await read_valid_image(image)
 
-        return damage_analyzer.analyze(
-            file_content=file_content,
+        if context_image is None:
+            return damage_analyzer.analyze(
+                file_content=file_content,
+                filename=image.filename or "vehicle.jpg",
+            )
+
+        context_file_content = await read_valid_image(context_image)
+        return damage_analyzer.analyze_pair(
+            damage_file_content=file_content,
+            context_file_content=context_file_content,
             filename=image.filename or "vehicle.jpg",
         )
 
@@ -96,6 +105,8 @@ async def analyze_damage(
 
     finally:
         await image.close()
+        if context_image is not None:
+            await context_image.close()
 
 
 @app.post(
