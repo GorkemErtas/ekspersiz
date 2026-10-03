@@ -516,7 +516,8 @@ public class DamageInspectionService {
         return analyzeInspection(
                 inspectionId,
                 authenticatedEmail,
-                false
+                false,
+                null
         );
     }
 
@@ -525,6 +526,21 @@ public class DamageInspectionService {
             String authenticatedEmail,
             boolean requireContextImage
     ) {
+        return analyzeInspection(
+                inspectionId,
+                authenticatedEmail,
+                requireContextImage,
+                null
+        );
+    }
+
+    public DamageInspectionResponse analyzeInspection(
+            Long inspectionId,
+            String authenticatedEmail,
+            boolean requireContextImage,
+            String vehicleRegion
+    ) {
+        String normalizedVehicleRegion = normalizeVehicleRegion(vehicleRegion);
         ImageValidationContext imageValidation =
                 validateInspectionImageInternal(
                         inspectionId,
@@ -672,7 +688,8 @@ public class DamageInspectionService {
                         );
                 aiResponse = aiAnalysisClient.analyze(
                         storedImagePath,
-                        storedContextImagePath
+                        storedContextImagePath,
+                        normalizedVehicleRegion
                 );
             }
 
@@ -690,6 +707,20 @@ public class DamageInspectionService {
                     exception
             );
         }
+    }
+
+    private String normalizeVehicleRegion(String vehicleRegion) {
+        if (vehicleRegion == null || vehicleRegion.isBlank()) {
+            return null;
+        }
+
+        String normalized = vehicleRegion.trim().toUpperCase();
+        if (!"FRONT".equals(normalized) && !"REAR".equals(normalized)) {
+            throw new IllegalArgumentException(
+                    "Araç bölgesi FRONT veya REAR olmalıdır."
+            );
+        }
+        return normalized;
     }
 
     public ImageQualityResponse validateInspectionImage(
