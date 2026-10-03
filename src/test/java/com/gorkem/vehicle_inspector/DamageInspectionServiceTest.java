@@ -289,7 +289,7 @@ class DamageInspectionServiceTest {
                 );
         verify(analysisUsageRepository, times(1))
                 .save(any(AnalysisUsage.class));
-        verify(ai, times(2)).analyze(any(), any());
+        verify(ai, times(2)).analyze(any(), any(), any());
     }
 
     @Test
