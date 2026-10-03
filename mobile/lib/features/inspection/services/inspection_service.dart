@@ -101,9 +101,19 @@ class InspectionService {
     );
   }
 
-  Future<DamageInspection> analyzeInspection(int inspectionId) async {
+  Future<DamageInspection> analyzeInspection(
+    int inspectionId, {
+    required String vehicleRegion,
+  }) async {
+    final normalizedRegion = vehicleRegion.trim().toUpperCase();
+    if (normalizedRegion != 'FRONT' && normalizedRegion != 'REAR') {
+      throw const FormatException('Araç bölgesi seçimi geçersiz.');
+    }
+
     final response = await apiClient.post(
-      '/inspections/$inspectionId/analyze?requireContext=true',
+      '/inspections/$inspectionId/analyze'
+      '?requireContext=true'
+      '&vehicleRegion=${Uri.encodeQueryComponent(normalizedRegion)}',
       timeout: _analysisTimeout,
     );
 
