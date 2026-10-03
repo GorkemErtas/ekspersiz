@@ -275,7 +275,7 @@ class DamageInspectionServiceTest {
     @Test
     void failedAnalysisRetainsReservationAndSameMonthRetryDoesNotConsumeAnotherSlot() {
         when(storage.resolveStoredFile("image.jpg")).thenReturn(Path.of("image.jpg"));
-        when(ai.analyze(any(), any())).thenThrow(new IllegalStateException("AI unavailable"));
+        when(ai.analyze(any(), any(), any())).thenThrow(new IllegalStateException("AI unavailable"));
         assertEquals(InspectionStatus.FAILED, service.analyzeInspection(30L, actor.getEmail()).getStatus());
         assertEquals(NOW, inspection.getAnalysisStartedAt());
 
@@ -371,7 +371,7 @@ class DamageInspectionServiceTest {
     void reportFailureKeepsCompletedAnalysisAndCreator() {
         when(storage.resolveStoredFile("image.jpg")).thenReturn(Path.of("image.jpg"));
         AiAnalysisResponse response = minorAnalysisResponse();
-        when(ai.analyze(any(), any())).thenReturn(response);
+        when(ai.analyze(any(), any(), any())).thenReturn(response);
         when(reports.generateReport(any())).thenThrow(new IllegalStateException("Gemini unavailable"));
 
         var result = service.analyzeInspection(30L, actor.getEmail());
@@ -386,7 +386,7 @@ class DamageInspectionServiceTest {
         when(storage.resolveStoredFile("image.jpg")).thenReturn(Path.of("image.jpg"));
         AiAnalysisResponse response = new AiAnalysisResponse();
         response.setDamageSeverity(DamageSeverity.NONE);
-        when(ai.analyze(any(), any())).thenReturn(response);
+        when(ai.analyze(any(), any(), any())).thenReturn(response);
 
         var result = service.analyzeInspection(30L, actor.getEmail());
 
@@ -414,7 +414,7 @@ class DamageInspectionServiceTest {
     @Test
     void validMinorDamageRemainsMinorAndUsesGeminiReport() {
         when(storage.resolveStoredFile("image.jpg")).thenReturn(Path.of("image.jpg"));
-        when(ai.analyze(any(), any())).thenReturn(minorAnalysisResponse());
+        when(ai.analyze(any(), any(), any())).thenReturn(minorAnalysisResponse());
         when(reports.generateReport(any())).thenReturn(report());
 
         var result = service.analyzeInspection(30L, actor.getEmail());
@@ -430,7 +430,7 @@ class DamageInspectionServiceTest {
     @Test
     void invalidAiResponseIsTechnicalFailureAndKeepsQuotaReservationForRetry() {
         when(storage.resolveStoredFile("image.jpg")).thenReturn(Path.of("image.jpg"));
-        when(ai.analyze(any(), any())).thenReturn(new AiAnalysisResponse());
+        when(ai.analyze(any(), any(), any())).thenReturn(new AiAnalysisResponse());
 
         var result = service.analyzeInspection(30L, actor.getEmail());
 
@@ -445,7 +445,7 @@ class DamageInspectionServiceTest {
         when(storage.resolveStoredFile("image.jpg")).thenReturn(Path.of("image.jpg"));
         AiAnalysisResponse response = minorAnalysisResponse();
         response.setDamageSeverity(DamageSeverity.NONE);
-        when(ai.analyze(any(), any())).thenReturn(response);
+        when(ai.analyze(any(), any(), any())).thenReturn(response);
 
         var result = service.analyzeInspection(30L, actor.getEmail());
 
@@ -496,7 +496,7 @@ class DamageInspectionServiceTest {
         when(storage.resolveStoredFile("image.jpg")).thenReturn(Path.of("image.jpg"));
         AiAnalysisResponse response = new AiAnalysisResponse();
         response.setDamageSeverity(DamageSeverity.NONE);
-        when(ai.analyze(any(), any())).thenReturn(response);
+        when(ai.analyze(any(), any(), any())).thenReturn(response);
     }
 
     private static AiAnalysisResponse minorAnalysisResponse() {
