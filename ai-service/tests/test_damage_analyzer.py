@@ -16,6 +16,54 @@ class DamageAnalyzerResultTest(unittest.TestCase):
         self.analyzer = DamageAnalyzer.__new__(DamageAnalyzer)
         self.analyzer.damage_recommendation_confidence_threshold = 0.30
 
+    def test_context_part_is_transferred_only_for_same_damage_type(self) -> None:
+        close_scratch = DetectedObject(
+            label="SCRATCH",
+            confidence=0.91,
+            affectedPart="UNKNOWN",
+            boundingBox=BoundingBox(x1=1, y1=1, x2=10, y2=10),
+        )
+        context_scratch = DetectedObject(
+            label="SCRATCH",
+            confidence=0.72,
+            affectedPart="FRONT_BUMPER",
+            boundingBox=BoundingBox(x1=20, y1=20, x2=40, y2=40),
+        )
+        context_dent = DetectedObject(
+            label="DENT",
+            confidence=0.99,
+            affectedPart="REAR_BUMPER",
+            boundingBox=BoundingBox(x1=50, y1=50, x2=70, y2=70),
+        )
+
+        self.analyzer._transfer_context_parts(
+            [close_scratch],
+            [context_scratch, context_dent],
+        )
+
+        self.assertEqual("FRONT_BUMPER", close_scratch.affectedPart)
+
+    def test_context_part_remains_unknown_without_same_damage_type(self) -> None:
+        close_scratch = DetectedObject(
+            label="SCRATCH",
+            confidence=0.91,
+            affectedPart="UNKNOWN",
+            boundingBox=BoundingBox(x1=1, y1=1, x2=10, y2=10),
+        )
+        context_dent = DetectedObject(
+            label="DENT",
+            confidence=0.99,
+            affectedPart="REAR_BUMPER",
+            boundingBox=BoundingBox(x1=50, y1=50, x2=70, y2=70),
+        )
+
+        self.analyzer._transfer_context_parts(
+            [close_scratch],
+            [context_dent],
+        )
+
+        self.assertEqual("UNKNOWN", close_scratch.affectedPart)
+
     def test_no_damage_response_uses_canonical_domain_values(self) -> None:
         result = self.analyzer._build_no_damage_response("vehicle.jpg")
 
