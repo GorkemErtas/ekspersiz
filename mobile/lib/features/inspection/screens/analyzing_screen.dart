@@ -13,9 +13,14 @@ import '../services/inspection_service.dart';
 import 'inspection_result_screen.dart';
 
 class AnalyzingScreen extends StatefulWidget {
-  const AnalyzingScreen({super.key, required this.inspection});
+  const AnalyzingScreen({
+    super.key,
+    required this.inspection,
+    required this.vehicleRegion,
+  });
 
   final DamageInspection inspection;
+  final String vehicleRegion;
 
   @override
   State<AnalyzingScreen> createState() => _AnalyzingScreenState();
@@ -68,6 +73,7 @@ class _AnalyzingScreenState extends State<AnalyzingScreen>
     try {
       final analyzedInspection = await _inspectionService.analyzeInspection(
         widget.inspection.id,
+        vehicleRegion: widget.vehicleRegion,
       );
 
       if (!mounted) {
