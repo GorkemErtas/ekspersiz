@@ -256,6 +256,23 @@ class DamageInspectionServiceTest {
     }
 
     @Test
+    void newClientRequiresContextImageBeforeAnalysis() {
+        inspection.setContextImagePath(null);
+
+        assertThrows(
+                IllegalStateException.class,
+                () -> service.analyzeInspection(
+                        30L,
+                        actor.getEmail(),
+                        true
+                )
+        );
+
+        verify(ai, never()).analyze(any(), any());
+        verifyNoInteractions(analysisUsageRepository);
+    }
+
+    @Test
     void failedAnalysisRetainsReservationAndSameMonthRetryDoesNotConsumeAnotherSlot() {
         when(storage.resolveStoredFile("image.jpg")).thenReturn(Path.of("image.jpg"));
         when(ai.analyze(any(), any())).thenThrow(new IllegalStateException("AI unavailable"));
