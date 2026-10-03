@@ -336,6 +336,13 @@ public class DamageInspectionService {
                 newImagePath
         );
 
+        String previousContextImagePath =
+                inspection.getContextImagePath();
+        inspection.setContextImagePath(null);
+        registerImageDeletionAfterCommit(
+                previousContextImagePath
+        );
+
         inspection.clearDetections();
         inspection.clearRepairRecommendations();
 
