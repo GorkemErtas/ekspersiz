@@ -54,6 +54,14 @@ private static final long[] RETRY_DELAYS_MS = {
             Path imagePath,
             Path contextImagePath
     ) {
+        return analyze(imagePath, contextImagePath, null);
+    }
+
+    public AiAnalysisResponse analyze(
+            Path imagePath,
+            Path contextImagePath,
+            String vehicleRegion
+    ) {
         validateImagePath(imagePath);
         validateImagePath(contextImagePath);
 
@@ -67,6 +75,9 @@ private static final long[] RETRY_DELAYS_MS = {
                 "context_image",
                 buildImagePart(contextImagePath, "context_image")
         );
+        if (vehicleRegion != null && !vehicleRegion.isBlank()) {
+            multipartBody.add("vehicle_region", vehicleRegion);
+        }
 
         return postMultipart(
                 multipartBody,
