@@ -1,6 +1,8 @@
 package com.gorkem.vehicle_inspector.controller;
 
 import com.gorkem.vehicle_inspector.dto.response.*;
+import com.gorkem.vehicle_inspector.dto.request.AiAssistantChatRequest;
+import jakarta.validation.Valid;
 import com.gorkem.vehicle_inspector.service.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -11,9 +13,12 @@ import java.util.List;
 public class AiAssistantController {
     private final AiAssistantEntitlementService entitlement;
     private final AiAssistantToolService tools;
-    public AiAssistantController(AiAssistantEntitlementService entitlement, AiAssistantToolService tools) {
-        this.entitlement=entitlement; this.tools=tools;
+    private final AiAssistantChatService chat;
+    public AiAssistantController(AiAssistantEntitlementService entitlement, AiAssistantToolService tools, AiAssistantChatService chat) {
+        this.entitlement=entitlement; this.tools=tools; this.chat=chat;
     }
+    @PostMapping("/chat")
+    public AiAssistantChatResponse chat(@Valid @RequestBody AiAssistantChatRequest request, Authentication auth) { return chat.chat(request, auth.getName()); }
     @GetMapping("/entitlement")
     public AiAssistantEntitlementResponse entitlement(Authentication auth) { return entitlement.status(auth.getName()); }
     @PostMapping("/trial")
