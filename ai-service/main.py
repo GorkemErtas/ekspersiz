@@ -11,6 +11,8 @@ from fastapi import (
 
 from app.damage_analyzer import DamageAnalyzer
 from app.schemas import DamageAnalysisResponse, ImageQualityResponse
+from app.assistant.api_schemas import AssistantPlanRequest, AssistantPlanResponse, RetrievedContext
+from app.assistant.routing import DeterministicDomainRouter
 
 
 logger = logging.getLogger(__name__)
@@ -152,3 +154,19 @@ async def validate_image_quality(
         ) from exc
     finally:
         await image.close()
+
+
+assistant_router = DeterministicDomainRouter()
+
+
+@app.post("/api/v1/assistant/plan", response_model=AssistantPlanResponse)
+def plan_assistant_turn(request: AssistantPlanRequest) -> AssistantPlanResponse:
+    decision = assistant_router.route(request.question)
+    return AssistantPlanResponse(
+        intent=decision.intent.value,
+        in_scope=decision.in_scope,
+        use_rag=decision.use_rag,
+        tool_name=decision.tool_name,
+        reason=decision.reason,
+        context=[],
+    )
