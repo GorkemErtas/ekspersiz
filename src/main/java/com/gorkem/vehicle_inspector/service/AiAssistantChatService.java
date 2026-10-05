@@ -12,9 +12,10 @@ public class AiAssistantChatService {
     private final AiAssistantClient aiClient;
     private final AiAssistantEntitlementService entitlement;
     private final AiAssistantToolService tools;
+    private final AiAssistantGenerationService generation;
 
-    public AiAssistantChatService(AiAssistantClient aiClient, AiAssistantEntitlementService entitlement, AiAssistantToolService tools) {
-        this.aiClient=aiClient; this.entitlement=entitlement; this.tools=tools;
+    public AiAssistantChatService(AiAssistantClient aiClient, AiAssistantEntitlementService entitlement, AiAssistantToolService tools, AiAssistantGenerationService generation) {
+        this.aiClient=aiClient; this.entitlement=entitlement; this.tools=tools; this.generation=generation;
     }
 
     @Transactional
@@ -30,18 +31,17 @@ public class AiAssistantChatService {
         }
 
         String answer;
+        String toolContext=null;
         List<String> usedTools=List.of();
         if (plan.toolName()!=null) {
             if (request.vehicleId()==null && !"getMyVehicles".equals(plan.toolName())) {
                 return new AiAssistantChatResponse(plan.intent(), "Bu soruyu yanıtlamak için önce bir araç seçmelisiniz.", false,
                         entitlement.status(email).remainingToday(), List.of());
             }
-            answer=executeTool(plan.toolName(), request.vehicleId(), email);
+            toolContext=executeTool(plan.toolName(), request.vehicleId(), email);
             usedTools=List.of(plan.toolName());
-        } else {
-            // RAG + grounded LLM generation is connected in the next layer.
-            answer="Sorunuz araç asistanı kapsamında. Bilgi tabanı yanıt katmanı hazırlanıyor.";
         }
+        answer=generation.generate(request.question(), plan, toolContext);
 
         entitlement.recordSuccessfulAnswer(email);
         var status=entitlement.status(email);
