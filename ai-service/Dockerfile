@@ -19,6 +19,8 @@ RUN pip uninstall -y opencv-python && \
     pip install --no-cache-dir opencv-python-headless==4.13.0.92
 
 COPY app ./app
+COPY knowledge ./knowledge
+COPY scripts ./scripts
 COPY main.py .
 
 COPY yolo11n.pt ./yolo11n.pt
