@@ -3,7 +3,7 @@ import hashlib
 import os
 from pathlib import Path
 
-from app.assistant.chunking import HeadingAwareChunker
+AI_SERVICE_ROOT = Path(__file__).resolve().parents[1]\nif str(AI_SERVICE_ROOT) not in sys.path:\n    sys.path.insert(0, str(AI_SERVICE_ROOT))\n\nfrom app.assistant.chunking import HeadingAwareChunker
 from app.assistant.embeddings import LocalMultilingualEmbedder
 from app.assistant.schemas import KnowledgeDocument
 from app.assistant.vector_store import PgVectorKnowledgeStore
@@ -31,7 +31,7 @@ def ingest_file(path: Path, category: str, store: PgVectorKnowledgeStore,
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--knowledge-dir", default="knowledge")
+    parser.add_argument("--knowledge-dir", default=str(AI_SERVICE_ROOT / "knowledge"))
     args = parser.parse_args()
     database_url = os.environ.get("DATABASE_URL")
     if not database_url:
