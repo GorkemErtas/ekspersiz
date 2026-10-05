@@ -1,4 +1,5 @@
 import logging
+import os
 
 from fastapi import (
     FastAPI,
@@ -13,6 +14,9 @@ from app.damage_analyzer import DamageAnalyzer
 from app.schemas import DamageAnalysisResponse, ImageQualityResponse
 from app.assistant.api_schemas import AssistantPlanRequest, AssistantPlanResponse, RetrievedContext
 from app.assistant.routing import DeterministicDomainRouter
+from app.assistant.embeddings import LocalMultilingualEmbedder
+from app.assistant.vector_store import PgVectorKnowledgeStore
+from app.assistant.retriever import SemanticRetriever
 
 
 logger = logging.getLogger(__name__)
@@ -157,16 +161,31 @@ async def validate_image_quality(
 
 
 assistant_router = DeterministicDomainRouter()
+_assistant_retriever = None
+
+
+def get_assistant_retriever():
+    global _assistant_retriever
+    if _assistant_retriever is None:
+        database_url = os.getenv("DATABASE_URL")
+        if not database_url:
+            raise RuntimeError("DATABASE_URL is required for assistant RAG retrieval")
+        _assistant_retriever = SemanticRetriever(LocalMultilingualEmbedder(), PgVectorKnowledgeStore(database_url))
+    return _assistant_retriever
 
 
 @app.post("/api/v1/assistant/plan", response_model=AssistantPlanResponse)
 def plan_assistant_turn(request: AssistantPlanRequest) -> AssistantPlanResponse:
     decision = assistant_router.route(request.question)
+    context = []
+    if decision.in_scope and decision.use_rag:
+        chunks = get_assistant_retriever().retrieve(request.question)
+        context = [RetrievedContext(title=x.title, category=x.category, content=x.content, similarity=x.similarity) for x in chunks]
     return AssistantPlanResponse(
         intent=decision.intent.value,
         in_scope=decision.in_scope,
         use_rag=decision.use_rag,
         tool_name=decision.tool_name,
         reason=decision.reason,
-        context=[],
+        context=context,
     )
