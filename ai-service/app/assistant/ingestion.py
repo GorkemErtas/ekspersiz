@@ -23,6 +23,9 @@ class KnowledgeSource:
     market: str | None = "TR"
     valid_from: date | None = None
     valid_until: date | None = None
+    vehicle_years: tuple[int, ...] = ()
+    vehicle_models: tuple[str, ...] = ()
+    vehicle_trims: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -67,6 +70,13 @@ class KnowledgeIngestionService:
             slug=slug, title=title, category=source.category, content=content,
             source_name=source.source_name, source_url=source.source_url,
             source_version=source.source_version,
+            metadata={
+                "vehicle_years": list(source.vehicle_years),
+                "vehicle_models": list(source.vehicle_models),
+                "vehicle_trims": list(source.vehicle_trims),
+                "market": source.market,
+                "authority": source.authority,
+            },
         )
         chunks = self.chunker.chunk(document)
         embeddings = self.embedder.embed_passages([chunk.content for chunk in chunks])
