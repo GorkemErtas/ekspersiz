@@ -1,5 +1,5 @@
 ALTER TABLE ai_knowledge_documents
-    DROP CONSTRAINT ai_knowledge_documents_slug_key;
+    DROP CONSTRAINT IF EXISTS ai_knowledge_documents_slug_key;
 
 ALTER TABLE ai_knowledge_documents
     ADD COLUMN lifecycle_status VARCHAR(24) NOT NULL DEFAULT 'ACTIVE',
