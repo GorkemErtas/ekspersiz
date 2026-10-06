@@ -6,7 +6,7 @@ from .chunking import HybridSemanticChunker
 from .embeddings import LocalMultilingualEmbedder
 from .document_parser import DocumentParserRegistry
 from .schemas import KnowledgeDocument
-from .vector_store import PgVectorKnowledgeStore
+from .vector_store import KnowledgeVersionConflict, PgVectorKnowledgeStore
 
 
 @dataclass(frozen=True)
@@ -49,6 +49,14 @@ class KnowledgeIngestionService:
         current = self.store.find_active_document(slug)
         if current and current.content_hash == digest:
             return IngestionResult(slug, "UNCHANGED", 0)
+
+        existing_version = self.store.find_version(slug, source.source_version)
+        if existing_version:
+            if existing_version.content_hash == digest:
+                return IngestionResult(slug, "UNCHANGED", 0)
+            raise KnowledgeVersionConflict(
+                f"{slug} source_version={source.source_version} already exists with different content; publish a new version"
+            )
 
         title = parsed.title
         document = KnowledgeDocument(
