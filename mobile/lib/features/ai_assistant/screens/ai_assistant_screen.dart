@@ -4,9 +4,13 @@ import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_theme.dart';
 import '../models/ai_assistant_models.dart';
 import '../services/ai_assistant_service.dart';
+import '../../vehicle/models/vehicle.dart';
+import '../../vehicle/services/vehicle_service.dart';
 
 class AiAssistantScreen extends StatefulWidget {
-  const AiAssistantScreen({super.key});
+  const AiAssistantScreen({super.key, this.initialVehicle});
+
+  final Vehicle? initialVehicle;
 
   @override
   State<AiAssistantScreen> createState() => _AiAssistantScreenState();
@@ -14,11 +18,14 @@ class AiAssistantScreen extends StatefulWidget {
 
 class _AiAssistantScreenState extends State<AiAssistantScreen> {
   final _service = AiAssistantService();
+  final _vehicleService = const VehicleService();
   final _controller = TextEditingController();
   final _scrollController = ScrollController();
   final List<AiChatMessage> _messages = [];
 
   AiAssistantEntitlement? _entitlement;
+  List<Vehicle> _vehicles = const [];
+  Vehicle? _selectedVehicle;
   bool _loading = true;
   bool _sending = false;
   String? _error;
@@ -26,7 +33,30 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
   @override
   void initState() {
     super.initState();
-    _loadEntitlement();
+    _selectedVehicle = widget.initialVehicle;
+    _loadInitialData();
+  }
+
+  Future<void> _loadInitialData() async {
+    await Future.wait([_loadEntitlement(), _loadVehicles()]);
+  }
+
+  Future<void> _loadVehicles() async {
+    try {
+      final vehicles = await _vehicleService.getVehicles();
+      if (!mounted) return;
+      setState(() {
+        _vehicles = vehicles;
+        if (_selectedVehicle == null && vehicles.isNotEmpty) {
+          _selectedVehicle = vehicles.firstWhere(
+            (vehicle) => vehicle.primaryVehicle,
+            orElse: () => vehicles.first,
+          );
+        }
+      });
+    } catch (_) {
+      // Vehicle context is optional for general automotive questions.
+    }
   }
 
   Future<void> _loadEntitlement() async {
@@ -79,7 +109,10 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
     _scrollToBottom();
 
     try {
-      final reply = await _service.ask(question);
+      final reply = await _service.ask(
+        question,
+        vehicleId: _selectedVehicle?.id,
+      );
       if (!mounted) return;
       setState(() {
         _messages.add(AiChatMessage(text: reply.answer, isUser: false));
@@ -138,6 +171,37 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
             ? const Center(child: CircularProgressIndicator())
             : Column(
                 children: [
+                  if (_vehicles.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                      child: DropdownButtonFormField<int>(
+                        initialValue: _selectedVehicle?.id,
+                        decoration: const InputDecoration(
+                          labelText: 'Araç bağlamı',
+                          prefixIcon: Icon(Icons.directions_car_outlined),
+                        ),
+                        items: _vehicles
+                            .map(
+                              (vehicle) => DropdownMenuItem<int>(
+                                value: vehicle.id,
+                                child: Text(
+                                  '${vehicle.displayName} • ${vehicle.modelYear}',
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            )
+                            .toList(growable: false),
+                        onChanged: _sending
+                            ? null
+                            : (id) {
+                                setState(() {
+                                  _selectedVehicle = _vehicles.firstWhere(
+                                    (vehicle) => vehicle.id == id,
+                                  );
+                                });
+                              },
+                      ),
+                    ),
                   if (_entitlement != null)
                     Container(
                       width: double.infinity,
