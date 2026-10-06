@@ -53,7 +53,7 @@ public class AiAssistantChatService {
         UUID reservationToken=entitlement.reserveQuestion(email);
         boolean completed=false;
         try {
-            String answer=generation.generate(request.question(), plan, toolContext);
+            String answer=generation.generate(request.question(), plan, toolContext, request.history());
             entitlement.completeReservedQuestion(email, reservationToken);
             completed=true;
             var status=entitlement.status(email);
