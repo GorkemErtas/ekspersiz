@@ -1,7 +1,5 @@
 package com.gorkem.vehicle_inspector.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gorkem.vehicle_inspector.client.AiAssistantClient;
 import com.gorkem.vehicle_inspector.dto.request.AiAssistantChatRequest;
 import com.gorkem.vehicle_inspector.dto.response.*;
@@ -12,14 +10,13 @@ import java.util.List;
 public class AiAssistantChatService {
     private final AiAssistantClient aiClient;
     private final AiAssistantEntitlementService entitlement;
-    private final AiAssistantToolService tools;
+    private final AiAssistantToolContextService contextService;
     private final AiAssistantGenerationService generation;
-    private final ObjectMapper objectMapper;
 
     public AiAssistantChatService(AiAssistantClient aiClient, AiAssistantEntitlementService entitlement,
-            AiAssistantToolService tools, AiAssistantGenerationService generation, ObjectMapper objectMapper) {
-        this.aiClient=aiClient; this.entitlement=entitlement; this.tools=tools;
-        this.generation=generation; this.objectMapper=objectMapper;
+            AiAssistantToolContextService contextService, AiAssistantGenerationService generation) {
+        this.aiClient=aiClient; this.entitlement=entitlement; this.contextService=contextService;
+        this.generation=generation;
     }
 
     public AiAssistantChatResponse chat(AiAssistantChatRequest request, String email) {
@@ -47,7 +44,7 @@ public class AiAssistantChatService {
         String toolContext=null;
         List<String> usedTools=List.of();
         if (plan.toolName()!=null) {
-            toolContext=executeTool(plan.toolName(), request.vehicleId(), email);
+            toolContext=contextService.build(plan.toolName(), request.vehicleId(), email);
             usedTools=List.of(plan.toolName());
         }
 
@@ -69,17 +66,4 @@ public class AiAssistantChatService {
         return new AiAssistantChatResponse(plan.intent(), answer, consumed, remaining, toolsUsed);
     }
 
-    private String executeTool(String toolName, Long vehicleId, String email) {
-        Object value=switch (toolName) {
-            case "getDamageHistory" -> tools.getDamageHistory(vehicleId, email);
-            case "getUpcomingReminders" -> tools.getUpcomingReminders(vehicleId, email);
-            case "getMyVehicles" -> tools.getMyVehicles(email);
-            default -> throw new IllegalArgumentException("Desteklenmeyen AI tool: " + toolName);
-        };
-        try {
-            return objectMapper.writeValueAsString(value);
-        } catch (JsonProcessingException exc) {
-            throw new IllegalStateException("AI tool context serialize edilemedi.", exc);
-        }
-    }
 }
