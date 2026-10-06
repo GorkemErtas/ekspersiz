@@ -117,7 +117,7 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
       );
       if (!mounted) return;
       setState(() {
-        _messages.add(AiChatMessage(text: reply.answer, isUser: false));
+        _messages.add(AiChatMessage(text: reply.answer, isUser: false, sources: reply.sources));
         final current = _entitlement;
         if (current != null) {
           _entitlement = AiAssistantEntitlement(
@@ -262,13 +262,41 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
                                         : scheme.surfaceContainerHighest,
                                     borderRadius: BorderRadius.circular(18),
                                   ),
-                                  child: Text(
-                                    message.text,
-                                    style: TextStyle(
-                                      color: message.isUser
-                                          ? scheme.onPrimary
-                                          : scheme.onSurface,
-                                    ),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        message.text,
+                                        style: TextStyle(
+                                          color: message.isUser
+                                              ? scheme.onPrimary
+                                              : scheme.onSurface,
+                                        ),
+                                      ),
+                                      if (!message.isUser && message.sources.isNotEmpty) ...[
+                                        const SizedBox(height: 10),
+                                        Wrap(
+                                          spacing: 6,
+                                          runSpacing: 6,
+                                          children: message.sources
+                                              .map(
+                                                (source) => Chip(
+                                                  avatar: const Icon(
+                                                    Icons.verified_outlined,
+                                                    size: 16,
+                                                  ),
+                                                  label: Text(
+                                                    source.name,
+                                                    overflow: TextOverflow.ellipsis,
+                                                  ),
+                                                  visualDensity: VisualDensity.compact,
+                                                ),
+                                              )
+                                              .toList(growable: false),
+                                        ),
+                                      ],
+                                    ],
                                   ),
                                 ),
                               );
