@@ -8,6 +8,10 @@ from .ingestion import KnowledgeSource
 
 _ID_RE = re.compile(r"^[a-z0-9][a-z0-9-]{2,79}$")
 _ALLOWED_AUTHORITIES = {"OFFICIAL", "VERIFIED", "CURATED"}
+_ALLOWED_CATEGORIES = {"VEHICLE_GENERAL", "INSPECTION", "MAINTENANCE", "DRIVING_USAGE", "SAFETY", "VEHICLE_SPEC", "APP_HELP"}
+_LANGUAGE_RE = re.compile(r"^[a-z]{2,3}(?:-[A-Z]{2})?$")
+_MARKET_RE = re.compile(r"^[A-Z]{2,3}$")
+_VERSION_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$")
 
 
 def _date(value: str | None) -> date | None:
@@ -40,6 +44,20 @@ class KnowledgeManifest:
             if not rule.get("glob") or not rule.get("category"):
                 raise ValueError("each knowledge source rule requires glob and category")
 
+            category = rule["category"]
+            if category not in _ALLOWED_CATEGORIES:
+                raise ValueError(f"invalid knowledge category: {category}")
+
+            language = rule.get("language", defaults.get("language", "tr"))
+            market = rule.get("market", defaults.get("market"))
+            version = rule.get("source_version", source_version)
+            if not isinstance(language, str) or not _LANGUAGE_RE.fullmatch(language):
+                raise ValueError(f"invalid knowledge language: {language}")
+            if market is not None and (not isinstance(market, str) or not _MARKET_RE.fullmatch(market)):
+                raise ValueError(f"invalid knowledge market: {market}")
+            if not isinstance(version, str) or not _VERSION_RE.fullmatch(version):
+                raise ValueError(f"invalid knowledge source_version: {version}")
+
             explicit_id = rule.get("id")
             if explicit_id and not _ID_RE.fullmatch(explicit_id):
                 raise ValueError(f"invalid knowledge source id: {explicit_id}")
@@ -55,7 +73,7 @@ class KnowledgeManifest:
                 raise ValueError("vehicle_years must contain valid integer years")
             if any(not isinstance(value, str) or not value.strip() for value in (*vehicle_models, *vehicle_trims)):
                 raise ValueError("vehicle_models and vehicle_trims must contain non-empty strings")
-            if rule["category"] == "VEHICLE_SPEC" and (not vehicle_years or not vehicle_models):
+            if category == "VEHICLE_SPEC" and (not vehicle_years or not vehicle_models):
                 raise ValueError("VEHICLE_SPEC sources require vehicle_years and vehicle_models")
 
             valid_from = _date(rule.get("valid_from"))
@@ -83,15 +101,15 @@ class KnowledgeManifest:
 
                 resolved.append(KnowledgeSource(
                     path=path,
-                    category=rule["category"],
+                    category=category,
                     source_name=rule.get(
                         "source_name", defaults.get("source_name", "Unknown")),
-                    source_version=rule.get("source_version", source_version),
+                    source_version=version,
                     slug=slug,
                     source_url=rule.get("source_url"),
                     authority=authority,
-                    language=rule.get("language", defaults.get("language", "tr")),
-                    market=rule.get("market", defaults.get("market")),
+                    language=language,
+                    market=market,
                     valid_from=valid_from,
                     valid_until=valid_until,
                     vehicle_years=vehicle_years,
