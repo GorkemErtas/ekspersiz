@@ -199,9 +199,17 @@ def assistant_readiness():
 def plan_assistant_turn(request: AssistantPlanRequest) -> AssistantPlanResponse:
     decision = assistant_router.route(request.question)
     context = []
+    evidence_score = 0.0
+    evidence_sufficient = True
     if decision.in_scope and decision.use_rag:
         chunks = get_assistant_retriever().retrieve(request.question)
         context = [RetrievedContext(title=x.title, category=x.category, content=x.content, similarity=x.similarity) for x in chunks]
+        evidence_score = max((x.similarity for x in chunks), default=0.0)
+        settings = AssistantSettings.from_env()
+        threshold = (settings.vehicle_spec_min_similarity
+                     if decision.intent.value == "VEHICLE_SPEC"
+                     else settings.evidence_min_similarity)
+        evidence_sufficient = evidence_score >= threshold
     return AssistantPlanResponse(
         intent=decision.intent.value,
         in_scope=decision.in_scope,
@@ -210,5 +218,7 @@ def plan_assistant_turn(request: AssistantPlanRequest) -> AssistantPlanResponse:
         reason=decision.reason,
         automotive_relevance=decision.automotive_relevance,
         assistant_capability=decision.assistant_capability,
+        evidence_score=evidence_score,
+        evidence_sufficient=evidence_sufficient,
         context=context,
     )
