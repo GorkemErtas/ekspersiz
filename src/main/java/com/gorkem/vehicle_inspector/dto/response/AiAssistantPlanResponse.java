@@ -11,6 +11,8 @@ public record AiAssistantPlanResponse(
         String reason,
         @JsonProperty("automotive_relevance") double automotiveRelevance,
         @JsonProperty("assistant_capability") double assistantCapability,
+        @JsonProperty("evidence_score") double evidenceScore,
+        @JsonProperty("evidence_sufficient") boolean evidenceSufficient,
         List<AiAssistantRetrievedContext> context) {
 
     public record AiAssistantRetrievedContext(
