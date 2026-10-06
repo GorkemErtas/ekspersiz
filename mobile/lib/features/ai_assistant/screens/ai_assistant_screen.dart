@@ -29,6 +29,7 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
   bool _loading = true;
   bool _sending = false;
   String? _error;
+  String? _retryQuestion;
 
   @override
   void initState() {
@@ -106,6 +107,7 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
       _controller.clear();
       _sending = true;
       _error = null;
+      _retryQuestion = null;
     });
     _scrollToBottom();
 
@@ -140,9 +142,33 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
       if (!mounted) return;
       setState(() {
         _error = e.message;
+        _retryQuestion = question;
         _sending = false;
       });
     }
+  }
+
+  Future<void> _retryLastQuestion() async {
+    final question = _retryQuestion;
+    if (question == null || _sending || !(_entitlement?.canAsk ?? false)) return;
+    if (_messages.isNotEmpty &&
+        _messages.last.isUser &&
+        _messages.last.text == question) {
+      setState(() => _messages.removeLast());
+    }
+    _controller.text = question;
+    await _send();
+  }
+
+  String _accessMessage(AiAssistantEntitlement entitlement) {
+    return switch (entitlement.status) {
+      'INACTIVE' => 'AI Asistanı kullanmak için ücretsiz denemeyi başlatın.',
+      'LOCKED' => 'Çok sayıda kapsam dışı istek nedeniyle AI Asistan geçici olarak kilitlendi.',
+      'EXPIRED' => 'AI Asistan deneme süreniz sona erdi.',
+      _ when entitlement.remainingToday <= 0 =>
+        'Bugünkü 3 soru hakkınızı kullandınız. Yeni günlük haklarınız yarın yenilenir.',
+      _ => 'Aracınız, bakım, muayene, güvenlik veya EksperSiz hakkında bir şey sorun.',
+    };
   }
 
   void _scrollToBottom() {
@@ -220,8 +246,23 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
                     ),
                   if (_error != null)
                     Padding(
-                      padding: const EdgeInsets.all(12),
-                      child: Text(_error!, style: TextStyle(color: scheme.error)),
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              _error!,
+                              style: TextStyle(color: scheme.error),
+                            ),
+                          ),
+                          if (_retryQuestion != null)
+                            TextButton.icon(
+                              onPressed: _retryLastQuestion,
+                              icon: const Icon(Icons.refresh_rounded),
+                              label: const Text('Tekrar dene'),
+                            ),
+                        ],
+                      ),
                     ),
                   if (_entitlement != null && _entitlement!.status == 'INACTIVE')
                     Padding(
@@ -233,11 +274,13 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
                     ),
                   Expanded(
                     child: _messages.isEmpty
-                        ? const Center(
+                        ? Center(
                             child: Padding(
-                              padding: EdgeInsets.all(28),
+                              padding: const EdgeInsets.all(28),
                               child: Text(
-                                'Aracınız, bakım, muayene, güvenlik veya EksperSiz hakkında bir şey sorun.',
+                                _entitlement == null
+                                    ? 'AI Asistan hazırlanıyor.'
+                                    : _accessMessage(_entitlement!),
                                 textAlign: TextAlign.center,
                               ),
                             ),
@@ -329,7 +372,9 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
                         ),
                         const SizedBox(width: 8),
                         IconButton.filled(
-                          onPressed: _sending ? null : _send,
+                          onPressed: _sending || !(_entitlement?.canAsk ?? false)
+                              ? null
+                              : _send,
                           icon: const Icon(Icons.arrow_upward_rounded),
                         ),
                       ],
