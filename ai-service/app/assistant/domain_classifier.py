@@ -40,6 +40,10 @@ class SemanticDomainClassifier:
             reason=assessment.reason,
             automotive_relevance=assessment.automotive_relevance,
             assistant_capability=assessment.assistant_capability,
+            vehicle_year=assessment.vehicle_year,
+            vehicle_model=assessment.vehicle_model,
+            vehicle_trim=assessment.vehicle_trim,
+            vehicle_market=assessment.vehicle_market,
         )
 
     def assess(self, question: str) -> DomainAssessment:
