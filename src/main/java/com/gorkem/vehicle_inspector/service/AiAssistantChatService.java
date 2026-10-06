@@ -6,6 +6,7 @@ import com.gorkem.vehicle_inspector.dto.response.*;
 import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.UUID;
+import java.util.Objects;
 
 @Service
 public class AiAssistantChatService {
@@ -65,7 +66,14 @@ public class AiAssistantChatService {
 
     private AiAssistantChatResponse response(AiAssistantPlanResponse plan, String answer,
             boolean consumed, int remaining, List<String> toolsUsed) {
-        return new AiAssistantChatResponse(plan.intent(), answer, consumed, remaining, toolsUsed);
+        var sources = plan.context() == null ? List.<AiAssistantChatResponse.Source>of()
+                : plan.context().stream()
+                    .filter(item -> item.sourceName() != null && !item.sourceName().isBlank())
+                    .map(item -> new AiAssistantChatResponse.Source(item.sourceName(), item.sourceUrl()))
+                    .filter(Objects::nonNull)
+                    .distinct()
+                    .toList();
+        return new AiAssistantChatResponse(plan.intent(), answer, consumed, remaining, toolsUsed, sources);
     }
 
 }
