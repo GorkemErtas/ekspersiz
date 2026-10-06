@@ -12,13 +12,23 @@ public class AiAssistantDailyUsage {
     @Column(name = "usage_date", nullable = false) private LocalDate usageDate;
     @Column(name = "successful_questions", nullable = false) private int successfulQuestions;
     @Column(name = "out_of_scope_attempts", nullable = false) private int outOfScopeAttempts;
+    @Column(name = "reserved_questions", nullable = false) private int reservedQuestions;
     @Column(name = "created_at", nullable = false) private LocalDateTime createdAt;
     @Column(name = "updated_at", nullable = false) private LocalDateTime updatedAt;
 
     protected AiAssistantDailyUsage() {}
     public AiAssistantDailyUsage(User user, LocalDate date, LocalDateTime now) { this.user=user; this.usageDate=date; this.createdAt=now; this.updatedAt=now; }
-    public void recordSuccess(LocalDateTime now) { successfulQuestions++; updatedAt=now; }
+    public void reserve(LocalDateTime now) { reservedQuestions++; updatedAt=now; }
+    public void completeReservation(LocalDateTime now) {
+        if (reservedQuestions <= 0) throw new IllegalStateException("AI quota reservation is missing.");
+        reservedQuestions--; successfulQuestions++; updatedAt=now;
+    }
+    public void releaseReservation(LocalDateTime now) {
+        if (reservedQuestions > 0) reservedQuestions--;
+        updatedAt=now;
+    }
     public void recordOutOfScope(LocalDateTime now) { outOfScopeAttempts++; updatedAt=now; }
     public int getSuccessfulQuestions() { return successfulQuestions; }
     public int getOutOfScopeAttempts() { return outOfScopeAttempts; }
+    public int getReservedQuestions() { return reservedQuestions; }
 }
