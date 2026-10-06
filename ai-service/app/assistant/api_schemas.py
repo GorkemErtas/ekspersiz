@@ -15,4 +15,4 @@ class AssistantPlanResponse(BaseModel):
     use_rag: bool
     tool_name: str | None = None
     reason: str
-    context: list[RetrievedContext] = []
+    context: list[RetrievedContext] = Field(default_factory=list)
