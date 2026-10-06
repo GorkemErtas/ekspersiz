@@ -19,6 +19,8 @@ class AssistantSettings:
     retrieval_candidate_k: int = 8
     retrieval_final_k: int = 4
     retrieval_min_similarity: float = 0.55
+    evidence_min_similarity: float = 0.62
+    vehicle_spec_min_similarity: float = 0.78
 
     @classmethod
     def from_env(cls) -> "AssistantSettings":
@@ -32,6 +34,10 @@ class AssistantSettings:
             retrieval_final_k=_int("ASSISTANT_RETRIEVAL_FINAL_K", 4),
             retrieval_min_similarity=_float(
                 "ASSISTANT_RETRIEVAL_MIN_SIMILARITY", 0.55),
+            evidence_min_similarity=_float(
+                "ASSISTANT_EVIDENCE_MIN_SIMILARITY", 0.62),
+            vehicle_spec_min_similarity=_float(
+                "ASSISTANT_VEHICLE_SPEC_MIN_SIMILARITY", 0.78),
         )
         settings.validate()
         return settings
@@ -45,3 +51,7 @@ class AssistantSettings:
             raise ValueError("invalid assistant retrieval top-k configuration")
         if not 0.0 <= self.retrieval_min_similarity <= 1.0:
             raise ValueError("invalid assistant retrieval similarity threshold")
+        if not self.retrieval_min_similarity <= self.evidence_min_similarity <= 1.0:
+            raise ValueError("invalid assistant evidence similarity threshold")
+        if not self.evidence_min_similarity <= self.vehicle_spec_min_similarity <= 1.0:
+            raise ValueError("invalid vehicle spec evidence similarity threshold")
