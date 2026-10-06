@@ -6,26 +6,35 @@ import com.gorkem.vehicle_inspector.repository.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.*;
+import java.util.UUID;
 
 @Service
 public class AiAssistantEntitlementService {
     public static final int DAILY_LIMIT = 3;
     public static final int OUT_OF_SCOPE_LOCK_THRESHOLD = 3;
+    private static final Duration RESERVATION_TTL = Duration.ofMinutes(5);
     private static final ZoneId USAGE_ZONE = ZoneId.of("Europe/Istanbul");
 
     private final AiAssistantAccessRepository accessRepository;
     private final AiAssistantDailyUsageRepository usageRepository;
+    private final AiAssistantQuotaReservationRepository reservationRepository;
     private final BusinessContextService businessContext;
     private final Clock clock;
 
     public AiAssistantEntitlementService(AiAssistantAccessRepository accessRepository,
-            AiAssistantDailyUsageRepository usageRepository, BusinessContextService businessContext) {
-        this(accessRepository, usageRepository, businessContext, Clock.system(USAGE_ZONE));
+            AiAssistantDailyUsageRepository usageRepository,
+            AiAssistantQuotaReservationRepository reservationRepository,
+            BusinessContextService businessContext) {
+        this(accessRepository, usageRepository, reservationRepository,
+                businessContext, Clock.system(USAGE_ZONE));
     }
 
     AiAssistantEntitlementService(AiAssistantAccessRepository accessRepository,
-            AiAssistantDailyUsageRepository usageRepository, BusinessContextService businessContext, Clock clock) {
+            AiAssistantDailyUsageRepository usageRepository,
+            AiAssistantQuotaReservationRepository reservationRepository,
+            BusinessContextService businessContext, Clock clock) {
         this.accessRepository=accessRepository; this.usageRepository=usageRepository;
+        this.reservationRepository=reservationRepository;
         this.businessContext=businessContext; this.clock=clock;
     }
 
@@ -50,36 +59,43 @@ public class AiAssistantEntitlementService {
     @Transactional
     public void assertCanAsk(String email) {
         User user=businessContext.requireUser(email); LocalDateTime now=LocalDateTime.now(clock);
-        AiAssistantAccess access=accessRepository.findByUserId(user.getId())
-                .orElseThrow(() -> new IllegalStateException("AI Asistan etkin değil."));
-        if (!access.canAsk(now)) throw new IllegalStateException("AI Asistan erişiminiz aktif değil.");
+        assertAccess(user, now);
         AiAssistantDailyUsage usage=findOrCreateUsageForUpdate(user);
-        if (usage.getSuccessfulQuestions() + usage.getReservedQuestions() >= DAILY_LIMIT)
+        releaseExpired(now);
+        if (usage.getSuccessfulQuestions() + activeReservations(user, now) >= DAILY_LIMIT)
             throw new IllegalStateException("Bugünkü 3 AI Asistan soru hakkınızı kullandınız.");
     }
 
     @Transactional
-    public void reserveQuestion(String email) {
+    public UUID reserveQuestion(String email) {
         User user=businessContext.requireUser(email); LocalDateTime now=LocalDateTime.now(clock);
-        AiAssistantAccess access=accessRepository.findByUserId(user.getId())
-                .orElseThrow(() -> new IllegalStateException("AI Asistan etkin değil."));
-        if (!access.canAsk(now)) throw new IllegalStateException("AI Asistan erişiminiz aktif değil.");
+        assertAccess(user, now);
         AiAssistantDailyUsage usage=findOrCreateUsageForUpdate(user);
-        if (usage.getSuccessfulQuestions() + usage.getReservedQuestions() >= DAILY_LIMIT)
+        releaseExpired(now);
+        if (usage.getSuccessfulQuestions() + activeReservations(user, now) >= DAILY_LIMIT)
             throw new IllegalStateException("Günlük AI Asistan kotası doldu.");
-        usage.reserve(now);
+        UUID token=UUID.randomUUID();
+        reservationRepository.save(new AiAssistantQuotaReservation(
+                token, user, LocalDate.now(clock), now, now.plus(RESERVATION_TTL)));
+        return token;
     }
 
     @Transactional
-    public void completeReservedQuestion(String email) {
+    public void completeReservedQuestion(String email, UUID token) {
         User user=businessContext.requireUser(email); LocalDateTime now=LocalDateTime.now(clock);
-        findOrCreateUsageForUpdate(user).completeReservation(now);
+        AiAssistantDailyUsage usage=findOrCreateUsageForUpdate(user);
+        AiAssistantQuotaReservation reservation=reservationRepository
+                .findOwnedForUpdate(token, user.getId())
+                .orElseThrow(() -> new IllegalStateException("AI quota reservation not found."));
+        reservation.complete(now);
+        usage.recordSuccessful(now);
     }
 
     @Transactional
-    public void releaseReservedQuestion(String email) {
+    public void releaseReservedQuestion(String email, UUID token) {
         User user=businessContext.requireUser(email); LocalDateTime now=LocalDateTime.now(clock);
-        findOrCreateUsageForUpdate(user).releaseReservation(now);
+        reservationRepository.findOwnedForUpdate(token, user.getId())
+                .ifPresent(reservation -> reservation.release(now));
     }
 
     @Transactional
@@ -92,17 +108,34 @@ public class AiAssistantEntitlementService {
         }
     }
 
+    private void assertAccess(User user, LocalDateTime now) {
+        AiAssistantAccess access=accessRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new IllegalStateException("AI Asistan etkin değil."));
+        if (!access.canAsk(now))
+            throw new IllegalStateException("AI Asistan erişiminiz aktif değil.");
+    }
+
     private AiAssistantDailyUsage findOrCreateUsageForUpdate(User user) {
         LocalDate date=LocalDate.now(clock);
         usageRepository.ensureDailyRow(user.getId(), date);
         return usageRepository.findForUpdate(user.getId(), date).orElseThrow();
     }
 
+    private void releaseExpired(LocalDateTime now) {
+        reservationRepository.releaseExpired(now);
+    }
+
+    private int activeReservations(User user, LocalDateTime now) {
+        return Math.toIntExact(reservationRepository.countActive(
+                user.getId(), LocalDate.now(clock), now));
+    }
+
     private AiAssistantEntitlementResponse response(User user, AiAssistantAccess access, LocalDateTime now) {
+        releaseExpired(now);
         AiAssistantDailyUsage usage=usageRepository
                 .findByUserIdAndUsageDate(user.getId(), LocalDate.now(clock)).orElse(null);
         int used=usage == null ? 0 : usage.getSuccessfulQuestions();
-        int reserved=usage == null ? 0 : usage.getReservedQuestions();
+        int reserved=activeReservations(user, now);
         int out=usage == null ? 0 : usage.getOutOfScopeAttempts();
         int remaining=Math.max(0, DAILY_LIMIT-used-reserved);
         return new AiAssistantEntitlementResponse(
