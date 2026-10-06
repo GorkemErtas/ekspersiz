@@ -1,12 +1,20 @@
 import json
 from collections.abc import Sequence
 from contextlib import contextmanager
+from dataclasses import dataclass
 
 from .schemas import KnowledgeChunk, RetrievedChunk
 
 
 def _vector_literal(values: Sequence[float]) -> str:
     return "[" + ",".join(f"{value:.8f}" for value in values) + "]"
+
+
+@dataclass(frozen=True)
+class StoredDocument:
+    id: int
+    content_hash: str
+    source_version: str | None
 
 
 class PgVectorKnowledgeStore:
@@ -22,28 +30,40 @@ class PgVectorKnowledgeStore:
         with psycopg.connect(self.database_url) as connection:
             yield connection
 
-    def upsert_document(self, *, slug: str, title: str, category: str,
-                        content_hash: str, source_name: str | None = None,
-                        source_url: str | None = None,
-                        source_version: str | None = None) -> int:
-        sql = """
-            INSERT INTO ai_knowledge_documents
-                (slug, title, category, source_name, source_url, source_version, content_hash)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
-            ON CONFLICT (slug) DO UPDATE SET
-                title = EXCLUDED.title,
-                category = EXCLUDED.category,
-                source_name = EXCLUDED.source_name,
-                source_url = EXCLUDED.source_url,
-                source_version = EXCLUDED.source_version,
-                content_hash = EXCLUDED.content_hash,
-                active = TRUE,
-                updated_at = CURRENT_TIMESTAMP
-            RETURNING id
-        """
+    def find_active_document(self, slug: str) -> StoredDocument | None:
         with self._connection() as connection, connection.cursor() as cursor:
-            cursor.execute(sql, (slug, title, category, source_name, source_url,
-                                 source_version, content_hash))
+            cursor.execute(
+                """SELECT id, content_hash, source_version
+                   FROM ai_knowledge_documents
+                   WHERE slug = %s AND lifecycle_status = 'ACTIVE'
+                   LIMIT 1""",
+                (slug,),
+            )
+            row = cursor.fetchone()
+            return StoredDocument(row[0], row[1], row[2]) if row else None
+
+    def publish_document(self, *, slug: str, title: str, category: str,
+                         content_hash: str, source_name: str | None,
+                         source_url: str | None, source_version: str,
+                         authority: str = "CURATED", language: str = "tr",
+                         market: str | None = None) -> int:
+        with self._connection() as connection, connection.cursor() as cursor:
+            cursor.execute(
+                """UPDATE ai_knowledge_documents
+                   SET lifecycle_status = 'SUPERSEDED', active = FALSE,
+                       superseded_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+                   WHERE slug = %s AND lifecycle_status = 'ACTIVE'""",
+                (slug,),
+            )
+            cursor.execute(
+                """INSERT INTO ai_knowledge_documents
+                   (slug, title, category, source_name, source_url, source_version,
+                    content_hash, active, lifecycle_status, authority, language, market)
+                   VALUES (%s,%s,%s,%s,%s,%s,%s,TRUE,'ACTIVE',%s,%s,%s)
+                   RETURNING id""",
+                (slug, title, category, source_name, source_url, source_version,
+                 content_hash, authority, language, market),
+            )
             return cursor.fetchone()[0]
 
     def replace_chunks(self, document_id: int, chunks: Sequence[KnowledgeChunk],
@@ -56,7 +76,7 @@ class PgVectorKnowledgeStore:
                 cursor.execute(
                     """INSERT INTO ai_knowledge_chunks
                        (document_id, chunk_index, content, token_count, embedding, metadata)
-                       VALUES (%s, %s, %s, %s, %s::vector, %s::jsonb)""",
+                       VALUES (%s,%s,%s,%s,%s::vector,%s::jsonb)""",
                     (document_id, chunk.chunk_index, chunk.content,
                      len(chunk.content.split()), _vector_literal(embedding),
                      json.dumps(chunk.metadata, ensure_ascii=False)),
@@ -68,11 +88,12 @@ class PgVectorKnowledgeStore:
             raise ValueError("limit must be between 1 and 20")
         sql = """
             SELECT c.id, d.slug, d.title, d.category, c.content,
-                   1 - (c.embedding <=> %s::vector) AS similarity,
-                   c.metadata
+                   1 - (c.embedding <=> %s::vector) AS similarity, c.metadata
             FROM ai_knowledge_chunks c
             JOIN ai_knowledge_documents d ON d.id = c.document_id
-            WHERE d.active = TRUE
+            WHERE d.lifecycle_status = 'ACTIVE'
+              AND (d.valid_from IS NULL OR d.valid_from <= CURRENT_DATE)
+              AND (d.valid_until IS NULL OR d.valid_until >= CURRENT_DATE)
               AND 1 - (c.embedding <=> %s::vector) >= %s
             ORDER BY c.embedding <=> %s::vector
             LIMIT %s
