@@ -138,6 +138,9 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
         _sending = false;
       });
       _scrollToBottom();
+      if (!reply.quotaConsumed) {
+        await _refreshEntitlementSilently();
+      }
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() {
@@ -145,6 +148,16 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
         _retryQuestion = question;
         _sending = false;
       });
+    }
+  }
+
+  Future<void> _refreshEntitlementSilently() async {
+    try {
+      final entitlement = await _service.entitlement();
+      if (!mounted) return;
+      setState(() => _entitlement = entitlement);
+    } catch (_) {
+      // The answer is already available; a status refresh failure is non-fatal.
     }
   }
 
