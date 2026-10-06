@@ -79,17 +79,10 @@ class PgVectorKnowledgeStore:
                          market: str | None = None) -> int:
         with self._connection() as connection, connection.cursor() as cursor:
             cursor.execute(
-                """UPDATE ai_knowledge_documents
-                   SET lifecycle_status = 'SUPERSEDED', active = FALSE,
-                       superseded_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
-                   WHERE slug = %s AND lifecycle_status = 'ACTIVE'""",
-                (slug,),
-            )
-            cursor.execute(
                 """INSERT INTO ai_knowledge_documents
                    (slug, title, category, source_name, source_url, source_version,
                     content_hash, active, lifecycle_status, authority, language, market)
-                   VALUES (%s,%s,%s,%s,%s,%s,%s,TRUE,'ACTIVE',%s,%s,%s)
+                   VALUES (%s,%s,%s,%s,%s,%s,%s,FALSE,'DRAFT',%s,%s,%s)
                    RETURNING id""",
                 (slug, title, category, source_name, source_url, source_version,
                  content_hash, authority, language, market),
