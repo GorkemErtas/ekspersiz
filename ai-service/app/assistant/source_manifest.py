@@ -61,6 +61,8 @@ class KnowledgeManifest:
                 raise ValueError("knowledge valid_until cannot be before valid_from")
 
             matches = [p for p in sorted(knowledge_root.glob(rule["glob"])) if p.is_file()]
+            if explicit_id and not matches:
+                raise ValueError(f"knowledge source id {explicit_id} did not match a file")
             if explicit_id and len(matches) > 1:
                 raise ValueError(
                     f"knowledge source id {explicit_id} must resolve to exactly one file"
