@@ -66,12 +66,11 @@ class KnowledgeIngestionService:
         )
         chunks = self.chunker.chunk(document)
         embeddings = self.embedder.embed_passages([chunk.content for chunk in chunks])
-        document_id = self.store.publish_document(
+        self.store.publish_version(
             slug=slug, title=title, category=source.category,
             content_hash=digest, source_name=source.source_name,
             source_url=source.source_url, source_version=source.source_version,
+            chunks=chunks, embeddings=embeddings,
             authority=source.authority, language=source.language, market=source.market,
         )
-        self.store.replace_chunks(document_id, chunks, embeddings)
-        self.store.activate_document(document_id, slug)
         return IngestionResult(slug, "UPDATED" if current else "CREATED", len(chunks))
