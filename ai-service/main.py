@@ -183,7 +183,12 @@ def assistant_readiness():
             raise RuntimeError("DATABASE_URL is not configured")
         store = PgVectorKnowledgeStore(database_url)
         storage = store.readiness()
-        ready = bool(storage["pgvector"]) and int(storage["active_documents"]) > 0
+        ready = (
+            bool(storage["pgvector"])
+            and int(storage["active_documents"]) > 0
+            and int(storage["active_chunks"]) > 0
+            and int(storage["embedding_dimensions"]) == 384
+        )
         return {"status": "READY" if ready else "NOT_READY", **storage}
     except Exception:
         logger.exception("Assistant readiness check failed.")
