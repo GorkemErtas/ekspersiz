@@ -94,6 +94,24 @@ class PgVectorKnowledgeStore:
             return StoredDocument(row[0], row[1], row[2]) if row else None
 
     @staticmethod
+    def _lock_slug(cursor, slug: str) -> None:
+        # Transaction-scoped lock serializes publication for the same stable source.
+        cursor.execute("SELECT pg_advisory_xact_lock(hashtextextended(%s, 0))", (slug,))
+
+    @staticmethod
+    def _find_version_with_cursor(cursor, slug: str,
+                                  source_version: str) -> StoredDocument | None:
+        cursor.execute(
+            """SELECT id, content_hash, source_version
+               FROM ai_knowledge_documents
+               WHERE slug = %s AND source_version = %s
+               LIMIT 1""",
+            (slug, source_version),
+        )
+        row = cursor.fetchone()
+        return StoredDocument(row[0], row[1], row[2]) if row else None
+
+    @staticmethod
     def _insert_draft(cursor, slug: str, title: str, category: str,
                       content_hash: str, source_name: str | None,
                       source_url: str | None, source_version: str,
@@ -152,6 +170,15 @@ class PgVectorKnowledgeStore:
             raise ValueError("knowledge version cannot be published without chunks")
 
         with self._connection() as connection, connection.cursor() as cursor:
+            self._lock_slug(cursor, slug)
+            existing = self._find_version_with_cursor(cursor, slug, source_version)
+            if existing:
+                if existing.content_hash == content_hash:
+                    return existing.id
+                raise KnowledgeVersionConflict(
+                    f"{slug} source_version={source_version} already exists with different content; publish a new version"
+                )
+
             document_id = self._insert_draft(
                 cursor, slug, title, category, content_hash, source_name,
                 source_url, source_version, authority, language, market,
