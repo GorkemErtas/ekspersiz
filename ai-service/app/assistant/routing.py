@@ -26,6 +26,10 @@ class RouteDecision:
     reason: str = ""
     automotive_relevance: float = 0.0
     assistant_capability: float = 0.0
+    vehicle_year: int | None = None
+    vehicle_model: str | None = None
+    vehicle_trim: str | None = None
+    vehicle_market: str | None = None
 
 
 class DeterministicDomainRouter:
