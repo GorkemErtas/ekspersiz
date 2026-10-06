@@ -18,6 +18,7 @@ from app.assistant.embeddings import LocalMultilingualEmbedder
 from app.assistant.vector_store import PgVectorKnowledgeStore
 from app.assistant.retriever import SemanticRetriever
 from app.assistant.settings import AssistantSettings
+from app.assistant.spec_evidence import VehicleSpecIdentity, validate_vehicle_spec_evidence
 
 
 logger = logging.getLogger(__name__)
@@ -206,10 +207,21 @@ def plan_assistant_turn(request: AssistantPlanRequest) -> AssistantPlanResponse:
         context = [RetrievedContext(title=x.title, category=x.category, content=x.content, similarity=x.similarity) for x in chunks]
         evidence_score = max((x.similarity for x in chunks), default=0.0)
         settings = AssistantSettings.from_env()
-        threshold = (settings.vehicle_spec_min_similarity
-                     if decision.intent.value == "VEHICLE_SPEC"
-                     else settings.evidence_min_similarity)
+        threshold = settings.evidence_min_similarity
         evidence_sufficient = evidence_score >= threshold
+        if decision.intent.value == "VEHICLE_SPEC":
+            spec_result = validate_vehicle_spec_evidence(
+                VehicleSpecIdentity(
+                    year=decision.vehicle_year,
+                    model=decision.vehicle_model,
+                    trim=decision.vehicle_trim,
+                    market=decision.vehicle_market,
+                ),
+                chunks,
+                settings.vehicle_spec_min_similarity,
+            )
+            evidence_score = spec_result.score
+            evidence_sufficient = spec_result.sufficient
     return AssistantPlanResponse(
         intent=decision.intent.value,
         in_scope=decision.in_scope,
