@@ -204,7 +204,7 @@ def plan_assistant_turn(request: AssistantPlanRequest) -> AssistantPlanResponse:
     evidence_sufficient = True
     if decision.in_scope and decision.use_rag:
         chunks = get_assistant_retriever().retrieve(request.question)
-        context = [RetrievedContext(title=x.title, category=x.category, content=x.content, similarity=x.similarity) for x in chunks]
+        context = [RetrievedContext(title=x.title, category=x.category, content=x.content, similarity=x.similarity, source_name=x.source_name, source_url=x.source_url) for x in chunks]
         evidence_score = max((x.similarity for x in chunks), default=0.0)
         settings = AssistantSettings.from_env()
         threshold = settings.evidence_min_similarity
