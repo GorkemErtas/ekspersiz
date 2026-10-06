@@ -13,7 +13,7 @@ from fastapi import (
 from app.damage_analyzer import DamageAnalyzer
 from app.schemas import DamageAnalysisResponse, ImageQualityResponse
 from app.assistant.api_schemas import AssistantPlanRequest, AssistantPlanResponse, RetrievedContext
-from app.assistant.routing import DeterministicDomainRouter
+from app.assistant.domain_classifier import SemanticDomainClassifier
 from app.assistant.embeddings import LocalMultilingualEmbedder
 from app.assistant.vector_store import PgVectorKnowledgeStore
 from app.assistant.retriever import SemanticRetriever
@@ -161,7 +161,7 @@ async def validate_image_quality(
         await image.close()
 
 
-assistant_router = DeterministicDomainRouter()
+assistant_router = SemanticDomainClassifier()
 _assistant_retriever = None
 
 
@@ -208,5 +208,7 @@ def plan_assistant_turn(request: AssistantPlanRequest) -> AssistantPlanResponse:
         use_rag=decision.use_rag,
         tool_name=decision.tool_name,
         reason=decision.reason,
+        automotive_relevance=decision.automotive_relevance,
+        assistant_capability=decision.assistant_capability,
         context=context,
     )
