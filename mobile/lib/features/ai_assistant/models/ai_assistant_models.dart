@@ -6,6 +6,8 @@ class AiAssistantEntitlement {
     required this.usedToday,
     required this.remainingToday,
     required this.outOfScopeAttempts,
+    this.trialExpiresAt,
+    this.lockedUntil,
   });
 
   final String status;
@@ -14,6 +16,8 @@ class AiAssistantEntitlement {
   final int usedToday;
   final int remainingToday;
   final int outOfScopeAttempts;
+  final DateTime? trialExpiresAt;
+  final DateTime? lockedUntil;
 
   factory AiAssistantEntitlement.fromJson(Map<String, dynamic> json) =>
       AiAssistantEntitlement(
@@ -22,7 +26,9 @@ class AiAssistantEntitlement {
         dailyLimit: json['dailyLimit'] as int? ?? 0,
         usedToday: json['usedToday'] as int? ?? 0,
         remainingToday: json['remainingToday'] as int? ?? 0,
-        outOfScopeAttempts: json['outOfScopeAttempts'] as int? ?? 0,
+        outOfScopeAttempts: json['outOfScopeAttemptsToday'] as int? ?? 0,
+        trialExpiresAt: DateTime.tryParse(json['trialExpiresAt'] as String? ?? ''),
+        lockedUntil: DateTime.tryParse(json['lockedUntil'] as String? ?? ''),
       );
 }
 
