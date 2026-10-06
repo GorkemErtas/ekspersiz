@@ -17,6 +17,7 @@ from app.assistant.routing import DeterministicDomainRouter
 from app.assistant.embeddings import LocalMultilingualEmbedder
 from app.assistant.vector_store import PgVectorKnowledgeStore
 from app.assistant.retriever import SemanticRetriever
+from app.assistant.settings import AssistantSettings
 
 
 logger = logging.getLogger(__name__)
@@ -170,7 +171,7 @@ def get_assistant_retriever():
         database_url = os.getenv("DATABASE_URL")
         if not database_url:
             raise RuntimeError("DATABASE_URL is required for assistant RAG retrieval")
-        _assistant_retriever = SemanticRetriever(LocalMultilingualEmbedder(), PgVectorKnowledgeStore(database_url))
+        _assistant_retriever = SemanticRetriever(LocalMultilingualEmbedder(), PgVectorKnowledgeStore(database_url), AssistantSettings.from_env())
     return _assistant_retriever
 
 
