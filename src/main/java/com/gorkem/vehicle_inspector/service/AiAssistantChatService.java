@@ -5,6 +5,7 @@ import com.gorkem.vehicle_inspector.dto.request.AiAssistantChatRequest;
 import com.gorkem.vehicle_inspector.dto.response.*;
 import org.springframework.stereotype.Service;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class AiAssistantChatService {
@@ -48,16 +49,16 @@ public class AiAssistantChatService {
             usedTools=List.of(plan.toolName());
         }
 
-        entitlement.reserveQuestion(email);
+        UUID reservationToken=entitlement.reserveQuestion(email);
         boolean completed=false;
         try {
             String answer=generation.generate(request.question(), plan, toolContext);
-            entitlement.completeReservedQuestion(email);
+            entitlement.completeReservedQuestion(email, reservationToken);
             completed=true;
             var status=entitlement.status(email);
             return response(plan, answer, true, status.remainingToday(), usedTools);
         } finally {
-            if (!completed) entitlement.releaseReservedQuestion(email);
+            if (!completed) entitlement.releaseReservedQuestion(email, reservationToken);
         }
     }
 
