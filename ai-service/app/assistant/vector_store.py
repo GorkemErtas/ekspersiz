@@ -167,7 +167,8 @@ class PgVectorKnowledgeStore:
             raise ValueError("limit must be between 1 and 20")
         sql = """
             SELECT c.id, d.slug, d.title, d.category, c.content,
-                   1 - (c.embedding <=> %s::vector) AS similarity, c.metadata
+                   1 - (c.embedding <=> %s::vector) AS similarity,
+                   d.market, d.authority, d.source_version, c.metadata
             FROM ai_knowledge_chunks c
             JOIN ai_knowledge_documents d ON d.id = c.document_id
             WHERE d.lifecycle_status = 'ACTIVE'
@@ -182,5 +183,6 @@ class PgVectorKnowledgeStore:
             cursor.execute(sql, (vector, vector, min_similarity, vector, limit))
             return [RetrievedChunk(
                 chunk_id=row[0], document_slug=row[1], title=row[2], category=row[3],
-                content=row[4], similarity=float(row[5]), metadata=row[6] or {},
+                content=row[4], similarity=float(row[5]), market=row[6],
+                authority=row[7], source_version=row[8], metadata=row[9] or {},
             ) for row in cursor.fetchall()]
