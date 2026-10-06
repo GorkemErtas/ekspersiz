@@ -12,6 +12,7 @@ from app.assistant.embeddings import LocalMultilingualEmbedder
 from app.assistant.ingestion import KnowledgeIngestionService
 from app.assistant.source_manifest import KnowledgeManifest
 from app.assistant.vector_store import PgVectorKnowledgeStore
+from app.assistant.settings import AssistantSettings
 
 
 def main() -> None:
@@ -29,11 +30,17 @@ def main() -> None:
     manifest_path = Path(args.manifest) if args.manifest else root / "sources.json"
     manifest = KnowledgeManifest.load(root, manifest_path, args.source_version)
 
+    settings = AssistantSettings.from_env()
     store = PgVectorKnowledgeStore(database_url)
     embedder = LocalMultilingualEmbedder()
-    service = KnowledgeIngestionService(
-        store, embedder, HybridSemanticChunker(embedder)
+    chunker = HybridSemanticChunker(
+        embedder,
+        target_tokens=settings.chunk_target_tokens,
+        min_tokens=settings.chunk_min_tokens,
+        max_tokens=settings.chunk_max_tokens,
+        similarity_threshold=settings.chunk_similarity_threshold,
     )
+    service = KnowledgeIngestionService(store, embedder, chunker)
 
     results = [service.ingest(source) for source in manifest.sources]
     for result in results:
