@@ -1,4 +1,5 @@
 import json
+import math
 import os
 from dataclasses import dataclass
 from urllib import request, error
@@ -30,7 +31,7 @@ class SemanticDomainClassifier:
         if not 0.0 < scope_threshold < 1.0:
             raise ValueError("scope_threshold must be between 0 and 1")
         self.scope_threshold = scope_threshold
-        self.timeout_seconds = timeout_seconds or float(os.getenv("ASSISTANT_ROUTER_TIMEOUT_SECONDS", "8"))
+        self.timeout_seconds = timeout_seconds if timeout_seconds is not None else float(os.getenv("ASSISTANT_ROUTER_TIMEOUT_SECONDS", "8"))
         if self.timeout_seconds <= 0:
             raise ValueError("assistant router timeout must be positive")
 
@@ -95,7 +96,7 @@ USER_QUESTION:
             automotive_relevance=self._score(data.get("automotive_relevance")),
             assistant_capability=self._score(data.get("assistant_capability")),
             intent=self._intent(data.get("intent")),
-            use_rag=bool(data.get("use_rag")),
+            use_rag=self._boolean(data.get("use_rag")),
             tool_name=self._tool(data.get("tool_name")),
             reason=str(data.get("reason", "semantic classification"))[:120],
             vehicle_year=self._year(data.get("vehicle_year")),
@@ -110,9 +111,15 @@ USER_QUESTION:
             score = float(value)
         except (TypeError, ValueError) as exc:
             raise RuntimeError("semantic router returned an invalid score") from exc
-        if score != score:
+        if not math.isfinite(score):
             raise RuntimeError("semantic router returned a non-finite score")
         return max(0.0, min(1.0, score))
+
+    @staticmethod
+    def _boolean(value) -> bool:
+        if type(value) is not bool:
+            raise RuntimeError("semantic router returned an invalid boolean")
+        return value
 
     @staticmethod
     def _intent(value) -> AssistantIntent:
