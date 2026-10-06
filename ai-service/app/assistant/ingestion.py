@@ -13,6 +13,7 @@ from .vector_store import KnowledgeVersionConflict, PgVectorKnowledgeStore
 class KnowledgeSource:
     path: Path
     category: str
+    slug: str | None = None
     source_name: str
     source_version: str
     source_url: str | None = None
@@ -44,7 +45,7 @@ class KnowledgeIngestionService:
         if not content:
             return IngestionResult(source.path.stem, "EMPTY", 0)
 
-        slug = source.path.stem.replace("_", "-").lower()
+        slug = source.slug or source.path.stem.replace("_", "-").lower()
         digest = hashlib.sha256(content.encode("utf-8")).hexdigest()
         current = self.store.find_active_document(slug)
         if current and current.content_hash == digest:
