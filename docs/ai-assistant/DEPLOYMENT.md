@@ -14,7 +14,7 @@ Knowledge ingestion is a release/admin operation, not an application startup tas
 4. Deploy the AI service image. The pinned E5 embedding model is baked into the image and production uses local-only loading.
 5. Run the knowledge ingestion command explicitly against the target database.
 6. Verify `/health` for the existing AI service.
-7. Verify `/api/v1/assistant/readiness` reports pgvector enabled and at least one active document.
+7. Verify `/api/v1/assistant/readiness` reports pgvector enabled, at least one active document, at least one active chunk, and the expected 384-dimensional embedding column.
 8. Run the assistant evaluation/smoke suite.
 9. Enable/expose the assistant UI only after readiness and evaluation pass.
 
