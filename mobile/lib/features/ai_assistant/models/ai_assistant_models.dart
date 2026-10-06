@@ -39,6 +39,7 @@ class AiAssistantReply {
     required this.quotaConsumed,
     required this.remainingToday,
     required this.toolsUsed,
+    required this.sources,
   });
 
   final String intent;
@@ -46,6 +47,7 @@ class AiAssistantReply {
   final bool quotaConsumed;
   final int remainingToday;
   final List<String> toolsUsed;
+  final List<AiAssistantSource> sources;
 
   factory AiAssistantReply.fromJson(Map<String, dynamic> json) =>
       AiAssistantReply(
@@ -56,11 +58,25 @@ class AiAssistantReply {
         toolsUsed: (json['toolsUsed'] as List<dynamic>? ?? const [])
             .whereType<String>()
             .toList(growable: false),
+        sources: (json['sources'] as List<dynamic>? ?? const [])
+            .whereType<Map>()
+            .map((item) => AiAssistantSource.fromJson(Map<String, dynamic>.from(item)))
+            .toList(growable: false),
       );
 }
 
+class AiAssistantSource {
+  const AiAssistantSource({required this.name, this.url});
+  final String name;
+  final String? url;
+
+  factory AiAssistantSource.fromJson(Map<String, dynamic> json) =>
+      AiAssistantSource(name: json['name'] as String? ?? 'Kaynak', url: json['url'] as String?);
+}
+
 class AiChatMessage {
-  const AiChatMessage({required this.text, required this.isUser});
+  const AiChatMessage({required this.text, required this.isUser, this.sources = const []});
   final String text;
   final bool isUser;
+  final List<AiAssistantSource> sources;
 }
