@@ -4,6 +4,7 @@ from pathlib import Path
 
 from .chunking import HybridSemanticChunker
 from .embeddings import LocalMultilingualEmbedder
+from .document_parser import DocumentParserRegistry
 from .schemas import KnowledgeDocument
 from .vector_store import PgVectorKnowledgeStore
 
@@ -30,13 +31,16 @@ class IngestionResult:
 class KnowledgeIngestionService:
     def __init__(self, store: PgVectorKnowledgeStore,
                  embedder: LocalMultilingualEmbedder,
-                 chunker: HybridSemanticChunker) -> None:
+                 chunker: HybridSemanticChunker,
+                 parsers: DocumentParserRegistry | None = None) -> None:
         self.store = store
         self.embedder = embedder
         self.chunker = chunker
+        self.parsers = parsers or DocumentParserRegistry()
 
     def ingest(self, source: KnowledgeSource) -> IngestionResult:
-        content = source.path.read_text(encoding="utf-8").strip()
+        parsed = self.parsers.parse(source.path)
+        content = parsed.content.strip()
         if not content:
             return IngestionResult(source.path.stem, "EMPTY", 0)
 
@@ -46,11 +50,7 @@ class KnowledgeIngestionService:
         if current and current.content_hash == digest:
             return IngestionResult(slug, "UNCHANGED", 0)
 
-        title = next(
-            (line.lstrip("# ").strip() for line in content.splitlines()
-             if line.startswith("#")),
-            source.path.stem.replace("_", " ").title(),
-        )
+        title = parsed.title
         document = KnowledgeDocument(
             slug=slug, title=title, category=source.category, content=content,
             source_name=source.source_name, source_url=source.source_url,
