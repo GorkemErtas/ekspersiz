@@ -17,4 +17,6 @@ class AssistantPlanResponse(BaseModel):
     reason: str
     automotive_relevance: float = 0.0
     assistant_capability: float = 0.0
+    evidence_score: float = 0.0
+    evidence_sufficient: bool = True
     context: list[RetrievedContext] = Field(default_factory=list)
