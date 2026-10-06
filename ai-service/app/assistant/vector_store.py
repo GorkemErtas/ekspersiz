@@ -17,6 +17,10 @@ class StoredDocument:
     source_version: str | None
 
 
+class KnowledgeVersionConflict(ValueError):
+    pass
+
+
 class PgVectorKnowledgeStore:
     def __init__(self, database_url: str) -> None:
         self.database_url = database_url
