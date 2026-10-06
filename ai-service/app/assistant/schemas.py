@@ -30,4 +30,7 @@ class RetrievedChunk:
     category: str
     content: str
     similarity: float
+    market: str | None = None
+    authority: str | None = None
+    source_version: str | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
