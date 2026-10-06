@@ -7,20 +7,28 @@
   },
   "sources": [
     {
-      "glob": "inspection/**/*.md",
-      "category": "INSPECTION"
+      "id": "inspection-precheck-tr",
+      "glob": "inspection/muayene-oncesi-kontrol.md",
+      "category": "INSPECTION",
+      "enabled": true
     },
     {
-      "glob": "maintenance/**/*.md",
-      "category": "MAINTENANCE"
+      "id": "tire-maintenance-tr",
+      "glob": "maintenance/lastik-bakimi.md",
+      "category": "MAINTENANCE",
+      "enabled": true
     },
     {
-      "glob": "safety/**/*.md",
-      "category": "SAFETY"
+      "id": "warning-lights-safety-tr",
+      "glob": "safety/uyari-lambalari.md",
+      "category": "SAFETY",
+      "enabled": true
     },
     {
-      "glob": "app-help/**/*.md",
-      "category": "APP_HELP"
+      "id": "assistant-safety-help-tr",
+      "glob": "app-help/ai-asistan-guvenlik.md",
+      "category": "APP_HELP",
+      "enabled": true
     }
   ]
 }
