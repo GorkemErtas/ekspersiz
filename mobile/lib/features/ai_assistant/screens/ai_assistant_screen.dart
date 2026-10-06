@@ -87,11 +87,15 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
         if (current != null) {
           _entitlement = AiAssistantEntitlement(
             status: current.status,
-            canAsk: reply.remainingToday > 0,
+            canAsk: current.canAsk && reply.remainingToday > 0,
             dailyLimit: current.dailyLimit,
-            usedToday: current.dailyLimit - reply.remainingToday,
+            usedToday: reply.quotaConsumed
+                ? current.usedToday + 1
+                : current.usedToday,
             remainingToday: reply.remainingToday,
             outOfScopeAttempts: current.outOfScopeAttempts,
+            trialExpiresAt: current.trialExpiresAt,
+            lockedUntil: current.lockedUntil,
           );
         }
         _sending = false;
@@ -153,7 +157,7 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
                       padding: const EdgeInsets.all(12),
                       child: Text(_error!, style: TextStyle(color: scheme.error)),
                     ),
-                  if (_entitlement != null && !_entitlement!.canAsk && _entitlement!.status != 'ACTIVE')
+                  if (_entitlement != null && _entitlement!.status == 'INACTIVE')
                     Padding(
                       padding: const EdgeInsets.all(16),
                       child: FilledButton(
