@@ -37,6 +37,15 @@ Application rollback and knowledge rollback are separate operations. Existing do
 - `ASSISTANT_EMBEDDING_MODEL`: pinned SentenceTransformer model.
 - `ASSISTANT_EMBEDDING_LOCAL_ONLY=true`: production guard against runtime model downloads.
 - `KNOWLEDGE_SOURCE_VERSION`: release identifier supplied by CI/admin ingestion.
+- `ASSISTANT_CHUNK_TARGET_TOKENS`: target semantic chunk size, default 420.
+- `ASSISTANT_CHUNK_MIN_TOKENS`: minimum semantic chunk size, default 120.
+- `ASSISTANT_CHUNK_MAX_TOKENS`: hard chunk ceiling, default 560.
+- `ASSISTANT_CHUNK_SIMILARITY_THRESHOLD`: semantic boundary threshold, default 0.72.
+- `ASSISTANT_RETRIEVAL_CANDIDATE_K`: vector candidates, default 8.
+- `ASSISTANT_RETRIEVAL_FINAL_K`: context chunks returned, default 4.
+- `ASSISTANT_RETRIEVAL_MIN_SIMILARITY`: retrieval floor, default 0.55.
+
+RAG tuning values are validated at startup/use. Keep production changes versioned in Railway/environment history and evaluate retrieval quality before and after threshold changes.
 
 Secrets must remain environment variables and must not be committed to the repository.
 
