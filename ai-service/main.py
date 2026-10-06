@@ -174,6 +174,21 @@ def get_assistant_retriever():
     return _assistant_retriever
 
 
+@app.get("/api/v1/assistant/readiness")
+def assistant_readiness():
+    try:
+        database_url = os.getenv("DATABASE_URL")
+        if not database_url:
+            raise RuntimeError("DATABASE_URL is not configured")
+        store = PgVectorKnowledgeStore(database_url)
+        storage = store.readiness()
+        ready = bool(storage["pgvector"]) and int(storage["active_documents"]) > 0
+        return {"status": "READY" if ready else "NOT_READY", **storage}
+    except Exception:
+        logger.exception("Assistant readiness check failed.")
+        raise HTTPException(status_code=503, detail="Assistant RAG is not ready.")
+
+
 @app.post("/api/v1/assistant/plan", response_model=AssistantPlanResponse)
 def plan_assistant_turn(request: AssistantPlanRequest) -> AssistantPlanResponse:
     decision = assistant_router.route(request.question)
