@@ -63,6 +63,15 @@ class PgVectorKnowledgeStore:
             row = cursor.fetchone()
             return StoredDocument(row[0], row[1], row[2]) if row else None
 
+    def find_version(self, slug: str, source_version: str) -> StoredDocument | None:
+        with self._connection() as connection, connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT id, content_hash, source_version FROM ai_knowledge_documents WHERE slug = %s AND source_version = %s LIMIT 1",
+                (slug, source_version),
+            )
+            row = cursor.fetchone()
+            return StoredDocument(row[0], row[1], row[2]) if row else None
+
     def publish_document(self, *, slug: str, title: str, category: str,
                          content_hash: str, source_name: str | None,
                          source_url: str | None, source_version: str,
