@@ -1,3 +1,4 @@
+import os
 from collections.abc import Sequence
 
 
@@ -7,8 +8,10 @@ class LocalMultilingualEmbedder:
     DEFAULT_MODEL = "intfloat/multilingual-e5-small"
     DIMENSION = 384
 
-    def __init__(self, model_name: str = DEFAULT_MODEL) -> None:
-        self.model_name = model_name
+    def __init__(self, model_name: str | None = None) -> None:
+        self.model_name = model_name or os.getenv(
+            "ASSISTANT_EMBEDDING_MODEL", self.DEFAULT_MODEL
+        )
         self._model = None
 
     def _load(self):
@@ -19,8 +22,15 @@ class LocalMultilingualEmbedder:
                 raise RuntimeError(
                     "sentence-transformers is required for AI Assistant embeddings"
                 ) from exc
-            self._model = SentenceTransformer(self.model_name)
+            local_only = os.getenv("ASSISTANT_EMBEDDING_LOCAL_ONLY", "false").lower() == "true"
+            self._model = SentenceTransformer(
+                self.model_name,
+                local_files_only=local_only,
+            )
         return self._model
+
+    def warmup(self) -> None:
+        self._load()
 
     def embed_passages(self, texts: Sequence[str]) -> list[list[float]]:
         prepared = [f"passage: {text.strip()}" for text in texts]
