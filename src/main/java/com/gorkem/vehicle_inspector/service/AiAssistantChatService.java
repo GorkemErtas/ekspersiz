@@ -31,9 +31,10 @@ public class AiAssistantChatService {
                     false, status.remainingToday(), List.of());
         }
 
-        if (plan.useRag() && (plan.context() == null || plan.context().isEmpty())) {
+        if (plan.useRag() && (!plan.evidenceSufficient()
+                || plan.context() == null || plan.context().isEmpty())) {
             var status=entitlement.status(email);
-            return response(plan, "Bu soru için doğrulanmış bilgi tabanımda yeterli kaynak bulamadım. Yanlış bilgi vermemek için tahminde bulunmayacağım.",
+            return response(plan, "Bu soru için yeterince güçlü ve doğrulanmış bir kaynak bulamadım. Yanlış bilgi vermemek için tahminde bulunmayacağım.",
                     false, status.remainingToday(), List.of());
         }
 
