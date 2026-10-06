@@ -9,6 +9,8 @@ public record AiAssistantPlanResponse(
         @JsonProperty("use_rag") boolean useRag,
         @JsonProperty("tool_name") String toolName,
         String reason,
+        @JsonProperty("automotive_relevance") double automotiveRelevance,
+        @JsonProperty("assistant_capability") double assistantCapability,
         List<AiAssistantRetrievedContext> context) {
 
     public record AiAssistantRetrievedContext(
