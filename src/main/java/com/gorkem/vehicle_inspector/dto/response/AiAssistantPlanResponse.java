@@ -16,5 +16,7 @@ public record AiAssistantPlanResponse(
         List<AiAssistantRetrievedContext> context) {
 
     public record AiAssistantRetrievedContext(
-            String title, String category, String content, double similarity) {}
+            String title, String category, String content, double similarity,
+            @JsonProperty("source_name") String sourceName,
+            @JsonProperty("source_url") String sourceUrl) {}
 }
