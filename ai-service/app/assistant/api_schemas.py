@@ -8,6 +8,8 @@ class RetrievedContext(BaseModel):
     category: str
     content: str
     similarity: float
+    source_name: str | None = None
+    source_url: str | None = None
 
 class AssistantPlanResponse(BaseModel):
     intent: str
