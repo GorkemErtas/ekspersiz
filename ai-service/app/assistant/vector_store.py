@@ -118,6 +118,27 @@ class PgVectorKnowledgeStore:
             if cursor.rowcount != 1:
                 raise RuntimeError("staged knowledge document could not be activated")
 
+    def publish_version(self, *, slug: str, title: str, category: str,
+                        content_hash: str, source_name: str | None,
+                        source_url: str | None, source_version: str,
+                        chunks: Sequence[KnowledgeChunk],
+                        embeddings: Sequence[Sequence[float]],
+                        authority: str = "CURATED", language: str = "tr",
+                        market: str | None = None) -> int:
+        if len(chunks) != len(embeddings):
+            raise ValueError("chunks and embeddings must have the same length")
+        if not chunks:
+            raise ValueError("knowledge version cannot be published without chunks")
+
+        with self._connection() as connection, connection.cursor() as cursor:
+            document_id = self._insert_draft(
+                cursor, slug, title, category, content_hash, source_name,
+                source_url, source_version, authority, language, market
+            )
+            self._insert_chunks(cursor, document_id, chunks, embeddings)
+            self._activate(cursor, document_id, slug)
+            return document_id
+
     def search(self, query_embedding: Sequence[float], *, limit: int = 8,
                min_similarity: float = 0.55) -> list[RetrievedChunk]:
         if limit < 1 or limit > 20:
