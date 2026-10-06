@@ -100,6 +100,7 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
     final question = _controller.text.trim();
     if (question.isEmpty || _sending || !(_entitlement?.canAsk ?? false)) return;
 
+    final history = List<AiChatMessage>.from(_messages);
     setState(() {
       _messages.add(AiChatMessage(text: question, isUser: true));
       _controller.clear();
@@ -112,6 +113,7 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
       final reply = await _service.ask(
         question,
         vehicleId: _selectedVehicle?.id,
+        history: history,
       );
       if (!mounted) return;
       setState(() {
