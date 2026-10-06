@@ -1,5 +1,6 @@
 import hashlib
 from dataclasses import dataclass
+from datetime import date
 from pathlib import Path
 
 from .chunking import HybridSemanticChunker
@@ -13,13 +14,15 @@ from .vector_store import KnowledgeVersionConflict, PgVectorKnowledgeStore
 class KnowledgeSource:
     path: Path
     category: str
-    slug: str | None = None
     source_name: str
     source_version: str
+    slug: str | None = None
     source_url: str | None = None
     authority: str = "CURATED"
     language: str = "tr"
     market: str | None = "TR"
+    valid_from: date | None = None
+    valid_until: date | None = None
 
 
 @dataclass(frozen=True)
@@ -73,5 +76,6 @@ class KnowledgeIngestionService:
             source_url=source.source_url, source_version=source.source_version,
             chunks=chunks, embeddings=embeddings,
             authority=source.authority, language=source.language, market=source.market,
+            valid_from=source.valid_from, valid_until=source.valid_until,
         )
         return IngestionResult(slug, "UPDATED" if current else "CREATED", len(chunks))
