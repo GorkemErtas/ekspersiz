@@ -105,6 +105,19 @@ class PgVectorKnowledgeStore:
                      json.dumps(chunk.metadata, ensure_ascii=False)),
                 )
 
+    def activate_document(self, document_id: int, slug: str) -> None:
+        with self._connection() as connection, connection.cursor() as cursor:
+            cursor.execute(
+                "UPDATE ai_knowledge_documents SET lifecycle_status = 'SUPERSEDED', active = FALSE, superseded_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE slug = %s AND lifecycle_status = 'ACTIVE'",
+                (slug,),
+            )
+            cursor.execute(
+                "UPDATE ai_knowledge_documents SET lifecycle_status = 'ACTIVE', active = TRUE, updated_at = CURRENT_TIMESTAMP WHERE id = %s AND lifecycle_status = 'DRAFT'",
+                (document_id,),
+            )
+            if cursor.rowcount != 1:
+                raise RuntimeError("staged knowledge document could not be activated")
+
     def search(self, query_embedding: Sequence[float], *, limit: int = 8,
                min_similarity: float = 0.55) -> list[RetrievedChunk]:
         if limit < 1 or limit > 20:
