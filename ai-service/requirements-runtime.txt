@@ -7,3 +7,4 @@ ultralytics==8.4.106
 uvicorn==0.51.0
 psycopg[binary]==3.2.10
 sentence-transformers==5.1.1
+pypdf==6.1.1
