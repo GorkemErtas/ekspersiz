@@ -15,4 +15,6 @@ class AssistantPlanResponse(BaseModel):
     use_rag: bool
     tool_name: str | None = None
     reason: str
+    automotive_relevance: float = 0.0
+    assistant_capability: float = 0.0
     context: list[RetrievedContext] = Field(default_factory=list)
