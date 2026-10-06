@@ -29,6 +29,8 @@ def validate_vehicle_spec_evidence(identity: VehicleSpecIdentity,
 
     matching: list[RetrievedChunk] = []
     for chunk in chunks:
+        if chunk.authority not in {"OFFICIAL", "VERIFIED"}:
+            continue
         metadata = chunk.metadata or {}
         years = metadata.get("vehicle_years", [])
         models = [str(x).casefold().strip() for x in metadata.get("vehicle_models", [])]
@@ -47,7 +49,7 @@ def validate_vehicle_spec_evidence(identity: VehicleSpecIdentity,
 
     score = max((chunk.similarity for chunk in matching), default=0.0)
     if not matching:
-        return SpecEvidenceResult(False, 0.0, "no exact year/model/trim/market evidence")
+        return SpecEvidenceResult(False, 0.0, "no verified exact year/model/trim/market evidence")
     if score < min_similarity:
         return SpecEvidenceResult(False, score, "exact source similarity is below threshold")
     return SpecEvidenceResult(True, score, "exact vehicle specification evidence matched")
