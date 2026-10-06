@@ -4,6 +4,7 @@ import com.gorkem.vehicle_inspector.dto.response.AiAssistantEntitlementResponse;
 import com.gorkem.vehicle_inspector.entity.*;
 import com.gorkem.vehicle_inspector.repository.*;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.*;
 import java.util.UUID;
@@ -12,8 +13,7 @@ import java.util.UUID;
 public class AiAssistantEntitlementService {
     public static final int DAILY_LIMIT = 3;
     public static final int OUT_OF_SCOPE_LOCK_THRESHOLD = 3;
-    private static final Duration RESERVATION_TTL = Duration.ofMinutes(5);
-    private static final ZoneId USAGE_ZONE = ZoneId.of("Europe/Istanbul");
+    private final Duration reservationTtl;
 
     private final AiAssistantAccessRepository accessRepository;
     private final AiAssistantDailyUsageRepository usageRepository;
@@ -24,18 +24,23 @@ public class AiAssistantEntitlementService {
     public AiAssistantEntitlementService(AiAssistantAccessRepository accessRepository,
             AiAssistantDailyUsageRepository usageRepository,
             AiAssistantQuotaReservationRepository reservationRepository,
-            BusinessContextService businessContext) {
+            BusinessContextService businessContext,
+            @Value("${application.ai-assistant.usage-zone:Europe/Istanbul}") String usageZone,
+            @Value("${application.ai-assistant.reservation-ttl:PT5M}") Duration reservationTtl) {
         this(accessRepository, usageRepository, reservationRepository,
-                businessContext, Clock.system(USAGE_ZONE));
+                businessContext, Clock.system(ZoneId.of(usageZone)), reservationTtl);
     }
 
     AiAssistantEntitlementService(AiAssistantAccessRepository accessRepository,
             AiAssistantDailyUsageRepository usageRepository,
             AiAssistantQuotaReservationRepository reservationRepository,
-            BusinessContextService businessContext, Clock clock) {
+            BusinessContextService businessContext, Clock clock, Duration reservationTtl) {
+        if (reservationTtl == null || reservationTtl.isZero() || reservationTtl.isNegative())
+            throw new IllegalArgumentException("AI assistant reservation TTL must be positive.");
         this.accessRepository=accessRepository; this.usageRepository=usageRepository;
         this.reservationRepository=reservationRepository;
         this.businessContext=businessContext; this.clock=clock;
+        this.reservationTtl=reservationTtl;
     }
 
     @Transactional
@@ -76,7 +81,7 @@ public class AiAssistantEntitlementService {
             throw new IllegalStateException("Günlük AI Asistan kotası doldu.");
         UUID token=UUID.randomUUID();
         reservationRepository.save(new AiAssistantQuotaReservation(
-                token, user, LocalDate.now(clock), now, now.plus(RESERVATION_TTL)));
+                token, user, LocalDate.now(clock), now, now.plus(reservationTtl)));
         return token;
     }
 
