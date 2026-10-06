@@ -103,6 +103,7 @@ class HybridSemanticChunker:
             content=content,
             heading=heading,
             metadata={
+                **document.metadata,
                 "category": document.category,
                 "heading": heading,
                 "chunking": "hybrid-semantic-v1",
