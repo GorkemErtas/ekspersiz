@@ -2,6 +2,7 @@ import json
 from collections.abc import Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass
+from datetime import date
 
 from .schemas import KnowledgeChunk, RetrievedChunk
 
@@ -96,15 +97,17 @@ class PgVectorKnowledgeStore:
     def _insert_draft(cursor, slug: str, title: str, category: str,
                       content_hash: str, source_name: str | None,
                       source_url: str | None, source_version: str,
-                      authority: str, language: str, market: str | None) -> int:
+                      authority: str, language: str, market: str | None,
+                      valid_from: date | None, valid_until: date | None) -> int:
         cursor.execute(
             """INSERT INTO ai_knowledge_documents
                (slug, title, category, source_name, source_url, source_version,
-                content_hash, active, lifecycle_status, authority, language, market)
-               VALUES (%s,%s,%s,%s,%s,%s,%s,FALSE,'DRAFT',%s,%s,%s)
+                content_hash, active, lifecycle_status, authority, language, market,
+                valid_from, valid_until)
+               VALUES (%s,%s,%s,%s,%s,%s,%s,FALSE,'DRAFT',%s,%s,%s,%s,%s)
                RETURNING id""",
             (slug, title, category, source_name, source_url, source_version,
-             content_hash, authority, language, market),
+             content_hash, authority, language, market, valid_from, valid_until),
         )
         return cursor.fetchone()[0]
 
@@ -140,7 +143,9 @@ class PgVectorKnowledgeStore:
                         chunks: Sequence[KnowledgeChunk],
                         embeddings: Sequence[Sequence[float]],
                         authority: str = "CURATED", language: str = "tr",
-                        market: str | None = None) -> int:
+                        market: str | None = None,
+                        valid_from: date | None = None,
+                        valid_until: date | None = None) -> int:
         if len(chunks) != len(embeddings):
             raise ValueError("chunks and embeddings must have the same length")
         if not chunks:
@@ -149,7 +154,8 @@ class PgVectorKnowledgeStore:
         with self._connection() as connection, connection.cursor() as cursor:
             document_id = self._insert_draft(
                 cursor, slug, title, category, content_hash, source_name,
-                source_url, source_version, authority, language, market
+                source_url, source_version, authority, language, market,
+                valid_from, valid_until
             )
             self._insert_chunks(cursor, document_id, chunks, embeddings)
             self._activate(cursor, document_id, slug)
