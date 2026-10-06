@@ -1,7 +1,7 @@
 import json
 import os
 from dataclasses import dataclass
-from urllib import request
+from urllib import request, error
 
 from .routing import AssistantIntent, RouteDecision
 
@@ -24,10 +24,15 @@ class SemanticDomainClassifier:
     """Semantic scope classifier. No keyword/question allow-list is used."""
 
     def __init__(self, api_key: str | None = None, model: str | None = None,
-                 scope_threshold: float = 0.55) -> None:
+                 scope_threshold: float = 0.55, timeout_seconds: float | None = None) -> None:
         self.api_key = api_key or os.getenv("GEMINI_API_KEY")
         self.model = model or os.getenv("ASSISTANT_ROUTER_MODEL", "gemini-2.5-flash-lite")
+        if not 0.0 < scope_threshold < 1.0:
+            raise ValueError("scope_threshold must be between 0 and 1")
         self.scope_threshold = scope_threshold
+        self.timeout_seconds = timeout_seconds or float(os.getenv("ASSISTANT_ROUTER_TIMEOUT_SECONDS", "8"))
+        if self.timeout_seconds <= 0:
+            raise ValueError("assistant router timeout must be positive")
 
     def route(self, question: str) -> RouteDecision:
         assessment = self.assess(question)
@@ -79,10 +84,13 @@ USER_QUESTION:
             "generationConfig": {"responseMimeType": "application/json", "temperature": 0}
         }).encode()
         req = request.Request(url, data=payload, headers={"Content-Type": "application/json"})
-        with request.urlopen(req, timeout=8) as response:
-            raw = json.loads(response.read().decode())
-        text = raw["candidates"][0]["content"]["parts"][0]["text"]
-        data = json.loads(text)
+        try:
+            with request.urlopen(req, timeout=self.timeout_seconds) as response:
+                raw = json.loads(response.read().decode())
+            text = raw["candidates"][0]["content"]["parts"][0]["text"]
+            data = json.loads(text)
+        except (error.URLError, TimeoutError, json.JSONDecodeError, KeyError, IndexError, TypeError) as exc:
+            raise RuntimeError("semantic assistant routing failed safely") from exc
         return DomainAssessment(
             automotive_relevance=self._score(data.get("automotive_relevance")),
             assistant_capability=self._score(data.get("assistant_capability")),
@@ -98,7 +106,13 @@ USER_QUESTION:
 
     @staticmethod
     def _score(value) -> float:
-        return max(0.0, min(1.0, float(value)))
+        try:
+            score = float(value)
+        except (TypeError, ValueError) as exc:
+            raise RuntimeError("semantic router returned an invalid score") from exc
+        if score != score:
+            raise RuntimeError("semantic router returned a non-finite score")
+        return max(0.0, min(1.0, score))
 
     @staticmethod
     def _intent(value) -> AssistantIntent:
