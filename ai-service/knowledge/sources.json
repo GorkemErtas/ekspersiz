@@ -1,0 +1,26 @@
+{
+  "defaults": {
+    "source_name": "EksperSiz curated knowledge",
+    "authority": "CURATED",
+    "language": "tr",
+    "market": "TR"
+  },
+  "sources": [
+    {
+      "glob": "inspection/**/*.md",
+      "category": "INSPECTION"
+    },
+    {
+      "glob": "maintenance/**/*.md",
+      "category": "MAINTENANCE"
+    },
+    {
+      "glob": "safety/**/*.md",
+      "category": "SAFETY"
+    },
+    {
+      "glob": "app-help/**/*.md",
+      "category": "APP_HELP"
+    }
+  ]
+}
