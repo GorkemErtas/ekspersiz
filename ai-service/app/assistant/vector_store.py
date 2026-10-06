@@ -72,52 +72,6 @@ class PgVectorKnowledgeStore:
             row = cursor.fetchone()
             return StoredDocument(row[0], row[1], row[2]) if row else None
 
-    def publish_document(self, *, slug: str, title: str, category: str,
-                         content_hash: str, source_name: str | None,
-                         source_url: str | None, source_version: str,
-                         authority: str = "CURATED", language: str = "tr",
-                         market: str | None = None) -> int:
-        with self._connection() as connection, connection.cursor() as cursor:
-            cursor.execute(
-                """INSERT INTO ai_knowledge_documents
-                   (slug, title, category, source_name, source_url, source_version,
-                    content_hash, active, lifecycle_status, authority, language, market)
-                   VALUES (%s,%s,%s,%s,%s,%s,%s,FALSE,'DRAFT',%s,%s,%s)
-                   RETURNING id""",
-                (slug, title, category, source_name, source_url, source_version,
-                 content_hash, authority, language, market),
-            )
-            return cursor.fetchone()[0]
-
-    def replace_chunks(self, document_id: int, chunks: Sequence[KnowledgeChunk],
-                       embeddings: Sequence[Sequence[float]]) -> None:
-        if len(chunks) != len(embeddings):
-            raise ValueError("chunks and embeddings must have the same length")
-        with self._connection() as connection, connection.cursor() as cursor:
-            cursor.execute("DELETE FROM ai_knowledge_chunks WHERE document_id = %s", (document_id,))
-            for chunk, embedding in zip(chunks, embeddings, strict=True):
-                cursor.execute(
-                    """INSERT INTO ai_knowledge_chunks
-                       (document_id, chunk_index, content, token_count, embedding, metadata)
-                       VALUES (%s,%s,%s,%s,%s::vector,%s::jsonb)""",
-                    (document_id, chunk.chunk_index, chunk.content,
-                     len(chunk.content.split()), _vector_literal(embedding),
-                     json.dumps(chunk.metadata, ensure_ascii=False)),
-                )
-
-    def activate_document(self, document_id: int, slug: str) -> None:
-        with self._connection() as connection, connection.cursor() as cursor:
-            cursor.execute(
-                "UPDATE ai_knowledge_documents SET lifecycle_status = 'SUPERSEDED', active = FALSE, superseded_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE slug = %s AND lifecycle_status = 'ACTIVE'",
-                (slug,),
-            )
-            cursor.execute(
-                "UPDATE ai_knowledge_documents SET lifecycle_status = 'ACTIVE', active = TRUE, updated_at = CURRENT_TIMESTAMP WHERE id = %s AND lifecycle_status = 'DRAFT'",
-                (document_id,),
-            )
-            if cursor.rowcount != 1:
-                raise RuntimeError("staged knowledge document could not be activated")
-
     @staticmethod
     def _insert_draft(cursor, slug: str, title: str, category: str,
                       content_hash: str, source_name: str | None,
