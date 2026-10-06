@@ -4,7 +4,10 @@ WORKDIR /app
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    YOLO_CONFIG_DIR=/tmp/Ultralytics
+    YOLO_CONFIG_DIR=/tmp/Ultralytics \
+    HF_HOME=/app/.cache/huggingface \
+    ASSISTANT_EMBEDDING_MODEL=intfloat/multilingual-e5-small \
+    ASSISTANT_EMBEDDING_LOCAL_ONLY=true
 
 COPY requirements-runtime.txt .
 
@@ -17,6 +20,10 @@ RUN pip install --no-cache-dir -r requirements-runtime.txt
 
 RUN pip uninstall -y opencv-python && \
     pip install --no-cache-dir opencv-python-headless==4.13.0.92
+
+# Bake the pinned embedding model into the image. Production never depends on
+# a Hugging Face download during startup or the first assistant request.
+RUN ASSISTANT_EMBEDDING_LOCAL_ONLY=false python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('intfloat/multilingual-e5-small')"
 
 COPY app ./app
 COPY knowledge ./knowledge
