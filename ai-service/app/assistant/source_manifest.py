@@ -45,6 +45,16 @@ class KnowledgeManifest:
             if authority not in _ALLOWED_AUTHORITIES:
                 raise ValueError(f"invalid knowledge authority: {authority}")
 
+            vehicle_years = tuple(rule.get("vehicle_years", ()))
+            vehicle_models = tuple(rule.get("vehicle_models", ()))
+            vehicle_trims = tuple(rule.get("vehicle_trims", ()))
+            if any(not isinstance(year, int) or year < 1886 or year > 2100 for year in vehicle_years):
+                raise ValueError("vehicle_years must contain valid integer years")
+            if any(not isinstance(value, str) or not value.strip() for value in (*vehicle_models, *vehicle_trims)):
+                raise ValueError("vehicle_models and vehicle_trims must contain non-empty strings")
+            if rule["category"] == "VEHICLE_SPEC" and (not vehicle_years or not vehicle_models):
+                raise ValueError("VEHICLE_SPEC sources require vehicle_years and vehicle_models")
+
             valid_from = _date(rule.get("valid_from"))
             valid_until = _date(rule.get("valid_until"))
             if valid_from and valid_until and valid_until < valid_from:
@@ -79,5 +89,8 @@ class KnowledgeManifest:
                     market=rule.get("market", defaults.get("market")),
                     valid_from=valid_from,
                     valid_until=valid_until,
+                    vehicle_years=vehicle_years,
+                    vehicle_models=vehicle_models,
+                    vehicle_trims=vehicle_trims,
                 ))
         return cls(resolved)
