@@ -73,4 +73,5 @@ class KnowledgeIngestionService:
             authority=source.authority, language=source.language, market=source.market,
         )
         self.store.replace_chunks(document_id, chunks, embeddings)
+        self.store.activate_document(document_id, slug)
         return IngestionResult(slug, "UPDATED" if current else "CREATED", len(chunks))
