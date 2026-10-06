@@ -30,6 +30,23 @@ class PgVectorKnowledgeStore:
         with psycopg.connect(self.database_url) as connection:
             yield connection
 
+    def readiness(self) -> dict[str, object]:
+        with self._connection() as connection, connection.cursor() as cursor:
+            cursor.execute("SELECT EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'vector')")
+            vector_enabled = bool(cursor.fetchone()[0])
+            cursor.execute(
+                """SELECT COUNT(*) FROM ai_knowledge_documents
+                   WHERE lifecycle_status = 'ACTIVE'
+                     AND (valid_from IS NULL OR valid_from <= CURRENT_DATE)
+                     AND (valid_until IS NULL OR valid_until >= CURRENT_DATE)"""
+            )
+            active_documents = int(cursor.fetchone()[0])
+            return {
+                "database": True,
+                "pgvector": vector_enabled,
+                "active_documents": active_documents,
+            }
+
     def find_active_document(self, slug: str) -> StoredDocument | None:
         with self._connection() as connection, connection.cursor() as cursor:
             cursor.execute(
