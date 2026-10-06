@@ -208,7 +208,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _openAiAssistant() async {
     await Navigator.of(context).push(
-      _premiumRoute<void>(const AiAssistantScreen()),
+      _premiumRoute<void>(AiAssistantScreen(initialVehicle: _mainVehicle)),
     );
   }
 
