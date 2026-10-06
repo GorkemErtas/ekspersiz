@@ -25,7 +25,7 @@ class KnowledgeIngestionServiceTest(unittest.TestCase):
             self.assertEqual("UNCHANGED", result.status)
             chunker.chunk.assert_not_called()
             embedder.embed_passages.assert_not_called()
-            store.publish_document.assert_not_called()
+            store.publish_version.assert_not_called()
 
     def test_changed_document_is_reembedded_and_published(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -34,9 +34,9 @@ class KnowledgeIngestionServiceTest(unittest.TestCase):
 
             store, embedder, chunker = Mock(), Mock(), Mock()
             store.find_active_document.return_value = Mock(content_hash="old")
+            store.find_version.return_value = None
             chunker.chunk.return_value = [Mock(content="semantic chunk")]
             embedder.embed_passages.return_value = [[0.1, 0.2]]
-            store.publish_document.return_value = 42
             service = KnowledgeIngestionService(store, embedder, chunker)
 
             result = service.ingest(KnowledgeSource(
@@ -45,8 +45,7 @@ class KnowledgeIngestionServiceTest(unittest.TestCase):
 
             self.assertEqual("UPDATED", result.status)
             embedder.embed_passages.assert_called_once()
-            store.publish_document.assert_called_once()
-            store.replace_chunks.assert_called_once()
+            store.publish_version.assert_called_once()
 
 
 if __name__ == "__main__":
