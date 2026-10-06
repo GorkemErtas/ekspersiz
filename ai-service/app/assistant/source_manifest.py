@@ -32,7 +32,10 @@ class KnowledgeManifest:
         seen_ids: set[str] = set()
 
         for rule in rules:
-            if rule.get("enabled", True) is False:
+            enabled = rule.get("enabled", True)
+            if not isinstance(enabled, bool):
+                raise ValueError("knowledge source enabled must be a boolean")
+            if not enabled:
                 continue
             if not rule.get("glob") or not rule.get("category"):
                 raise ValueError("each knowledge source rule requires glob and category")
@@ -70,7 +73,7 @@ class KnowledgeManifest:
 
             for path in matches:
                 if path in seen_paths:
-                    continue
+                    raise ValueError(f"knowledge source file matched by multiple rules: {path}")
                 seen_paths.add(path)
                 slug = explicit_id
                 if slug:
