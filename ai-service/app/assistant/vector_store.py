@@ -45,10 +45,29 @@ class PgVectorKnowledgeStore:
                      AND (valid_until IS NULL OR valid_until >= CURRENT_DATE)"""
             )
             active_documents = int(cursor.fetchone()[0])
+            cursor.execute(
+                """SELECT COUNT(*) FROM ai_knowledge_chunks c
+                   JOIN ai_knowledge_documents d ON d.id = c.document_id
+                   WHERE d.lifecycle_status = 'ACTIVE'
+                     AND (d.valid_from IS NULL OR d.valid_from <= CURRENT_DATE)
+                     AND (d.valid_until IS NULL OR d.valid_until >= CURRENT_DATE)"""
+            )
+            active_chunks = int(cursor.fetchone()[0])
+            cursor.execute(
+                """SELECT atttypmod
+                   FROM pg_attribute
+                   WHERE attrelid = 'ai_knowledge_chunks'::regclass
+                     AND attname = 'embedding'
+                     AND NOT attisdropped"""
+            )
+            dimension_row = cursor.fetchone()
+            embedding_dimensions = int(dimension_row[0]) if dimension_row else 0
             return {
                 "database": True,
                 "pgvector": vector_enabled,
                 "active_documents": active_documents,
+                "active_chunks": active_chunks,
+                "embedding_dimensions": embedding_dimensions,
             }
 
     def find_active_document(self, slug: str) -> StoredDocument | None:
