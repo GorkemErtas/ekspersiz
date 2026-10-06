@@ -24,6 +24,8 @@ class RouteDecision:
     use_rag: bool = False
     tool_name: str | None = None
     reason: str = ""
+    automotive_relevance: float = 0.0
+    assistant_capability: float = 0.0
 
 
 class DeterministicDomainRouter:
