@@ -11,6 +11,8 @@ class KnowledgeDocument:
     source_name: str | None = None
     source_url: str | None = None
     source_version: str | None = None
+    source_name: str | None = None
+    source_url: str | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
 
 
