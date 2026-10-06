@@ -9,13 +9,15 @@ if str(AI_SERVICE_ROOT) not in sys.path:
 
 from app.assistant.chunking import HybridSemanticChunker
 from app.assistant.embeddings import LocalMultilingualEmbedder
-from app.assistant.ingestion import KnowledgeIngestionService, KnowledgeSource
+from app.assistant.ingestion import KnowledgeIngestionService
+from app.assistant.source_manifest import KnowledgeManifest
 from app.assistant.vector_store import PgVectorKnowledgeStore
 
 
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--knowledge-dir", default=str(AI_SERVICE_ROOT / "knowledge"))
+    parser.add_argument("--manifest", default=None)
     parser.add_argument("--source-version", default=os.getenv("KNOWLEDGE_SOURCE_VERSION", "dev"))
     args = parser.parse_args()
 
@@ -24,22 +26,16 @@ def main() -> None:
         raise SystemExit("DATABASE_URL is required")
 
     root = Path(args.knowledge_dir)
+    manifest_path = Path(args.manifest) if args.manifest else root / "sources.json"
+    manifest = KnowledgeManifest.load(root, manifest_path, args.source_version)
+
     store = PgVectorKnowledgeStore(database_url)
     embedder = LocalMultilingualEmbedder()
     service = KnowledgeIngestionService(
         store, embedder, HybridSemanticChunker(embedder)
     )
 
-    results = []
-    for path in sorted(root.rglob("*.md")):
-        category = path.parent.name.upper().replace("-", "_")
-        results.append(service.ingest(KnowledgeSource(
-            path=path,
-            category=category,
-            source_name="EksperSiz curated knowledge",
-            source_version=args.source_version,
-        )))
-
+    results = [service.ingest(source) for source in manifest.sources]
     for result in results:
         print(f"{result.status:9} {result.slug}: {result.chunks} chunks")
     print(
