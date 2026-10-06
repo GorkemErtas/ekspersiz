@@ -54,14 +54,15 @@ class PgVectorKnowledgeStore:
             )
             active_chunks = int(cursor.fetchone()[0])
             cursor.execute(
-                """SELECT atttypmod
+                """SELECT format_type(atttypid, atttypmod)
                    FROM pg_attribute
                    WHERE attrelid = 'ai_knowledge_chunks'::regclass
                      AND attname = 'embedding'
                      AND NOT attisdropped"""
             )
             dimension_row = cursor.fetchone()
-            embedding_dimensions = int(dimension_row[0]) if dimension_row else 0
+            embedding_type = str(dimension_row[0]) if dimension_row else ""
+            embedding_dimensions = 384 if embedding_type == "vector(384)" else 0
             return {
                 "database": True,
                 "pgvector": vector_enabled,
