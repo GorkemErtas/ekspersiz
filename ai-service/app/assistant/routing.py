@@ -22,6 +22,7 @@ class RouteDecision:
     intent: AssistantIntent
     in_scope: bool
     use_rag: bool = False
+    knowledge_source: str = "PUBLIC_WEB"
     tool_name: str | None = None
     reason: str = ""
     automotive_relevance: float = 0.0
