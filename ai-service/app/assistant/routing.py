@@ -31,6 +31,8 @@ class RouteDecision:
     vehicle_model: str | None = None
     vehicle_trim: str | None = None
     vehicle_market: str | None = None
+    clarification_needed: bool = False
+    clarification_message: str | None = None
 
 
 class DeterministicDomainRouter:
