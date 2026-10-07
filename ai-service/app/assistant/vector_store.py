@@ -24,7 +24,13 @@ class KnowledgeVersionConflict(ValueError):
 
 class PgVectorKnowledgeStore:
     def __init__(self, database_url: str) -> None:
-        self.database_url = database_url
+        # Railway/Spring commonly exposes PostgreSQL URLs with a JDBC prefix,
+        # while psycopg expects a standard PostgreSQL connection URI.
+        self.database_url = (
+            database_url.removeprefix("jdbc:")
+            if database_url.startswith("jdbc:postgresql://")
+            else database_url
+        )
 
     @contextmanager
     def _connection(self):
