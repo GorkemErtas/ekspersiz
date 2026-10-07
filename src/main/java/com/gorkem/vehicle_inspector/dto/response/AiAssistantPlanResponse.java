@@ -13,6 +13,8 @@ public record AiAssistantPlanResponse(
         @JsonProperty("assistant_capability") double assistantCapability,
         @JsonProperty("evidence_score") double evidenceScore,
         @JsonProperty("evidence_sufficient") boolean evidenceSufficient,
+        @JsonProperty("clarification_needed") boolean clarificationNeeded,
+        @JsonProperty("clarification_message") String clarificationMessage,
         List<AiAssistantRetrievedContext> context) {
 
     public record AiAssistantRetrievedContext(
