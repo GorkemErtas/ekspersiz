@@ -7,6 +7,7 @@ public record AiAssistantPlanResponse(
         String intent,
         @JsonProperty("in_scope") boolean inScope,
         @JsonProperty("use_rag") boolean useRag,
+        @JsonProperty("knowledge_source") String knowledgeSource,
         @JsonProperty("tool_name") String toolName,
         String reason,
         @JsonProperty("automotive_relevance") double automotiveRelevance,
