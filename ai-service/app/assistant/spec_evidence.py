@@ -5,6 +5,7 @@ from .schemas import RetrievedChunk
 @dataclass(frozen=True)
 class VehicleSpecIdentity:
     year: int | None = None
+    make: str | None = None
     model: str | None = None
     trim: str | None = None
     market: str | None = None
@@ -20,12 +21,13 @@ class SpecEvidenceResult:
 def validate_vehicle_spec_evidence(identity: VehicleSpecIdentity,
                                    chunks: list[RetrievedChunk],
                                    min_similarity: float) -> SpecEvidenceResult:
-    if identity.year is None or not identity.model:
-        return SpecEvidenceResult(False, 0.0, "vehicle year and model are required")
+    if identity.year is None or not identity.make or not identity.model:
+        return SpecEvidenceResult(False, 0.0, "vehicle year, make and model are required")
 
+    normalized_make = identity.make.casefold().strip()
     normalized_model = identity.model.casefold().strip()
     normalized_trim = identity.trim.casefold().strip() if identity.trim else None
-    normalized_market = identity.market.upper().strip() if identity.market else None
+    normalized_market = identity.market.upper().strip() if identity.market else "TR"
 
     matching: list[RetrievedChunk] = []
     for chunk in chunks:
@@ -33,17 +35,23 @@ def validate_vehicle_spec_evidence(identity: VehicleSpecIdentity,
             continue
         metadata = chunk.metadata or {}
         years = metadata.get("vehicle_years", [])
+        makes = [str(x).casefold().strip() for x in metadata.get("vehicle_makes", [])]
         models = [str(x).casefold().strip() for x in metadata.get("vehicle_models", [])]
         trims = [str(x).casefold().strip() for x in metadata.get("vehicle_trims", [])]
         market = (chunk.market or metadata.get("market") or "").upper().strip()
 
         if identity.year not in years:
             continue
+        if normalized_make not in makes:
+            continue
         if normalized_model not in models:
             continue
-        if normalized_market and market != normalized_market:
+        if market != normalized_market:
             continue
-        if normalized_trim and normalized_trim not in trims:
+        if normalized_trim:
+            if normalized_trim not in trims:
+                continue
+        elif not metadata.get("applies_all_trims", False):
             continue
         matching.append(chunk)
 
