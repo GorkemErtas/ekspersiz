@@ -117,7 +117,7 @@ class AiAssistantChatServiceTest {
         return new AiAssistantPlanResponse(
                 "GENERAL", inScope, useRag, tool, "test", 0.9, 0.9,
                 context.isEmpty() && useRag ? 0.2 : 0.9,
-                !useRag || !context.isEmpty(), context);
+                !useRag || !context.isEmpty(), false, null, context);
     }
 
     private AiAssistantEntitlementResponse status(int remaining) {
