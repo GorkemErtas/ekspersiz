@@ -6,7 +6,7 @@ EksperSiz combines a Flutter mobile application, a Spring Boot backend and a ded
 
 Beyond damage analysis, the application includes vehicle tracking, maintenance and inspection reminders, nearby automotive services, notifications, Google authentication, usage-based AI credits, business accounts and a finalized vehicle damage assessment record workflow.
 
-> Currently in **Google Play closed testing**.
+> Currently in **Google Play closed testing**. An in-app **AI Vehicle Assistant** is also under active development.
 
 ---
 
@@ -36,6 +36,18 @@ Beyond damage analysis, the application includes vehicle tracking, maintenance a
 - Inspection history with stored analysis results
 - Report regeneration without rerunning completed computer-vision analysis
 - Serverless cold-start retry handling for the AI service
+
+### 💬 AI Vehicle Assistant *(In Development)*
+- Automotive-focused conversational assistant integrated into the mobile app
+- Semantic scope and intent classification instead of a fixed question/keyword allow-list
+- RAG over a curated automotive knowledge base with local multilingual embeddings and PostgreSQL/pgvector
+- Evidence-grounded answers with source provenance and stricter verification for exact vehicle specifications
+- Secure access to authorized user data through backend-controlled tools such as vehicles, reminders and damage history
+- Clarification flow for relevant but underspecified questions instead of guessing missing details
+- Out-of-scope filtering before answer generation
+- 30-day trial design with a daily successful-answer quota; clarification, out-of-scope and failed requests do not consume the quota
+- Bounded conversation context for follow-up questions
+- Private user data is kept out of the vector knowledge base
 
 ### 📄 Vehicle Damage Assessment Record
 - Create a damage assessment record from a completed inspection
@@ -98,7 +110,8 @@ Beyond damage analysis, the application includes vehicle tracking, maintenance a
 | **Mobile** | Flutter, Dart, Firebase Messaging, Google Sign-In, Google Maps, RevenueCat |
 | **Backend** | Java 21, Spring Boot 4.1, Spring Security, JPA/Hibernate, Flyway, Maven |
 | **AI / ML** | Python, FastAPI, Ultralytics YOLO, NumPy, Pillow |
-| **Generative AI** | Google Gemini |
+| **Generative AI** | Google Gemini, RAG, multilingual embeddings |
+| **Vector Search** | PostgreSQL + pgvector |
 | **Database** | PostgreSQL |
 | **External Services** | Firebase, Google Maps & Places, RevenueCat, Brevo |
 | **Infrastructure** | Docker, Railway |
@@ -117,6 +130,7 @@ Beyond damage analysis, the application includes vehicle tracking, maintenance a
 │    Spring Boot REST API     │
 │  Auth · Vehicles · Billing  │
 │ Inspections · Records · FCM │
+│ AI Assistant · Secure Tools │
 └──────┬────────┬────────┬────┘
        │        │        │
        │        │        ├────────► Google Gemini
@@ -128,12 +142,12 @@ Beyond damage analysis, the application includes vehicle tracking, maintenance a
        │        ▼
        │  ┌───────────────────────┐
        │  │ FastAPI AI Service    │
-       │  │ YOLO damage pipeline  │
+       │  │ YOLO + RAG planning   │
        │  └───────────────────────┘
        │
        ▼
 ┌─────────────────────────────┐
-│         PostgreSQL          │
+│ PostgreSQL + pgvector       │
 └─────────────────────────────┘
 ```
 
@@ -268,9 +282,9 @@ Finalized records preserve a structured snapshot of the relevant inspection stat
 
 The project contains automated tests across the backend, mobile application and AI service.
 
-- **Backend:** Spring Boot / JUnit tests for authentication, vehicles, inspections, billing, quotas, business flows and service logic
+- **Backend:** Spring Boot / JUnit tests for authentication, vehicles, inspections, billing, quotas, business flows, AI Assistant quota/grounding behavior and service logic
 - **Mobile:** Flutter widget and service tests for important user flows
-- **AI Service:** damage-analyzer tests plus model evaluation and error-analysis scripts
+- **AI Service:** damage-analyzer tests, semantic assistant routing, RAG/evidence tests, knowledge-ingestion tests, plus model evaluation and error-analysis scripts
 
 The project also includes protections for cases such as AI-service cold starts, repeated purchase transactions and report regeneration after a completed ML analysis.
 
