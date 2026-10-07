@@ -4,6 +4,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gorkem.vehicle_inspector.dto.response.*;
 import org.springframework.stereotype.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -11,6 +13,7 @@ import java.util.Map;
 
 @Service
 public class AiAssistantToolContextService {
+    private static final Logger log = LoggerFactory.getLogger(AiAssistantToolContextService.class);
     private static final int MAX_HISTORY_ITEMS = 5;
 
     private final AiAssistantToolService tools;
@@ -35,6 +38,8 @@ public class AiAssistantToolContextService {
         try {
             return objectMapper.writeValueAsString(safeContext);
         } catch (JsonProcessingException exc) {
+            log.error("AI tool context serialization failed for tool={} contextType={}: {}",
+                    toolName, safeContext.getClass().getName(), exc.getOriginalMessage(), exc);
             throw new IllegalStateException("AI tool context serialize edilemedi.", exc);
         }
     }
@@ -61,7 +66,7 @@ public class AiAssistantToolContextService {
                     Map<String, Object> data = new LinkedHashMap<>();
                     data.put("type", reminder.type());
                     data.put("title", reminder.title());
-                    data.put("dueDate", reminder.dueDate());
+                    data.put("dueDate", reminder.dueDate() == null ? null : reminder.dueDate().toString());
                     data.put("dueMileage", reminder.dueMileage());
                     return data;
                 })
@@ -76,7 +81,7 @@ public class AiAssistantToolContextService {
                     data.put("severity", damage.severity());
                     data.put("confidenceScore", damage.confidenceScore());
                     data.put("message", damage.message());
-                    data.put("completedAt", damage.completedAt());
+                    data.put("completedAt", damage.completedAt() == null ? null : damage.completedAt().toString());
                     return data;
                 })
                 .toList();
