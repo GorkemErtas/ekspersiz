@@ -10,7 +10,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/ai-assistant")
+@RequestMapping("/api/v1/ai-assistant")
 public class AiAssistantController {
     private final AiAssistantEntitlementService entitlement;
     private final AiAssistantChatService chat;
