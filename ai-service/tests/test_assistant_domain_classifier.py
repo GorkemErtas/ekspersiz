@@ -32,7 +32,8 @@ class SemanticDomainClassifierTest(unittest.TestCase):
             "automotive_relevance": 0.94,
             "assistant_capability": 0.90,
             "intent": "MAINTENANCE",
-            "use_rag": True,
+            "use_rag": False,
+            "knowledge_source": "PUBLIC_WEB",
             "tool_name": None,
             "reason": "vehicle maintenance",
             "vehicle_year": None,
@@ -46,7 +47,8 @@ class SemanticDomainClassifierTest(unittest.TestCase):
         decision = self.classifier().route("Soğuk havalarda tekerlerin havası neden azalıyor?")
         self.assertTrue(decision.in_scope)
         self.assertEqual(AssistantIntent.MAINTENANCE, decision.intent)
-        self.assertTrue(decision.use_rag)
+        self.assertFalse(decision.use_rag)
+        self.assertEqual("PUBLIC_WEB", decision.knowledge_source)
 
     @patch("app.assistant.domain_classifier.request.urlopen")
     def test_out_of_scope_disables_model_requested_rag_and_tool(self, urlopen):
@@ -54,7 +56,8 @@ class SemanticDomainClassifierTest(unittest.TestCase):
             "automotive_relevance": 0.08,
             "assistant_capability": 0.02,
             "intent": "USER_VEHICLE",
-            "use_rag": True,
+            "use_rag": False,
+            "knowledge_source": "USER_DATA",
             "tool_name": "getMyVehicles",
             "reason": "unrelated",
             "vehicle_year": None,
@@ -78,6 +81,7 @@ class SemanticDomainClassifierTest(unittest.TestCase):
             "assistant_capability": 0.9,
             "intent": "VEHICLE_GENERAL",
             "use_rag": "false",
+            "knowledge_source": "PUBLIC_WEB",
             "tool_name": None,
             "reason": "invalid shape",
         })
@@ -91,7 +95,8 @@ class SemanticDomainClassifierTest(unittest.TestCase):
             "automotive_relevance": 0.96,
             "assistant_capability": 0.82,
             "intent": "MAINTENANCE",
-            "use_rag": True,
+            "use_rag": False,
+            "knowledge_source": "PUBLIC_WEB",
             "tool_name": None,
             "reason": "specific pressure needs vehicle context",
             "vehicle_year": None,
