@@ -30,7 +30,7 @@ class SemanticDomainClassifier:
     def __init__(self, api_key: str | None = None, model: str | None = None,
                  scope_threshold: float = 0.55, timeout_seconds: float | None = None) -> None:
         self.api_key = api_key or os.getenv("GEMINI_API_KEY")
-        self.model = model or os.getenv("ASSISTANT_ROUTER_MODEL", "gemini-2.5-flash-lite")
+        self.model = model or os.getenv("ASSISTANT_ROUTER_MODEL", "gemini-3.5-flash-lite")
         if not 0.0 < scope_threshold < 1.0:
             raise ValueError("scope_threshold must be between 0 and 1")
         self.scope_threshold = scope_threshold
