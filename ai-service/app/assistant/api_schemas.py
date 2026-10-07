@@ -21,4 +21,6 @@ class AssistantPlanResponse(BaseModel):
     assistant_capability: float = 0.0
     evidence_score: float = 0.0
     evidence_sufficient: bool = True
+    clarification_needed: bool = False
+    clarification_message: str | None = None
     context: list[RetrievedContext] = Field(default_factory=list)
