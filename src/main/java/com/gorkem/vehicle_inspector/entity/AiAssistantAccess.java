@@ -28,7 +28,7 @@ public class AiAssistantAccess {
     }
     public void startTrial(LocalDateTime now) {
         if (trialStartedAt != null) throw new IllegalStateException("AI Asistan deneme hakkı daha önce kullanılmış.");
-        trialStartedAt = now; trialExpiresAt = now.plusDays(30); status = AiAssistantAccessStatus.TRIAL; updatedAt = now;
+        trialStartedAt = now; trialExpiresAt = now.plusDays(7); status = AiAssistantAccessStatus.TRIAL; updatedAt = now;
     }
     public void activateSubscription(LocalDateTime startedAt, LocalDateTime expiresAt) {
         subscriptionStartedAt = startedAt; subscriptionExpiresAt = expiresAt; status = AiAssistantAccessStatus.ACTIVE; lockedUntil = null; updatedAt = startedAt;
