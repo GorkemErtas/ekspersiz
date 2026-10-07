@@ -7,6 +7,7 @@ import com.gorkem.vehicle_inspector.service.*;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -23,7 +24,7 @@ class AiAssistantChatServiceTest {
         var generation = mock(AiAssistantGenerationService.class);
         var service = new AiAssistantChatService(client, entitlement, tools, generation);
 
-        when(client.plan("Bana şiir yaz")).thenReturn(plan(false, false, null, List.of()));
+        when(client.plan(eq("Bana şiir yaz"), anyList(), isNull())).thenReturn(plan(false, false, null, List.of()));
         when(entitlement.status("user@example.com")).thenReturn(status(3));
 
         var response = service.chat(
@@ -45,7 +46,7 @@ class AiAssistantChatServiceTest {
         var generation = mock(AiAssistantGenerationService.class);
         var service = new AiAssistantChatService(client, entitlement, tools, generation);
 
-        when(client.plan("Lastik basıncı?")).thenReturn(plan(true, true, null, List.of()));
+        when(client.plan(eq("Lastik basıncı?"), anyList(), isNull())).thenReturn(plan(true, true, null, List.of()));
         when(entitlement.status("user@example.com")).thenReturn(status(3));
 
         var response = service.chat(
@@ -71,7 +72,7 @@ class AiAssistantChatServiceTest {
                 0.95, 0.90, 0.0, true, true,
                 "Bunu doğru yanıtlayabilmem için model yılı bilgisini paylaşır mısınız?",
                 List.of());
-        when(client.plan("Corolla kaç airbag?")).thenReturn(plan);
+        when(client.plan(eq("Corolla kaç airbag?"), anyList(), isNull())).thenReturn(plan);
         when(entitlement.status("user@example.com")).thenReturn(status(3));
 
         var response = service.chat(
@@ -98,7 +99,7 @@ class AiAssistantChatServiceTest {
         var history = List.of(new AiAssistantChatRequest.HistoryMessage(
                 "user", "Kışın basınç düşer mi?"));
 
-        when(client.plan("Ne sıklıkla kontrol edeyim?"))
+        when(client.plan(eq("Ne sıklıkla kontrol edeyim?"), anyList(), isNull()))
                 .thenReturn(plan(true, true, null, context));
         when(entitlement.reserveQuestion("user@example.com")).thenReturn(UUID.fromString(
                 "11111111-1111-1111-1111-111111111111"));
@@ -118,6 +119,38 @@ class AiAssistantChatServiceTest {
                 eq("user@example.com"), any(UUID.class));
     }
 
+
+    @Test
+    void selectedVehicleAndHistoryArePassedToPlanner() {
+        var client = mock(AiAssistantClient.class);
+        var entitlement = mock(AiAssistantEntitlementService.class);
+        var tools = mock(AiAssistantToolContextService.class);
+        var generation = mock(AiAssistantGenerationService.class);
+        var service = new AiAssistantChatService(client, entitlement, tools, generation);
+        var history = List.of(new AiAssistantChatRequest.HistoryMessage(
+                "user", "Mercedes aracım için"));
+
+        when(tools.getVehicle(42L, "user@example.com")).thenReturn(
+                new AiAssistantVehicleToolResponse(42L, "34ABC123",
+                        "Mercedes-Benz", "E Serisi", 2021, 50000, true));
+        when(client.plan(eq("Lastik basınçları ne olmalı"), anyList(), anyMap()))
+                .thenReturn(plan(true, false, null, List.of()));
+        when(entitlement.reserveQuestion("user@example.com")).thenReturn(UUID.fromString(
+                "33333333-3333-3333-3333-333333333333"));
+        when(generation.generate(anyString(), any(), isNull(), eq(history)))
+                .thenReturn("Yanıt");
+        when(entitlement.status("user@example.com")).thenReturn(status(2));
+
+        service.chat(new AiAssistantChatRequest(
+                "Lastik basınçları ne olmalı", 42L, history), "user@example.com");
+
+        verify(client).plan(
+                eq("Lastik basınçları ne olmalı"),
+                eq(List.of(Map.of("role", "user", "content", "Mercedes aracım için"))),
+                eq(Map.of("brand", "Mercedes-Benz", "model", "E Serisi", "modelYear", 2021)));
+    }
+
+
     @Test
     void generationFailureReleasesReservation() {
         var client = mock(AiAssistantClient.class);
@@ -127,7 +160,7 @@ class AiAssistantChatServiceTest {
         var service = new AiAssistantChatService(client, entitlement, tools, generation);
         var token = UUID.fromString("22222222-2222-2222-2222-222222222222");
 
-        when(client.plan("Motor yağı ne zaman değişir?"))
+        when(client.plan(eq("Motor yağı ne zaman değişir?"), anyList(), isNull()))
                 .thenReturn(plan(true, false, null, List.of()));
         when(entitlement.reserveQuestion("user@example.com")).thenReturn(token);
         when(generation.generate(anyString(), any(), isNull(), any()))
