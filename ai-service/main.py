@@ -202,8 +202,8 @@ def plan_assistant_turn(request: AssistantPlanRequest) -> AssistantPlanResponse:
     context = []
     evidence_score = 0.0
     evidence_sufficient = True
-    clarification_needed = False
-    clarification_message = None
+    clarification_needed = decision.clarification_needed
+    clarification_message = decision.clarification_message
 
     if decision.in_scope and decision.intent.value == "VEHICLE_SPEC":
         missing = []
