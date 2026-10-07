@@ -26,6 +26,7 @@ class AssistantPlanResponse(BaseModel):
     intent: str
     in_scope: bool
     use_rag: bool
+    knowledge_source: str = "PUBLIC_WEB"
     tool_name: str | None = None
     reason: str
     automotive_relevance: float = 0.0
