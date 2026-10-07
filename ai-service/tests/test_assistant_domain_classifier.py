@@ -112,6 +112,53 @@ class SemanticDomainClassifierTest(unittest.TestCase):
         self.assertTrue(decision.clarification_needed)
         self.assertIn("marka", decision.clarification_message)
 
+
+    @patch("app.assistant.domain_classifier.request.urlopen")
+    def test_app_help_uses_private_rag(self, urlopen):
+        urlopen.return_value = _Response({
+            "automotive_relevance": 0.98,
+            "assistant_capability": 0.98,
+            "intent": "APP_HELP",
+            "use_rag": True,
+            "knowledge_source": "APP_KNOWLEDGE",
+            "tool_name": None,
+            "reason": "EksperSiz product information",
+            "vehicle_year": None,
+            "vehicle_make": None,
+            "vehicle_model": None,
+            "vehicle_trim": None,
+            "vehicle_market": None,
+            "clarification_needed": False,
+            "clarification_message": None,
+        })
+        decision = self.classifier().route("EksperSiz kişisel araç verilerimi embedding yapıyor mu?")
+        self.assertTrue(decision.in_scope)
+        self.assertTrue(decision.use_rag)
+        self.assertEqual("APP_KNOWLEDGE", decision.knowledge_source)
+
+    @patch("app.assistant.domain_classifier.request.urlopen")
+    def test_user_damage_history_uses_secure_user_data(self, urlopen):
+        urlopen.return_value = _Response({
+            "automotive_relevance": 0.99,
+            "assistant_capability": 0.99,
+            "intent": "DAMAGE_HISTORY",
+            "use_rag": False,
+            "knowledge_source": "USER_DATA",
+            "tool_name": "getDamageHistory",
+            "reason": "authorized damage history",
+            "vehicle_year": None,
+            "vehicle_make": None,
+            "vehicle_model": None,
+            "vehicle_trim": None,
+            "vehicle_market": None,
+            "clarification_needed": False,
+            "clarification_message": None,
+        })
+        decision = self.classifier().route("Seçili aracımın son hasar analizinde ne çıktı?")
+        self.assertFalse(decision.use_rag)
+        self.assertEqual("USER_DATA", decision.knowledge_source)
+        self.assertEqual("getDamageHistory", decision.tool_name)
+
     def test_rejects_non_finite_scores(self):
         classifier = self.classifier()
         for value in (float("nan"), float("inf"), float("-inf")):
