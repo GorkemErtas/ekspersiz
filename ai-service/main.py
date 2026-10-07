@@ -220,7 +220,7 @@ def plan_assistant_turn(request: AssistantPlanRequest) -> AssistantPlanResponse:
                 + " bilgisini de paylaşır mısınız?"
             )
 
-    if decision.in_scope and decision.use_rag:
+    if decision.in_scope and decision.use_rag and not clarification_needed:
         chunks = get_assistant_retriever().retrieve(request.question)
         context = [RetrievedContext(title=x.title, category=x.category, content=x.content, similarity=x.similarity, source_name=x.source_name, source_url=x.source_url) for x in chunks]
         evidence_score = max((x.similarity for x in chunks), default=0.0)
