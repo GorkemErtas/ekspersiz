@@ -7,12 +7,12 @@ class AiAssistantService {
   final ApiClient apiClient;
 
   Future<AiAssistantEntitlement> entitlement() async {
-    final data = await apiClient.get('/api/ai-assistant/entitlement');
+    final data = await apiClient.get('/ai-assistant/entitlement');
     return AiAssistantEntitlement.fromJson(data as Map<String, dynamic>);
   }
 
   Future<AiAssistantEntitlement> startTrial() async {
-    final data = await apiClient.post('/api/ai-assistant/trial');
+    final data = await apiClient.post('/ai-assistant/trial');
     return AiAssistantEntitlement.fromJson(data as Map<String, dynamic>);
   }
 
@@ -22,7 +22,7 @@ class AiAssistantService {
     List<AiChatMessage> history = const [],
   }) async {
     final data = await apiClient.post(
-      '/api/ai-assistant/chat',
+      '/ai-assistant/chat',
       body: {
         'question': question,
         'vehicleId': ?vehicleId,
