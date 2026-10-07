@@ -198,7 +198,18 @@ def assistant_readiness():
 
 @app.post("/api/v1/assistant/plan", response_model=AssistantPlanResponse)
 def plan_assistant_turn(request: AssistantPlanRequest) -> AssistantPlanResponse:
-    decision = assistant_router.route(request.question)
+    context_lines = []
+    for item in request.history:
+        context_lines.append(f"{item.role.upper()}: {item.content}")
+    if request.vehicle_context is not None:
+        vehicle = request.vehicle_context
+        context_lines.append(
+            f"SELECTED_VEHICLE: {vehicle.brand} {vehicle.model}, model year {vehicle.modelYear}"
+        )
+    conversation_context = "\n".join(context_lines)
+    decision = assistant_router.route(
+        request.question, conversation_context=conversation_context
+    )
     context = []
     evidence_score = 0.0
     evidence_sufficient = True
@@ -221,7 +232,11 @@ def plan_assistant_turn(request: AssistantPlanRequest) -> AssistantPlanResponse:
             )
 
     if decision.in_scope and decision.use_rag and not clarification_needed:
-        chunks = get_assistant_retriever().retrieve(request.question)
+        retrieval_query = (
+            request.question + "\n" + conversation_context
+            if conversation_context else request.question
+        )
+        chunks = get_assistant_retriever().retrieve(retrieval_query)
         context = [RetrievedContext(title=x.title, category=x.category, content=x.content, similarity=x.similarity, source_name=x.source_name, source_url=x.source_url) for x in chunks]
         evidence_score = max((x.similarity for x in chunks), default=0.0)
         settings = AssistantSettings.from_env()
