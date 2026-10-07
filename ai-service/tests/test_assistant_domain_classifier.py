@@ -39,6 +39,8 @@ class SemanticDomainClassifierTest(unittest.TestCase):
             "vehicle_model": None,
             "vehicle_trim": None,
             "vehicle_market": None,
+            "clarification_needed": False,
+            "clarification_message": None,
         })
         decision = self.classifier().route("Soğuk havalarda tekerlerin havası neden azalıyor?")
         self.assertTrue(decision.in_scope)
@@ -58,6 +60,8 @@ class SemanticDomainClassifierTest(unittest.TestCase):
             "vehicle_model": None,
             "vehicle_trim": None,
             "vehicle_market": None,
+            "clarification_needed": False,
+            "clarification_message": None,
         })
         decision = self.classifier().route("Bana makarna tarifi ver")
         self.assertFalse(decision.in_scope)
