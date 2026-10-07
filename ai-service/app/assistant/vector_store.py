@@ -78,6 +78,25 @@ class PgVectorKnowledgeStore:
                 "embedding_dimensions": embedding_dimensions,
             }
 
+    def supersede_active_documents_except(self, slugs: set[str]) -> int:
+        with self._connection() as connection, connection.cursor() as cursor:
+            if slugs:
+                cursor.execute(
+                    """UPDATE ai_knowledge_documents
+                       SET lifecycle_status = 'SUPERSEDED', active = FALSE,
+                           superseded_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+                       WHERE lifecycle_status = 'ACTIVE' AND NOT (slug = ANY(%s))""",
+                    (list(slugs),),
+                )
+            else:
+                cursor.execute(
+                    """UPDATE ai_knowledge_documents
+                       SET lifecycle_status = 'SUPERSEDED', active = FALSE,
+                           superseded_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+                       WHERE lifecycle_status = 'ACTIVE'"""
+                )
+            return cursor.rowcount
+
     def find_active_document(self, slug: str) -> StoredDocument | None:
         with self._connection() as connection, connection.cursor() as cursor:
             cursor.execute(
