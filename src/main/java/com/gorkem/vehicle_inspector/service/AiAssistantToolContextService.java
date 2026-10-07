@@ -21,6 +21,10 @@ public class AiAssistantToolContextService {
         this.objectMapper = objectMapper;
     }
 
+    public AiAssistantVehicleToolResponse getVehicle(Long vehicleId, String email) {
+        return tools.getVehicle(vehicleId, email);
+    }
+
     public String build(String toolName, Long vehicleId, String email) {
         Object safeContext = switch (toolName) {
             case "getMyVehicles" -> vehicles(email);
