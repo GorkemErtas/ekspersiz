@@ -10,6 +10,7 @@ import '../../../core/widgets/app_status_badge.dart';
 import '../../../core/widgets/section_title.dart';
 import '../../../core/widgets/theme_toggle_button.dart';
 import '../../auth/models/business_account.dart';
+import '../../ai_assistant/screens/ai_assistant_screen.dart';
 import '../../vehicle/screens/vehicle_detail_screen.dart';
 
 import '../../inspection/models/damage_inspection.dart';
@@ -202,6 +203,12 @@ class _HomeScreenState extends State<HomeScreen> {
           child: SlideTransition(position: slide, child: child),
         );
       },
+    );
+  }
+
+  Future<void> _openAiAssistant() async {
+    await Navigator.of(context).push(
+      _premiumRoute<void>(AiAssistantScreen(initialVehicle: _mainVehicle)),
     );
   }
 
@@ -567,6 +574,8 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      floatingActionButton: _AiAssistantLauncher(onTap: _openAiAssistant),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -1318,6 +1327,82 @@ class _LoadingCard extends StatelessWidget {
       child: SizedBox(
         height: 72,
         child: Center(child: CircularProgressIndicator()),
+      ),
+    );
+  }
+}
+
+
+class _AiAssistantLauncher extends StatelessWidget {
+  const _AiAssistantLauncher({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
+    return SafeArea(
+      minimum: const EdgeInsets.only(bottom: 82),
+      child: AppPressScale(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(999),
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 230),
+          padding: const EdgeInsets.fromLTRB(10, 8, 14, 8),
+          decoration: BoxDecoration(
+            gradient: AppTheme.deepBrandGradient,
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.16),
+            ),
+            boxShadow: AppTheme.primaryShadowFor(context),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.auto_awesome_rounded,
+                  color: Colors.white,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Flexible(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    AppText(
+                      'AI Asistan',
+                      maxLines: 1,
+                      style: textTheme.labelLarge?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    AppText(
+                      'Aracınla ilgili bir şey sor',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: textTheme.labelSmall?.copyWith(
+                        color: Colors.white.withValues(alpha: 0.78),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
