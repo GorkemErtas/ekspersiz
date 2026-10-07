@@ -24,8 +24,10 @@ class KnowledgeSource:
     valid_from: date | None = None
     valid_until: date | None = None
     vehicle_years: tuple[int, ...] = ()
+    vehicle_makes: tuple[str, ...] = ()
     vehicle_models: tuple[str, ...] = ()
     vehicle_trims: tuple[str, ...] = ()
+    applies_all_trims: bool = False
 
 
 @dataclass(frozen=True)
@@ -72,8 +74,10 @@ class KnowledgeIngestionService:
             source_version=source.source_version,
             metadata={
                 "vehicle_years": list(source.vehicle_years),
+                "vehicle_makes": list(source.vehicle_makes),
                 "vehicle_models": list(source.vehicle_models),
                 "vehicle_trims": list(source.vehicle_trims),
+                "applies_all_trims": source.applies_all_trims,
                 "market": source.market,
                 "authority": source.authority,
             },
