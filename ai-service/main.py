@@ -202,6 +202,24 @@ def plan_assistant_turn(request: AssistantPlanRequest) -> AssistantPlanResponse:
     context = []
     evidence_score = 0.0
     evidence_sufficient = True
+    clarification_needed = False
+    clarification_message = None
+
+    if decision.in_scope and decision.intent.value == "VEHICLE_SPEC":
+        missing = []
+        if decision.vehicle_year is None:
+            missing.append("model yılı")
+        if not decision.vehicle_make:
+            missing.append("marka")
+        if not decision.vehicle_model:
+            missing.append("model")
+        if missing:
+            clarification_needed = True
+            clarification_message = (
+                "Bunu doğru yanıtlayabilmem için " + ", ".join(missing)
+                + " bilgisini de paylaşır mısınız?"
+            )
+
     if decision.in_scope and decision.use_rag:
         chunks = get_assistant_retriever().retrieve(request.question)
         context = [RetrievedContext(title=x.title, category=x.category, content=x.content, similarity=x.similarity, source_name=x.source_name, source_url=x.source_url) for x in chunks]
@@ -233,5 +251,7 @@ def plan_assistant_turn(request: AssistantPlanRequest) -> AssistantPlanResponse:
         assistant_capability=decision.assistant_capability,
         evidence_score=evidence_score,
         evidence_sufficient=evidence_sufficient,
+        clarification_needed=clarification_needed,
+        clarification_message=clarification_message,
         context=context,
     )
