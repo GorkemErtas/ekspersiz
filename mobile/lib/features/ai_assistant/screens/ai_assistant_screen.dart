@@ -282,7 +282,7 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
                       padding: const EdgeInsets.all(16),
                       child: FilledButton(
                         onPressed: _startTrial,
-                        child: const Text('30 günlük ücretsiz denemeyi başlat'),
+                        child: const Text('7 günlük ücretsiz denemeyi başlat'),
                       ),
                     ),
                   Expanded(
@@ -360,9 +360,16 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
                           ),
                   ),
                   if (_sending)
-                    const Padding(
-                      padding: EdgeInsets.only(bottom: 6),
-                      child: LinearProgressIndicator(),
+                    const Align(
+                      alignment: Alignment.centerLeft,
+                      child: Padding(
+                        padding: EdgeInsets.fromLTRB(24, 4, 24, 6),
+                        child: SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(strokeWidth: 2.5),
+                        ),
+                      ),
                     ),
                   Padding(
                     padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
