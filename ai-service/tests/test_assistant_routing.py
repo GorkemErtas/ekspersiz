@@ -45,7 +45,7 @@ class AssistantRoutingTest(unittest.TestCase):
             "Muayene öncesinde nelere dikkat etmeliyim?"
         )
 
-        self.assertEqual(["chunk"], plan.context)
+        self.assertEqual(("chunk",), plan.retrieved_chunks)
         retriever.retrieve.assert_called_once()
 
     def test_secure_tool_decision_does_not_require_rag(self):
