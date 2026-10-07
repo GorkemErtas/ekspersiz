@@ -7,6 +7,8 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.UUID;
 import java.util.Objects;
+import java.util.Map;
+import java.util.LinkedHashMap;
 
 @Service
 public class AiAssistantChatService {
@@ -23,7 +25,19 @@ public class AiAssistantChatService {
 
     public AiAssistantChatResponse chat(AiAssistantChatRequest request, String email) {
         entitlement.assertCanAsk(email);
-        AiAssistantPlanResponse plan=aiClient.plan(request.question());
+        List<Map<String, String>> plannerHistory = request.history() == null ? List.of()
+                : request.history().stream()
+                    .map(item -> Map.of("role", item.role(), "content", item.content()))
+                    .toList();
+        Map<String, Object> vehicleContext = null;
+        if (request.vehicleId() != null) {
+            var vehicle = contextService.getVehicle(request.vehicleId(), email);
+            vehicleContext = new LinkedHashMap<>();
+            vehicleContext.put("brand", vehicle.brand());
+            vehicleContext.put("model", vehicle.model());
+            vehicleContext.put("modelYear", vehicle.modelYear());
+        }
+        AiAssistantPlanResponse plan=aiClient.plan(request.question(), plannerHistory, vehicleContext);
 
         if (!plan.inScope()) {
             entitlement.recordOutOfScope(email);
