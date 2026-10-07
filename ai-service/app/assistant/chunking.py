@@ -3,8 +3,8 @@ import re
 
 from .schemas import KnowledgeChunk, KnowledgeDocument
 
-_HEADING_RE = re.compile(r"^(#{1,6})\\s+(.+?)\\s*$")
-_TOKEN_RE = re.compile(r"\\S+")
+_HEADING_RE = re.compile(r"^(#{1,6})\s+(.+?)\s*$")
+_TOKEN_RE = re.compile(r"\S+")
 
 
 def _cosine(a: list[float], b: list[float]) -> float:
@@ -85,8 +85,8 @@ class HybridSemanticChunker:
 
     @staticmethod
     def _paragraphs(body: str) -> list[str]:
-        return [re.sub(r"\\s+", " ", p).strip()
-                for p in re.split(r"\\n\\s*\\n", body) if p.strip()]
+        return [re.sub(r"\s+", " ", p).strip()
+                for p in re.split(r"\n\s*\n", body) if p.strip()]
 
     @staticmethod
     def _token_count(text: str) -> int:
