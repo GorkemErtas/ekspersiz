@@ -46,6 +46,7 @@ class AiAssistantChatServiceTest {
         var service = new AiAssistantChatService(client, entitlement, tools, generation);
 
         when(client.plan("Lastik basıncı?")).thenReturn(plan(true, true, null, List.of()));
+        when(entitlement.status("user@example.com")).thenReturn(status(3));
 
         var response = service.chat(
                 new AiAssistantChatRequest("Lastik basıncı?", null, List.of()),
@@ -53,6 +54,34 @@ class AiAssistantChatServiceTest {
 
         assertFalse(response.quotaConsumed());
         verify(entitlement, never()).reserveQuestion(anyString());
+        verifyNoInteractions(generation);
+    }
+
+
+    @Test
+    void clarificationDoesNotConsumeQuota() {
+        var client = mock(AiAssistantClient.class);
+        var entitlement = mock(AiAssistantEntitlementService.class);
+        var tools = mock(AiAssistantToolContextService.class);
+        var generation = mock(AiAssistantGenerationService.class);
+        var service = new AiAssistantChatService(client, entitlement, tools, generation);
+
+        var plan = new AiAssistantPlanResponse(
+                "VEHICLE_SPEC", true, true, null, "missing vehicle year",
+                0.95, 0.90, 0.0, true, true,
+                "Bunu doğru yanıtlayabilmem için model yılı bilgisini paylaşır mısınız?",
+                List.of());
+        when(client.plan("Corolla kaç airbag?")).thenReturn(plan);
+        when(entitlement.status("user@example.com")).thenReturn(status(3));
+
+        var response = service.chat(
+                new AiAssistantChatRequest("Corolla kaç airbag?", null, List.of()),
+                "user@example.com");
+
+        assertFalse(response.quotaConsumed());
+        assertTrue(response.answer().contains("model yılı"));
+        verify(entitlement, never()).reserveQuestion(anyString());
+        verify(entitlement, never()).recordOutOfScope(anyString());
         verifyNoInteractions(generation);
     }
 
