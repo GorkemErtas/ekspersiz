@@ -19,6 +19,7 @@ from app.schemas import (
     DetectedObject,
     DamageRecommendation,
     ImageQualityResponse,
+    VehiclePart,
 )
 
 
@@ -572,7 +573,7 @@ class DamageAnalyzer:
                 continue
 
             corrected_part = pair[0] if vehicle_region == "FRONT" else pair[1]
-            detection.affectedPart = corrected_part
+            detection.affectedPart = VehiclePart(corrected_part)
             logger.info(
                 "Vehicle region constraint: region=%s original=%s corrected=%s",
                 vehicle_region,
