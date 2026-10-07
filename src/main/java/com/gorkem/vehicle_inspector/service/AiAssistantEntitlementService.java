@@ -4,6 +4,7 @@ import com.gorkem.vehicle_inspector.dto.response.AiAssistantEntitlementResponse;
 import com.gorkem.vehicle_inspector.entity.*;
 import com.gorkem.vehicle_inspector.repository.*;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.*;
@@ -21,6 +22,7 @@ public class AiAssistantEntitlementService {
     private final BusinessContextService businessContext;
     private final Clock clock;
 
+    @Autowired
     public AiAssistantEntitlementService(AiAssistantAccessRepository accessRepository,
             AiAssistantDailyUsageRepository usageRepository,
             AiAssistantQuotaReservationRepository reservationRepository,
