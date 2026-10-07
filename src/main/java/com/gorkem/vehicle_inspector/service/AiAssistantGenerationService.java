@@ -5,8 +5,6 @@ import com.google.genai.types.GenerateContentConfig;
 import com.google.genai.types.GenerateContentResponse;
 import com.google.genai.types.GoogleSearch;
 import com.google.genai.types.Tool;
-import com.google.genai.types.ThinkingConfig;
-import com.google.genai.types.ThinkingLevel;
 import com.gorkem.vehicle_inspector.dto.response.AiAssistantPlanResponse;
 import com.gorkem.vehicle_inspector.dto.request.AiAssistantChatRequest;
 import org.springframework.beans.factory.annotation.Value;
@@ -48,10 +46,7 @@ TOOL_CONTEXT:
                 plan.intent(), plan.knowledgeSource(), formatVehicleContext(vehicleContext),
                 formatHistory(history), question, formatRagContext(plan.context()),
                 toolContext == null ? "YOK" : toolContext);
-        GenerateContentConfig.Builder config = GenerateContentConfig.builder()
-                .thinkingConfig(ThinkingConfig.builder()
-                        .thinkingLevel(ThinkingLevel.MINIMAL)
-                        .build());
+        GenerateContentConfig.Builder config = GenerateContentConfig.builder();
         if ("PUBLIC_WEB".equals(plan.knowledgeSource())) {
             config.tools(Tool.builder().googleSearch(GoogleSearch.builder()).build());
         }
