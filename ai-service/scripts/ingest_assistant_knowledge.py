@@ -42,9 +42,15 @@ def main() -> None:
     )
     service = KnowledgeIngestionService(store, embedder, chunker)
 
+    active_slugs = {
+        source.slug or source.path.stem
+        for source in manifest.sources
+    }
+    retired = store.supersede_active_documents_except(active_slugs)
     results = [service.ingest(source) for source in manifest.sources]
     for result in results:
         print(f"{result.status:9} {result.slug}: {result.chunks} chunks")
+    print(f"Retired obsolete active documents: {retired}")
     print(
         "Ingestion complete: "
         + ", ".join(f"{status}={sum(r.status == status for r in results)}"
