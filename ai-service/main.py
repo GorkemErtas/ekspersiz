@@ -217,13 +217,15 @@ def plan_assistant_turn(request: AssistantPlanRequest) -> AssistantPlanResponse:
     clarification_message = decision.clarification_message
 
     if decision.in_scope and decision.intent.value == "VEHICLE_SPEC":
+        has_selected_vehicle = request.vehicle_context is not None
         missing = []
-        if decision.vehicle_year is None:
-            missing.append("model yılı")
-        if not decision.vehicle_make:
-            missing.append("marka")
-        if not decision.vehicle_model:
-            missing.append("model")
+        if not has_selected_vehicle:
+            if decision.vehicle_year is None:
+                missing.append("model yılı")
+            if not decision.vehicle_make:
+                missing.append("marka")
+            if not decision.vehicle_model:
+                missing.append("model")
         if missing:
             clarification_needed = True
             clarification_message = (
@@ -260,6 +262,7 @@ def plan_assistant_turn(request: AssistantPlanRequest) -> AssistantPlanResponse:
         intent=decision.intent.value,
         in_scope=decision.in_scope,
         use_rag=decision.use_rag,
+        knowledge_source=decision.knowledge_source,
         tool_name=decision.tool_name,
         reason=decision.reason,
         automotive_relevance=decision.automotive_relevance,
