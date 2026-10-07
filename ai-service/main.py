@@ -213,6 +213,7 @@ def plan_assistant_turn(request: AssistantPlanRequest) -> AssistantPlanResponse:
             spec_result = validate_vehicle_spec_evidence(
                 VehicleSpecIdentity(
                     year=decision.vehicle_year,
+                    make=decision.vehicle_make,
                     model=decision.vehicle_model,
                     trim=decision.vehicle_trim,
                     market=decision.vehicle_market,
