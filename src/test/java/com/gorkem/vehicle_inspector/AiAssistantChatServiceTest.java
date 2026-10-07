@@ -68,7 +68,7 @@ class AiAssistantChatServiceTest {
         var service = new AiAssistantChatService(client, entitlement, tools, generation);
 
         var plan = new AiAssistantPlanResponse(
-                "VEHICLE_SPEC", true, true, null, "missing vehicle year",
+                "VEHICLE_SPEC", true, true, "APP_KNOWLEDGE", null, "missing vehicle year",
                 0.95, 0.90, 0.0, true, true,
                 "Bunu doğru yanıtlayabilmem için model yılı bilgisini paylaşır mısınız?",
                 List.of());
@@ -103,7 +103,7 @@ class AiAssistantChatServiceTest {
                 .thenReturn(plan(true, true, null, context));
         when(entitlement.reserveQuestion("user@example.com")).thenReturn(UUID.fromString(
                 "11111111-1111-1111-1111-111111111111"));
-        when(generation.generate(eq("Ne sıklıkla kontrol edeyim?"), any(), isNull(), eq(history)))
+        when(generation.generate(eq("Ne sıklıkla kontrol edeyim?"), any(), isNull(), eq(history), isNull()))
                 .thenReturn("Ayda en az bir kez kontrol edin.");
         when(entitlement.status("user@example.com")).thenReturn(status(2));
 
@@ -137,7 +137,7 @@ class AiAssistantChatServiceTest {
                 .thenReturn(plan(true, false, null, List.of()));
         when(entitlement.reserveQuestion("user@example.com")).thenReturn(UUID.fromString(
                 "33333333-3333-3333-3333-333333333333"));
-        when(generation.generate(anyString(), any(), isNull(), eq(history)))
+        when(generation.generate(anyString(), any(), isNull(), eq(history), anyMap()))
                 .thenReturn("Yanıt");
         when(entitlement.status("user@example.com")).thenReturn(status(2));
 
@@ -163,7 +163,7 @@ class AiAssistantChatServiceTest {
         when(client.plan(eq("Motor yağı ne zaman değişir?"), anyList(), isNull()))
                 .thenReturn(plan(true, false, null, List.of()));
         when(entitlement.reserveQuestion("user@example.com")).thenReturn(token);
-        when(generation.generate(anyString(), any(), isNull(), any()))
+        when(generation.generate(anyString(), any(), isNull(), any(), any()))
                 .thenThrow(new RuntimeException("provider unavailable"));
 
         assertThrows(RuntimeException.class, () -> service.chat(
@@ -177,7 +177,7 @@ class AiAssistantChatServiceTest {
     private AiAssistantPlanResponse plan(boolean inScope, boolean useRag, String tool,
             List<AiAssistantPlanResponse.AiAssistantRetrievedContext> context) {
         return new AiAssistantPlanResponse(
-                "GENERAL", inScope, useRag, tool, "test", 0.9, 0.9,
+                "GENERAL", inScope, useRag, useRag ? "APP_KNOWLEDGE" : (tool == null ? "PUBLIC_WEB" : "USER_DATA"), tool, "test", 0.9, 0.9,
                 context.isEmpty() && useRag ? 0.2 : 0.9,
                 !useRag || !context.isEmpty(), false, null, context);
     }
