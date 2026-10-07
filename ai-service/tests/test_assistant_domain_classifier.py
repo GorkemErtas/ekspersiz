@@ -36,6 +36,7 @@ class SemanticDomainClassifierTest(unittest.TestCase):
             "tool_name": None,
             "reason": "vehicle maintenance",
             "vehicle_year": None,
+            "vehicle_make": None,
             "vehicle_model": None,
             "vehicle_trim": None,
             "vehicle_market": None,
@@ -57,6 +58,7 @@ class SemanticDomainClassifierTest(unittest.TestCase):
             "tool_name": "getMyVehicles",
             "reason": "unrelated",
             "vehicle_year": None,
+            "vehicle_make": None,
             "vehicle_model": None,
             "vehicle_trim": None,
             "vehicle_market": None,
@@ -81,6 +83,29 @@ class SemanticDomainClassifierTest(unittest.TestCase):
         })
         with self.assertRaises(RuntimeError):
             self.classifier().route("ABS nedir?")
+
+
+    @patch("app.assistant.domain_classifier.request.urlopen")
+    def test_requests_clarification_for_underspecified_vehicle_question(self, urlopen):
+        urlopen.return_value = _Response({
+            "automotive_relevance": 0.96,
+            "assistant_capability": 0.82,
+            "intent": "MAINTENANCE",
+            "use_rag": True,
+            "tool_name": None,
+            "reason": "specific pressure needs vehicle context",
+            "vehicle_year": None,
+            "vehicle_make": None,
+            "vehicle_model": None,
+            "vehicle_trim": None,
+            "vehicle_market": None,
+            "clarification_needed": True,
+            "clarification_message": "Araç marka, model ve model yılını paylaşır mısınız?",
+        })
+        decision = self.classifier().route("Lastik basıncım kaç olmalı?")
+        self.assertTrue(decision.in_scope)
+        self.assertTrue(decision.clarification_needed)
+        self.assertIn("marka", decision.clarification_message)
 
     def test_rejects_non_finite_scores(self):
         classifier = self.classifier()
