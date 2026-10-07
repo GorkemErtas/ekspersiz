@@ -62,7 +62,7 @@ class SemanticDomainClassifier:
 
     def assess(self, question: str, *, conversation_context: str = "") -> DomainAssessment:
         if not question.strip():
-            return DomainAssessment(0.0, 0.0, AssistantIntent.OUT_OF_SCOPE, False, None, "empty")
+            return DomainAssessment(0.0, 0.0, AssistantIntent.OUT_OF_SCOPE, False, "NONE", None, "empty")
         if not self.api_key:
             raise RuntimeError("GEMINI_API_KEY is required for semantic assistant routing")
 
