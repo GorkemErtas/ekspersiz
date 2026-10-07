@@ -2,18 +2,17 @@ import '../../../core/network/api_client.dart';
 import '../models/ai_assistant_models.dart';
 
 class AiAssistantService {
-  AiAssistantService({ApiClient apiClient = const ApiClient()})
-      : _apiClient = apiClient;
+  AiAssistantService({this.apiClient = const ApiClient()});
 
-  final ApiClient _apiClient;
+  final ApiClient apiClient;
 
   Future<AiAssistantEntitlement> entitlement() async {
-    final data = await _apiClient.get('/api/ai-assistant/entitlement');
+    final data = await apiClient.get('/api/ai-assistant/entitlement');
     return AiAssistantEntitlement.fromJson(data as Map<String, dynamic>);
   }
 
   Future<AiAssistantEntitlement> startTrial() async {
-    final data = await _apiClient.post('/api/ai-assistant/trial');
+    final data = await apiClient.post('/api/ai-assistant/trial');
     return AiAssistantEntitlement.fromJson(data as Map<String, dynamic>);
   }
 
@@ -22,11 +21,11 @@ class AiAssistantService {
     int? vehicleId,
     List<AiChatMessage> history = const [],
   }) async {
-    final data = await _apiClient.post(
+    final data = await apiClient.post(
       '/api/ai-assistant/chat',
       body: {
         'question': question,
-        if (vehicleId != null) 'vehicleId': vehicleId,
+        'vehicleId': ?vehicleId,
         'history': history
             .takeLast(6)
             .map((message) => {
