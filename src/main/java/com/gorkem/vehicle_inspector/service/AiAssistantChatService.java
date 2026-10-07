@@ -32,6 +32,15 @@ public class AiAssistantChatService {
                     false, status.remainingToday(), List.of());
         }
 
+        if (plan.clarificationNeeded()) {
+            var status = entitlement.status(email);
+            String message = plan.clarificationMessage();
+            if (message == null || message.isBlank()) {
+                message = "Bu soruyu doğru yanıtlayabilmem için lütfen biraz daha spesifik bilgi paylaşın.";
+            }
+            return response(plan, message, false, status.remainingToday(), List.of());
+        }
+
         if (plan.useRag() && (!plan.evidenceSufficient()
                 || plan.context() == null || plan.context().isEmpty())) {
             var status=entitlement.status(email);
