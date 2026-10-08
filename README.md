@@ -6,7 +6,7 @@ EksperSiz combines a Flutter mobile application, a Spring Boot backend and a ded
 
 Beyond damage analysis, the application includes vehicle tracking, maintenance and inspection reminders, nearby automotive services, notifications, Google authentication, usage-based AI credits, business accounts and a finalized vehicle damage assessment record workflow.
 
-> Currently in **Google Play closed testing**. An in-app **AI Vehicle Assistant** is also under active development.
+> Currently in **Google Play closed testing**. The app also includes an **AI Vehicle Assistant** powered by retrieval-augmented generation (RAG).
 
 ---
 
@@ -37,7 +37,7 @@ Beyond damage analysis, the application includes vehicle tracking, maintenance a
 - Report regeneration without rerunning completed computer-vision analysis
 - Serverless cold-start retry handling for the AI service
 
-### 💬 AI Vehicle Assistant *(In Development)*
+### 💬 AI Vehicle Assistant
 - Automotive-focused conversational assistant integrated into the mobile app
 - Semantic scope and intent classification instead of a fixed question/keyword allow-list
 - RAG over a curated automotive knowledge base with local multilingual embeddings and PostgreSQL/pgvector
