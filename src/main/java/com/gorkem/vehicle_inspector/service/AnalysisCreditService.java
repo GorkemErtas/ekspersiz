@@ -13,8 +13,6 @@ import java.time.LocalDateTime;
 @Service
 public class AnalysisCreditService {
 
-    private static final int FREE_MONTHLY_REPORT_LIMIT = 1;
-
     private final AnalysisCreditTransactionRepository credits;
     private final AnalysisUsageRepository usages;
     private final UserRepository users;
@@ -134,7 +132,10 @@ public class AnalysisCreditService {
                 .countByUser_IdAndStartedAtGreaterThanEqualAndStartedAtLessThan(
                         lockedUser.getId(), start, start.plusMonths(1));
 
-        if (freeUsed < FREE_MONTHLY_REPORT_LIMIT) {
+        SubscriptionPlan plan = subscriptions.getEffectivePlan(lockedUser);
+        int monthlyLimit = plan == SubscriptionPlan.BUSINESS
+                ? 1 : subscriptions.monthlyAnalysisLimit(plan);
+        if (freeUsed < monthlyLimit) {
             subscriptions.recordPersonalAnalysisUsage(lockedUser, now);
             inspection.grantReportAccess(ReportAccessSource.FREE_MONTHLY);
             return;
@@ -142,7 +143,7 @@ public class AnalysisCreditService {
 
         if (credits.balanceByUserId(lockedUser.getId()) <= 0) {
             throw new InsufficientAnalysisCreditException(
-                    "Detaylı AI raporu için analiz hakkınız bulunmuyor. Tek analiz veya avantajlı paket satın alabilirsiniz."
+                    "Aylık detaylı AI analiz hakkınız doldu. Daha yüksek bir abonelik planına geçebilirsiniz."
             );
         }
 
