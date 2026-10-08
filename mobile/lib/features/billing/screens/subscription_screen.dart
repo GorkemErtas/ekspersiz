@@ -175,7 +175,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
       if (!mounted) return;
 
       _showMessage(
-        'Business aboneliğiniz etkinleştirildi.',
+        'Aboneliğiniz etkinleştirildi.',
       );
     } on BillingPurchaseCancelled {
       return;
@@ -253,89 +253,28 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
           children: [
             _buildQuotaCard(context),
 
-            if (!_isBusiness) ...[
-              const SizedBox(height: 30),
-              _buildSectionTitle(
-                context,
-                title: 'Analiz hakkı ekle',
-                subtitle:
-                    'İhtiyacınız kadar detaylı AI analizi satın alın.',
-              ),
-              const SizedBox(height: 14),
-
-              for (var i = 0; i < _packs.length; i++) ...[
-                _AnalysisPackCard(
-                  pack: _packs[i],
-                  localizedPrice:
-                      _billingData!.localizedPrices[_packs[i].id],
-                  loading: _busyPack == _packs[i].id,
-                  enabled:
-                      _billingData!.storeConfigured &&
-                      _busyPack == null &&
-                      !_businessBusy,
-                  onPressed: () => _buy(_packs[i].id),
-                ),
-                if (i != _packs.length - 1)
-                  const SizedBox(height: 12),
-              ],
-
-              const SizedBox(height: 14),
-
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.lock_outline_rounded,
-                    size: 16,
-                    color:
-                        Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-                  const SizedBox(width: 6),
-                  Flexible(
-                    child: AppText(
-                      'Tek seferlik ödeme • Hakların süresi dolmaz',
-                      textAlign: TextAlign.center,
-                      style:
-                          Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onSurfaceVariant,
-                              ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-
-            if (_businessPlan != null) ...[
-              const SizedBox(height: 36),
-
-              _buildSectionTitle(
-                context,
-                title: 'EksperSiz Business',
-                subtitle:
-                    'Ekipler ve ortak şirket araçları için.',
-              ),
-
-              const SizedBox(height: 14),
-
+            const SizedBox(height: 24),
+            _buildSectionTitle(
+              context,
+              title: 'Aylık abonelikler',
+              subtitle: 'AI Asistan ve hasar analiz haklarınızı planınıza göre artırın.',
+            ),
+            const SizedBox(height: 14),
+            for (final plan in _billingData!.overview.plans.where(
+              (item) => item.plan != 'FREE',
+            )) ...[
               _BusinessPlanCard(
-                plan: _businessPlan!,
-                active: _isBusiness,
+                plan: plan,
+                active: _billingData!.overview.status.currentPlan == plan.plan,
                 busy: _businessBusy,
-                storeConfigured:
-                    _billingData!.storeConfigured,
-                localizedPrice:
-                    _businessPlan!.packageIdentifier == null
-                        ? null
-                        : _billingData!.localizedPrices[
-                            _businessPlan!.packageIdentifier!
-                          ],
-                onBuy: () =>
-                    _buyBusiness(_businessPlan!),
+                storeConfigured: _billingData!.storeConfigured,
+                localizedPrice: plan.packageIdentifier == null
+                    ? null
+                    : _billingData!.localizedPrices[plan.packageIdentifier!],
+                onBuy: () => _buyBusiness(plan),
               ),
+              const SizedBox(height: 12),
             ],
-
             const SizedBox(height: 30),
           ],
         ),
