@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:mobile/core/localization/app_text.dart';
 
 import '../../../core/theme/app_theme.dart';
-import '../../../core/widgets/app_card.dart';
 import '../models/analysis_quota.dart';
 import '../models/billing_plan.dart';
 import '../services/analysis_quota_service.dart';
