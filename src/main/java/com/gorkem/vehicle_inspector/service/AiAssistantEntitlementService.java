@@ -187,8 +187,20 @@ public class AiAssistantEntitlementService {
     private void assertAccess(User user, LocalDateTime now) {
         AiAssistantAccess access=accessRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new IllegalStateException("AI Asistan etkin değil."));
-        if (!access.canAsk(now))
+        if (!hasAssistantAccess(user, access, now))
             throw new IllegalStateException("AI Asistan erişiminiz aktif değil.");
+    }
+
+    private boolean hasAssistantAccess(User user, AiAssistantAccess access, LocalDateTime now) {
+        boolean existingAccess = access.canAsk(now);
+        if (access.getLockedUntil() != null && access.getLockedUntil().isAfter(now)) {
+            return false;
+        }
+        if (subscriptions != null) {
+            if (businessAccount(user) != null) return true;
+            if (subscriptions.getEffectivePlan(user) != SubscriptionPlan.FREE) return true;
+        }
+        return existingAccess;
     }
 
     private AiAssistantDailyUsage findOrCreateUsageForUpdate(User user) {
@@ -222,7 +234,7 @@ public class AiAssistantEntitlementService {
         }
         int remaining=Math.max(0, limit-used-reserved);
         return new AiAssistantEntitlementResponse(
-                access.getStatus(), access.canAsk(now) && remaining > 0,
+                access.getStatus(), hasAssistantAccess(user, access, now) && remaining > 0,
                 limit, used, remaining, out, access.getTrialExpiresAt(),
                 access.getSubscriptionExpiresAt(), access.getLockedUntil());
     }
