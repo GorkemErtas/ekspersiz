@@ -84,14 +84,12 @@ public class AiAssistantEntitlementService {
         assertAccess(user, now);
         BusinessAccount business=businessAccount(user);
         if (business != null) {
-            releaseExpired(now);
             lockBusiness(business);
             if (businessUsed(business) + businessReservations(business, now) >= 10)
                 throw new IllegalStateException("Şirketin günlük AI Asistan soru hakkı doldu.");
             return;
         }
         AiAssistantDailyUsage usage=findOrCreateUsageForUpdate(user);
-        releaseExpired(now);
         if (usage.getSuccessfulQuestions() + activeReservations(user, now) >= dailyLimit(user))
             throw new IllegalStateException("Bugünkü AI Asistan soru hakkınızı kullandınız.");
     }
@@ -102,13 +100,11 @@ public class AiAssistantEntitlementService {
         assertAccess(user, now);
         BusinessAccount business=businessAccount(user);
         if (business != null) {
-            releaseExpired(now);
             lockBusiness(business);
             if (businessUsed(business) + businessReservations(business, now) >= 10)
                 throw new IllegalStateException("Şirketin günlük AI Asistan kotası doldu.");
         } else {
             AiAssistantDailyUsage usage=findOrCreateUsageForUpdate(user);
-            releaseExpired(now);
             if (usage.getSuccessfulQuestions() + activeReservations(user, now) >= dailyLimit(user))
                 throw new IllegalStateException("Günlük AI Asistan kotası doldu.");
         }
