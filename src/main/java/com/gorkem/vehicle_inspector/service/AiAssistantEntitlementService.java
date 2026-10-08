@@ -15,6 +15,7 @@ public class AiAssistantEntitlementService {
     public static final int DAILY_LIMIT = 3;
     public static final int OUT_OF_SCOPE_LOCK_THRESHOLD = 3;
     private final Duration reservationTtl;
+    private final SubscriptionService subscriptions;
 
     private final AiAssistantAccessRepository accessRepository;
     private final AiAssistantDailyUsageRepository usageRepository;
@@ -27,10 +28,12 @@ public class AiAssistantEntitlementService {
             AiAssistantDailyUsageRepository usageRepository,
             AiAssistantQuotaReservationRepository reservationRepository,
             BusinessContextService businessContext,
+            SubscriptionService subscriptions,
             @Value("${application.ai-assistant.usage-zone:Europe/Istanbul}") String usageZone,
             @Value("${application.ai-assistant.reservation-ttl:PT5M}") Duration reservationTtl) {
         this(accessRepository, usageRepository, reservationRepository,
                 businessContext, Clock.system(ZoneId.of(usageZone)), reservationTtl);
+        this.subscriptions = subscriptions;
     }
 
     AiAssistantEntitlementService(AiAssistantAccessRepository accessRepository,
@@ -43,6 +46,7 @@ public class AiAssistantEntitlementService {
         this.reservationRepository=reservationRepository;
         this.businessContext=businessContext; this.clock=clock;
         this.reservationTtl=reservationTtl;
+        this.subscriptions=null;
     }
 
     @Transactional
@@ -69,8 +73,8 @@ public class AiAssistantEntitlementService {
         assertAccess(user, now);
         AiAssistantDailyUsage usage=findOrCreateUsageForUpdate(user);
         releaseExpired(now);
-        if (usage.getSuccessfulQuestions() + activeReservations(user, now) >= DAILY_LIMIT)
-            throw new IllegalStateException("Bugünkü 3 AI Asistan soru hakkınızı kullandınız.");
+        if (usage.getSuccessfulQuestions() + activeReservations(user, now) >= dailyLimit(user))
+            throw new IllegalStateException("Bugünkü AI Asistan soru hakkınızı kullandınız.");
     }
 
     @Transactional
@@ -79,7 +83,7 @@ public class AiAssistantEntitlementService {
         assertAccess(user, now);
         AiAssistantDailyUsage usage=findOrCreateUsageForUpdate(user);
         releaseExpired(now);
-        if (usage.getSuccessfulQuestions() + activeReservations(user, now) >= DAILY_LIMIT)
+        if (usage.getSuccessfulQuestions() + activeReservations(user, now) >= dailyLimit(user))
             throw new IllegalStateException("Günlük AI Asistan kotası doldu.");
         UUID token=UUID.randomUUID();
         reservationRepository.save(new AiAssistantQuotaReservation(
@@ -115,6 +119,15 @@ public class AiAssistantEntitlementService {
         }
     }
 
+    private int dailyLimit(User user) {
+        if (subscriptions == null) return DAILY_LIMIT;
+        return switch (subscriptions.getEffectivePlan(user)) {
+            case PRO -> 5;
+            case BUSINESS -> 10;
+            default -> DAILY_LIMIT;
+        };
+    }
+
     private void assertAccess(User user, LocalDateTime now) {
         AiAssistantAccess access=accessRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new IllegalStateException("AI Asistan etkin değil."));
@@ -144,10 +157,10 @@ public class AiAssistantEntitlementService {
         int used=usage == null ? 0 : usage.getSuccessfulQuestions();
         int reserved=activeReservations(user, now);
         int out=usage == null ? 0 : usage.getOutOfScopeAttempts();
-        int remaining=Math.max(0, DAILY_LIMIT-used-reserved);
+        int remaining=Math.max(0, dailyLimit(user)-used-reserved);
         return new AiAssistantEntitlementResponse(
                 access.getStatus(), access.canAsk(now) && remaining > 0,
-                DAILY_LIMIT, used, remaining, out, access.getTrialExpiresAt(),
+                dailyLimit(user), used, remaining, out, access.getTrialExpiresAt(),
                 access.getSubscriptionExpiresAt(), access.getLockedUntil());
     }
 }
