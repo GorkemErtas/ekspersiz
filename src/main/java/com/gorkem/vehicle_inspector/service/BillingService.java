@@ -317,9 +317,6 @@ public class BillingService {
         ));
 
         for (BillingProduct product : BillingProduct.values()) {
-            if (product.getPlan() != SubscriptionPlan.BUSINESS) {
-                continue;
-            }
             plans.add(new BillingPlanResponse(
                     product.getPlan(),
                     product.getTitle(),
