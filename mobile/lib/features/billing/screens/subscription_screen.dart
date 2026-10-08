@@ -250,7 +250,8 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                     AppText(
                       _isBusiness
                           ? '${_quota!.remaining} / ${_quota!.limit} şirket analizi kaldı'
-                          : 'Bu ay ${_quota!.freeRemaining} ücretsiz • ${_quota!.purchasedCredits} satın alınan',
+                          : 'Bu ay ${_quota!.freeRemaining} / ${_quota!.limit} analiz hakkı kaldı'
+                              '${_quota!.purchasedCredits > 0 ? ' • ${_quota!.purchasedCredits} eski kredi' : ''}',
                       style:
                           theme.textTheme.bodyMedium?.copyWith(
                                 color:
