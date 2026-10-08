@@ -6,7 +6,6 @@ import com.gorkem.vehicle_inspector.service.*;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.InOrder;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -57,9 +56,8 @@ class AiAssistantBusinessQuotaTest {
                 clock, Duration.ofMinutes(5));
 
         UUID token = service.reserveQuestion("owner@example.com");
-        InOrder firstRequest = inOrder(reservations, jdbc);
-        firstRequest.verify(reservations).releaseExpired(any(LocalDateTime.class));
-        firstRequest.verify(jdbc).queryForObject(
+        verify(reservations, never()).releaseExpired(any(LocalDateTime.class));
+        verify(jdbc).queryForObject(
                 contains("SELECT id FROM business_accounts"), eq(Long.class), eq(11L));
         assertNotNull(token);
         verify(reservations).save(argThat(r -> Long.valueOf(11L).equals(r.getBusinessAccountId())));
