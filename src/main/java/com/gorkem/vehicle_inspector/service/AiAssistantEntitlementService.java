@@ -203,6 +203,18 @@ public class AiAssistantEntitlementService {
         return existingAccess;
     }
 
+    private AiAssistantAccessStatus assistantStatus(User user, AiAssistantAccess access, LocalDateTime now) {
+        access.refresh(now);
+        if (access.getLockedUntil() != null && access.getLockedUntil().isAfter(now)) {
+            return AiAssistantAccessStatus.LOCKED;
+        }
+        if (subscriptions != null && (businessAccount(user) != null
+                || subscriptions.getEffectivePlan(user) != SubscriptionPlan.FREE)) {
+            return AiAssistantAccessStatus.ACTIVE;
+        }
+        return access.getStatus();
+    }
+
     private AiAssistantDailyUsage findOrCreateUsageForUpdate(User user) {
         LocalDate date=LocalDate.now(clock);
         usageRepository.ensureDailyRow(user.getId(), date);
@@ -234,7 +246,7 @@ public class AiAssistantEntitlementService {
         }
         int remaining=Math.max(0, limit-used-reserved);
         return new AiAssistantEntitlementResponse(
-                access.getStatus(), hasAssistantAccess(user, access, now) && remaining > 0,
+                assistantStatus(user, access, now), hasAssistantAccess(user, access, now) && remaining > 0,
                 limit, used, remaining, out, access.getTrialExpiresAt(),
                 access.getSubscriptionExpiresAt(), access.getLockedUntil());
     }
