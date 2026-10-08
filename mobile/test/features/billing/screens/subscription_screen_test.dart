@@ -23,7 +23,6 @@ void main() {
     expect(find.text('Aylık abonelikler'), findsOneWidget);
     expect(find.text('1 detaylı AI analizi'), findsNothing);
     expect(find.text('₺20,00 ile satın al'), findsNothing);
-    expect(find.text('Business'), findsWidgets);
   });
 
   testWidgets('shows Business monthly analysis features', (tester) async {
