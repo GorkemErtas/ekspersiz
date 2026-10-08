@@ -186,7 +186,7 @@ public class AiAssistantEntitlementService {
 
     private void assertAccess(User user, LocalDateTime now) {
         AiAssistantAccess access=accessRepository.findByUserId(user.getId())
-                .orElseThrow(() -> new IllegalStateException("AI Asistan etkin değil."));
+                .orElseGet(() -> accessRepository.save(new AiAssistantAccess(user, now)));
         if (!hasAssistantAccess(user, access, now))
             throw new IllegalStateException("AI Asistan erişiminiz aktif değil.");
     }
