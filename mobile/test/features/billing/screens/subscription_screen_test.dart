@@ -9,168 +9,40 @@ import 'package:mobile/features/billing/services/analysis_quota_service.dart';
 import 'package:mobile/features/billing/services/billing_service.dart';
 
 void main() {
-  testWidgets(
-    'shows free allowance and analysis credit packs',
-    (tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: SubscriptionScreen(
-            billingService: FakeBillingService(
-              storeConfigured: false,
-            ),
-            quotaService: FakeQuotaService(),
-          ),
-        ),
-      );
+  testWidgets('shows monthly plans instead of one-time packs', (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      home: SubscriptionScreen(
+        billingService: FakeBillingService(storeConfigured: false),
+        quotaService: FakeQuotaService(),
+      ),
+    ));
+    await tester.pumpAndSettle();
 
-      await tester.pumpAndSettle();
+    expect(find.text('Planlar ve AI Hakları'), findsOneWidget);
+    expect(find.text('Bu ay 1 ücretsiz • 0 satın alınan'), findsOneWidget);
+    expect(find.text('Aylık abonelikler'), findsOneWidget);
+    expect(find.text('1 detaylı AI analizi'), findsNothing);
+    expect(find.text('₺20,00 ile satın al'), findsNothing);
+    expect(find.text('Business'), findsWidgets);
+  });
 
-      expect(
-        find.text('Planlar ve AI Hakları'),
-        findsOneWidget,
-      );
-
-      expect(
-        find.text('Bu ay 1 ücretsiz • 0 satın alınan'),
-        findsOneWidget,
-      );
-
-      expect(
-        find.text('1 detaylı AI analizi'),
-        findsOneWidget,
-      );
-
-      expect(
-        find.text('₺20,00 ile satın al'),
-        findsOneWidget,
-      );
-
-      expect(
-        find.text('3 detaylı AI analizi'),
-        findsOneWidget,
-      );
-
-      expect(
-        find.text('₺49,99 ile satın al'),
-        findsOneWidget,
-      );
-
-      expect(
-        find.text('Önerilen'),
-        findsOneWidget,
-      );
-    },
-  );
-
-  testWidgets(
-    'shows Business plan separately from credit packs',
-    (tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: SubscriptionScreen(
-            billingService: FakeBillingService(
-              storeConfigured: false,
-            ),
-            quotaService: FakeQuotaService(),
-          ),
-        ),
-      );
-
-      await tester.pumpAndSettle();
-
-      final scrollable = find.byType(Scrollable).first;
-
-      await tester.scrollUntilVisible(
-        find.text('EksperSiz Business'),
-        300,
-        scrollable: scrollable,
-      );
-
-      await tester.pumpAndSettle();
-
-      expect(
-        find.text('EksperSiz Business'),
-        findsOneWidget,
-      );
-
-      await tester.scrollUntilVisible(
-        find.text('50 ortak aktif araç'),
-        200,
-        scrollable: scrollable,
-      );
-
-      await tester.pumpAndSettle();
-
-      expect(
-        find.text('50 ortak aktif araç'),
-        findsOneWidget,
-      );
-
-      expect(
-        find.text('Şirket genelinde ayda 100 AI analizi'),
-        findsOneWidget,
-      );
-
-      expect(
-        find.text('Çalışan daveti ve ortak geçmiş'),
-        findsOneWidget,
-      );
-    },
-  );
-
-  testWidgets(
-    'purchases a credit pack',
-    (tester) async {
-      final quotaService = FakeQuotaService();
-
-      final billingService = FakeBillingService(
-        storeConfigured: true,
-        onPurchaseCreditPack: quotaService.addCredit,
-      );
-
-      await tester.pumpWidget(
-        MaterialApp(
-          home: SubscriptionScreen(
-            billingService: billingService,
-            quotaService: quotaService,
-          ),
-        ),
-      );
-
-      await tester.pumpAndSettle();
-
-      final buyButton = find.widgetWithText(
-        FilledButton,
-        '₺20,00 ile satın al',
-      );
-
-      expect(buyButton, findsOneWidget);
-
-      await tester.tap(buyButton);
-
-      // _buy() içindeki 750 ms polling süresini ilerlet.
-      await tester.pump(
-        const Duration(milliseconds: 800),
-      );
-
-      await tester.pumpAndSettle();
-
-      expect(
-        billingService.purchasedPackage,
-        'analysis_1',
-      );
-
-      expect(
-        quotaService.credits,
-        1,
-      );
-
-      expect(
-        find.text('Bu ay 1 ücretsiz • 1 satın alınan'),
-        findsOneWidget,
-      );
-    },
-  );
+  testWidgets('shows Business monthly analysis features', (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      home: SubscriptionScreen(
+        billingService: FakeBillingService(storeConfigured: false),
+        quotaService: FakeQuotaService(),
+      ),
+    ));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('50 ortak aktif araç'), 200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('50 ortak aktif araç'), findsOneWidget);
+    expect(find.text('Şirket genelinde ayda 100 AI analizi'), findsOneWidget);
+    expect(find.text('Çalışan daveti ve ortak geçmiş'), findsOneWidget);
+  });
 }
 
 class FakeQuotaService extends AnalysisQuotaService {
