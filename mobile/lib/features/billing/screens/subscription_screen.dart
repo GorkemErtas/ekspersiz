@@ -29,7 +29,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
   BillingPageData? _billingData;
   AnalysisQuota? _quota;
 
-  bool _businessBusy = false;
+  bool _purchaseBusy = false;
   String? _error;
 
   bool get _isBusiness =>
@@ -65,14 +65,14 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
     }
   }
 
-  Future<void> _buyBusiness(BillingPlan plan) async {
-    if (_businessBusy ||
+  Future<void> _subscribe(BillingPlan plan) async {
+    if (_purchaseBusy ||
         _billingData?.overview.status.currentPlan == plan.plan) {
       return;
     }
 
     setState(() {
-      _businessBusy = true;
+      _purchaseBusy = true;
     });
 
     try {
@@ -98,7 +98,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
     } finally {
       if (mounted) {
         setState(() {
-          _businessBusy = false;
+          _purchaseBusy = false;
         });
       }
     }
@@ -175,15 +175,15 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
             for (final plan in _billingData!.overview.plans.where(
               (item) => item.plan != 'FREE',
             )) ...[
-              _BusinessPlanCard(
+              _SubscriptionPlanCard(
                 plan: plan,
                 active: _billingData!.overview.status.currentPlan == plan.plan,
-                busy: _businessBusy,
+                busy: _purchaseBusy,
                 storeConfigured: _billingData!.storeConfigured,
                 localizedPrice: plan.packageIdentifier == null
                     ? null
                     : _billingData!.localizedPrices[plan.packageIdentifier!],
-                onBuy: () => _buyBusiness(plan),
+                onBuy: () => _subscribe(plan),
               ),
               const SizedBox(height: 12),
             ],
@@ -333,8 +333,8 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
   }
 }
 
-class _BusinessPlanCard extends StatelessWidget {
-  const _BusinessPlanCard({
+class _SubscriptionPlanCard extends StatelessWidget {
+  const _SubscriptionPlanCard({
     required this.plan,
     required this.active,
     required this.busy,
@@ -388,7 +388,9 @@ class _BusinessPlanCard extends StatelessWidget {
                       BorderRadius.circular(14),
                 ),
                 child: const Icon(
-                  Icons.business_center_rounded,
+                  plan.plan == 'BUSINESS'
+                      ? Icons.business_center_rounded
+                      : Icons.workspace_premium_rounded,
                   color: Colors.white,
                 ),
               ),
@@ -465,7 +467,7 @@ class _BusinessPlanCard extends StatelessWidget {
           const SizedBox(height: 22),
 
           for (final feature in plan.features) ...[
-            _BusinessFeature(
+            _SubscriptionFeature(
               text: feature,
             ),
             const SizedBox(height: 12),
@@ -484,9 +486,10 @@ class _BusinessPlanCard extends StatelessWidget {
                 borderRadius:
                     BorderRadius.circular(14),
               ),
-              child: const AppText(
-                'Business planınız aktif. Şirket araçları ve '
-                'analiz kotası ekip üyelerinizle ortaktır.',
+              child: AppText(
+                plan.plan == 'BUSINESS'
+                    ? 'Business planınız aktif. Şirket araçları ve analiz kotası ekip üyelerinizle ortaktır.'
+                    : '${plan.title} aboneliğiniz aktif. Plan haklarınız kullanımınıza açıktır.',
                 style: TextStyle(
                   color: Colors.white,
                   height: 1.4,
@@ -569,8 +572,8 @@ class _BusinessPlanCard extends StatelessWidget {
   }
 }
 
-class _BusinessFeature extends StatelessWidget {
-  const _BusinessFeature({
+class _SubscriptionFeature extends StatelessWidget {
+  const _SubscriptionFeature({
     required this.text,
   });
 
