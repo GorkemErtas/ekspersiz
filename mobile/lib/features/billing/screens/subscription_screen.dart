@@ -155,7 +155,8 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
   }
 
   Future<void> _buyBusiness(BillingPlan plan) async {
-    if (_businessBusy || _busyPack != null || _isBusiness) {
+    if (_businessBusy || _busyPack != null ||
+        _billingData?.overview.status.currentPlan == plan.plan) {
       return;
     }
 
