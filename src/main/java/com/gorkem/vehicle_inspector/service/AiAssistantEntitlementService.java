@@ -134,7 +134,7 @@ public class AiAssistantEntitlementService {
             reservation.complete(now);
             jdbc.update("INSERT INTO ai_assistant_business_daily_usage (business_account_id, usage_date, successful_questions) VALUES (?, ?, 1) ON CONFLICT (business_account_id, usage_date) DO UPDATE SET successful_questions = ai_assistant_business_daily_usage.successful_questions + 1, updated_at = CURRENT_TIMESTAMP", business.getId(), java.sql.Date.valueOf(reservation.getUsageDate()));
         } else {
-            AiAssistantDailyUsage usage=findOrCreateUsageForUpdate(user);
+            AiAssistantDailyUsage usage=findOrCreateUsageForUpdate(user, reservation.getUsageDate());
             reservation.complete(now);
             usage.recordSuccessful(now);
         }
@@ -216,7 +216,10 @@ public class AiAssistantEntitlementService {
     }
 
     private AiAssistantDailyUsage findOrCreateUsageForUpdate(User user) {
-        LocalDate date=LocalDate.now(clock);
+        return findOrCreateUsageForUpdate(user, LocalDate.now(clock));
+    }
+
+    private AiAssistantDailyUsage findOrCreateUsageForUpdate(User user, LocalDate date) {
         usageRepository.ensureDailyRow(user.getId(), date);
         return usageRepository.findForUpdate(user.getId(), date).orElseThrow();
     }
