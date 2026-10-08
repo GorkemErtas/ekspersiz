@@ -45,7 +45,7 @@ public class AiAssistantEntitlementService {
         this(accessRepository, usageRepository, reservationRepository, businessContext, null, null, clock, reservationTtl);
     }
 
-    AiAssistantEntitlementService(AiAssistantAccessRepository accessRepository,
+    public AiAssistantEntitlementService(AiAssistantAccessRepository accessRepository,
             AiAssistantDailyUsageRepository usageRepository,
             AiAssistantQuotaReservationRepository reservationRepository,
             BusinessContextService businessContext, SubscriptionService subscriptions,
