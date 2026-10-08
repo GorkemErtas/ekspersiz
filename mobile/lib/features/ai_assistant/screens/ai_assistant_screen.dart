@@ -138,9 +138,9 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
         _sending = false;
       });
       _scrollToBottom();
-      if (!reply.quotaConsumed) {
-        await _refreshEntitlementSilently();
-      }
+      // The server is the source of truth for the active plan and shared quota.
+      // Refresh after every answer, including quota-consuming answers.
+      await _refreshEntitlementSilently();
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() {
@@ -179,7 +179,7 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
       'LOCKED' => 'Çok sayıda kapsam dışı istek nedeniyle AI Asistan geçici olarak kilitlendi.',
       'EXPIRED' => 'AI Asistan deneme süreniz sona erdi.',
       _ when entitlement.remainingToday <= 0 =>
-        'Bugünkü 3 soru hakkınızı kullandınız. Yeni günlük haklarınız yarın yenilenir.',
+        'Bugünkü ${entitlement.dailyLimit} soru hakkınızı kullandınız. Yeni günlük haklarınız yarın yenilenir.',
       _ => 'Aracınız, bakım, muayene, güvenlik veya EksperSiz hakkında bir şey sorun.',
     };
   }
