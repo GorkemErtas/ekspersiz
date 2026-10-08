@@ -387,7 +387,7 @@ class _SubscriptionPlanCard extends StatelessWidget {
                   borderRadius:
                       BorderRadius.circular(14),
                 ),
-                child: const Icon(
+                child: Icon(
                   plan.plan == 'BUSINESS'
                       ? Icons.business_center_rounded
                       : Icons.workspace_premium_rounded,
