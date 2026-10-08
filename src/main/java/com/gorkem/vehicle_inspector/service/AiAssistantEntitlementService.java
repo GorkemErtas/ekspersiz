@@ -32,21 +32,28 @@ public class AiAssistantEntitlementService {
             @Value("${application.ai-assistant.usage-zone:Europe/Istanbul}") String usageZone,
             @Value("${application.ai-assistant.reservation-ttl:PT5M}") Duration reservationTtl) {
         this(accessRepository, usageRepository, reservationRepository,
-                businessContext, Clock.system(ZoneId.of(usageZone)), reservationTtl);
-        this.subscriptions = subscriptions;
+                businessContext, subscriptions, Clock.system(ZoneId.of(usageZone)), reservationTtl);
     }
 
     AiAssistantEntitlementService(AiAssistantAccessRepository accessRepository,
             AiAssistantDailyUsageRepository usageRepository,
             AiAssistantQuotaReservationRepository reservationRepository,
             BusinessContextService businessContext, Clock clock, Duration reservationTtl) {
+        this(accessRepository, usageRepository, reservationRepository, businessContext, null, clock, reservationTtl);
+    }
+
+    AiAssistantEntitlementService(AiAssistantAccessRepository accessRepository,
+            AiAssistantDailyUsageRepository usageRepository,
+            AiAssistantQuotaReservationRepository reservationRepository,
+            BusinessContextService businessContext, SubscriptionService subscriptions,
+            Clock clock, Duration reservationTtl) {
         if (reservationTtl == null || reservationTtl.isZero() || reservationTtl.isNegative())
             throw new IllegalArgumentException("AI assistant reservation TTL must be positive.");
         this.accessRepository=accessRepository; this.usageRepository=usageRepository;
         this.reservationRepository=reservationRepository;
         this.businessContext=businessContext; this.clock=clock;
         this.reservationTtl=reservationTtl;
-        this.subscriptions=null;
+        this.subscriptions=subscriptions;
     }
 
     @Transactional
