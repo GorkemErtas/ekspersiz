@@ -73,32 +73,22 @@ public class AnalysisQuotaService {
             );
         }
 
-        if (analysisCreditService == null) {
-            SubscriptionPlan plan = subscriptions.getEffectivePlan(user);
-            int limit = subscriptions.monthlyAnalysisLimit(plan);
-            long used = usages.countByUser_IdAndStartedAtGreaterThanEqualAndStartedAtLessThan(
-                    user.getId(), start, end);
-            return response(plan, used, limit);
-        }
-
-        long used =
-                usages.countByUser_IdAndStartedAtGreaterThanEqualAndStartedAtLessThan(
-                        user.getId(),
-                        start,
-                        end
-                );
-
-        int freeLimit = 1;
-        long freeRemaining = Math.max(0, freeLimit - used);
-        long purchasedCredits = analysisCreditService == null ? 0 : analysisCreditService.getBalance(user);
+        SubscriptionPlan plan = subscriptions.getEffectivePlan(user);
+        int limit = plan == SubscriptionPlan.BUSINESS
+                ? 1 : subscriptions.monthlyAnalysisLimit(plan);
+        long used = usages.countByUser_IdAndStartedAtGreaterThanEqualAndStartedAtLessThan(
+                user.getId(), start, end);
+        long monthlyRemaining = Math.max(0, limit - used);
+        long legacyCredits = analysisCreditService == null
+                ? 0 : analysisCreditService.getBalance(user);
 
         return new AnalysisQuotaResponse(
-                SubscriptionPlan.FREE,
+                plan,
                 used,
-                freeLimit,
-                freeRemaining + purchasedCredits,
-                freeRemaining,
-                purchasedCredits
+                limit,
+                monthlyRemaining + legacyCredits,
+                monthlyRemaining,
+                legacyCredits
         );
     }
 
