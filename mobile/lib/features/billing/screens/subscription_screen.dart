@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:mobile/core/localization/app_text.dart';
 
 import '../../../core/theme/app_theme.dart';
@@ -23,7 +24,8 @@ class SubscriptionScreen extends StatefulWidget {
   State<SubscriptionScreen> createState() => _SubscriptionScreenState();
 }
 
-class _SubscriptionScreenState extends State<SubscriptionScreen> {
+class _SubscriptionScreenState extends State<SubscriptionScreen>
+    with WidgetsBindingObserver {
   BillingService get _billing => widget.billingService;
   AnalysisQuotaService get _quotaService => widget.quotaService;
 
@@ -40,7 +42,34 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _load();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _load();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  Future<void> _manageSubscription(BillingStatus status) async {
+    final rawUrl = status.managementUrl;
+    final uri = rawUrl == null ? null : Uri.tryParse(rawUrl);
+    final destination = uri != null && uri.scheme == 'https'
+        ? uri
+        : Uri.parse('https://play.google.com/store/account/subscriptions');
+    try {
+      if (!await launchUrl(destination, mode: LaunchMode.externalApplication)) {
+        throw StateError('Abonelik yönetimi açılamadı. Google Play üzerinden aboneliklerinizi kontrol edin.');
+      }
+    } catch (_) {
+      if (mounted) _showMessage('Abonelik yönetimi açılamadı. Google Play > Ödemeler ve abonelikler bölümünü açın.');
+    }
   }
 
   Future<void> _load() async {
@@ -230,7 +259,27 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
             color: theme.colorScheme.primary,
           ),
           const SizedBox(width: 10),
-          Expanded(child: AppText(message)),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                AppText(message),
+                if (!cancelled) ...[
+                  const SizedBox(height: 12),
+                  OutlinedButton.icon(
+                    onPressed: () => _manageSubscription(status),
+                    icon: const Icon(Icons.cancel_outlined),
+                    label: const AppText('Aboneliği İptal Et'),
+                  ),
+                  const SizedBox(height: 4),
+                  const AppText(
+                    'Google Play üzerinden otomatik yenilemeyi kapatabilirsiniz. '
+                    'Mevcut haklarınız abonelik dönemi bitene kadar devam eder.',
+                  ),
+                ],
+              ],
+            ),
+          ),
         ],
       ),
     );
