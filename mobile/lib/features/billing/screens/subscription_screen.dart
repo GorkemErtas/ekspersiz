@@ -401,9 +401,9 @@ class _BusinessPlanCard extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        const Expanded(
+                        Expanded(
                           child: AppText(
-                            'Business',
+                            plan.title,
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 20,
@@ -557,7 +557,7 @@ class _BusinessPlanCard extends StatelessWidget {
                         ),
                       )
                     : const AppText(
-                        'Business’a Geç',
+                        'Abone Ol',
                       ),
               ),
             ),
