@@ -28,6 +28,31 @@ class AiAssistantBusinessQuotaTest {
             ZoneId.of("Europe/Istanbul"));
 
     @Test
+    void statusDoesNotBulkUpdateExpiredReservations() {
+        User user = new User("Owner", "status@example.com", "password");
+        ReflectionTestUtils.setField(user, "id", 5L);
+        BusinessAccount company = new BusinessAccount("Test Company");
+        ReflectionTestUtils.setField(company, "id", 11L);
+        AiAssistantAccess access = new AiAssistantAccess(user, LocalDateTime.now(clock));
+
+        when(businessContext.requireUser("status@example.com")).thenReturn(user);
+        when(businessContext.isBusinessMember(user)).thenReturn(true);
+        when(businessContext.requireBusinessAccount(user)).thenReturn(company);
+        when(accesses.findByUserId(5L)).thenReturn(Optional.of(access));
+        when(jdbc.queryForObject(contains("COALESCE(SUM(successful_questions)"),
+                eq(Integer.class), eq(11L), any(java.sql.Date.class))).thenReturn(0);
+        when(reservations.countBusinessActive(eq(11L), any(LocalDate.class),
+                any(LocalDateTime.class))).thenReturn(0L);
+
+        AiAssistantEntitlementService service = new AiAssistantEntitlementService(
+                accesses, usages, reservations, businessContext, subscriptions, jdbc,
+                clock, Duration.ofMinutes(5));
+
+        service.status("status@example.com");
+        verify(reservations, never()).releaseExpired(any(LocalDateTime.class));
+    }
+
+    @Test
     void sharedBusinessQuotaRejectsEleventhReservation() {
         User owner = new User("Owner", "owner@example.com", "password");
         ReflectionTestUtils.setField(owner, "id", 1L);
