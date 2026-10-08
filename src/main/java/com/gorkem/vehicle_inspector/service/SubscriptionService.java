@@ -17,7 +17,7 @@ public class SubscriptionService {
 
     private static final int FREE_MONTHLY_ANALYSIS_LIMIT = 1;
     private static final int PLUS_MONTHLY_ANALYSIS_LIMIT = 5;
-    private static final int PRO_MONTHLY_ANALYSIS_LIMIT = 20;
+    private static final int PRO_MONTHLY_ANALYSIS_LIMIT = 10;
     private static final int BUSINESS_MONTHLY_ANALYSIS_LIMIT = 100;
 
     private static final int FREE_VEHICLE_LIMIT = 1;
