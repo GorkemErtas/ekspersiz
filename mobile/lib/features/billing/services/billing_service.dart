@@ -40,10 +40,13 @@ class BillingService {
       );
     }
 
+    // Reconcile the backend subscription with RevenueCat when opening plans.
+    // A purchase can be active in the store while a webhook is delayed or missed.
+    final syncedOverview = await sync();
     final packages = await revenueCatGateway.getPackages();
 
     return BillingPageData(
-      overview: overview,
+      overview: syncedOverview,
       storeConfigured: true,
       localizedPrices: {
         for (final entry in packages.entries)
