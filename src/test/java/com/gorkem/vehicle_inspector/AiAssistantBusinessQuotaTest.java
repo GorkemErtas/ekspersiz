@@ -39,6 +39,7 @@ class AiAssistantBusinessQuotaTest {
         when(businessContext.isBusinessMember(user)).thenReturn(true);
         when(businessContext.requireBusinessAccount(user)).thenReturn(company);
         when(accesses.findByUserId(5L)).thenReturn(Optional.of(access));
+        when(subscriptions.getEffectivePlan(user)).thenReturn(SubscriptionPlan.BUSINESS);
         when(jdbc.queryForObject(contains("COALESCE(SUM(successful_questions)"),
                 eq(Integer.class), eq(11L), any(java.sql.Date.class))).thenReturn(0);
         when(reservations.countBusinessActive(eq(11L), any(LocalDate.class),
