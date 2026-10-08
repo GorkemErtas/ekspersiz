@@ -420,6 +420,44 @@ class SubscriptionServiceTest {
         );
     }
 
+    @Test
+    void cancelledPaidPlanRemainsEffectiveOneSecondBeforePeriodEnd() {
+        when(user.getSubscriptionPlan()).thenReturn(SubscriptionPlan.PRO);
+        when(user.getSubscriptionExpiresAt()).thenReturn(NOW.plusSeconds(1));
+
+        org.junit.jupiter.api.Assertions.assertEquals(
+                SubscriptionPlan.PRO, service.getEffectivePlan(user));
+    }
+
+    @Test
+    void cancelledPaidPlanExpiresAtExactPeriodBoundary() {
+        when(user.getSubscriptionPlan()).thenReturn(SubscriptionPlan.PRO);
+        when(user.getSubscriptionExpiresAt()).thenReturn(NOW);
+
+        org.junit.jupiter.api.Assertions.assertEquals(
+                SubscriptionPlan.FREE, service.getEffectivePlan(user));
+    }
+
+    @Test
+    void cancelledBusinessPlanExpiresAtExactPeriodBoundary() {
+        when(user.getSubscriptionPlan()).thenReturn(SubscriptionPlan.BUSINESS);
+        when(user.getSubscriptionExpiresAt()).thenReturn(NOW);
+
+        org.junit.jupiter.api.Assertions.assertEquals(
+                SubscriptionPlan.FREE, service.getEffectivePlan(user));
+    }
+
+    @Test
+    void expiredProPlanFallsBackToFreeMonthlyAnalysisLimit() {
+        when(user.getSubscriptionPlan()).thenReturn(SubscriptionPlan.PRO);
+        when(user.getSubscriptionExpiresAt()).thenReturn(NOW.minusSeconds(1));
+        when(usages.countByUser_IdAndStartedAtGreaterThanEqualAndStartedAtLessThan(
+                1L, MONTH_START, NEXT_MONTH)).thenReturn(1L);
+
+        assertThrows(IllegalStateException.class,
+                () -> service.validatePersonalMonthlyAnalysisLimit(user, NOW));
+    }
+
     private void plan(
             SubscriptionPlan plan
     ) {
