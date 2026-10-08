@@ -93,7 +93,6 @@ class FakeBillingService extends BillingService {
     );
   }
 
-  @override
   Future<void> purchaseCreditPack(
     String packageIdentifier,
   ) async {
