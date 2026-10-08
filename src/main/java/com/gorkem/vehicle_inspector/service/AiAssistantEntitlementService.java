@@ -132,7 +132,7 @@ public class AiAssistantEntitlementService {
                 throw new IllegalStateException("Şirket rezervasyonu uyuşmuyor.");
             lockBusiness(business);
             reservation.complete(now);
-            jdbc.update("INSERT INTO ai_assistant_business_daily_usage (business_account_id, usage_date, successful_questions) VALUES (?, ?, 1) ON CONFLICT (business_account_id, usage_date) DO UPDATE SET successful_questions = ai_assistant_business_daily_usage.successful_questions + 1, updated_at = CURRENT_TIMESTAMP", business.getId(), java.sql.Date.valueOf(LocalDate.now(clock)));
+            jdbc.update("INSERT INTO ai_assistant_business_daily_usage (business_account_id, usage_date, successful_questions) VALUES (?, ?, 1) ON CONFLICT (business_account_id, usage_date) DO UPDATE SET successful_questions = ai_assistant_business_daily_usage.successful_questions + 1, updated_at = CURRENT_TIMESTAMP", business.getId(), java.sql.Date.valueOf(reservation.getUsageDate()));
         } else {
             AiAssistantDailyUsage usage=findOrCreateUsageForUpdate(user);
             reservation.complete(now);
