@@ -12,6 +12,7 @@ public class AiAssistantQuotaReservation {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
+    @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "business_account_id") private BusinessAccount businessAccount;
     @Column(name = "usage_date", nullable = false) private LocalDate usageDate;
     @Column(nullable = false) private String status;
     @Column(name = "expires_at", nullable = false) private LocalDateTime expiresAt;
@@ -26,6 +27,9 @@ public class AiAssistantQuotaReservation {
         this.id=id; this.user=user; this.usageDate=usageDate;
         this.status="RESERVED"; this.createdAt=now; this.expiresAt=expiresAt;
     }
+
+    public void assignBusiness(BusinessAccount business) { this.businessAccount=business; }
+    public Long getBusinessAccountId() { return businessAccount == null ? null : businessAccount.getId(); }
 
     public void complete(LocalDateTime now) {
         if (!isActive(now)) throw new IllegalStateException("AI quota reservation is not active.");
