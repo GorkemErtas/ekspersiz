@@ -56,6 +56,10 @@ class AiAssistantBusinessQuotaTest {
                 clock, Duration.ofMinutes(5));
 
         UUID token = service.reserveQuestion("owner@example.com");
+        InOrder firstRequest = inOrder(reservations, jdbc);
+        firstRequest.verify(reservations).releaseExpired(any(LocalDateTime.class));
+        firstRequest.verify(jdbc).queryForObject(
+                contains("SELECT id FROM business_accounts"), eq(Long.class), eq(11L));
         assertNotNull(token);
         verify(reservations).save(argThat(r -> Long.valueOf(11L).equals(r.getBusinessAccountId())));
         assertThrows(IllegalStateException.class,
