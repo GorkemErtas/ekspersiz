@@ -46,5 +46,6 @@ public class AiAssistantQuotaReservation {
         return "RESERVED".equals(status) && expiresAt.isAfter(now);
     }
 
+    public LocalDate getUsageDate() { return usageDate; }
     public UUID getId() { return id; }
 }
