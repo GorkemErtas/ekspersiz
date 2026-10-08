@@ -220,17 +220,12 @@ public class AiAssistantEntitlementService {
         return usageRepository.findForUpdate(user.getId(), date).orElseThrow();
     }
 
-    private void releaseExpired(LocalDateTime now) {
-        reservationRepository.releaseExpired(now);
-    }
-
     private int activeReservations(User user, LocalDateTime now) {
         return Math.toIntExact(reservationRepository.countActive(
                 user.getId(), LocalDate.now(clock), now));
     }
 
     private AiAssistantEntitlementResponse response(User user, AiAssistantAccess access, LocalDateTime now) {
-        releaseExpired(now);
         AiAssistantDailyUsage usage=usageRepository
                 .findByUserIdAndUsageDate(user.getId(), LocalDate.now(clock)).orElse(null);
         int used=usage == null ? 0 : usage.getSuccessfulQuestions();
