@@ -4,6 +4,7 @@ import 'package:mobile/core/localization/app_text.dart';
 import '../../../core/theme/app_theme.dart';
 import '../models/analysis_quota.dart';
 import '../models/billing_plan.dart';
+import '../models/billing_status.dart';
 import '../services/analysis_quota_service.dart';
 import '../services/billing_service.dart';
 import '../services/revenue_cat_gateway.dart';
@@ -164,6 +165,10 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
           ),
           children: [
             _buildQuotaCard(context),
+            if (_billingData!.overview.status.currentPlan != 'FREE') ...[
+              const SizedBox(height: 12),
+              _buildSubscriptionStatus(context, _billingData!.overview.status),
+            ],
 
             const SizedBox(height: 24),
             _buildSectionTitle(
@@ -190,6 +195,43 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
             const SizedBox(height: 30),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildSubscriptionStatus(BuildContext context, BillingStatus status) {
+    final theme = Theme.of(context);
+    final endsAt = status.currentPeriodEndsAt?.toLocal();
+    final dateLabel = endsAt == null
+        ? null
+        : '${endsAt.day.toString().padLeft(2, '0')}.${endsAt.month.toString().padLeft(2, '0')}.${endsAt.year}';
+    final cancelled = status.status == 'CANCELLED' || !status.autoRenewing;
+    final message = cancelled
+        ? (dateLabel == null
+            ? 'Aboneliğiniz iptal edildi. Mevcut haklarınız ödenmiş dönem sonuna kadar devam eder.'
+            : 'Aboneliğiniz iptal edildi. Haklarınız $dateLabel tarihine kadar devam eder.')
+        : (dateLabel == null
+            ? 'Aboneliğiniz aktif.'
+            : 'Aboneliğiniz aktif. Sonraki yenileme: $dateLabel');
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            cancelled ? Icons.event_available_outlined : Icons.autorenew_rounded,
+            color: theme.colorScheme.primary,
+          ),
+          const SizedBox(width: 10),
+          Expanded(child: AppText(message)),
+        ],
       ),
     );
   }
