@@ -3,7 +3,6 @@ package com.gorkem.vehicle_inspector;
 import com.gorkem.vehicle_inspector.entity.*;
 import com.gorkem.vehicle_inspector.repository.*;
 import com.gorkem.vehicle_inspector.service.*;
-import org.mockito.Mockito;
 import java.util.Optional;
 import static org.mockito.Mockito.*;
 import org.junit.jupiter.api.Test;
@@ -48,7 +47,7 @@ class AiAssistantQuotaReservationTest {
                 accesses, usages, reservations, context, null, null,
                 afterMidnight, Duration.ofMinutes(5));
 
-        service.completeReservedQuestion("test@example.com");
+        service.completeReservedQuestion("test@example.com", token);
 
         verify(usages).ensureDailyRow(7L, START.toLocalDate());
         verify(usages).findForUpdate(7L, START.toLocalDate());
