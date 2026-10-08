@@ -16,7 +16,7 @@ public enum BillingProduct {
             "plus_monthly",
             new BigDecimal("149.99"),
             false,
-            List.of("3 aktif araç", "Ayda 5 AI hasar analizi")
+            List.of("3 aktif araç", "Ayda 5 AI hasar analizi", "AI Asistan: günde 3 soru")
     ),
     PRO(
             SubscriptionPlan.PRO,
@@ -26,7 +26,7 @@ public enum BillingProduct {
             "pro_monthly",
             new BigDecimal("349.99"),
             true,
-            List.of("10 aktif araç", "Ayda 20 AI hasar analizi")
+            List.of("10 aktif araç", "Ayda 10 AI hasar analizi", "AI Asistan: günde 5 soru")
     ),
     BUSINESS(
             SubscriptionPlan.BUSINESS,
@@ -39,7 +39,8 @@ public enum BillingProduct {
             List.of(
                     "50 ortak aktif araç",
                     "Şirket genelinde ayda 100 AI analizi",
-                    "Çalışan daveti ve ortak geçmiş"
+                    "Çalışan daveti ve ortak geçmiş",
+                    "AI Asistan: ekip için ortak günde 10 soru"
             )
     );
 
