@@ -121,6 +121,43 @@ class BillingServiceTest {
     }
 
     @Test
+    void cancelledProShouldRetainBenefitsUntilPaidPeriodEnds() {
+        Instant periodEnd = Instant.parse("2026-10-16T09:00:00Z");
+        when(revenueCatClient.getCustomer(user.getBillingCustomerId()))
+                .thenReturn(customer(subscription(
+                        "eksper_pro_monthly", false, false, false, periodEnd)));
+
+        service.sync("test@example.com");
+
+        assertEquals(SubscriptionPlan.PRO, user.getSubscriptionPlan());
+        assertEquals(java.time.LocalDateTime.parse("2026-10-16T09:00:00"),
+                user.getSubscriptionExpiresAt());
+        ArgumentCaptor<BillingSubscription> saved =
+                ArgumentCaptor.forClass(BillingSubscription.class);
+        verify(subscriptions).save(saved.capture());
+        assertEquals(BillingSubscriptionStatus.CANCELLED, saved.getValue().getStatus());
+        assertFalse(saved.getValue().isAutoRenewing());
+        assertEquals(java.time.LocalDateTime.parse("2026-10-16T09:00:00"),
+                saved.getValue().getCurrentPeriodEndsAt());
+    }
+
+    @Test
+    void cancellationAfterPaidPeriodShouldExpireImmediately() {
+        when(revenueCatClient.getCustomer(user.getBillingCustomerId()))
+                .thenReturn(customer(subscription(
+                        "eksper_plus_monthly", false, false, false,
+                        Instant.parse("2026-09-15T09:00:00Z"))));
+
+        service.sync("test@example.com");
+
+        assertEquals(SubscriptionPlan.FREE, user.getSubscriptionPlan());
+        ArgumentCaptor<BillingSubscription> saved =
+                ArgumentCaptor.forClass(BillingSubscription.class);
+        verify(subscriptions).save(saved.capture());
+        assertEquals(BillingSubscriptionStatus.EXPIRED, saved.getValue().getStatus());
+    }
+
+    @Test
     void expiredOrRefundedSubscriptionShouldReturnUserToFree() {
         user.setSubscriptionPlan(SubscriptionPlan.BUSINESS);
         when(revenueCatClient.getCustomer(user.getBillingCustomerId()))
