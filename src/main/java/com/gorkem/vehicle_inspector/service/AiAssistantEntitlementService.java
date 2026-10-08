@@ -84,8 +84,8 @@ public class AiAssistantEntitlementService {
         assertAccess(user, now);
         BusinessAccount business=businessAccount(user);
         if (business != null) {
-            lockBusiness(business);
             releaseExpired(now);
+            lockBusiness(business);
             if (businessUsed(business) + businessReservations(business, now) >= 10)
                 throw new IllegalStateException("Şirketin günlük AI Asistan soru hakkı doldu.");
             return;
@@ -102,8 +102,8 @@ public class AiAssistantEntitlementService {
         assertAccess(user, now);
         BusinessAccount business=businessAccount(user);
         if (business != null) {
-            lockBusiness(business);
             releaseExpired(now);
+            lockBusiness(business);
             if (businessUsed(business) + businessReservations(business, now) >= 10)
                 throw new IllegalStateException("Şirketin günlük AI Asistan kotası doldu.");
         } else {
