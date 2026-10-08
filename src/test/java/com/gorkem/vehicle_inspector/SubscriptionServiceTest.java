@@ -197,7 +197,7 @@ class SubscriptionServiceTest {
     }
 
     @Test
-    void proAllowsTwentyAndBlocksTwentyFirstAnalysis() {
+    void proAllowsTenAndBlocksEleventhAnalysis() {
         plan(SubscriptionPlan.PRO);
 
         when(
@@ -208,8 +208,8 @@ class SubscriptionServiceTest {
                                 NEXT_MONTH
                         )
         ).thenReturn(
-                19L,
-                20L
+                9L,
+                10L
         );
 
         assertDoesNotThrow(
