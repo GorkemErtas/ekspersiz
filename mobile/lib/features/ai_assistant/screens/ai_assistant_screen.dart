@@ -135,8 +135,10 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
         _error = null;
       });
       await _speech.listen(
-        localeId: 'tr_TR',
-        listenOptions: stt.SpeechListenOptions(partialResults: true),
+        listenOptions: stt.SpeechListenOptions(
+          localeId: 'tr_TR',
+          partialResults: true,
+        ),
         onResult: (result) {
           if (!mounted) return;
           final prefix = _speechPrefix.isEmpty ? '' : '$_speechPrefix ';
@@ -147,10 +149,12 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
         },
       );
     } catch (_) {
-      if (mounted) setState(() {
-        _listening = false;
-        _error = 'Mikrofon başlatılamadı. Lütfen tekrar deneyin.';
-      });
+      if (mounted) {
+        setState(() {
+          _listening = false;
+          _error = 'Mikrofon başlatılamadı. Lütfen tekrar deneyin.';
+        });
+      }
     }
   }
 
