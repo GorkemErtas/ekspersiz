@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_theme.dart';
@@ -18,6 +19,9 @@ class AiAssistantScreen extends StatefulWidget {
 
 class _AiAssistantScreenState extends State<AiAssistantScreen> {
   final _service = AiAssistantService();
+  final _speech = stt.SpeechToText();
+  bool _listening = false;
+  String _speechPrefix = '';
   final _vehicleService = const VehicleService();
   final _controller = TextEditingController();
   final _scrollController = ScrollController();
@@ -97,7 +101,68 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
     }
   }
 
+  Future<void> _toggleListening() async {
+    if (_listening) {
+      await _speech.stop();
+      if (mounted) setState(() => _listening = false);
+      return;
+    }
+    if (_sending || !(_entitlement?.canAsk ?? false)) return;
+    try {
+      final available = await _speech.initialize(
+        onStatus: (status) {
+          if (!mounted) return;
+          if (status == 'done' || status == 'notListening') {
+            setState(() => _listening = false);
+          }
+        },
+        onError: (error) {
+          if (!mounted) return;
+          setState(() {
+            _listening = false;
+            _error = 'Ses tanıma tamamlanamadı. Tekrar deneyin.';
+          });
+        },
+      );
+      if (!mounted) return;
+      if (!available) {
+        setState(() => _error = 'Konuşma tanıma kullanılamıyor. Mikrofon iznini ve cihaz ayarlarını kontrol edin.');
+        return;
+      }
+      _speechPrefix = _controller.text.trimRight();
+      setState(() {
+        _listening = true;
+        _error = null;
+      });
+      await _speech.listen(
+        listenOptions: stt.SpeechListenOptions(
+          localeId: 'tr_TR',
+          partialResults: true,
+        ),
+        onResult: (result) {
+          if (!mounted) return;
+          final prefix = _speechPrefix.isEmpty ? '' : '$_speechPrefix ';
+          _controller.value = TextEditingValue(
+            text: '$prefix${result.recognizedWords}',
+            selection: TextSelection.collapsed(offset: ('$prefix${result.recognizedWords}').length),
+          );
+        },
+      );
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _listening = false;
+          _error = 'Mikrofon başlatılamadı. Lütfen tekrar deneyin.';
+        });
+      }
+    }
+  }
+
   Future<void> _send() async {
+    if (_listening) {
+      await _speech.stop();
+      if (mounted) setState(() => _listening = false);
+    }
     final question = _controller.text.trim();
     if (question.isEmpty || _sending || !(_entitlement?.canAsk ?? false)) return;
 
@@ -197,6 +262,7 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
 
   @override
   void dispose() {
+    _speech.cancel();
     _controller.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -371,6 +437,11 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
                         ),
                       ),
                     ),
+                  if (_listening)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16),
+                      child: Text('Dinleniyor… Durdurmak için mikrofona dokunun.'),
+                    ),
                   Padding(
                     padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
                     child: Row(
@@ -391,6 +462,15 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
                           ),
                         ),
                         const SizedBox(width: 8),
+                        IconButton(
+                          tooltip: _listening ? 'Dinlemeyi durdur' : 'Sesle yaz',
+                          onPressed: _sending || !(_entitlement?.canAsk ?? false)
+                              ? null
+                              : _toggleListening,
+                          icon: Icon(_listening ? Icons.mic_rounded : Icons.mic_none_rounded),
+                          color: _listening ? scheme.error : scheme.primary,
+                        ),
+                        const SizedBox(width: 4),
                         IconButton.filled(
                           onPressed: _sending || !(_entitlement?.canAsk ?? false)
                               ? null
