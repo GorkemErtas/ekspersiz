@@ -15,6 +15,7 @@ import '../../auth/screens/login_screen.dart';
 import '../../auth/services/auth_service.dart';
 import '../../business/screens/business_management_screen.dart';
 import '../../billing/screens/subscription_screen.dart';
+import '../../billing/services/billing_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({
@@ -40,22 +41,55 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   final AuthService _authService = const AuthService();
+  final BillingService _billingService = const BillingService();
+  String? _verifiedSubscriptionPlan;
+
+  String get _currentSubscriptionPlan =>
+      _verifiedSubscriptionPlan ?? widget.subscriptionPlan;
+
+  @override
+  void initState() {
+    super.initState();
+    _refreshSubscriptionPlan();
+  }
+
+  Future<void> _refreshSubscriptionPlan() async {
+    try {
+      final overview = await _billingService.getOverview();
+      if (mounted) {
+        setState(() {
+          _verifiedSubscriptionPlan = overview.status.currentPlan;
+        });
+      }
+    } catch (_) {
+      // Preserve the authenticated profile plan when billing is unavailable.
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant ProfileScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.subscriptionPlan != widget.subscriptionPlan) {
+      _verifiedSubscriptionPlan = null;
+      _refreshSubscriptionPlan();
+    }
+  }
 
   bool _isLoggingOut = false;
   bool _isDeletingAccount = false;
 
   String get _subscriptionPlanLabel {
-    return switch (widget.subscriptionPlan) {
+    return switch (_currentSubscriptionPlan) {
       'FREE' => 'Ücretsiz',
       'PLUS' => 'Plus',
       'PRO' => 'Pro',
       'BUSINESS' => 'Kurumsal',
-      _ => widget.subscriptionPlan,
+      _ => _currentSubscriptionPlan,
     };
   }
 
   Color _subscriptionColor(BuildContext context) {
-    return switch (widget.subscriptionPlan) {
+    return switch (_currentSubscriptionPlan) {
       'PLUS' => AppTheme.infoColorFor(context),
       'PRO' => AppTheme.warningColorFor(context),
       _ => AppTheme.neutralColorFor(context),
@@ -63,7 +97,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Color _subscriptionBackgroundColor(BuildContext context) {
-    return switch (widget.subscriptionPlan) {
+    return switch (_currentSubscriptionPlan) {
       'PLUS' => AppTheme.infoSoftFor(context),
       'PRO' => AppTheme.warningSoftFor(context),
       _ => AppTheme.neutralSoftFor(context),
@@ -99,6 +133,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
 
     try {
+      await _refreshSubscriptionPlan();
       final profile = await _authService.getCurrentUser();
 
       if (mounted) {
@@ -114,7 +149,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final businessAccount = await Navigator.of(context).push<BusinessAccount>(
       MaterialPageRoute<BusinessAccount>(
         builder: (_) => BusinessManagementScreen(
-          subscriptionPlan: widget.subscriptionPlan,
+          subscriptionPlan: _currentSubscriptionPlan,
           businessAccount: widget.businessAccount,
         ),
       ),
@@ -333,10 +368,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final canManageBusiness =
-        widget.subscriptionPlan == 'BUSINESS' &&
+        _currentSubscriptionPlan == 'BUSINESS' &&
         (widget.businessAccount == null || widget.businessAccount!.isOwner);
     final canAcceptBusinessInvitation =
-        widget.subscriptionPlan != 'BUSINESS' && widget.businessAccount == null;
+        _currentSubscriptionPlan != 'BUSINESS' && widget.businessAccount == null;
 
     return Scaffold(
       appBar: AppBar(
