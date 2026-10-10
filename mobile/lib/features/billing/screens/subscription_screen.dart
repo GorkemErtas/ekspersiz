@@ -330,8 +330,8 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
                   children: [
                     AppText(
                       _isBusiness
-                          ? 'Business analiz kotası'
-                          : 'AI analiz haklarınız',
+                          ? 'Business aylık analiz kotası'
+                          : 'Aylık analiz kotanız',
                       style:
                           theme.textTheme.titleMedium?.copyWith(
                                 fontWeight: FontWeight.w900,
