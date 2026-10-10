@@ -155,7 +155,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const AppText('Planlar ve AI Hakları'),
+        title: const AppText('Abonelik ve Planlar'),
       ),
       body: SafeArea(
         child: _buildBody(context),
@@ -341,8 +341,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
                     AppText(
                       _isBusiness
                           ? '${_quota!.remaining} / ${_quota!.limit} şirket analizi kaldı'
-                          : 'Bu ay ${_quota!.freeRemaining} / ${_quota!.limit} analiz hakkı kaldı'
-                              '${_quota!.purchasedCredits > 0 ? ' • ${_quota!.purchasedCredits} eski kredi' : ''}',
+                          : 'Bu ay ${_quota!.freeRemaining} / ${_quota!.limit} analiz hakkı kaldı',
                       style:
                           theme.textTheme.bodyMedium?.copyWith(
                                 color:
