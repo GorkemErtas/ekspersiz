@@ -74,16 +74,17 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
 
   Future<void> _load() async {
     try {
-      final values = await Future.wait([
-        _billing.load(),
-        _quotaService.getQuota(),
-      ]);
+      // Billing.load() reconciles RevenueCat with the backend. Fetching the
+      // quota in parallel can read the old FREE plan before sync finishes,
+      // especially after cancellation while paid access remains valid.
+      final billingData = await _billing.load();
+      final quota = await _quotaService.getQuota();
 
       if (!mounted) return;
 
       setState(() {
-        _billingData = values[0] as BillingPageData;
-        _quota = values[1] as AnalysisQuota;
+        _billingData = billingData;
+        _quota = quota;
         _error = null;
       });
     } catch (e) {
