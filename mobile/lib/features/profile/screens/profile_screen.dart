@@ -455,12 +455,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     children: [
                       _ActionProfileItem(
                         icon: Icons.workspace_premium_outlined,
-                        title: widget.businessAccount != null
-                            ? 'Abonelik ve Ödeme'
-                            : 'AI Analiz Hakları',
+                        title: 'Abonelik ve Planlar',
                         subtitle: widget.businessAccount != null
-                            ? 'Business planınızı ve şirket analiz kotasını yönetin.'
-                            : 'Ücretsiz aylık hakkınızı görün veya tek seferlik analiz hakkı ekleyin.',
+                            ? 'Business aboneliğinizi ve şirket analiz kotanızı yönetin.'
+                            : 'Mevcut planınızı, aylık analiz kotanızı ve abonelik seçeneklerini görüntüleyin.',
                         onTap: _openSubscription,
                       ),
                       const Divider(height: 1, indent: 82),
