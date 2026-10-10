@@ -627,6 +627,11 @@ public class DamageInspectionService {
                             validateNotProcessing(inspection);
                             if (analysisCreditService == null) {
                                 validateAnalysisLimit(inspection, user);
+                            } else if (!inspection.isReportAccessGranted()) {
+                                // Reserve the monthly allowance or purchased credit before
+                                // invoking the ML service. The same inspection can be retried
+                                // without consuming another allowance.
+                                analysisCreditService.grantReportAccess(inspection, user);
                             }
                             if (inspection.getStatus() == InspectionStatus.COMPLETED) {
                                 throw new IllegalStateException(
