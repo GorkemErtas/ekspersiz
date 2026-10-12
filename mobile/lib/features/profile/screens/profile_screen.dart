@@ -16,6 +16,8 @@ import '../../auth/services/auth_service.dart';
 import '../../business/screens/business_management_screen.dart';
 import '../../billing/screens/subscription_screen.dart';
 import '../../billing/services/billing_service.dart';
+import '../../ai_assistant/services/ai_assistant_service.dart';
+import '../../ai_assistant/models/ai_assistant_models.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({
@@ -43,6 +45,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final AuthService _authService = const AuthService();
   final BillingService _billingService = const BillingService();
   String? _verifiedSubscriptionPlan;
+  final AiAssistantService _trialService = AiAssistantService();
+  AiAssistantEntitlement? _trialStatus;
+  bool _startingTrial = false;
 
   String get _currentSubscriptionPlan =>
       _verifiedSubscriptionPlan ?? widget.subscriptionPlan;
@@ -51,6 +56,36 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void initState() {
     super.initState();
     _refreshSubscriptionPlan();
+    _loadTrialStatus();
+  }
+
+  Future<void> _loadTrialStatus() async {
+    try {
+      final status = await _trialService.entitlement();
+      if (mounted) setState(() => _trialStatus = status);
+    } catch (_) { /* Profile remains usable when assistant service is unavailable. */ }
+  }
+
+  Future<void> _startPlusTrial() async {
+    if (_startingTrial) return;
+    final confirmed = await showDialog<bool>(context: context, builder: (context) => AlertDialog(
+      title: const AppText("7 günlük Plus denemesi"),
+      content: const AppText("Plus özellikleri 7 gün boyunca ücretsiz açılır. Ödeme yöntemi gerekmez, otomatik ücretlendirme yapılmaz. Bu hak yalnızca bir kez kullanılabilir."),
+      actions: [TextButton(onPressed: () => Navigator.pop(context, false), child: const AppText("Vazgeç")),
+        FilledButton(onPressed: () => Navigator.pop(context, true), child: const AppText("Denemeyi başlat"))],
+    ));
+    if (confirmed != true || !mounted) return;
+    setState(() => _startingTrial = true);
+    try {
+      await _trialService.startTrial();
+      await _refreshSubscriptionPlan();
+      await _loadTrialStatus();
+      if (mounted) widget.onSubscriptionPlanChanged?.call("PLUS");
+    } catch (error) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Deneme başlatılamadı: $error")));
+    } finally {
+      if (mounted) setState(() => _startingTrial = false);
+    }
   }
 
   Future<void> _refreshSubscriptionPlan() async {
@@ -488,6 +523,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   padding: EdgeInsets.zero,
                   child: Column(
                     children: [
+                      if (_currentSubscriptionPlan == 'FREE' && _trialStatus != null && _trialStatus!.trialExpiresAt == null) ...[
+                        _ActionProfileItem(
+                          icon: Icons.card_giftcard_outlined,
+                          title: '7 Gün Ücretsiz Plus Denemesi',
+                          subtitle: 'Ödeme yöntemi gerekmez. Tek seferlik deneme hakkınızı istediğiniz zaman başlatın.',
+                          onTap: _startingTrial ? () {} : _startPlusTrial,
+                        ),
+                        const Divider(height: 1, indent: 82),
+                      ],
+                      if (_trialStatus?.trialExpiresAt != null && _trialStatus!.trialExpiresAt!.isAfter(DateTime.now())) ...[
+                        _ProfileItem(icon: Icons.timer_outlined, title: 'Plus Denemesi',
+                          value: 'Bitiş: ${_trialStatus!.trialExpiresAt!.day}.${_trialStatus!.trialExpiresAt!.month}.${_trialStatus!.trialExpiresAt!.year}'),
+                        const Divider(height: 1, indent: 82),
+                      ],
                       _ActionProfileItem(
                         icon: Icons.workspace_premium_outlined,
                         title: 'Abonelik ve Planlar',
