@@ -1,26 +1,26 @@
 {
   "defaults": {
-    "source_name": "EksperSiz private product knowledge",
+    "source_name": "EksperSiz resmi uygulama bilgi tabanı",
     "authority": "CURATED",
     "language": "tr",
     "market": "TR"
   },
   "sources": [
     {
-      "id": "assistant-safety-help-tr",
-      "glob": "app-help/ai-asistan-guvenlik.md",
+      "id": "ekspersiz-app-guide",
+      "glob": "app-help/01-uygulama-ve-arac-yonetimi.md",
       "category": "APP_HELP",
       "enabled": true
     },
     {
-      "id": "app-guide-tr",
-      "glob": "app-help/uygulama-kilavuzu.md",
+      "id": "ekspersiz-damage-guide",
+      "glob": "app-help/02-hasar-analizi-ve-raporlar.md",
       "category": "APP_HELP",
       "enabled": true
     },
     {
-      "id": "data-privacy-architecture-tr",
-      "glob": "app-help/veri-gizlilik-mimarisi.md",
+      "id": "ekspersiz-assistant-guide",
+      "glob": "app-help/03-ai-asistan-veri-ve-gizlilik.md",
       "category": "APP_HELP",
       "enabled": true
     }
