@@ -22,19 +22,22 @@ Flutter mobil uygulaması, Java/Spring Boot API'si ve Python/FastAPI AI servisin
 
 ## Sistem mimarisi
 
-```text
-Flutter (Android; iOS proje altyapısı)
-           │ HTTPS / JWT
-           ▼
-Spring Boot 4.1 · Java 21
-  ├── Kimlik doğrulama, iş kuralları, RBAC ve abonelik/kota
-  ├── PostgreSQL · Flyway (uygulama verileri)
-  ├── FastAPI · Python
-  │    ├── YOLO: görüntü doğrulama ve hasar analizi
-  │    └── AI Asistan: anlamsal yönlendirme + RAG
-  │                         └── PostgreSQL · pgvector
-  ├── Gemini: rapor ve AI Asistan yanıt üretimi
-  └── RevenueCat · Google Places · Firebase · Brevo
+```mermaid
+flowchart TB
+    Mobile["Flutter Mobil Uygulama"]
+    API["Spring Boot API<br/>Kimlik · İş kuralları · Kota"]
+    DB[("PostgreSQL<br/>Flyway + pgvector")]
+    AI["FastAPI<br/>YOLO · RAG · Yönlendirme"]
+    Gemini["Google Gemini<br/>Yanıt ve rapor üretimi"]
+    External["RevenueCat · Google Places<br/>Firebase · Brevo"]
+
+    Mobile -->|"HTTPS / JWT"| API
+    API --> DB
+    API -->|"Görüntü / Asistan isteği"| AI
+    AI -->|"RAG araması"| DB
+    AI -->|"Kapsam sınıflandırması"| Gemini
+    API -->|"Yanıt / rapor"| Gemini
+    API --> External
 ```
 
 **Mimari kararlar:** Flutter, mobil arayüzü özellik bazlı modüllere ayırır; Spring Boot kimlik doğrulama, veri sahipliği, ödeme ve iş kurallarının otoritesidir. Python/FastAPI, ML çıkarımını ve bilgi erişimini API katmanından ayırır. PostgreSQL + pgvector, uygulama verileri ve vektör araması için ayrı bir vektör veritabanı hizmeti gereksinimini azaltır. Backend ve AI servisi Docker ile Railway üzerinde ayrı dağıtılır.
@@ -43,23 +46,36 @@ Spring Boot 4.1 · Java 21
 
 ### Görüntüden hasar ön değerlendirmesi
 
-```text
-Fotoğraf → Görsel doğrulama → YOLO11n ile ana araç/kırpma
-         → CarDD tabanlı 5 sınıflı hasar tespiti
-         → Araç parçası tespiti → Kutu örtüşmesiyle eşleştirme
-         → Kurallı şiddet/onarım önerisi → Gemini raporu
+```mermaid
+flowchart LR
+    A["Fotoğraf"] --> B["Görsel doğrulama"]
+    B --> C["YOLO11n<br/>Ana araç"]
+    C --> D["CarDD YOLO<br/>5 hasar sınıfı"]
+    D --> E["Parça tespiti<br/>ve eşleştirme"]
+    E --> F["Şiddet ve<br/>onarım önerisi"]
+    F --> G["Gemini raporu"]
 ```
 
 Aktif hasar sınıfları: `SCRATCH`, `DENT`, `CRACK`, `BROKEN_PART`, `BROKEN_GLASS`. `NO_VISIBLE_DAMAGE` eğitilmiş bir sınıf değil, kurallı sonuç durumudur. Rapor yeniden oluşturulurken kaydedilmiş başarılı ML analizi tekrar kullanılabilir. Model eğitim, CarDD veri aktarımı ve değerlendirme ayrıntıları [AI servis dokümantasyonunda](ai-service/README.md) bulunur.
 
 ### Kaynağa göre yönlendirilen AI Asistan
 
-1. Spring Boot, kullanıcı erişimini, planı ve günlük kullanım hakkını denetler.
-2. FastAPI, **Gemini Flash-Lite** ile sorunun otomotiv kapsamını, niyetini ve gerekli veri kaynağını belirler.
-3. **APP_KNOWLEDGE:** EksperSiz uygulama bilgisi, yerel 384 boyutlu multilingual E5-small embedding ve PostgreSQL/pgvector tabanlı RAG üzerinden getirilir.
-4. **PUBLIC_WEB:** Genel otomotiv soruları Gemini tarafından, gerektiğinde Google Search desteğiyle yanıtlanır.
-5. **USER_DATA:** Kullanıcıya ait araç, hatırlatma ve hasar geçmişi yalnızca Spring Boot'un yetkilendirdiği araçlardan alınır; kişisel kayıtlar vektör bilgi tabanına eklenmez.
-6. Kapsam dışı, açıklama gerektiren veya RAG kanıtı yetersiz isteklerde ana yanıt üretimi atlanır. Başarılı yanıt kotaya işlenir; başarısız çağrıda rezervasyon serbest bırakılır.
+```mermaid
+flowchart TB
+    Q["Kullanıcı sorusu"] --> Auth["Spring Boot<br/>Yetki ve kota kontrolü"]
+    Auth --> Router["Gemini Flash-Lite<br/>Kapsam ve kaynak yönlendirme"]
+    Router -->|"APP_KNOWLEDGE"| RAG["Yerel E5 embedding<br/>pgvector RAG"]
+    Router -->|"PUBLIC_WEB"| Web["Gemini<br/>Gerektiğinde Google Search"]
+    Router -->|"USER_DATA"| Tools["Yetkilendirilmiş backend araçları"]
+    Router -->|"Kapsam dışı / eksik bilgi"| Stop["Sabit yanıt / açıklama isteği"]
+    RAG -->|"Yeterli kanıt"| Answer["Gemini yanıt üretimi"]
+    RAG -->|"Yetersiz kanıt"| Stop
+    Tools --> Answer
+    Web --> Done["Kullanıcı yanıtı"]
+    Answer --> Done
+```
+
+**İşleyiş:** Kapsam dışı veya kanıtı yetersiz sorular ana yanıt modeline gönderilmez. RAG yalnızca EksperSiz uygulama bilgisini içerir; kişisel veriler yetkili backend araçlarıyla alınır. Başarılı yanıtlar günlük kotadan düşülür, başarısız çağrıların rezervasyonu serbest bırakılır.
 
 Ayrıntılar: [AI Asistan mimarisi](docs/ai-assistant/ARCHITECTURE.md).
 
