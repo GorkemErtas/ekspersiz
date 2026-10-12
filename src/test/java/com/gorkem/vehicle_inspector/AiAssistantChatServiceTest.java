@@ -177,7 +177,9 @@ class AiAssistantChatServiceTest {
     private AiAssistantPlanResponse plan(boolean inScope, boolean useRag, String tool,
             List<AiAssistantPlanResponse.AiAssistantRetrievedContext> context) {
         return new AiAssistantPlanResponse(
-                "GENERAL", inScope, useRag, useRag ? "APP_KNOWLEDGE" : (tool == null ? "PUBLIC_WEB" : "USER_DATA"), tool, "test", 0.9, 0.9,
+                "GENERAL", inScope, useRag, !inScope ? "NONE" :
+    useRag ? "APP_KNOWLEDGE" :
+    (tool == null ? "PUBLIC_WEB" : "USER_DATA"), tool, "test", 0.9, 0.9,
                 context.isEmpty() && useRag ? 0.2 : 0.9,
                 !useRag || !context.isEmpty(), false, null, context);
     }
