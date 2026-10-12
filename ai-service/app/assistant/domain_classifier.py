@@ -42,12 +42,23 @@ class SemanticDomainClassifier:
     def route(self, question: str, *, conversation_context: str = "") -> RouteDecision:
         assessment = self.assess(question, conversation_context=conversation_context)
         in_scope = assessment.automotive_relevance >= self.scope_threshold
+        # The model proposes a route; application code enforces source/tool isolation.
+        source = assessment.knowledge_source if in_scope else "NONE"
+        if source == "APP_KNOWLEDGE":
+            if assessment.tool_name is not None or not assessment.use_rag:
+                raise RuntimeError("invalid APP_KNOWLEDGE route")
+        elif source == "PUBLIC_WEB":
+            if assessment.tool_name is not None or assessment.use_rag:
+                raise RuntimeError("invalid PUBLIC_WEB route")
+        elif source == "USER_DATA":
+            if assessment.tool_name is None or assessment.use_rag:
+                raise RuntimeError("invalid USER_DATA route")
         return RouteDecision(
             intent=assessment.intent if in_scope else AssistantIntent.OUT_OF_SCOPE,
             in_scope=in_scope,
-            use_rag=assessment.use_rag if in_scope else False,
-            knowledge_source=assessment.knowledge_source if in_scope else "NONE",
-            tool_name=assessment.tool_name if in_scope else None,
+            use_rag=source == "APP_KNOWLEDGE",
+            knowledge_source=source,
+            tool_name=assessment.tool_name if source == "USER_DATA" else None,
             reason=assessment.reason,
             automotive_relevance=assessment.automotive_relevance,
             assistant_capability=assessment.assistant_capability,
