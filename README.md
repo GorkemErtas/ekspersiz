@@ -87,7 +87,7 @@ Spring Boot 4.1 / Java 21 REST API
 6. Başarılı yanıt kotaya işlenir; başarısız işlem rezervasyonu serbest bırakılır.
 
 - **Bilgi tabanı:** `ai-service/knowledge`, kaynak manifesti ve `scripts/ingest_assistant_knowledge.py`.
-- **Tasarım/kurulum:** [AI Asistan mimarisi](docs/ai-assistant/ARCHITECTURE.md) · [Dağıtım](docs/ai-assistant/DEPLOYMENT.md). **Not:** Bu alt belgelerde eski 30 günlük deneme/ayrı asistan ürünü tasarımına ilişkin tarihsel açıklamalar bulunabilir; geçerli ürün akışı yukarıdaki **7 günlük PLUS denemesi**dir.
+- **Tasarım/kurulum:** [AI Asistan mimarisi](docs/ai-assistant/ARCHITECTURE.md) · [Dağıtım](docs/ai-assistant/DEPLOYMENT.md).
 
 ## 🔐 Güvenlik ve dayanıklılık
 
