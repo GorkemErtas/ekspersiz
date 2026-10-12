@@ -26,31 +26,40 @@ public class SubscriptionService {
     private static final int BUSINESS_VEHICLE_LIMIT = 50;
 
     private final AnalysisUsageRepository analysisUsageRepository;
+    private final com.gorkem.vehicle_inspector.repository.AiAssistantAccessRepository trialAccessRepository;
 
     private final VehicleRepository
             vehicleRepository;
     private final Clock clock;
-    public SubscriptionService(
-            AnalysisUsageRepository analysisUsageRepository,
-            VehicleRepository vehicleRepository,
-            Clock clock
-    ) {
+    @org.springframework.beans.factory.annotation.Autowired
+    public SubscriptionService(AnalysisUsageRepository analysisUsageRepository,
+            VehicleRepository vehicleRepository, Clock clock,
+            com.gorkem.vehicle_inspector.repository.AiAssistantAccessRepository trialAccessRepository) {
         this.analysisUsageRepository = analysisUsageRepository;
         this.vehicleRepository = vehicleRepository;
         this.clock = clock;
+        this.trialAccessRepository = trialAccessRepository;
+    }
+
+    public SubscriptionService(AnalysisUsageRepository analysisUsageRepository,
+            VehicleRepository vehicleRepository, Clock clock) {
+        this.analysisUsageRepository = analysisUsageRepository;
+        this.vehicleRepository = vehicleRepository;
+        this.clock = clock;
+        this.trialAccessRepository = null;
     }
 
     public SubscriptionPlan getEffectivePlan(
             User user
     ) {
         if (user.getSubscriptionPlan() == null) {
-            return SubscriptionPlan.FREE;
+            return trialPlan(user);
         }
 
         if (user.getSubscriptionPlan()
                 == SubscriptionPlan.FREE) {
 
-            return SubscriptionPlan.FREE;
+            return trialPlan(user);
         }
 
         LocalDateTime expiresAt =
@@ -61,10 +70,19 @@ public class SubscriptionService {
                 LocalDateTime.now(clock)
         )) {
 
-            return SubscriptionPlan.FREE;
+            return trialPlan(user);
         }
 
         return user.getSubscriptionPlan();
+    }
+
+    private SubscriptionPlan trialPlan(User user) {
+        if (trialAccessRepository == null || user.getId() == null) return SubscriptionPlan.FREE;
+        return trialAccessRepository.findByUserId(user.getId())
+                .filter(access -> access.getTrialExpiresAt() != null
+                        && access.getTrialExpiresAt().isAfter(LocalDateTime.now(clock)))
+                .map(access -> SubscriptionPlan.PLUS)
+                .orElse(SubscriptionPlan.FREE);
     }
 
     public void validatePersonalMonthlyAnalysisLimit(
