@@ -1,144 +1,139 @@
-# 🚗 EksperSiz
+# EksperSiz
 
-**Yapay zekâ destekli araç hasar analizi, raporlama ve araç yönetimi uygulaması.** Flutter istemcisi, Spring Boot REST API'si ve FastAPI tabanlı bilgisayarlı görü/RAG servisinden oluşur.
+**Yapay zekâ destekli araç hasar ön değerlendirmesi, raporlama ve araç yönetimi platformu.**
 
-> **Durum:** Aktif geliştirilen mobil uygulama. Google Play yayın/test kanalı durumu Play Console üzerinden doğrulanır.
-
-## 📱 Ekran görüntüleri
+Flutter mobil uygulaması, Java/Spring Boot API'si ve Python/FastAPI AI servisini birleştirir. Araç fotoğraflarından görünür hasarları tespit eder, açıklayıcı raporlar üretir ve araç sahiplerine kayıt, bakım, hatırlatma ve otomotiv odaklı AI Asistan özellikleri sunar.
 
 <p align="center">
-  <img src="docs/screenshots/home.jpeg" width="23%" />
-  <img src="docs/screenshots/tracking.jpeg" width="23%" />
-  <img src="docs/screenshots/report.jpeg" width="23%" />
-  <img src="docs/screenshots/ai-analysis.jpeg" width="23%" />
+  <img src="docs/screenshots/home.jpeg" width="23%" alt="Ana ekran" />
+  <img src="docs/screenshots/ai-analysis.jpeg" width="23%" alt="Hasar analizi" />
+  <img src="docs/screenshots/report.jpeg" width="23%" alt="Rapor" />
+  <img src="docs/screenshots/ai-assistant.jpeg" width="23%" alt="AI Asistan" />
 </p>
 
-## ✨ Özellikler
+## Özellikler
 
-- **Hasar analizi:** Fotoğraf uygunluk kontrolü; ana aracın, görünür hasarın ve etkilenen parçanın YOLO ile tespiti; hasar-parça eşleştirmesi, hasar seviyesi ve onarım önerileri.
-- **Analiz raporu:** Gemini ile yapılandırılmış ekspertiz ön değerlendirmesi, konuma göre tahmini onarım maliyet aralıkları; analiz/rapor geçmişi; başarılı ML analizini tekrarlamadan raporu yeniden üretme.
-- **Görsel yükleme:** JPG/PNG/WEBP, en fazla 10 MB; hasar görseline ek bağlam fotoğrafı ve ön/arka bölge bilgisi desteği.
-- **AI Asistan:** Otomotiv ve uygulama odaklı sohbet; anlamsal konu/niyet sınıflandırması; kaynaklı RAG yanıtları; eksik bilgiler için açıklama isteme; yetkili kullanıcıya ait araç, hasar ve hatırlatma verilerine kontrollü erişim.
-- **Araç yönetimi:** Marka/model kataloğu, araç ekleme/düzenleme, ana araç seçimi, kilometre, bakım kayıtları, muayene ve tarih/kilometre bazlı hatırlatmalar, araç durumu ve birleşik geçmiş.
-- **Hasar değerlendirme tutanağı:** Tamamlanan analizden taslak oluşturma; olay, konum ve beyan bilgilerini düzenleme; kesinleştirilmiş salt-okunur veri anlık görüntüsü, SHA-256 içerik özeti ve PDF paylaşımı.
-- **Yakındaki servisler:** Konum ve Google Maps/Places ile çevredeki otomotiv servislerini görüntüleme.
-- **Bildirimler:** Uygulama içi bildirim merkezi, planlı hatırlatmalar ve yapılandırılabilir Firebase Cloud Messaging.
-- **Hesap:** E-posta/şifre ve Google ile giriş, e-posta doğrulama, şifre sıfırlama/değiştirme, hesap silme, güvenli oturum saklama.
-- **Arayüz:** Türkçe/İngilizce, açık/koyu tema, zorunlu Android sürüm güncelleme kontrolü.
-- **Kurumsal kullanım:** OWNER/MEMBER rolleri, üye daveti/yönetimi, ortak şirket araçları, analiz geçmişi ve şirket kotası.
+- **AI hasar analizi:** Fotoğraf kalite kontrolü, araç/hasar/parça tespiti, hasar-parça eşleştirmesi, şiddet sınıflandırması ve onarım önerileri.
+- **Rapor ve tutanak:** Gemini destekli hasar ön değerlendirmesi, tahmini onarım maliyet aralıkları, analiz geçmişi ve PDF olarak paylaşılabilen hasar değerlendirme tutanağı.
+- **Araç yönetimi:** Araç profilleri, kilometre/bakım kayıtları, muayene ve bakım hatırlatmaları, birleşik araç geçmişi.
+- **AI Asistan:** Araç, bakım ve muayene soruları; uygulama bilgi tabanı; yetkili kullanıcının araç, hasar ve hatırlatma kayıtları; Türkçe sesli giriş.
+- **Entegrasyonlar:** Yakındaki servisler (Google Maps/Places), uygulama içi ve FCM bildirimleri, e-posta/Google ile giriş.
+- **Planlar:** FREE, PLUS, PRO ve BUSINESS; RevenueCat abonelikleri, 7 günlük tek kullanımlık PLUS denemesi, şirket üyeleri ve paylaşımlı kotalar.
 
-## 💳 Planlar ve haklar
-
-| Plan | Aktif araç | Aylık hasar analizi | AI Asistan |
-| --- | ---: | ---: | --- |
-| **FREE** | 1 | 1 | Kapalı |
-| **PLUS** | 3 | 5 | Günde 3 başarılı yanıt |
-| **PRO** | 10 | 10 | Günde 5 başarılı yanıt |
-| **BUSINESS** | Şirket genelinde 50 | Şirket genelinde 100 | Ekip genelinde günde 10 başarılı yanıt |
-
-- **7 günlük PLUS denemesi:** FREE hesaplarda profilden bir kez, ödeme yöntemi olmadan başlatılır; otomatik ücretli aboneliğe dönüşmez. Süre dolunca etkin plan yeniden FREE olur.
-- **Ücretli abonelikler:** PLUS/PRO/BUSINESS aylık ürünleri; Google Play satın alma akışı RevenueCat üzerinden, yetkiler ve webhook/senkronizasyon backend üzerinden yönetilir.
-- **İptal/sona erme:** Abonelik hakları, ödenmiş dönemin bitişine kadar etkin kalabilir; plan hesabı sunucuda geçerlilik süresine göre yapılır.
-- **Asistan kotası:** Başarılı yanıtlar sayılır; kapsam dışı, açıklama isteyen veya başarısız istekler günlük yanıt hakkını tüketmez. Eşzamanlı istekler için süreli kota rezervasyonu kullanılır; kapsam dışı tekrarlarında geçici erişim kilidi uygulanır.
-- **Analiz kredileri:** Kod tabanında tek seferlik `analysis_1`, `analysis_3`, `analysis_10` kredi paketleri, işlem geçmişi, mükerrer işlem önleme ve iade yönetimi de bulunur. Bu mekanizma aylık plan limitlerinden ayrı ele alınır.
-
-## 🏗 Mimari ve veri akışı
+## Sistem mimarisi
 
 ```text
 Flutter (Android; iOS proje altyapısı)
-    │ HTTPS / JWT
-    ▼
-Spring Boot 4.1 / Java 21 REST API
-    ├── PostgreSQL + Flyway (uygulama, kullanıcı, kota, fatura, rapor)
-    ├── FastAPI / Python
-    │     ├── YOLO görüntü analizi
-    │     └── Anlamsal yönlendirme + RAG / pgvector
-    ├── Google Gemini (raporlar ve asistan yanıtları)
-    ├── Google Maps / Places (yakındaki servisler)
-    ├── RevenueCat / Google Play (abonelikler)
-    ├── Firebase / FCM (anlık bildirimler)
-    └── Brevo (işlemsel e-posta)
+           │ HTTPS / JWT
+           ▼
+Spring Boot 4.1 · Java 21
+  ├── Kimlik doğrulama, iş kuralları, RBAC ve abonelik/kota
+  ├── PostgreSQL · Flyway (uygulama verileri)
+  ├── FastAPI · Python
+  │    ├── YOLO: görüntü doğrulama ve hasar analizi
+  │    └── AI Asistan: anlamsal yönlendirme + RAG
+  │                         └── PostgreSQL · pgvector
+  ├── Gemini: rapor ve AI Asistan yanıt üretimi
+  └── RevenueCat · Google Places · Firebase · Brevo
 ```
 
-- **Mobil:** `mobile/lib/core` (ağ, JWT oturumu, tema, yerelleştirme, bildirim, güncelleme); `mobile/lib/features` (auth, home, inspection, ai_assistant, vehicle, billing, business, notification, profile).
-- **Backend:** `src/main/java/.../controller` → `service` → `repository`/`entity`; DTO tabanlı API; Spring Security, JWT, JPA/Hibernate, Flyway, plan/üyelik/yetki kontrolleri.
-- **AI servisi:** `ai-service/main.py` HTTP giriş noktası; `app/damage_analyzer.py` görüntü işleme; `app/assistant` sınıflandırma, ayrıştırma, embedding, retrieval ve kanıt doğrulama.
-- **Veritabanı:** PostgreSQL; şema geçişleri `src/main/resources/db/migration/V1...V12`; RAG bilgi tabanı için pgvector, 384 boyutlu çok dilli embedding ve kosinüs benzerliği.
-- **Dağıtım:** Backend ve AI servisi ayrı Docker konteynerleriyle Railway üzerinde; yapılandırma ortam değişkenleriyle. Yüklenen görüntüler backend dosya depolama katmanında yönetilir.
+**Mimari kararlar:** Flutter, mobil arayüzü özellik bazlı modüllere ayırır; Spring Boot kimlik doğrulama, veri sahipliği, ödeme ve iş kurallarının otoritesidir. Python/FastAPI, ML çıkarımını ve bilgi erişimini API katmanından ayırır. PostgreSQL + pgvector, uygulama verileri ve vektör araması için ayrı bir vektör veritabanı hizmeti gereksinimini azaltır. Backend ve AI servisi Docker ile Railway üzerinde ayrı dağıtılır.
 
-## 🧠 Hasar analizi nasıl çalışır?
+## AI/ML tasarımı
 
-1. Görselin biçimi, boyutu ve uygunluğu kontrol edilir.
-2. `yolo11n.pt` ile ana araç belirlenir/kırpılır.
-3. `damage_detection_v2_cardd_5class.pt` ile **SCRATCH, DENT, CRACK, BROKEN_PART, BROKEN_GLASS** hasarları aranır.
-4. `vehicle_part_best.pt` ile araç parçaları belirlenir; kutu örtüşmesine göre hasar-parça eşleştirilir.
-5. Kurallı hasar şiddeti ve onarım önerisi üretilir; görünür hasar yoksa `NO_VISIBLE_DAMAGE` sonuç olarak döner (eğitilmiş sınıf değildir).
-6. Spring Boot, ML sonucunu saklar; Gemini ile açıklama, öneri ve tahmini maliyet içeren rapor oluşturur. Rapor hatasında mevcut analiz yeniden kullanılabilir.
+### Görüntüden hasar ön değerlendirmesi
 
-**Model geliştirme:** CarDD veri kümesi aktarımı, beş sınıflı etiket eşlemesi, eğitim, bağımsız test kümesi değerlendirmesi ve hata analizi betikleri `ai-service/scripts` altındadır. Ayrıntı: [AI servis dokümanı](ai-service/README.md).
+```text
+Fotoğraf → Görsel doğrulama → YOLO11n ile ana araç/kırpma
+         → CarDD tabanlı 5 sınıflı hasar tespiti
+         → Araç parçası tespiti → Kutu örtüşmesiyle eşleştirme
+         → Kurallı şiddet/onarım önerisi → Gemini raporu
+```
 
-## 💬 AI Asistan nasıl çalışır?
+Aktif hasar sınıfları: `SCRATCH`, `DENT`, `CRACK`, `BROKEN_PART`, `BROKEN_GLASS`. `NO_VISIBLE_DAMAGE` eğitilmiş bir sınıf değil, kurallı sonuç durumudur. Rapor yeniden oluşturulurken kaydedilmiş başarılı ML analizi tekrar kullanılabilir. Model eğitim, CarDD veri aktarımı ve değerlendirme ayrıntıları [AI servis dokümantasyonunda](ai-service/README.md) bulunur.
 
-1. Flutter, soruyu Spring Boot'a gönderir; kimlik, plan, kilit ve günlük kota doğrulanır.
-2. FastAPI, Gemini Flash-Lite üzerinden anlamsal kapsam/niyet sınıflandırması yapar; gerekirse ek bilgi ister. Bu kontrol de bir model çağrısıdır.
-3. **EksperSiz uygulama bilgisi** için RAG (yerel embedding → PostgreSQL/pgvector → ilgili kaynakları seçme); **genel otomotiv bilgisi** için Gemini ve gerektiğinde Google Search kullanılır.
-4. Kullanıcıya özel veri gerekiyorsa yalnızca backend'in yetkilendirdiği araç/hasar/hatırlatma sorguları çalışır; özel kullanıcı verileri vektör bilgi tabanına gömülmez.
-5. Gemini, seçilen kaynak türüne göre yanıt üretir; uygulama RAG kanıtı yetersizse yanıt üretimi durdurulur, genel otomotiv teknik değerlerinde kaynak doğrulaması istenir.
-6. Başarılı yanıt kotaya işlenir; başarısız işlem rezervasyonu serbest bırakılır.
+### Kaynağa göre yönlendirilen AI Asistan
 
-- **Bilgi tabanı:** `ai-service/knowledge`, kaynak manifesti ve `scripts/ingest_assistant_knowledge.py`.
-- **Tasarım/kurulum:** [AI Asistan mimarisi](docs/ai-assistant/ARCHITECTURE.md) · [Dağıtım](docs/ai-assistant/DEPLOYMENT.md).
+1. Spring Boot, kullanıcı erişimini, planı ve günlük kullanım hakkını denetler.
+2. FastAPI, **Gemini Flash-Lite** ile sorunun otomotiv kapsamını, niyetini ve gerekli veri kaynağını belirler.
+3. **APP_KNOWLEDGE:** EksperSiz uygulama bilgisi, yerel 384 boyutlu multilingual E5-small embedding ve PostgreSQL/pgvector tabanlı RAG üzerinden getirilir.
+4. **PUBLIC_WEB:** Genel otomotiv soruları Gemini tarafından, gerektiğinde Google Search desteğiyle yanıtlanır.
+5. **USER_DATA:** Kullanıcıya ait araç, hatırlatma ve hasar geçmişi yalnızca Spring Boot'un yetkilendirdiği araçlardan alınır; kişisel kayıtlar vektör bilgi tabanına eklenmez.
+6. Kapsam dışı, açıklama gerektiren veya RAG kanıtı yetersiz isteklerde ana yanıt üretimi atlanır. Başarılı yanıt kotaya işlenir; başarısız çağrıda rezervasyon serbest bırakılır.
 
-## 🔐 Güvenlik ve dayanıklılık
+Ayrıntılar: [AI Asistan mimarisi](docs/ai-assistant/ARCHITECTURE.md).
 
-- JWT oturumu, BCrypt parola özeti, sunucuda Google ID token doğrulaması, güvenli mobil token depolama.
-- Kullanıcı/şirket rolü ve kaynak sahipliği kontrolleri; asistanın doğrudan veritabanı erişimi yoktur.
-- Yükleme MIME/imza ve boyut doğrulaması, dosya yolu güvenliği; API anahtarları ortam değişkenlerinde.
-- RevenueCat sunucu doğrulaması, webhook/işlem tekrarına karşı koruma, kota ve eşzamanlı kullanım rezervasyonları.
-- Flyway şema sürümleme; Docker dağıtımı, servis sağlık uç noktaları ve AI servisinin geçici erişilemezliğine karşı istemci akışı.
-- AI sonuçları **bilgilendirme amaçlıdır**; profesyonel ekspertiz, servis incelemesi veya resmî hasar tespitinin yerine geçmez.
+## Güvenlik ve veri bütünlüğü
 
-## 🛠 Teknolojiler
+- **Kimlik ve yetki:** JWT, Spring Security, BCrypt, Google ID token doğrulaması; kullanıcı ve BUSINESS OWNER/MEMBER kaynak erişim kontrolleri.
+- **AI veri izolasyonu:** LLM'e doğrudan veritabanı erişimi verilmez; kullanıcıya özel sorgular sunucu tarafında yetkilendirilir. Kaynak metinleri ve sohbet geçmişi güvenilmeyen girdi kabul edilir.
+- **Ödeme ve kota:** RevenueCat doğrulama/senkronizasyonu, mükerrer işlem koruması, plan geçerlilik kontrolü ve eşzamanlı AI soru rezervasyonları.
+- **Veri yönetimi:** Flyway şema sürümleme, görsel yükleme doğrulaması, sürümlü bilgi tabanı ingest süreci ve tutanaklar için SHA-256 içerik özeti.
+
+## Maliyet ve ölçeklenebilirlik yaklaşımı
+
+| Karar | Amaç / ödünleşim |
+| --- | --- |
+| Flash-Lite ile erken kapsam kontrolü | Konu dışı sorularda ana Gemini yanıt çağrısını önler; sınıflandırmanın kendisi de ücretli bir API çağrısıdır. |
+| Yerel embedding + pgvector | Harici embedding ve ayrı vektör veritabanı hizmetlerine bağımlılığı azaltır; CPU/RAM ve PostgreSQL kapasitesi izlenmelidir. |
+| Kanıt eşiği ve sınırlı RAG bağlamı | Gereksiz üretimi ve prompt boyutunu sınırlar; yetersiz kanıtta yanıt uydurulmaz. |
+| Yerel YOLO çıkarımı ve analiz tekrar kullanımı | Görüntü başına harici görsel AI API ücreti yerine sunucu işlem kaynağı kullanır; yüksek trafikte çıkarım kapasitesi darboğaz olabilir. |
+| Sunucu taraflı kota ve rezervasyon | Kontrolsüz kullanım ve eşzamanlı kota aşımını sınırlar. |
+| Ayrı Spring Boot / FastAPI servisleri | İş yükleri bağımsız yönetilebilir; artan trafikte AI çıkarımı için ayrı worker/altyapı gerekebilir. |
+
+**Not:** Bu kararlar maliyet ve kapasiteyi yönetmek için uygulanmıştır; ölçülmüş tasarruf yüzdesi, üretim throughput'u veya gecikme garantisi iddia edilmez.
+
+## Teknolojiler
 
 | Katman | Teknolojiler |
 | --- | --- |
-| Mobil | Flutter, Dart, Google Sign-In, Maps, Firebase Messaging, RevenueCat, PDF/share |
-| API | Java 21, Spring Boot 4.1, Spring Security, JWT, JPA, Flyway, Maven |
-| ML | Python, FastAPI, Ultralytics YOLO, NumPy, Pillow |
-| Üretken AI | Google Gemini, RAG, çok dilli yerel embedding |
+| Mobil | Flutter, Dart, Google Sign-In, Firebase Messaging, Google Maps, RevenueCat |
+| Backend | Java 21, Spring Boot 4.1, Spring Security, JPA, Flyway |
+| AI/ML | Python, FastAPI, Ultralytics YOLO, Google Gemini, SentenceTransformers |
 | Veri | PostgreSQL, pgvector |
-| Entegrasyon | Google Places, Firebase, RevenueCat, Brevo |
-| Altyapı | Docker, Railway, Google Play |
+| Dağıtım ve entegrasyon | Docker, Railway, Google Play, Google Places, Brevo |
 
-## 📁 Depo yapısı
+## Planlar
 
-```text
-ekspersiz/
-├── src/main/java/              # Spring Boot controller/service/repository/entity/DTO
-├── src/main/resources/         # Ayarlar ve Flyway migration'ları
-├── src/test/                   # Backend testleri
-├── mobile/lib/                 # Flutter uygulaması (core + features)
-├── mobile/test/                # Flutter testleri
-├── ai-service/app/             # FastAPI, YOLO ve RAG
-├── ai-service/knowledge/       # Asistan bilgi kaynakları
-├── ai-service/scripts/         # Model eğitim/değerlendirme ve ingest
-├── ai-service/tests/           # AI testleri
-├── docs/                       # Ekran görüntüleri ve mimari dokümanları
-├── Dockerfile                  # Backend imajı
-├── docker-entrypoint.sh
-└── pom.xml
+| Plan | Araç | Aylık analiz | AI Asistan |
+| --- | ---: | ---: | --- |
+| FREE | 1 | 1 | Yok |
+| PLUS | 3 | 5 | 3 başarılı yanıt/gün |
+| PRO | 10 | 10 | 5 başarılı yanıt/gün |
+| BUSINESS | 50 (şirket) | 100 (şirket) | 10 başarılı yanıt/gün (ortak) |
+
+FREE kullanıcılar **bir defaya mahsus 7 günlük PLUS denemesi** başlatabilir; ödeme yöntemi ve otomatik ücretli geçiş gerekmez. Abonelik iptali, ödenmiş dönemin kalan haklarını hemen sona erdirmez. Hasar analizi ve AI Asistan kullanım kotaları ayrı yönetilir.
+
+## Geliştirme ve test
+
+**Gereksinimler:** Java 21, Flutter/Dart SDK, Python 3.12, PostgreSQL/pgvector ve ilgili servis kimlik bilgileri. Üretim YOLO ağırlıkları Git'te tutulmaz; AI servisinde belirtilen konumlara sağlanmalıdır.
+
+```bash
+# Backend
+./mvnw test
+
+# Mobil
+cd mobile && flutter pub get && flutter test
+
+# AI servisi (ai-service dizininde)
+pip install -r requirements.txt
+pytest
 ```
 
-## 🧪 Test ve yerel çalıştırma
+Yerel çalıştırma için backend ve AI servisinin ortam değişkenleri (`DATABASE_URL`, `DB_USERNAME`, `DB_PASSWORD`, `JWT_SECRET`, `AI_SERVICE_BASE_URL`, `GEMINI_API_KEY` vb.) tanımlanmalıdır. Harita, ödeme, Google girişi, e-posta ve bildirim entegrasyonları ayrıca yapılandırma gerektirir. Bu komutlar **testlerin çalıştırılma yoludur**; bu README güncellemesinde test sonucu iddia edilmez.
 
-- **Backend:** `./mvnw test` (Windows: `mvnw.cmd test`).
-- **Flutter:** `cd mobile && flutter pub get && flutter test`; Android geliştirme için `flutter run`.
-- **AI servisi:** `cd ai-service && pip install -r requirements.txt && pytest`; servis `uvicorn main:app --reload` ile başlatılabilir.
-- **Gereksinimler:** Java 21, Flutter/Dart SDK, Python ve PostgreSQL; servisler için ilgili ortam değişkenleri (örn. `DATABASE_URL`, `DB_USERNAME`, `DB_PASSWORD`, `JWT_SECRET`, `AI_SERVICE_BASE_URL`, `GEMINI_API_KEY`). Harita, giriş, ödeme, e-posta ve FCM entegrasyonları ayrıca kimlik bilgisi gerektirir.
-- **Model dosyaları:** Üretimde kullanılan YOLO ağırlıklarının AI servisinde doğru yollarda bulunması gerekir; dağıtım öncesi kontrol edilmelidir.
+## Dokümantasyon ve depo yapısı
 
-## 👨‍💻 Geliştirici
+- [Mobil uygulama](mobile/README.md) — Flutter özellikleri ve geliştirme
+- [AI servis ve model değerlendirme](ai-service/README.md) — YOLO, CarDD, eğitim ve test
+- [AI Asistan mimarisi](docs/ai-assistant/ARCHITECTURE.md) — yönlendirme, RAG, yetkili araçlar ve kota
+- [AI Asistan dağıtımı](docs/ai-assistant/DEPLOYMENT.md) — Docker, bilgi tabanı ingest ve readiness
+- [AI Asistan değerlendirme senaryoları](docs/ai-assistant/evaluation-v1.jsonl)
 
-**Görkem Ertaş** — Yazılım Mühendisi · Full-Stack & AI/ML
+`src/` Spring Boot API'sini, `mobile/` Flutter istemcisini, `ai-service/` AI/ML servisini, `docs/` teknik belgeleri ve ekran görüntülerini içerir.
 
-**Teknik dokümantasyon:** [AI servis](ai-service/README.md) · [Mobil](mobile/README.md) · [AI Asistan mimarisi](docs/ai-assistant/ARCHITECTURE.md) · [Dağıtım](docs/ai-assistant/DEPLOYMENT.md)
+> **Sorumluluk reddi:** AI hasar tespiti ve üretilen raporlar bilgilendirme amaçlı ön değerlendirmelerdir; profesyonel ekspertiz, mekanik inceleme veya resmî hasar tespitinin yerine geçmez.
+
+---
+
+**Geliştirici:** Görkem Ertaş · Yazılım Mühendisi · Full-Stack & AI/ML
