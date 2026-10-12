@@ -45,8 +45,8 @@ class KnowledgeManifest:
                 raise ValueError("each knowledge source rule requires glob and category")
 
             category = rule["category"]
-            if category not in _ALLOWED_CATEGORIES:
-                raise ValueError(f"invalid knowledge category: {category}")
+            if category != "APP_HELP":
+                raise ValueError("Only APP_HELP sources may be embedded in the private knowledge base")
 
             language = rule.get("language", defaults.get("language", "tr"))
             market = rule.get("market", defaults.get("market"))
