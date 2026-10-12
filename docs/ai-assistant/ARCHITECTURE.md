@@ -1,105 +1,68 @@
-# EksperSiz AI Assistant — Architecture
+# EksperSiz AI Asistan — Güncel Mimari
 
-## Goal
+> Bu belge mevcut uygulama kodunu açıklar. Eski 30 günlük bağımsız AI Asistan denemesi ve ayrı asistan aboneliği tasarımı geçerli değildir.
 
-Build a domain-restricted Turkish vehicle assistant that answers only automotive and EksperSiz questions. It combines retrieval-augmented generation (RAG) for curated automotive knowledge with authorized backend tools for user-specific data.
+## Amaç ve sınırlar
 
-## Core rule
+- Türkçe ağırlıklı, otomotiv ve EksperSiz odaklı asistan; Flutter'da yazılı sohbet ve cihaz üzerinde konuşmayı metne çevirme desteği.
+- Kişisel araç, hatırlatma ve hasar verileri **vektör bilgi tabanına gömülmez**. Kullanıcı kimliği JWT üzerinden Spring Boot tarafından doğrulanır.
+- Genel otomotiv bilgisi, uygulama dokümanları ve kişisel kullanıcı verileri **farklı kaynak yollarıyla** ele alınır.
 
-Private user data is **not embedded into the vector store**. Vehicle, inspection, damage, reminder and account context is fetched just-in-time through authenticated Spring Boot tools. Only curated, non-personal knowledge is chunked and embedded.
+## Gerçek istek akışı
 
-## Request pipeline
+1. Flutter `AiAssistantScreen` soruyu, en fazla sınırlı sohbet geçmişini ve isteğe bağlı seçili araç kimliğini Spring Boot'a gönderir.
+2. `AiAssistantChatService` erişimi ve kotayı kontrol eder; seçili araç bilgisini kullanıcı yetkisiyle doğrular.
+3. FastAPI `/api/v1/assistant/plan`, `SemanticDomainClassifier` üzerinden **Gemini `gemini-3.5-flash-lite`** ile anlamsal kapsam, niyet ve bilgi kaynağı seçimi yapar. Bu aşama da bir LLM API çağrısıdır; sıfır maliyetli değildir.
+4. Kapsam dışı sorular için sabit ret mesajı verilir; **ana yanıt üretimi çalıştırılmaz**. Tekrarlanan kapsam dışı istekler 24 saatlik geçici kilide yol açabilir.
+5. Eksik kritik bilgi varsa kısa açıklama istenir; yanıt hakkı tüketilmez.
+6. Kaynak rotası:
+   - `APP_KNOWLEDGE`: EksperSiz'e özel küratörlü dokümanlarda **RAG/pgvector**; yeterli kanıt yoksa cevap uydurulmaz.
+   - `PUBLIC_WEB`: Kamuya açık otomotiv bilgisi; Spring Boot'ta Gemini **Google Search grounding** aracı kullanılabilir. Özellikle kesin teknik özelliklerde kaynak doğrulaması istenir.
+   - `USER_DATA`: Yalnızca yetkili Spring Boot araçlarıyla kullanıcının kayıtlı verileri; web/RAG üzerinden özel veri aranmaz.
+7. Backend, planın kaynak/araç kombinasyonunu doğrular. Kullanıcı verisi için izin verilen araçlar: `getMyVehicles`, `getUpcomingReminders`, `getDamageHistory`.
+8. Yanıt öncesi sunucuda günlük kota **rezervasyonu** yapılır; Gemini yanıtı başarılıysa kullanım işlenir, hata olursa rezervasyon serbest bırakılır.
+9. Flutter yanıtı, varsa kaynakları ve güncel kalan kullanım hakkını gösterir.
 
-1. Flutter sends text (voice is converted to text on-device in a later phase).
-2. Spring Security authenticates the user.
-3. AI access service checks trial/subscription, temporary lock and daily quota.
-4. A zero/low-cost domain guard rejects obvious out-of-scope requests before an LLM call.
-5. In-scope requests are classified into an intent.
-6. The orchestrator selects one or both context sources:
-   - **RAG:** general automotive/EksperSiz knowledge.
-   - **Tools:** live user/vehicle/inspection/damage/reminder data.
-7. RAG queries are embedded and searched with cosine similarity in PostgreSQL/pgvector.
-8. Only the top relevant chunks and minimum necessary tool results are added to the prompt.
-9. The LLM must answer from supplied evidence/context. If evidence is insufficient, it must say so rather than guess.
-10. A successful answer consumes one daily question. Rejected/out-of-scope requests do not consume quota.
+## RAG bileşenleri
 
-## RAG design
+- Bilgi kaynağı: `ai-service/knowledge` ve `sources.json`; mevcut manifest yalnızca `APP_HELP` kategorisinin özel bilgi tabanına alınmasına izin verir.
+- Ingestion: `scripts/ingest_assistant_knowledge.py` → manifest doğrulama → PDF/Markdown ayrıştırma → anlamsal parçalama → embedding → sürümlü PostgreSQL/pgvector.
+- Embedding: `intfloat/multilingual-e5-small`, **384 boyut**, yerel çalışır; üretim Docker imajına önceden indirilir.
+- Retrieval: varsayılan 8 aday, 4 son parça; benzerlik ve kanıt eşikleri `app/assistant/settings.py` içinden yapılandırılır.
+- Kaynak metadata/sürüm yönetimi; aktif belge seçimi ve içerik değişmediyse gereksiz yeniden embedding'den kaçınma.
+- Araç/hasar geçmişi gibi özel veriler RAG'e yazılmaz.
 
-- Vector store: PostgreSQL + pgvector (no separate paid vector database).
-- Embedding dimension: 384.
-- Target embedding model: multilingual E5-small class local embedding model.
-- Chunking: heading-aware recursive chunking, target ~350–500 tokens, ~60-token overlap.
-- Retrieval: cosine similarity, initial top-k 8, then score threshold + final top 4 context chunks.
-- Metadata: category, source, document version and headings.
-- Index: HNSW cosine index.
-- Knowledge sources must be curated/versioned and carry source metadata.
+## Niyetler
 
-## Supported intents (v1)
+`VEHICLE_GENERAL`, `INSPECTION`, `MAINTENANCE`, `DRIVING_USAGE`, `SAFETY`, `VEHICLE_SPEC`, `USER_VEHICLE`, `DAMAGE_HISTORY`, `REMINDER`, `APP_HELP`, `OUT_OF_SCOPE`.
 
-- VEHICLE_GENERAL
-- INSPECTION
-- MAINTENANCE
-- DRIVING_USAGE
-- SAFETY
-- VEHICLE_SPEC
-- USER_VEHICLE
-- DAMAGE_HISTORY
-- REMINDER
-- APP_HELP
-- OUT_OF_SCOPE
+## Plan, deneme ve kota
 
-## Authorized tools (planned)
+| Plan | AI Asistan başarılı yanıt hakkı |
+| --- | --- |
+| FREE | Erişim yok |
+| PLUS | Günde 3 |
+| PRO | Günde 5 |
+| BUSINESS | Şirket genelinde günde 10 |
 
-- getMyVehicles
-- getPrimaryVehicle
-- getVehicleOverview
-- getInspectionStatus
-- getDamageHistory
-- getUpcomingReminders
+- FREE kullanıcı, **profilden bir kez 7 günlük PLUS denemesi** başlatabilir; ödeme yöntemi veya otomatik ücretli dönüşüm yoktur.
+- Aktif ücretli plan veya henüz dolmamış abonelik dönemi sunucuda etkin plan olarak değerlendirilir.
+- Başarılı yanıtlar kota tüketir; kapsam dışı, açıklama isteyen ve başarısız istekler tüketmez.
+- Eşzamanlı istekler için süreli kota rezervasyonu; üç kapsam dışı denemeden sonra 24 saatlik kilit mantığı bulunur.
+- Asistan kotası ile aylık hasar analizi kotası ayrı sayaçlardır.
 
-Tools always derive the user identity from the authenticated request. The LLM never receives arbitrary database access and never chooses a user id.
+## Güvenlik, maliyet ve doğruluk
 
-## Access and quota
+- LLM tarafından önerilen yönlendirme, backend'de izinli kaynak/araç listesiyle sınırlandırılır; kullanıcı ID'si LLM'den alınmaz.
+- Kullanıcı mesajı, geçmiş ve kaynaklar güvenilmeyen içerik sayılır; prompt-injection yönergeleri talimat kabul edilmez.
+- Konu dışı sorularda ana Gemini yanıt çağrısı atlanır; **sınıflandırma çağrısı ücretli olabilir**. Tasarruf oranı ölçülmeden iddia edilmemelidir.
+- En fazla sınırlı sohbet geçmişi taşınır; yeterli RAG kanıtı bulunmazsa cevap yerine belirsizlik bildirilir.
+- Ölçülmesi gerekenler: sınıflandırma doğruluğu, yanlış ret, RAG Recall@k, kaynak doğruluğu, araç yetkilendirme hataları, sınıflandırma/yanıt token ve maliyetleri.
 
-- AI Assistant is separate from the existing damage-analysis allowance.
-- First activation starts a one-time 30-day trial.
-- After trial, access requires the AI Assistant monthly product.
-- Daily successful-answer limit: 3.
-- Out-of-scope attempts do not consume the daily limit.
-- Repeated abuse increments warnings; after 3 daily out-of-scope attempts, AI access is temporarily locked for 24 hours. The paid subscription itself is not cancelled automatically.
-- Server/LLM failures do not consume quota.
+## Kod referansları
 
-## Cost controls
-
-- Domain rejection before LLM where confidence is high.
-- Local embeddings; embeddings are generated once per knowledge chunk and reused.
-- pgvector instead of a separate vector SaaS.
-- Top-k retrieval rather than sending the whole knowledge base.
-- Bounded conversation context with summary + recent turns.
-- Short output limits.
-- Cache stable retrieval results where useful.
-- Daily quota enforced server-side.
-
-## Evaluation
-
-The agent ships with an evaluation set containing in-domain, out-of-domain, ambiguous, tool-required, RAG-required and adversarial prompts. Track:
-
-- domain classification accuracy
-- out-of-domain rejection rate
-- retrieval hit rate / Recall@k
-- correct tool selection
-- grounded-answer rate
-- unauthorized-data-access attempts (target: zero)
-- average input/output tokens and cost per successful answer
-
-## Delivery phases
-
-1. Persistence + access/quota foundation.
-2. Knowledge ingestion: cleaning, chunking, embeddings and pgvector.
-3. Semantic retrieval API + retrieval tests.
-4. Agent orchestration, domain guard and grounded generation.
-5. Authenticated user-data tools.
-6. Flutter text chat + remaining quota UI.
-7. RevenueCat AI monthly product + one-time 30-day trial.
-8. Evaluation/observability and prompt-injection tests.
-9. On-device speech-to-text/text-to-speech.
+- `ai-service/app/assistant/domain_classifier.py`, `routing.py`, `retriever.py`, `source_manifest.py`
+- `ai-service/main.py`, `scripts/ingest_assistant_knowledge.py`
+- `src/main/java/com/gorkem/vehicle_inspector/service/AiAssistantChatService.java`
+- `AiAssistantEntitlementService.java`, `AiAssistantGenerationService.java`, `AiAssistantToolContextService.java`
+- `mobile/lib/features/ai_assistant/`
