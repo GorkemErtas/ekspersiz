@@ -169,6 +169,28 @@ class SemanticDomainClassifierTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.classifier(timeout_seconds=0)
 
+    @patch("app.assistant.domain_classifier.request.urlopen")
+    def test_rejects_web_route_with_private_user_tool(self, urlopen):
+        urlopen.return_value = _Response({
+            "automotive_relevance": 0.99, "assistant_capability": 0.9,
+            "intent": "DAMAGE_HISTORY", "use_rag": False,
+            "knowledge_source": "PUBLIC_WEB", "tool_name": "getDamageHistory",
+            "reason": "inconsistent route",
+        })
+        with self.assertRaisesRegex(RuntimeError, "invalid PUBLIC_WEB route"):
+            self.classifier().route("Son analizimi göster")
+
+    @patch("app.assistant.domain_classifier.request.urlopen")
+    def test_rejects_private_rag_with_backend_tool(self, urlopen):
+        urlopen.return_value = _Response({
+            "automotive_relevance": 0.99, "assistant_capability": 0.9,
+            "intent": "APP_HELP", "use_rag": True,
+            "knowledge_source": "APP_KNOWLEDGE", "tool_name": "getMyVehicles",
+            "reason": "inconsistent route",
+        })
+        with self.assertRaisesRegex(RuntimeError, "invalid APP_KNOWLEDGE route"):
+            self.classifier().route("EksperSiz nasıl çalışır?")
+
 
 if __name__ == "__main__":
     unittest.main()
