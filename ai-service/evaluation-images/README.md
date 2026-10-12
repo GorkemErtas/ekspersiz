@@ -1,13 +1,15 @@
-# Manual Real-World Evaluation Images
+# Gerçek Görsellerle Manuel Hasar Modeli Değerlendirmesi
 
-Place real review images in this directory; images are ignored by Git. Keep `.gitkeep`, this README, and the header-only `review_manifest.csv` tracked.
+Bu klasöre model karşılaştırması için izinli gerçek araç fotoğrafları koyun. Görseller Git tarafından izlenmez; özel fotoğrafları repoya eklemeyin. `review_manifest.csv` şablonunu kullanın.
 
-The optional manifest fields are:
+## Manifest alanları
+- `image`: Bu klasöre göre görsel yolu.
+- `expected_damage`: `true`, `false` veya bilinmiyorsa boş.
+- `expected_types`: Beklenen hasar sınıfları, `|` ile ayrılır.
+- `notes`: Aydınlatma, açı, görünürlük veya hata notları.
 
-- `image`: filename relative to this directory.
-- `expected_damage`: `true`, `false`, or blank when unknown.
-- `expected_types`: canonical classes separated by `|`, for example `SCRATCH|PAINT_DAMAGE`.
-- `notes`: manual context or localization observations.
+**Aktif beş sınıflı CarDD modelinin çıktı sınıfları:** `SCRATCH`, `DENT`, `CRACK`, `BROKEN_PART`, `BROKEN_GLASS`.
 
-Use the same folder for every compared model. Include clean vehicles, subtle damage, large damage, difficult lighting, different cameras and angles, and known `SCRATCH`/`PAINT_DAMAGE` and `DENT`/`DEFORMATION` cases. Do not commit private evaluation images.
+`PAINT_DAMAGE` ve `DEFORMATION` geniş uygulama taksonomisinde yer alsa da aktif CarDD beş sınıflı modelin **doğrudan tahmin ettiği sınıflar değildir**. `NO_VISIBLE_DAMAGE` de öğrenilmiş bir sınıf değil, sistemin sonuç durumudur.
 
+Temiz araçlar, küçük/büyük hasarlar, farklı kamera/açı/ışık koşulları ve yanlış pozitif örnekleri birlikte değerlendirin. Aynı veri kümesini tüm karşılaştırılan modeller için kullanın; bağımsız test görüntülerini eğitim amacıyla kullanmayın.
