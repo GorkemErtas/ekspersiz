@@ -63,6 +63,7 @@ public class AiAssistantEntitlementService {
     @Transactional
     public AiAssistantEntitlementResponse startTrial(String email) {
         User user=businessContext.requireUser(email); LocalDateTime now=LocalDateTime.now(clock);
+        if (jdbc != null) jdbc.queryForObject("SELECT id FROM users WHERE id = ? FOR UPDATE", Long.class, user.getId());
         AiAssistantAccess access=accessRepository.findByUserId(user.getId())
                 .orElseGet(() -> new AiAssistantAccess(user, now));
         if (subscriptions != null && subscriptions.getEffectivePlan(user) != SubscriptionPlan.FREE)
