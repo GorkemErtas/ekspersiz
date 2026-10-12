@@ -39,6 +39,8 @@ public class AiAssistantChatService {
         }
         AiAssistantPlanResponse plan=aiClient.plan(request.question(), plannerHistory, vehicleContext);
 
+        validateSourcePlan(plan);
+
         if (!plan.inScope()) {
             entitlement.recordOutOfScope(email);
             var status=entitlement.status(email);
@@ -86,6 +88,23 @@ public class AiAssistantChatService {
         } finally {
             if (!completed) entitlement.releaseReservedQuestion(email, reservationToken);
         }
+    }
+
+    private void validateSourcePlan(AiAssistantPlanResponse plan) {
+        if (!plan.inScope()) {
+            if (plan.useRag() || plan.toolName() != null || !"NONE".equals(plan.knowledgeSource())) {
+                throw new IllegalStateException("Invalid out-of-scope assistant plan");
+            }
+            return;
+        }
+        boolean valid = switch (plan.knowledgeSource()) {
+            case "APP_KNOWLEDGE" -> plan.useRag() && plan.toolName() == null;
+            case "PUBLIC_WEB" -> !plan.useRag() && plan.toolName() == null;
+            case "USER_DATA" -> !plan.useRag() && java.util.Set.of(
+                    "getMyVehicles", "getUpcomingReminders", "getDamageHistory").contains(plan.toolName());
+            default -> false;
+        };
+        if (!valid) throw new IllegalStateException("Invalid assistant source/tool combination");
     }
 
     private AiAssistantChatResponse response(AiAssistantPlanResponse plan, String answer,
