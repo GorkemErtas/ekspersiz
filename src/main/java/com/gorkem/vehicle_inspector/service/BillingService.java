@@ -269,8 +269,10 @@ public class BillingService {
                 .orElse(null);
         SubscriptionPlan effectivePlan =
                 subscriptionService.getEffectivePlan(user);
+        boolean trialActive = effectivePlan == SubscriptionPlan.PLUS
+                && user.getSubscriptionPlan() == SubscriptionPlan.FREE;
         BillingSubscriptionStatus effectiveStatus =
-                billingSubscription == null
+                trialActive ? BillingSubscriptionStatus.ACTIVE : billingSubscription == null
                         ? BillingSubscriptionStatus.NONE
                         : effectivePlan == SubscriptionPlan.FREE
                         ? BillingSubscriptionStatus.EXPIRED
@@ -280,15 +282,15 @@ public class BillingService {
                 user.ensureBillingCustomerId(),
                 effectivePlan,
                 effectiveStatus,
-                billingSubscription == null
+                trialActive ? null : billingSubscription == null
                         ? null
                         : billingSubscription.getProductId(),
-                effectivePlan != SubscriptionPlan.FREE
+                !trialActive && effectivePlan != SubscriptionPlan.FREE
                         && billingSubscription != null
                         && billingSubscription.isAutoRenewing(),
                 billingSubscription != null
                         && billingSubscription.isSandbox(),
-                billingSubscription == null
+                trialActive ? null : billingSubscription == null
                         ? user.getSubscriptionExpiresAt()
                         : billingSubscription.getCurrentPeriodEndsAt(),
                 billingSubscription == null
