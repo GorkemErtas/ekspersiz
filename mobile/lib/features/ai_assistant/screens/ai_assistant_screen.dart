@@ -82,25 +82,6 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
     }
   }
 
-  Future<void> _startTrial() async {
-    setState(() => _loading = true);
-    try {
-      final entitlement = await _service.startTrial();
-      if (!mounted) return;
-      setState(() {
-        _entitlement = entitlement;
-        _error = null;
-        _loading = false;
-      });
-    } on ApiException catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _error = e.message;
-        _loading = false;
-      });
-    }
-  }
-
   Future<void> _toggleListening() async {
     if (_listening) {
       await _speech.stop();
@@ -240,7 +221,7 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
 
   String _accessMessage(AiAssistantEntitlement entitlement) {
     return switch (entitlement.status) {
-      'INACTIVE' => 'AI Asistanı kullanmak için ücretsiz denemeyi başlatın.',
+      'INACTIVE' => 'AI Asistan için profilinizden Plus denemesini başlatın veya bir plan satın alın.',
       'LOCKED' => 'Çok sayıda kapsam dışı istek nedeniyle AI Asistan geçici olarak kilitlendi.',
       'EXPIRED' => 'AI Asistan deneme süreniz sona erdi.',
       _ when entitlement.remainingToday <= 0 =>
@@ -341,14 +322,6 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
                               label: const Text('Tekrar dene'),
                             ),
                         ],
-                      ),
-                    ),
-                  if (_entitlement != null && _entitlement!.status == 'INACTIVE')
-                    Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: FilledButton(
-                        onPressed: _startTrial,
-                        child: const Text('7 günlük ücretsiz denemeyi başlat'),
                       ),
                     ),
                   Expanded(
