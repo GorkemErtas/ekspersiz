@@ -65,6 +65,8 @@ public class AiAssistantEntitlementService {
         User user=businessContext.requireUser(email); LocalDateTime now=LocalDateTime.now(clock);
         AiAssistantAccess access=accessRepository.findByUserId(user.getId())
                 .orElseGet(() -> new AiAssistantAccess(user, now));
+        if (subscriptions != null && subscriptions.getEffectivePlan(user) != SubscriptionPlan.FREE)
+            throw new IllegalStateException("Deneme yalnızca ücretsiz hesaplarda başlatılabilir.");
         access.startTrial(now); accessRepository.save(access);
         return response(user, access, now);
     }
@@ -196,7 +198,8 @@ public class AiAssistantEntitlementService {
             if (businessAccount(user) != null) return true;
             if (subscriptions.getEffectivePlan(user) != SubscriptionPlan.FREE) return true;
         }
-        return existingAccess;
+        return existingAccess && access.getTrialExpiresAt() != null
+                && access.getTrialExpiresAt().isAfter(now);
     }
 
     private AiAssistantAccessStatus assistantStatus(User user, AiAssistantAccess access, LocalDateTime now) {
@@ -208,7 +211,8 @@ public class AiAssistantEntitlementService {
                 || subscriptions.getEffectivePlan(user) != SubscriptionPlan.FREE)) {
             return AiAssistantAccessStatus.ACTIVE;
         }
-        return access.getStatus();
+        return access.getTrialExpiresAt() != null && access.getTrialExpiresAt().isAfter(now)
+                ? AiAssistantAccessStatus.TRIAL : AiAssistantAccessStatus.INACTIVE;
     }
 
     private AiAssistantDailyUsage findOrCreateUsageForUpdate(User user) {
