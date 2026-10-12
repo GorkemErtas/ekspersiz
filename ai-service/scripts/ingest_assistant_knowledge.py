@@ -46,8 +46,12 @@ def main() -> None:
         source.slug or source.path.stem
         for source in manifest.sources
     }
-    retired = store.supersede_active_documents_except(active_slugs)
+    if not manifest.sources:
+        raise SystemExit("Refusing to retire knowledge: manifest contains no enabled sources")
     results = [service.ingest(source) for source in manifest.sources]
+    if any(result.status == "EMPTY" for result in results):
+        raise SystemExit("Refusing to retire knowledge: one or more sources are empty")
+    retired = store.supersede_active_documents_except(active_slugs)
     for result in results:
         print(f"{result.status:9} {result.slug}: {result.chunks} chunks")
     print(f"Retired obsolete active documents: {retired}")
