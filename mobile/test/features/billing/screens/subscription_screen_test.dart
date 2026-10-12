@@ -18,7 +18,7 @@ void main() {
     ));
     await tester.pumpAndSettle();
 
-    expect(find.text('Planlar ve AI Hakları'), findsOneWidget);
+    expect(find.text('Abonelik ve Planlar'), findsOneWidget);
     expect(find.text('Bu ay 1 / 1 analiz hakkı kaldı'), findsOneWidget);
     expect(find.text('Aylık abonelikler'), findsOneWidget);
     expect(find.text('1 detaylı AI analizi'), findsNothing);
