@@ -1,17 +1,31 @@
-# mobile
+# EksperSiz — Flutter Mobil Uygulaması
 
-A new Flutter project.
+EksperSiz'in Flutter/Dart istemcisi. Araç yönetimi, YOLO tabanlı hasar analizine fotoğraf gönderme, Gemini raporlarını görüntüleme, AI Asistan, hatırlatmalar, kurumsal hesaplar ve abonelik arayüzünü içerir.
 
-## Getting Started
+## Özellikler
+- E-posta/şifre ve Google oturumu; güvenli token saklama, profil ve hesap işlemleri.
+- Araç kaydı, bakım/kilometre, hatırlatmalar, analiz geçmişi ve raporlar.
+- Fotoğraf seçimi, hasar analizi, değerlendirme tutanağı ve PDF paylaşımı.
+- AI Asistan: yazılı sohbet, Türkçe konuşmadan metne giriş, araç bağlamı, günlük hakların görüntülenmesi.
+- FREE/PLUS/PRO/BUSINESS planları, RevenueCat satın alma akışı ve bir defalık 7 günlük PLUS denemesi.
+- Harita/yakındaki servisler, bildirimler/FCM, tema, yerelleştirme ve Android uygulama içi güncelleme kontrolü.
 
-This project is a starting point for a Flutter application.
+## Mimari
+- `lib/core/`: ağ, kimlik doğrulama/oturum, tema, yerelleştirme ve ortak altyapı.
+- `lib/features/`: ekranlar, modeller ve özellik bazlı servisler.
+- Mobil uygulama Spring Boot REST API'siyle haberleşir; AI modelleri ve ödeme yetkilendirmesi cihazda çalışmaz, backend'de yönetilir.
 
-A few resources to get you started if this is your first Flutter project:
+## Geliştirme
+Gereksinimler: projedeki `pubspec.yaml` ile uyumlu Flutter/Dart SDK, Android SDK ve ilgili Google/Firebase/RevenueCat yapılandırmaları.
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+```bash
+cd mobile
+flutter pub get
+flutter run
+flutter test
+flutter analyze
+```
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Android sürüm/build numarası `pubspec.yaml` içindeki `version` alanındadır. Yayınlama ve imzalama işlemleri için Google Play Console yapılandırması gerekir. Gizli anahtarları repoya eklemeyin.
+
+Ana proje ve backend bilgileri için [kök README](../README.md) dosyasına bakın.
