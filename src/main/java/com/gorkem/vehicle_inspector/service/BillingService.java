@@ -72,6 +72,19 @@ public class BillingService {
         this.trialAccessRepository = trialAccessRepository;
     }
 
+    public BillingService(UserRepository userRepository,
+            BillingSubscriptionRepository subscriptionRepository,
+            BillingWebhookEventRepository webhookEventRepository,
+            SubscriptionService subscriptionService,
+            RevenueCatClient revenueCatClient,
+            RevenueCatWebhookVerifier webhookVerifier,
+            ObjectMapper objectMapper, Clock clock,
+            AnalysisCreditService analysisCreditService) {
+        this(userRepository, subscriptionRepository, webhookEventRepository,
+                subscriptionService, revenueCatClient, webhookVerifier,
+                objectMapper, clock, analysisCreditService, null);
+    }
+
     public BillingService(
             UserRepository userRepository,
             BillingSubscriptionRepository subscriptionRepository,
