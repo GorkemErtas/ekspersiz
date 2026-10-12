@@ -216,7 +216,7 @@ def plan_assistant_turn(request: AssistantPlanRequest) -> AssistantPlanResponse:
     clarification_needed = decision.clarification_needed
     clarification_message = decision.clarification_message
 
-    if decision.in_scope and decision.intent.value == "VEHICLE_SPEC":
+    if decision.in_scope and decision.intent.value == "VEHICLE_SPEC" and decision.knowledge_source == "PUBLIC_WEB":
         has_selected_vehicle = request.vehicle_context is not None
         missing = []
         if not has_selected_vehicle:
