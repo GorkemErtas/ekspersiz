@@ -100,7 +100,7 @@ public class AiAssistantChatService {
         boolean valid = switch (plan.knowledgeSource()) {
             case "APP_KNOWLEDGE" -> plan.useRag() && plan.toolName() == null;
             case "PUBLIC_WEB" -> !plan.useRag() && plan.toolName() == null;
-            case "USER_DATA" -> !plan.useRag() && java.util.Set.of(
+            case "USER_DATA" -> !plan.useRag() && plan.toolName() != null && java.util.Set.of(
                     "getMyVehicles", "getUpcomingReminders", "getDamageHistory").contains(plan.toolName());
             default -> false;
         };
