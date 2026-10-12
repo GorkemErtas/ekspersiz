@@ -24,7 +24,7 @@ class AssistantSourceManifestTest(unittest.TestCase):
                 "sources": [{
                     "id": "tire-maintenance-tr",
                     "glob": "maintenance/tire.md",
-                    "category": "MAINTENANCE",
+                    "category": "APP_HELP",
                     "valid_from": "2026-10-01"
                 }]
             }), encoding="utf-8")
@@ -47,7 +47,7 @@ class AssistantSourceManifestTest(unittest.TestCase):
                 "sources": [{
                     "id": "invalid-window",
                     "glob": "source.md",
-                    "category": "SAFETY",
+                    "category": "APP_HELP",
                     "valid_from": "2026-11-01",
                     "valid_until": "2026-10-01"
                 }]
@@ -71,30 +71,19 @@ class AssistantSourceManifestTest(unittest.TestCase):
             with self.assertRaises(ValueError):
                 KnowledgeManifest.load(root, manifest, "2026-10")
 
-    def test_vehicle_spec_metadata_is_loaded(self):
+    def test_rejects_public_automotive_knowledge_even_with_verified_metadata(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             (root / "spec.md").write_text("# Corolla", encoding="utf-8")
             manifest = root / "sources.json"
-            manifest.write_text(json.dumps({
-                "sources": [{
-                    "id": "corolla-2020-dream-tr",
-                    "glob": "spec.md",
-                    "category": "VEHICLE_SPEC",
-                    "authority": "OFFICIAL",
-                    "vehicle_years": [2020],
-                    "vehicle_makes": ["Toyota"],
-                    "vehicle_models": ["Corolla"],
-                    "vehicle_trims": ["Dream"],
-                    "market": "TR"
-                }]
-            }), encoding="utf-8")
-            source = KnowledgeManifest.load(root, manifest, "2026-10").sources[0]
-            self.assertEqual((2020,), source.vehicle_years)
-            self.assertEqual(("Toyota",), source.vehicle_makes)
-            self.assertEqual(("Corolla",), source.vehicle_models)
-            self.assertEqual(("Dream",), source.vehicle_trims)
-
+            manifest.write_text(json.dumps({"sources": [{
+                "id": "corolla-2020-dream-tr", "glob": "spec.md",
+                "category": "VEHICLE_SPEC", "authority": "OFFICIAL",
+                "vehicle_years": [2020], "vehicle_makes": ["Toyota"],
+                "vehicle_models": ["Corolla"]
+            }]}), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "Only APP_HELP"):
+                KnowledgeManifest.load(root, manifest, "2026-10")
 
     def test_vehicle_spec_rejects_curated_authority(self):
         with tempfile.TemporaryDirectory() as directory:
