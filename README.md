@@ -2,7 +2,7 @@
 
 **Yapay zekâ destekli araç hasar analizi, raporlama ve araç yönetimi uygulaması.** Flutter istemcisi, Spring Boot REST API'si ve FastAPI tabanlı bilgisayarlı görü/RAG servisinden oluşur.
 
-> **Yayın:** Google Play'de test kanalları (açık/kapalı test). Android sürümü: `1.0.0+31` (depodaki Flutter yapılandırması). Test kanalındaki inceleme/yayın durumu Google Play Console'dan doğrulanmalıdır.
+> **Durum:** Aktif geliştirilen mobil uygulama. Google Play yayın/test kanalı durumu Play Console üzerinden doğrulanır.
 
 ## 📱 Ekran görüntüleri
 
@@ -80,10 +80,10 @@ Spring Boot 4.1 / Java 21 REST API
 ## 💬 AI Asistan nasıl çalışır?
 
 1. Flutter, soruyu Spring Boot'a gönderir; kimlik, plan, kilit ve günlük kota doğrulanır.
-2. FastAPI anlamsal kapsam/niyet sınıflandırması yapar; gerekirse ek bilgi ister.
-3. Genel bilgi için küratörlü kaynaklardan **RAG** (parçalama → yerel embedding → PostgreSQL/pgvector → ilgili kaynakları seçme) kullanılır.
+2. FastAPI, Gemini Flash-Lite üzerinden anlamsal kapsam/niyet sınıflandırması yapar; gerekirse ek bilgi ister. Bu kontrol de bir model çağrısıdır.
+3. **EksperSiz uygulama bilgisi** için RAG (yerel embedding → PostgreSQL/pgvector → ilgili kaynakları seçme); **genel otomotiv bilgisi** için Gemini ve gerektiğinde Google Search kullanılır.
 4. Kullanıcıya özel veri gerekiyorsa yalnızca backend'in yetkilendirdiği araç/hasar/hatırlatma sorguları çalışır; özel kullanıcı verileri vektör bilgi tabanına gömülmez.
-5. Gemini, sağlanan kanıt/araç bağlamından yanıt üretir; yeterli kanıt yoksa tahminde bulunmama yaklaşımı uygulanır.
+5. Gemini, seçilen kaynak türüne göre yanıt üretir; uygulama RAG kanıtı yetersizse yanıt üretimi durdurulur, genel otomotiv teknik değerlerinde kaynak doğrulaması istenir.
 6. Başarılı yanıt kotaya işlenir; başarısız işlem rezervasyonu serbest bırakılır.
 
 - **Bilgi tabanı:** `ai-service/knowledge`, kaynak manifesti ve `scripts/ingest_assistant_knowledge.py`.
@@ -140,3 +140,5 @@ ekspersiz/
 ## 👨‍💻 Geliştirici
 
 **Görkem Ertaş** — Yazılım Mühendisi · Full-Stack & AI/ML
+
+**Teknik dokümantasyon:** [AI servis](ai-service/README.md) · [Mobil](mobile/README.md) · [AI Asistan mimarisi](docs/ai-assistant/ARCHITECTURE.md) · [Dağıtım](docs/ai-assistant/DEPLOYMENT.md)
