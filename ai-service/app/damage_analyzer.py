@@ -1,4 +1,5 @@
 from io import BytesIO
+from app.inference_runtime import configure_torch_cpu_threads
 from pathlib import Path
 import logging
 import re
@@ -160,6 +161,10 @@ class DamageAnalyzer:
         self.minimum_vehicle_area_ratio = minimum_vehicle_area_ratio
 
         self._validate_model_paths()
+
+        # Configure CPU parallelism once, before the first YOLO prediction.
+        # Smaller thread pools can reduce persistent PyTorch/OpenMP allocations.
+        configure_torch_cpu_threads()
 
         self.vehicle_model = YOLO(
             str(self.vehicle_model_path)
@@ -1122,11 +1127,9 @@ class DamageAnalyzer:
             with Image.open(
                     BytesIO(file_content)
             ) as verified_image:
-                return (
-                    verified_image
-                    .convert("RGB")
-                    .copy()
-                )
+                # convert() already returns a new RGB image. The extra copy
+                # doubles a decoded image allocation without changing pixels.
+                return verified_image.convert("RGB")
 
         except (
                 UnidentifiedImageError,

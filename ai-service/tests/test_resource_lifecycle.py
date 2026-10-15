@@ -13,6 +13,7 @@ from fastapi import HTTPException
 
 import main
 from app.assistant.embeddings import LocalMultilingualEmbedder
+from app.inference_runtime import configure_torch_cpu_threads, parse_cpu_thread_limit
 
 
 class ResourceLifecycleTest(unittest.TestCase):
@@ -97,6 +98,24 @@ class ResourceLifecycleTest(unittest.TestCase):
         with patch.object(main, "run_damage_operation", slow_inference):
             self.assertEqual("done", asyncio.run(exercise()))
         image.close.assert_awaited_once()
+
+    def test_cpu_thread_limit_validation(self):
+        self.assertEqual(2, parse_cpu_thread_limit("2"))
+        self.assertEqual(0, parse_cpu_thread_limit("0"))
+        for invalid in ("abc", "-1", "17", "1.5"):
+            with self.subTest(invalid=invalid), self.assertRaises(ValueError):
+                parse_cpu_thread_limit(invalid)
+
+    def test_torch_thread_limit_applied_only_when_enabled(self):
+        calls = []
+        stub = types.ModuleType("torch")
+        stub.set_num_threads = calls.append
+        with patch.dict(sys.modules, {"torch": stub}):
+            with patch.dict("os.environ", {"AI_TORCH_NUM_THREADS": "2"}):
+                self.assertEqual(2, configure_torch_cpu_threads())
+            with patch.dict("os.environ", {"AI_TORCH_NUM_THREADS": "0"}):
+                self.assertEqual(0, configure_torch_cpu_threads())
+        self.assertEqual([2], calls)
 
     def test_embedding_first_load_is_singleton_across_threads(self):
         constructed = []

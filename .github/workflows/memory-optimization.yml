@@ -52,11 +52,37 @@ jobs:
           python -m pip install "fastapi==0.139.2" "pydantic==2.13.4" "python-multipart==0.0.32" "numpy==2.5.1" "pillow==12.3.0" "ultralytics==8.4.106" "opencv-python-headless==4.13.0.92"
           python -m pip uninstall -y opencv-python || true
           python -m pip install --force-reinstall --no-deps "opencv-python-headless==4.13.0.92"
-      - name: Cold-load production checkpoints, measure RSS and infer
+      - name: Benchmark four CPU threads (comparison, not Railway baseline)
+        env:
+          PYTHONPATH: ai-service
+          YOLO_CONFIG_DIR: /tmp/ultralytics
+          OMP_NUM_THREADS: "4"
+          MKL_NUM_THREADS: "4"
+          OPENBLAS_NUM_THREADS: "4"
+          AI_TORCH_NUM_THREADS: "0"
+        run: python ai-service/scripts/measure_runtime_memory.py | tee /tmp/ai-four-threads.log
+      - name: Benchmark bounded two CPU threads with identical model weights
         env:
           PYTHONPATH: ai-service
           YOLO_CONFIG_DIR: /tmp/ultralytics
           OMP_NUM_THREADS: "2"
           MKL_NUM_THREADS: "2"
           OPENBLAS_NUM_THREADS: "2"
-        run: python ai-service/scripts/measure_runtime_memory.py
+          AI_TORCH_NUM_THREADS: "2"
+        run: python ai-service/scripts/measure_runtime_memory.py | tee /tmp/ai-two-threads.log
+      - name: Verify inference output equivalence; report RAM difference
+        run: |
+          python - <<'PY'
+          import json
+          def load(path):
+              lines = open(path, encoding="utf-8").readlines()
+              return json.loads(next(x.removeprefix("MEMORY_SMOKE_RESULT=") for x in lines if x.startswith("MEMORY_SMOKE_RESULT=")))
+          baseline = load("/tmp/ai-four-threads.log")
+          optimized = load("/tmp/ai-two-threads.log")
+          print(f"Four threads: {baseline['peak_rss_mib']} MiB peak; two threads: {optimized['peak_rss_mib']} MiB peak")
+          print(f"Four threads cold image: {baseline['first_image_request_seconds']}s; two threads: {optimized['first_image_request_seconds']}s")
+          assert baseline["image_quality_code"] == optimized["image_quality_code"]
+          assert baseline["detections"] == optimized["detections"], "Model detections changed under thread cap"
+          assert baseline["torch_cpu_threads"] == 4
+          assert optimized["torch_cpu_threads"] == 2
+          PY

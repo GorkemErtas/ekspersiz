@@ -37,8 +37,8 @@ analyzer = main.get_damage_analyzer()
 assert analyzer.damage_class_mapping, "Damage checkpoint mapping missing"
 
 import torch
-torch.set_num_threads(2)
 timings = {}
+detections = {}
 for name, model in (("vehicle", analyzer.vehicle_model),
                     ("damage", analyzer.damage_model),
                     ("vehicle_part", analyzer.vehicle_part_model)):
@@ -46,10 +46,16 @@ for name, model in (("vehicle", analyzer.vehicle_model),
     result = model.predict(source=image, conf=0.25, imgsz=640, device="cpu", verbose=False)
     assert result and result[0].boxes is not None, name
     timings[name] = round(time.perf_counter() - started, 3)
+    detections[name] = [
+        {"class": int(box.cls[0]), "confidence": round(float(box.conf[0]), 4)}
+        for box in result[0].boxes
+    ]
 
 print("MEMORY_SMOKE_RESULT=" + json.dumps({
     "result": "PASS", "environment": "GitHub Actions, not Railway",
     "first_image_request_seconds": round(cold_start_seconds, 3),
     "peak_rss_mib": round(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024, 1),
     "model_inference_seconds": timings, "torch": torch.__version__,
+    "torch_cpu_threads": torch.get_num_threads(),
+    "detections": detections, "image_quality_code": response.code,
 }, sort_keys=True))
