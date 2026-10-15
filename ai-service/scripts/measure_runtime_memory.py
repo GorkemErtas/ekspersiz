@@ -19,6 +19,13 @@ assert hasattr(cv2, "imshow"), "OpenCV binary namespace is incomplete"
 import numpy as np
 from PIL import Image
 
+
+noise = np.random.default_rng(2026).integers(0, 256, (480, 640, 3), dtype=np.uint8)
+image = Image.fromarray(noise, "RGB")
+with io.BytesIO() as stream:
+    image.save(stream, "JPEG", quality=85)
+    image_bytes = stream.getvalue()
+
 # Confirm RGB decoding produces identical pixels without the redundant copy.
 from app.damage_analyzer import DamageAnalyzer
 with Image.open(io.BytesIO(image_bytes)) as uploaded_image:
@@ -27,12 +34,6 @@ decoded_rgb = DamageAnalyzer._load_image(image_bytes)
 assert np.array_equal(np.asarray(expected_rgb), np.asarray(decoded_rgb))
 expected_rgb.close()
 decoded_rgb.close()
-
-noise = np.random.default_rng(2026).integers(0, 256, (480, 640, 3), dtype=np.uint8)
-image = Image.fromarray(noise, "RGB")
-with io.BytesIO() as stream:
-    image.save(stream, "JPEG", quality=85)
-    image_bytes = stream.getvalue()
 
 upload = SimpleNamespace(filename="test.jpg", content_type="image/jpeg",
     read=AsyncMock(return_value=image_bytes), close=AsyncMock())
