@@ -2,6 +2,7 @@ import logging
 import os
 from threading import Lock
 
+from fastapi.concurrency import run_in_threadpool
 from fastapi import (
     FastAPI,
     File,
@@ -33,6 +34,9 @@ app = FastAPI(
 # Models are initialized once on the first image endpoint request.
 _damage_analyzer = None
 _damage_analyzer_lock = Lock()
+# YOLO predictors are shared mutable objects; serialize inference to avoid
+# parallel PyTorch allocations and reduce peak RSS on a small CPU instance.
+_damage_inference_lock = Lock()
 
 
 def get_damage_analyzer():
@@ -43,6 +47,21 @@ def get_damage_analyzer():
                 from app.damage_analyzer import DamageAnalyzer
                 _damage_analyzer = DamageAnalyzer()
     return _damage_analyzer
+
+
+def run_damage_operation(operation: str, **kwargs):
+    """Run CPU-heavy inference in a thread without blocking FastAPI's event loop."""
+    with _damage_inference_lock:
+        analyzer = get_damage_analyzer()
+        # Call sites pass only these explicit internal operations.
+        if operation == "analyze":
+            return analyzer.analyze(**kwargs)
+        if operation == "analyze_pair":
+            return analyzer.analyze_pair(**kwargs)
+        if operation == "validate_image_quality":
+            return analyzer.validate_image_quality(**kwargs)
+        raise ValueError("Unsupported damage operation")
+
 
 ALLOWED_CONTENT_TYPES = {
     "image/jpeg",
@@ -93,7 +112,9 @@ async def analyze_damage(
         file_content = await read_valid_image(image)
 
         if context_image is None:
-            return get_damage_analyzer().analyze(
+            return await run_in_threadpool(
+                run_damage_operation,
+                "analyze",
                 file_content=file_content,
                 filename=image.filename or "vehicle.jpg",
             )
@@ -110,7 +131,9 @@ async def analyze_damage(
                 detail="vehicle_region must be FRONT or REAR.",
             )
 
-        return get_damage_analyzer().analyze_pair(
+        return await run_in_threadpool(
+            run_damage_operation,
+            "analyze_pair",
             damage_file_content=file_content,
             context_file_content=context_file_content,
             filename=image.filename or "vehicle.jpg",
@@ -157,8 +180,10 @@ async def validate_image_quality(
 ) -> ImageQualityResponse:
     try:
         file_content = await read_valid_image(image)
-        return get_damage_analyzer().validate_image_quality(
-            file_content,
+        return await run_in_threadpool(
+            run_damage_operation,
+            "validate_image_quality",
+            file_content=file_content,
             purpose=purpose,
         )
     except HTTPException:

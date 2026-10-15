@@ -3,6 +3,7 @@ import asyncio
 from concurrent.futures import ThreadPoolExecutor
 from io import BytesIO
 import sys
+import threading
 import time
 import types
 import unittest
@@ -36,6 +37,66 @@ class ResourceLifecycleTest(unittest.TestCase):
                     ))
                 self.assertEqual(1, len(constructed))
                 self.assertTrue(all(value is constructed[0] for value in instances))
+
+    def test_inference_is_serialized_across_threads(self):
+        active = 0
+        max_active = 0
+        gate = threading.Lock()
+
+        class FakeDamageAnalyzer:
+            def analyze(self, *, file_content, filename):
+                nonlocal active, max_active
+                with gate:
+                    active += 1
+                    max_active = max(max_active, active)
+                time.sleep(0.02)
+                with gate:
+                    active -= 1
+                return filename
+
+        with patch.object(main, "_damage_analyzer", FakeDamageAnalyzer()):
+            with ThreadPoolExecutor(max_workers=8) as executor:
+                results = list(executor.map(
+                    lambda i: main.run_damage_operation(
+                        "analyze", file_content=b"image", filename=str(i)
+                    ),
+                    range(16),
+                ))
+        self.assertEqual([str(i) for i in range(16)], results)
+        self.assertEqual(1, max_active)
+
+    def test_image_inference_does_not_block_the_event_loop(self):
+        started = threading.Event()
+        finish = threading.Event()
+
+        def slow_inference(operation, **kwargs):
+            started.set()
+            finish.wait(timeout=2)
+            return "done"
+
+        image = types.SimpleNamespace(
+            filename="vehicle.jpg",
+            content_type="image/jpeg",
+            read=AsyncMock(return_value=b"picture"),
+            close=AsyncMock(),
+        )
+
+        async def exercise():
+            task = asyncio.create_task(main.analyze_damage(image))
+            try:
+                was_started = await asyncio.wait_for(
+                    asyncio.to_thread(started.wait, 0.7), timeout=1
+                )
+                self.assertTrue(was_started)
+                self.assertFalse(task.done())
+                self.assertEqual("UP", main.health_check()["status"])
+            finally:
+                finish.set()
+            return await asyncio.wait_for(task, timeout=1)
+
+        with patch.object(main, "run_damage_operation", slow_inference):
+            self.assertEqual("done", asyncio.run(exercise()))
+        image.close.assert_awaited_once()
 
     def test_embedding_first_load_is_singleton_across_threads(self):
         constructed = []
