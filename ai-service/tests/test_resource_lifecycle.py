@@ -82,7 +82,7 @@ class ResourceLifecycleTest(unittest.TestCase):
         )
 
         async def exercise():
-            task = asyncio.create_task(main.analyze_damage(image))
+            task = asyncio.create_task(main.analyze_damage(image, context_image=None, vehicle_region=None))
             try:
                 was_started = await asyncio.wait_for(
                     asyncio.to_thread(started.wait, 0.7), timeout=1
