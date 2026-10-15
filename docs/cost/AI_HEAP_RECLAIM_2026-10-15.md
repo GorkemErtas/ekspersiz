@@ -42,3 +42,11 @@ The trim call is also guarded: if the optional native operation raises an except
 ## Full-suite legacy test issues (not introduced by this PR)
 
 The first attempt to run **all 95 Python unit tests** reported 2 assertions failing in `test_assistant_domain_classifier` (expected error strings disagree with the router's actual invalid-boolean error), plus one `test_experiment_tools` error because `datasets/vehicle_damage_detection_v2/images/train/cardd` is absent from the checkout. These failures are unrelated to memory trimming, but their baseline status must be confirmed before merging. The CI now runs the same suite against both untouched `master` and this PR, failing if any baseline test changes outcome or any new test fails. **This check does not claim the full suite passes.** The underlying legacy failures should be fixed separately after investigation.
+
+## Verified CI results, final regression comparison
+
+- [CI run 38781613103](https://github.com/GorkemErtas/ekspersiz/actions/runs/38781613103): all GitHub Actions jobs succeeded, including real-weight synthetic inference, repeated RAM benchmarks, focused unit tests, Maven tests, and automatic full Python suite comparison to production master.
+- An additional repeated benchmark on the same runner measured median retained RSS **640.2 MiB (flag off)** vs **478.6 MiB (flag on)**, a **161.6 MiB** reduction; synthetic per-image median latency was **150 ms vs 161 ms**, respectively. This is runner-dependent and not an estimate of Railway's billed RAM or monthly savings.
+- **Original master:** 90 named Python tests, 87 pass, **2 failures / 1 error**.
+- **This PR:** 95 named Python tests, 92 pass, **the same 2 failures / 1 error**. Automatic baseline comparison confirms **zero additional regressions**, but does **not** claim a clean full suite. Existing test issues: 2 AI assistant domain-router error-message assertions and 1 absent CarDD training dataset directory. Resolve independently.
+- Default remains disabled until a production A/B test is explicitly approved. Because enabling the feature changes running production settings, a Railway redeployment may be required. Keep Serverless disabled.
