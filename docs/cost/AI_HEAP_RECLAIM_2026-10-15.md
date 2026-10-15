@@ -37,3 +37,8 @@ The experiment does **not** prove that Railway will have the same savings. Threa
 The single-pair CI benchmark was promising but could have been distorted by allocation variability. A follow-up workflow tests **three fresh Python processes per condition**, with 12 large-image validations per process. It checks model/quality equivalence, logs retained RSS at the end of each batch of four, and reports median retained RSS and validation latency. This is a synthetic CPU-runner test, not a production SLO; repeat with real-world photos and Railway RAM GB-min before claiming monthly savings.
 
 The trim call is also guarded: if the optional native operation raises an exception, it logs a warning and does **not** turn a successful analysis into HTTP 500. Production still defaults to `AI_TRIM_HEAP_AFTER_INFERENCE=false`.
+
+
+## Full-suite legacy test issues (not introduced by this PR)
+
+The first attempt to run **all 95 Python unit tests** reported 2 assertions failing in `test_assistant_domain_classifier` (expected error strings disagree with the router's actual invalid-boolean error), plus one `test_experiment_tools` error because `datasets/vehicle_damage_detection_v2/images/train/cardd` is absent from the checkout. These failures are unrelated to memory trimming, but their baseline status must be confirmed before merging. The CI now runs the same suite against both untouched `master` and this PR, failing if any baseline test changes outcome or any new test fails. **This check does not claim the full suite passes.** The underlying legacy failures should be fixed separately after investigation.
