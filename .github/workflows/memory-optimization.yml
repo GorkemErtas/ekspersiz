@@ -18,7 +18,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install lightweight API test dependencies
-        run: python -m pip install "fastapi==0.139.2" "pydantic==2.13.4"
+        run: python -m pip install "fastapi==0.139.2" "pydantic==2.13.4" "python-multipart==0.0.32"
       - name: Compile Python modules
         run: python -m compileall -q ai-service/app ai-service/main.py ai-service/tests
       - name: Run focused memory lifecycle tests
