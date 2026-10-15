@@ -52,7 +52,7 @@ jobs:
           python -m pip install "fastapi==0.139.2" "pydantic==2.13.4" "python-multipart==0.0.32" "numpy==2.5.1" "pillow==12.3.0" "ultralytics==8.4.106" "opencv-python-headless==4.13.0.92"
           python -m pip uninstall -y opencv-python || true
           python -m pip install --force-reinstall --no-deps "opencv-python-headless==4.13.0.92"
-      - name: Benchmark four CPU threads (comparison, not Railway baseline)
+      - name: Benchmark uncapped Ultralytics CPU threads (comparison, not Railway baseline)
         env:
           PYTHONPATH: ai-service
           YOLO_CONFIG_DIR: /tmp/ultralytics
@@ -79,10 +79,13 @@ jobs:
               return json.loads(next(x.removeprefix("MEMORY_SMOKE_RESULT=") for x in lines if x.startswith("MEMORY_SMOKE_RESULT=")))
           baseline = load("/tmp/ai-four-threads.log")
           optimized = load("/tmp/ai-two-threads.log")
-          print(f"Four threads: {baseline['peak_rss_mib']} MiB peak; two threads: {optimized['peak_rss_mib']} MiB peak")
-          print(f"Four threads cold image: {baseline['first_image_request_seconds']}s; two threads: {optimized['first_image_request_seconds']}s")
+          print(f"Uncapped (actual {baseline['torch_cpu_threads']} threads): {baseline['peak_rss_mib']} MiB peak; two threads: {optimized['peak_rss_mib']} MiB peak")
+          print(f"Uncapped cold image: {baseline['first_image_request_seconds']}s; two threads: {optimized['first_image_request_seconds']}s")
+          for label, run in (("uncapped", baseline), ("two-threads", optimized)):
+              print(f"{label}: RSS warm={run['rss_warm_mib']} MiB, after large images={run['rss_after_large_mib']} MiB, after GC={run['rss_after_gc_mib']} MiB, after malloc_trim={run['rss_after_trim_mib']} MiB")
           assert baseline["image_quality_code"] == optimized["image_quality_code"]
+          assert baseline["large_quality_codes"] == optimized["large_quality_codes"]
           assert baseline["detections"] == optimized["detections"], "Model detections changed under thread cap"
-          assert baseline["torch_cpu_threads"] == 4
+          assert baseline["torch_cpu_threads"] >= 2
           assert optimized["torch_cpu_threads"] == 2
           PY

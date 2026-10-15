@@ -51,6 +51,43 @@ for name, model in (("vehicle", analyzer.vehicle_model),
         for box in result[0].boxes
     ]
 
+# Probe temporary allocations from phone-sized images with real image validation.
+# This does not use user photos and never changes trained model weights.
+import gc
+import ctypes
+import os
+
+
+def current_rss_mib():
+    with open("/proc/self/statm", encoding="ascii") as stream:
+        resident_pages = int(stream.readline().split()[1])
+    return round(resident_pages * os.sysconf("SC_PAGE_SIZE") / (1024 * 1024), 1)
+
+
+rss_warm_mib = current_rss_mib()
+large_pixels = np.random.default_rng(2027).integers(0, 256, (2304, 3072, 3), dtype=np.uint8)
+large_image = Image.fromarray(large_pixels, "RGB")
+with io.BytesIO() as stream:
+    large_image.save(stream, "JPEG", quality=75)
+    large_bytes = stream.getvalue()
+large_image.close()
+del large_image, large_pixels
+assert len(large_bytes) < main.MAX_IMAGE_SIZE_BYTES
+large_quality_codes = []
+for purpose in ("damage", "context", "damage", "context"):
+    upload = SimpleNamespace(filename="large.jpg", content_type="image/jpeg",
+        read=AsyncMock(return_value=large_bytes), close=AsyncMock())
+    result = asyncio.run(main.validate_image_quality(upload, purpose=purpose))
+    large_quality_codes.append(result.code)
+    upload.close.assert_awaited_once()
+del upload, result, large_bytes
+rss_after_large_mib = current_rss_mib()
+gc.collect()
+rss_after_gc_mib = current_rss_mib()
+libc = ctypes.CDLL("libc.so.6")
+trim_result = libc.malloc_trim(0)
+rss_after_trim_mib = current_rss_mib()
+
 print("MEMORY_SMOKE_RESULT=" + json.dumps({
     "result": "PASS", "environment": "GitHub Actions, not Railway",
     "first_image_request_seconds": round(cold_start_seconds, 3),
@@ -58,4 +95,10 @@ print("MEMORY_SMOKE_RESULT=" + json.dumps({
     "model_inference_seconds": timings, "torch": torch.__version__,
     "torch_cpu_threads": torch.get_num_threads(),
     "detections": detections, "image_quality_code": response.code,
+    "large_quality_codes": large_quality_codes,
+    "rss_warm_mib": rss_warm_mib,
+    "rss_after_large_mib": rss_after_large_mib,
+    "rss_after_gc_mib": rss_after_gc_mib,
+    "rss_after_trim_mib": rss_after_trim_mib,
+    "malloc_trim_returned": int(trim_result),
 }, sort_keys=True))
