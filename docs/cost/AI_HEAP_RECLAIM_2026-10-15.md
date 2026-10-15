@@ -1,5 +1,7 @@
 # Opt-in native heap reclamation after AI requests
 
+> **Status update (2026-10-15):** This was originally a PR #9 design/verification record. PR [#9](https://github.com/GorkemErtas/ekspersiz/pull/9) was merged as a normal merge commit and the code was deployed in Railway. `AI_TRIM_HEAP_AFTER_INFERENCE` is **not set** on the AI service and thus remains **false** by default. The experimental `malloc_trim(0)` behavior has **not** been enabled in production. For current rollout decisions and optimization summary, see [OPTIMIZATIONS.md](OPTIMIZATIONS.md).
+
 ## Why
 
 Railway user measurements on 2026-10-15: AI sustained ~875 MB after an image request in the old deployment, and ~1.28 GB after an image request in the current deployment; both plateaus persisted for over 20 minutes. App Sleeping / Serverless on AI is intentionally kept **disabled** because users observed failed first analyses.
@@ -41,7 +43,7 @@ The trim call is also guarded: if the optional native operation raises an except
 
 ## Full-suite legacy test issues (not introduced by this PR)
 
-The first attempt to run **all 95 Python unit tests** reported 2 assertions failing in `test_assistant_domain_classifier` (expected error strings disagree with the router's actual invalid-boolean error), plus one `test_experiment_tools` error because `datasets/vehicle_damage_detection_v2/images/train/cardd` is absent from the checkout. These failures are unrelated to memory trimming, but their baseline status must be confirmed before merging. The CI now runs the same suite against both untouched `master` and this PR, failing if any baseline test changes outcome or any new test fails. **This check does not claim the full suite passes.** The underlying legacy failures should be fixed separately after investigation.
+The first attempt to run **all 95 Python unit tests** reported 2 assertions failing in `test_assistant_domain_classifier` (expected error strings disagree with the router's actual invalid-boolean error), plus one `test_experiment_tools` error because `datasets/vehicle_damage_detection_v2/images/train/cardd` is absent from the checkout. These failures are unrelated to memory trimming, and a subsequent baseline check **confirmed all three were already present on `master`**. The CI ran the same suite against both unchanged `master` and PR #9, confirming no additional regressions. **This check does not claim the full suite passes.** The underlying legacy failures should be fixed separately after investigation.
 
 ## Verified CI results, final regression comparison
 
