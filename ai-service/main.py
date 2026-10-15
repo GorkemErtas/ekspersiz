@@ -13,6 +13,7 @@ from fastapi import (
 )
 
 from app.schemas import DamageAnalysisResponse, ImageQualityResponse
+from app.memory_reclaim import trim_unused_heap_if_enabled
 from app.assistant.api_schemas import AssistantPlanRequest, AssistantPlanResponse, RetrievedContext
 from app.assistant.domain_classifier import SemanticDomainClassifier
 from app.assistant.embeddings import LocalMultilingualEmbedder
@@ -52,15 +53,20 @@ def get_damage_analyzer():
 def run_damage_operation(operation: str, **kwargs):
     """Run CPU-heavy inference in a thread without blocking FastAPI's event loop."""
     with _damage_inference_lock:
-        analyzer = get_damage_analyzer()
-        # Call sites pass only these explicit internal operations.
-        if operation == "analyze":
-            return analyzer.analyze(**kwargs)
-        if operation == "analyze_pair":
-            return analyzer.analyze_pair(**kwargs)
-        if operation == "validate_image_quality":
-            return analyzer.validate_image_quality(**kwargs)
-        raise ValueError("Unsupported damage operation")
+        try:
+            analyzer = get_damage_analyzer()
+            # Call sites pass only these explicit internal operations.
+            if operation == "analyze":
+                return analyzer.analyze(**kwargs)
+            if operation == "analyze_pair":
+                return analyzer.analyze_pair(**kwargs)
+            if operation == "validate_image_quality":
+                return analyzer.validate_image_quality(**kwargs)
+            raise ValueError("Unsupported damage operation")
+        finally:
+            # Releases only unused glibc pages; trained models remain resident.
+            # Disabled by default until real-load performance is validated.
+            trim_unused_heap_if_enabled()
 
 
 ALLOWED_CONTENT_TYPES = {

@@ -1122,11 +1122,8 @@ class DamageAnalyzer:
             with Image.open(
                     BytesIO(file_content)
             ) as verified_image:
-                return (
-                    verified_image
-                    .convert("RGB")
-                    .copy()
-                )
+                # convert() already owns a new RGB buffer; avoid duplicating it.
+                return verified_image.convert("RGB")
 
         except (
                 UnidentifiedImageError,
