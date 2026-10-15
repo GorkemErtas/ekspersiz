@@ -14,7 +14,7 @@ image
   -> FastAPI response
 ```
 
-The detector's class IDs are resolved from its checkpoint names at startup, not
+The detector's class IDs are resolved from its checkpoint names on first image request, not
 from a fixed numeric order. The active checkpoint supports `SCRATCH`, `DENT`,
 `CRACK`, `BROKEN_PART`, and `BROKEN_GLASS`. `NO_VISIBLE_DAMAGE` is a
 deterministic domain result, never a learned damage class.

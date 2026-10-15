@@ -1,4 +1,5 @@
 import os
+from threading import Lock
 from collections.abc import Sequence
 
 
@@ -13,20 +14,25 @@ class LocalMultilingualEmbedder:
             "ASSISTANT_EMBEDDING_MODEL", self.DEFAULT_MODEL
         )
         self._model = None
+        self._load_lock = Lock()
 
     def _load(self):
         if self._model is None:
-            try:
-                from sentence_transformers import SentenceTransformer
-            except ImportError as exc:
-                raise RuntimeError(
-                    "sentence-transformers is required for AI Assistant embeddings"
-                ) from exc
-            local_only = os.getenv("ASSISTANT_EMBEDDING_LOCAL_ONLY", "false").lower() == "true"
-            self._model = SentenceTransformer(
-                self.model_name,
-                local_files_only=local_only,
-            )
+            # Sync FastAPI routes can execute concurrently in worker threads.
+            # Prevent duplicate first-use model allocations under concurrent RAG requests.
+            with self._load_lock:
+                if self._model is None:
+                    try:
+                        from sentence_transformers import SentenceTransformer
+                    except ImportError as exc:
+                        raise RuntimeError(
+                            "sentence-transformers is required for AI Assistant embeddings"
+                        ) from exc
+                    local_only = os.getenv("ASSISTANT_EMBEDDING_LOCAL_ONLY", "false").lower() == "true"
+                    self._model = SentenceTransformer(
+                        self.model_name,
+                        local_files_only=local_only,
+                    )
         return self._model
 
     def warmup(self) -> None:
