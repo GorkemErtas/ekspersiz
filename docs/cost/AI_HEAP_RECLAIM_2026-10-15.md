@@ -30,3 +30,10 @@ The experiment does **not** prove that Railway will have the same savings. Threa
 - After a controlled production test, compare Railway RAM GB-min and HTTP latency over equal length and comparable traffic windows.
 
 **Baseline:** project was about $1.75 for ~one month (backend $0.9978, AI $0.5909, PostgreSQL $0.1602). No production savings claimed.
+
+
+## Robustness verification
+
+The single-pair CI benchmark was promising but could have been distorted by allocation variability. A follow-up workflow tests **three fresh Python processes per condition**, with 12 large-image validations per process. It checks model/quality equivalence, logs retained RSS at the end of each batch of four, and reports median retained RSS and validation latency. This is a synthetic CPU-runner test, not a production SLO; repeat with real-world photos and Railway RAM GB-min before claiming monthly savings.
+
+The trim call is also guarded: if the optional native operation raises an exception, it logs a warning and does **not** turn a successful analysis into HTTP 500. Production still defaults to `AI_TRIM_HEAP_AFTER_INFERENCE=false`.

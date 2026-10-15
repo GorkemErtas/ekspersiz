@@ -40,7 +40,7 @@ jobs:
 
   real-inference-smoke:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -60,7 +60,10 @@ jobs:
           MKL_NUM_THREADS: "2"
           OPENBLAS_NUM_THREADS: "2"
           AI_TRIM_HEAP_AFTER_INFERENCE: "false"
-        run: python ai-service/scripts/measure_runtime_memory.py | tee /tmp/ai-no-trim.log
+        run: |
+          for i in 1 2 3; do
+            python ai-service/scripts/measure_runtime_memory.py | tee "/tmp/ai-no-trim-$i.log"
+          done
       - name: Benchmark identical inference with memory trim enabled
         env:
           PYTHONPATH: ai-service
@@ -69,7 +72,10 @@ jobs:
           MKL_NUM_THREADS: "2"
           OPENBLAS_NUM_THREADS: "2"
           AI_TRIM_HEAP_AFTER_INFERENCE: "true"
-        run: python ai-service/scripts/measure_runtime_memory.py | tee /tmp/ai-with-trim.log
+        run: |
+          for i in 1 2 3; do
+            python ai-service/scripts/measure_runtime_memory.py | tee "/tmp/ai-with-trim-$i.log"
+          done
       - name: Compare response equivalence, retained RSS and cold latency
         run: |
           python - <<'PY'
@@ -77,15 +83,26 @@ jobs:
           def load(path):
               lines = open(path, encoding="utf-8").readlines()
               return json.loads(next(x.removeprefix("MEMORY_SMOKE_RESULT=") for x in lines if x.startswith("MEMORY_SMOKE_RESULT=")))
-          baseline = load("/tmp/ai-no-trim.log")
-          optimized = load("/tmp/ai-with-trim.log")
-          print(f"Without trim: peak={baseline['peak_rss_mib']} MiB, retained after photos={baseline['rss_after_large_mib']} MiB")
-          print(f"With trim: peak={optimized['peak_rss_mib']} MiB, retained after photos={optimized['rss_after_large_mib']} MiB")
-          print(f"First request latency off={baseline['first_image_request_seconds']}s; on={optimized['first_image_request_seconds']}s")
-          print(f"Native trim after benchmark: off={baseline['rss_after_trim_mib']} MiB; on={optimized['rss_after_trim_mib']} MiB")
-          assert baseline["image_quality_code"] == optimized["image_quality_code"]
-          assert baseline["large_quality_codes"] == optimized["large_quality_codes"]
-          assert baseline["detections"] == optimized["detections"], "Model detections changed"
-          assert baseline["trim_feature_enabled"] is False
-          assert optimized["trim_feature_enabled"] is True
+          from statistics import median
+          baselines = [load(f"/tmp/ai-no-trim-{i}.log") for i in (1, 2, 3)]
+          optimized_runs = [load(f"/tmp/ai-with-trim-{i}.log") for i in (1, 2, 3)]
+          for i, (base, optim) in enumerate(zip(baselines, optimized_runs), 1):
+              print(f"Pair {i}: off peak={base['peak_rss_mib']} MiB, after={base['rss_after_large_mib']} MiB; on peak={optim['peak_rss_mib']} MiB, after={optim['rss_after_large_mib']} MiB")
+              print(f"Pair {i}: off batch RSS={base['rss_after_each_batch_mib']}; on batch RSS={optim['rss_after_each_batch_mib']}")
+              assert base["image_quality_code"] == optim["image_quality_code"]
+              assert base["large_quality_codes"] == optim["large_quality_codes"]
+              assert base["detections"] == optim["detections"], "Model detections changed"
+              assert base["trim_feature_enabled"] is False
+              assert optim["trim_feature_enabled"] is True
+          off_rss = median(x["rss_after_large_mib"] for x in baselines)
+          on_rss = median(x["rss_after_large_mib"] for x in optimized_runs)
+          off_p95_like = median(max(x["large_validation_seconds"]) for x in baselines)
+          on_p95_like = median(max(x["large_validation_seconds"]) for x in optimized_runs)
+          off_median_latency = median(median(x["large_validation_seconds"]) for x in baselines)
+          on_median_latency = median(median(x["large_validation_seconds"]) for x in optimized_runs)
+          print(f"MEDIAN_RETAINED_RSS: off={off_rss:.1f} MiB, on={on_rss:.1f} MiB, delta={off_rss - on_rss:.1f} MiB")
+          print(f"MEDIAN_IMAGE_LATENCY_SECONDS: off={off_median_latency:.3f}, on={on_median_latency:.3f}")
+          print(f"MAX_IMAGE_LATENCY_SECONDS median across runs: off={off_p95_like:.3f}, on={on_p95_like:.3f}")
+          assert off_rss - on_rss >= 20.0, "Less than 20 MiB median retention improvement; revisit experiment"
+          assert on_median_latency <= max(off_median_latency * 1.5, off_median_latency + 0.2), "Median validation latency regressed substantially"
           PY

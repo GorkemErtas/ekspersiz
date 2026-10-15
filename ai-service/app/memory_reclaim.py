@@ -4,9 +4,13 @@ This never unloads YOLO weights or restarts the worker, avoiding cold model load
 Disabled by default until measured against real image workloads.
 """
 import ctypes
+import logging
 from functools import lru_cache
 import os
 import sys
+
+
+logger = logging.getLogger(__name__)
 
 
 def trim_enabled() -> bool:
@@ -35,4 +39,9 @@ def trim_unused_heap_if_enabled() -> bool:
     operation = _malloc_trim()
     if operation is None:
         return False
-    return bool(operation(0))
+    try:
+        return bool(operation(0))
+    except Exception:
+        # This is an optional optimization, never a reason to fail an analysis.
+        logger.warning("Native heap trimming failed; inference output is unaffected.", exc_info=True)
+        return False

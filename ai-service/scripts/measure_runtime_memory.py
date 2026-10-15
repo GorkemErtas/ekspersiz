@@ -84,12 +84,18 @@ large_image.close()
 del large_image, large_pixels
 assert len(large_bytes) < main.MAX_IMAGE_SIZE_BYTES
 large_quality_codes = []
-for purpose in ("damage", "context", "damage", "context"):
-    upload = SimpleNamespace(filename="large.jpg", content_type="image/jpeg",
-        read=AsyncMock(return_value=large_bytes), close=AsyncMock())
-    result = asyncio.run(main.validate_image_quality(upload, purpose=purpose))
-    large_quality_codes.append(result.code)
-    upload.close.assert_awaited_once()
+large_validation_seconds = []
+rss_after_each_batch_mib = []
+for batch in range(3):
+    for purpose in ("damage", "context", "damage", "context"):
+        upload = SimpleNamespace(filename="large.jpg", content_type="image/jpeg",
+            read=AsyncMock(return_value=large_bytes), close=AsyncMock())
+        validation_started = time.perf_counter()
+        result = asyncio.run(main.validate_image_quality(upload, purpose=purpose))
+        large_validation_seconds.append(round(time.perf_counter() - validation_started, 4))
+        large_quality_codes.append(result.code)
+        upload.close.assert_awaited_once()
+    rss_after_each_batch_mib.append(current_rss_mib())
 del upload, result, large_bytes
 rss_after_large_mib = current_rss_mib()
 gc.collect()
@@ -107,6 +113,8 @@ print("MEMORY_SMOKE_RESULT=" + json.dumps({
     "trim_feature_enabled": __import__("os").getenv("AI_TRIM_HEAP_AFTER_INFERENCE") == "true",
     "detections": detections, "image_quality_code": response.code,
     "large_quality_codes": large_quality_codes,
+    "large_validation_seconds": large_validation_seconds,
+    "rss_after_each_batch_mib": rss_after_each_batch_mib,
     "rss_warm_mib": rss_warm_mib,
     "rss_after_large_mib": rss_after_large_mib,
     "rss_after_gc_mib": rss_after_gc_mib,

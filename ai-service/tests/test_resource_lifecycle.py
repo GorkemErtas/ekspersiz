@@ -112,6 +112,28 @@ class ResourceLifecycleTest(unittest.TestCase):
                 self.assertTrue(trim_unused_heap_if_enabled())
         self.assertEqual([0], calls)
 
+    def test_heap_reclaim_failure_must_not_fail_analysis(self):
+        class FakeDamageAnalyzer:
+            def validate_image_quality(self, *, file_content, purpose):
+                return purpose
+        with patch.object(main, "_damage_analyzer", FakeDamageAnalyzer()):
+            with patch.dict("os.environ", {"AI_TRIM_HEAP_AFTER_INFERENCE": "true"}):
+                with patch("app.memory_reclaim._malloc_trim", return_value=lambda _: 1 / 0):
+                    with self.assertLogs("app.memory_reclaim", level="WARNING"):
+                        self.assertEqual("context", main.run_damage_operation(
+                            "validate_image_quality", file_content=b"jpeg", purpose="context"
+                        ))
+
+    def test_inference_exception_survives_heap_cleanup(self):
+        class FailingDamageAnalyzer:
+            def analyze(self, *, file_content, filename):
+                raise ValueError("synthetic model failure")
+        with patch.object(main, "_damage_analyzer", FailingDamageAnalyzer()):
+            with patch("main.trim_unused_heap_if_enabled") as trim:
+                with self.assertRaisesRegex(ValueError, "synthetic model failure"):
+                    main.run_damage_operation("analyze", file_content=b"x", filename="a.jpg")
+                trim.assert_called_once_with()
+
     def test_run_operation_releases_native_heap_after_return(self):
         class FakeDamageAnalyzer:
             def validate_image_quality(self, *, file_content, purpose):
