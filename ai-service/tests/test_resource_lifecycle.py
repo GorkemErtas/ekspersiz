@@ -13,7 +13,6 @@ from fastapi import HTTPException
 
 import main
 from app.assistant.embeddings import LocalMultilingualEmbedder
-from app.memory_reclaim import trim_unused_heap_if_enabled
 
 
 class ResourceLifecycleTest(unittest.TestCase):
@@ -98,53 +97,6 @@ class ResourceLifecycleTest(unittest.TestCase):
         with patch.object(main, "run_damage_operation", slow_inference):
             self.assertEqual("done", asyncio.run(exercise()))
         image.close.assert_awaited_once()
-
-    def test_heap_reclamation_is_opt_in(self):
-        with patch.dict("os.environ", {"AI_TRIM_HEAP_AFTER_INFERENCE": "false"}):
-            with patch("app.memory_reclaim._malloc_trim") as stub:
-                self.assertFalse(trim_unused_heap_if_enabled())
-                stub.assert_not_called()
-
-    def test_heap_reclamation_only_calls_native_trim_when_enabled(self):
-        calls = []
-        with patch.dict("os.environ", {"AI_TRIM_HEAP_AFTER_INFERENCE": "true"}):
-            with patch("app.memory_reclaim._malloc_trim", return_value=lambda x: calls.append(x) or 1):
-                self.assertTrue(trim_unused_heap_if_enabled())
-        self.assertEqual([0], calls)
-
-    def test_heap_reclaim_failure_must_not_fail_analysis(self):
-        class FakeDamageAnalyzer:
-            def validate_image_quality(self, *, file_content, purpose):
-                return purpose
-        with patch.object(main, "_damage_analyzer", FakeDamageAnalyzer()):
-            with patch.dict("os.environ", {"AI_TRIM_HEAP_AFTER_INFERENCE": "true"}):
-                with patch("app.memory_reclaim._malloc_trim", return_value=lambda _: 1 / 0):
-                    with self.assertLogs("app.memory_reclaim", level="WARNING"):
-                        self.assertEqual("context", main.run_damage_operation(
-                            "validate_image_quality", file_content=b"jpeg", purpose="context"
-                        ))
-
-    def test_inference_exception_survives_heap_cleanup(self):
-        class FailingDamageAnalyzer:
-            def analyze(self, *, file_content, filename):
-                raise ValueError("synthetic model failure")
-        with patch.object(main, "_damage_analyzer", FailingDamageAnalyzer()):
-            with patch("main.trim_unused_heap_if_enabled") as trim:
-                with self.assertRaisesRegex(ValueError, "synthetic model failure"):
-                    main.run_damage_operation("analyze", file_content=b"x", filename="a.jpg")
-                trim.assert_called_once_with()
-
-    def test_run_operation_releases_native_heap_after_return(self):
-        class FakeDamageAnalyzer:
-            def validate_image_quality(self, *, file_content, purpose):
-                return purpose
-        with patch.object(main, "_damage_analyzer", FakeDamageAnalyzer()):
-            with patch("main.trim_unused_heap_if_enabled") as reclaim:
-                output = main.run_damage_operation(
-                    "validate_image_quality", file_content=b"jpeg", purpose="context"
-                )
-                self.assertEqual("context", output)
-                reclaim.assert_called_once_with()
 
     def test_embedding_first_load_is_singleton_across_threads(self):
         constructed = []

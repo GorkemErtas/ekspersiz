@@ -40,7 +40,7 @@ jobs:
 
   real-inference-smoke:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -52,61 +52,14 @@ jobs:
           python -m pip install "fastapi==0.139.2" "pydantic==2.13.4" "python-multipart==0.0.32" "numpy==2.5.1" "pillow==12.3.0" "ultralytics==8.4.106" "opencv-python-headless==4.13.0.92"
           python -m pip uninstall -y opencv-python || true
           python -m pip install --force-reinstall --no-deps "opencv-python-headless==4.13.0.92"
-      - name: Benchmark normal inference without memory trim
+      - name: Exercise YOLO checkpoints with synthetic image (single smoke)
         env:
           PYTHONPATH: ai-service
           YOLO_CONFIG_DIR: /tmp/ultralytics
           OMP_NUM_THREADS: "2"
           MKL_NUM_THREADS: "2"
           OPENBLAS_NUM_THREADS: "2"
-          AI_TRIM_HEAP_AFTER_INFERENCE: "false"
-        run: |
-          for i in 1 2 3; do
-            python ai-service/scripts/measure_runtime_memory.py | tee "/tmp/ai-no-trim-$i.log"
-          done
-      - name: Benchmark identical inference with memory trim enabled
-        env:
-          PYTHONPATH: ai-service
-          YOLO_CONFIG_DIR: /tmp/ultralytics
-          OMP_NUM_THREADS: "2"
-          MKL_NUM_THREADS: "2"
-          OPENBLAS_NUM_THREADS: "2"
-          AI_TRIM_HEAP_AFTER_INFERENCE: "true"
-        run: |
-          for i in 1 2 3; do
-            python ai-service/scripts/measure_runtime_memory.py | tee "/tmp/ai-with-trim-$i.log"
-          done
-      - name: Compare response equivalence, retained RSS and cold latency
-        run: |
-          python - <<'PY'
-          import json
-          def load(path):
-              lines = open(path, encoding="utf-8").readlines()
-              return json.loads(next(x.removeprefix("MEMORY_SMOKE_RESULT=") for x in lines if x.startswith("MEMORY_SMOKE_RESULT=")))
-          from statistics import median
-          baselines = [load(f"/tmp/ai-no-trim-{i}.log") for i in (1, 2, 3)]
-          optimized_runs = [load(f"/tmp/ai-with-trim-{i}.log") for i in (1, 2, 3)]
-          for i, (base, optim) in enumerate(zip(baselines, optimized_runs), 1):
-              print(f"Pair {i}: off peak={base['peak_rss_mib']} MiB, after={base['rss_after_large_mib']} MiB; on peak={optim['peak_rss_mib']} MiB, after={optim['rss_after_large_mib']} MiB")
-              print(f"Pair {i}: off batch RSS={base['rss_after_each_batch_mib']}; on batch RSS={optim['rss_after_each_batch_mib']}")
-              assert base["image_quality_code"] == optim["image_quality_code"]
-              assert base["large_quality_codes"] == optim["large_quality_codes"]
-              assert base["detections"] == optim["detections"], "Model detections changed"
-              assert base["trim_feature_enabled"] is False
-              assert optim["trim_feature_enabled"] is True
-          off_rss = median(x["rss_after_large_mib"] for x in baselines)
-          on_rss = median(x["rss_after_large_mib"] for x in optimized_runs)
-          off_p95_like = median(max(x["large_validation_seconds"]) for x in baselines)
-          on_p95_like = median(max(x["large_validation_seconds"]) for x in optimized_runs)
-          off_median_latency = median(median(x["large_validation_seconds"]) for x in baselines)
-          on_median_latency = median(median(x["large_validation_seconds"]) for x in optimized_runs)
-          print(f"MEDIAN_RETAINED_RSS: off={off_rss:.1f} MiB, on={on_rss:.1f} MiB, delta={off_rss - on_rss:.1f} MiB")
-          print(f"MEDIAN_IMAGE_LATENCY_SECONDS: off={off_median_latency:.3f}, on={on_median_latency:.3f}")
-          print(f"MAX_IMAGE_LATENCY_SECONDS median across runs: off={off_p95_like:.3f}, on={on_p95_like:.3f}")
-          assert off_rss - on_rss >= 20.0, "Less than 20 MiB median retention improvement; revisit experiment"
-          assert on_median_latency <= max(off_median_latency * 1.5, off_median_latency + 0.2), "Median validation latency regressed substantially"
-          PY
-
+        run: python ai-service/scripts/measure_runtime_memory.py
       - name: Install remaining AI runtime dependencies for full test suite
         run: |
           python -m pip install --disable-pip-version-check \

@@ -202,7 +202,7 @@ class DamageAnalyzer:
                 message="Fotoğraf çok karanlık. Daha aydınlık bir ortamda tekrar çekin.",
             )
 
-        blur_score = float(cv2.Laplacian(grayscale, cv2.CV_32F).var())
+        blur_score = float(cv2.Laplacian(grayscale, cv2.CV_64F).var())
         if blur_score < self.minimum_blur_score:
             return ImageQualityResponse(
                 suitable=False,

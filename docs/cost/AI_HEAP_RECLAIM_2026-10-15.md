@@ -1,6 +1,6 @@
 # Opt-in native heap reclamation after AI requests
 
-> **Status update (2026-10-15):** This was originally a PR #9 design/verification record. PR [#9](https://github.com/GorkemErtas/ekspersiz/pull/9) was merged as a normal merge commit and the code was deployed in Railway. `AI_TRIM_HEAP_AFTER_INFERENCE` is **not set** on the AI service and thus remains **false** by default. The experimental `malloc_trim(0)` behavior has **not** been enabled in production. For current rollout decisions and optimization summary, see [OPTIMIZATIONS.md](OPTIMIZATIONS.md).
+> **Historical experiment; not current behavior.** PR [#9](https://github.com/GorkemErtas/ekspersiz/pull/9) merged the opt-in heap reclamation code, but the flag was **never enabled** in Railway. A subsequent code audit removed the unused feature and associated runtime hook. The experiment results below remain for historical reference. See [OPTIMIZATIONS.md](OPTIMIZATIONS.md) for current decisions.
 
 ## Why
 

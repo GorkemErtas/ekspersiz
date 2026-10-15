@@ -97,7 +97,7 @@ Ayrıntılar: [AI Asistan mimarisi](docs/ai-assistant/ARCHITECTURE.md).
 | Sunucu taraflı kota ve rezervasyon | Kontrolsüz kullanım ve eşzamanlı kota aşımını sınırlar. |
 | Ayrı Spring Boot / FastAPI servisleri | İş yükleri bağımsız yönetilebilir; artan trafikte AI çıkarımı için ayrı worker/altyapı gerekebilir. |
 
-**Uygulanan optimizasyonlar (Ekim 2026):** AI modellerinin ihtiyaç anında ve tek sefer yüklenmesi, eşzamanlı çıkarımın sınırlanması, görüntü bellek tahsislerinin azaltılması, JVM heap ve HikariCP havuzu sınırları. Linux heap temizleme seçeneği kodda bulunur ancak **üretimde kapalıdır**. Başlangıç Railway maliyet dökümü, testler, performans ödünleşimleri ve geçerli ayarlar için [optimizasyon kayıtları](docs/cost/OPTIMIZATIONS.md) belgesine bakın. Bu çalışmalar için doğrulanmış aylık tasarruf oranı iddia edilmez.
+**Uygulanan optimizasyonlar (Ekim 2026):** YOLO ve embedding modellerinin ihtiyaç anında tek sefer yüklenmesi, eşzamanlı görüntü çıkarımının sınırlandırılması, dosya okuma ve gereksiz görüntü kopyalarının azaltılması, JVM heap sınırlandırması. Ölçülmüş fayda sağlamayan Hikari havuzu daraltması ve varsayılanı kapalı Linux heap temizleme kodu geri alındı; fotoğraf netliği hesaplamasında önceki hassasiyet korundu. Ayrıntılar için [optimizasyon kayıtları](docs/cost/OPTIMIZATIONS.md). Doğrulanmış aylık tasarruf oranı iddia edilmez.
 
 ## Teknolojiler
 
