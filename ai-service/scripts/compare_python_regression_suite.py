@@ -1,7 +1,8 @@
 """Compare all Python test results with production master, never hiding regressions.
 
 The baseline may contain known failures; each original test must retain its
-outcome on this PR. Any new failure/error or missing baseline test fails CI.
+outcome on this PR. Removed heap-trim-only tests are explicitly allowlisted;
+any other missing test or new failure/error fails CI.
 """
 import argparse
 import os
@@ -9,6 +10,16 @@ from pathlib import Path
 import re
 import subprocess
 import sys
+
+# These five tests exclusively exercised the opt-in native heap feature that
+# was never enabled in production and is intentionally removed in this PR.
+REMOVED_HEAP_TRIM_TESTS = frozenset({
+    "test_heap_reclamation_is_opt_in",
+    "test_heap_reclamation_only_calls_native_trim_when_enabled",
+    "test_heap_reclaim_failure_must_not_fail_analysis",
+    "test_inference_exception_survives_heap_cleanup",
+    "test_run_operation_releases_native_heap_after_return",
+})
 
 RESULT_PATTERN = re.compile(
     r"^(test_\w+ \([^\n]+\)) \.\.\. (ok|FAIL|ERROR|skipped .+)$",
@@ -51,12 +62,19 @@ def main():
     current, current_exit = test_results(current_root, "pr")
 
     missing = sorted(set(baseline) - set(current))
+    allowed_missing = sorted(name for name in missing
+                             if name.split(" ", 1)[0] in REMOVED_HEAP_TRIM_TESTS)
+    unexpected_missing = sorted(set(missing) - set(allowed_missing))
+    expected_test_names = {name.split(" ", 1)[0] for name in allowed_missing}
+    if expected_test_names != REMOVED_HEAP_TRIM_TESTS:
+        raise SystemExit(f"Expected removed heap-only tests not all found: {expected_test_names}")
+    print(f"Intentionally removed heap-only tests: {allowed_missing}")
     changed = [(name, outcome, current.get(name)) for name, outcome in baseline.items()
                if current.get(name) != outcome and name not in missing]
     new_bad = [(name, outcome) for name, outcome in current.items()
                if name not in baseline and outcome in ("FAIL", "ERROR")]
-    if missing or changed or new_bad:
-        print(f"REGRESSIONS missing={missing} changed={changed} new_bad={new_bad}")
+    if unexpected_missing or changed or new_bad:
+        print(f"REGRESSIONS missing={unexpected_missing} changed={changed} new_bad={new_bad}")
         raise SystemExit(1)
     if current_exit != baseline_exit:
         raise SystemExit("Unexpected change in complete suite exit status")
