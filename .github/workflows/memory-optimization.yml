@@ -51,7 +51,7 @@ jobs:
           python -m pip install "torch==2.13.0+cpu" "torchvision==0.28.0+cpu" --index-url https://download.pytorch.org/whl/cpu
           python -m pip install "fastapi==0.139.2" "pydantic==2.13.4" "python-multipart==0.0.32" "numpy==2.5.1" "pillow==12.3.0" "ultralytics==8.4.106" "opencv-python-headless==4.13.0.92"
           python -m pip uninstall -y opencv-python || true
-          python -m pip install "opencv-python-headless==4.13.0.92"
+          python -m pip install --force-reinstall --no-deps "opencv-python-headless==4.13.0.92"
       - name: Cold-load production checkpoints, measure RSS and infer
         env:
           PYTHONPATH: ai-service

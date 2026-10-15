@@ -14,6 +14,8 @@ assert "torch" not in sys.modules, "PyTorch loaded on assistant/health startup"
 assert "ultralytics" not in sys.modules, "YOLO loaded on assistant/health startup"
 assert main.health_check()["status"] == "UP"
 
+import cv2
+assert hasattr(cv2, "imshow"), "OpenCV binary namespace is incomplete"
 import numpy as np
 from PIL import Image
 
