@@ -36,4 +36,4 @@ jobs:
           java-version: "21"
           cache: maven
       - name: Run backend tests
-        run: ./mvnw -B test
+        run: chmod +x ./mvnw && ./mvnw -B test
