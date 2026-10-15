@@ -2,13 +2,13 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
+# Keep CPU inference thread pools bounded on small Railway instances.
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     YOLO_CONFIG_DIR=/tmp/Ultralytics \
     HF_HOME=/app/.cache/huggingface \
     ASSISTANT_EMBEDDING_MODEL=intfloat/multilingual-e5-small \
     ASSISTANT_EMBEDDING_LOCAL_ONLY=true \
-    # Keep CPU inference thread pools bounded on small Railway instances.
     OMP_NUM_THREADS=2 \
     MKL_NUM_THREADS=2 \
     OPENBLAS_NUM_THREADS=2 \
