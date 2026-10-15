@@ -110,9 +110,18 @@ class ResourceLifecycleTest(unittest.TestCase):
         calls = []
         stub = types.ModuleType("torch")
         stub.set_num_threads = calls.append
-        with patch.dict(sys.modules, {"torch": stub}):
+        utils = types.ModuleType("ultralytics.utils")
+        utils.torch_utils = types.SimpleNamespace(NUM_THREADS=3)
+        ultralytics = types.ModuleType("ultralytics")
+        ultralytics.utils = utils
+        with patch.dict(sys.modules, {
+            "torch": stub,
+            "ultralytics": ultralytics,
+            "ultralytics.utils": utils,
+        }):
             with patch.dict("os.environ", {"AI_TORCH_NUM_THREADS": "2"}):
                 self.assertEqual(2, configure_torch_cpu_threads())
+                self.assertEqual(2, utils.torch_utils.NUM_THREADS)
             with patch.dict("os.environ", {"AI_TORCH_NUM_THREADS": "0"}):
                 self.assertEqual(0, configure_torch_cpu_threads())
         self.assertEqual([2], calls)

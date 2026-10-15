@@ -18,5 +18,11 @@ def configure_torch_cpu_threads() -> int:
     count = parse_cpu_thread_limit(os.getenv("AI_TORCH_NUM_THREADS", "2"))
     if count:
         import torch
+        from ultralytics.utils import torch_utils
+
+        # Ultralytics select_device() resets torch thread count to its
+        # imported NUM_THREADS constant during first predictor setup.
+        # Keep its CPU inference setting aligned with our configured cap.
+        torch_utils.NUM_THREADS = count
         torch.set_num_threads(count)
     return count
