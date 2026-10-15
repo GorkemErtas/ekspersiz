@@ -18,8 +18,10 @@ RUN pip install --no-cache-dir \
 
 RUN pip install --no-cache-dir -r requirements-runtime.txt
 
+# Reinstall rather than relying on an already-present headless wheel:
+# uninstalling opencv-python can remove shared cv2 files.
 RUN pip uninstall -y opencv-python && \
-    pip install --no-cache-dir opencv-python-headless==4.13.0.92
+    pip install --no-cache-dir --force-reinstall --no-deps opencv-python-headless==4.13.0.92
 
 # Bake the pinned embedding model into the image. Production never depends on
 # a Hugging Face download during startup or the first assistant request.

@@ -1,0 +1,62 @@
+name: Memory optimization checks
+
+on:
+  pull_request:
+    paths:
+      - "ai-service/**"
+      - "Dockerfile"
+      - "src/main/resources/application.properties"
+      - ".github/workflows/memory-optimization.yml"
+  workflow_dispatch:
+
+jobs:
+  ai-memory-regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install lightweight API test dependencies
+        run: python -m pip install "fastapi==0.139.2" "pydantic==2.13.4" "python-multipart==0.0.32"
+      - name: Compile Python modules
+        run: python -m compileall -q ai-service/app ai-service/main.py ai-service/tests
+      - name: Run focused memory lifecycle tests
+        env:
+          PYTHONPATH: ai-service
+        run: python -m unittest discover -s ai-service/tests -p "test_resource_lifecycle.py" -v
+
+  backend-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+      - name: Run backend tests
+        run: chmod +x ./mvnw && ./mvnw -B test
+
+  real-inference-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install CPU runtime dependencies
+        run: |
+          python -m pip install "torch==2.13.0+cpu" "torchvision==0.28.0+cpu" --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install "fastapi==0.139.2" "pydantic==2.13.4" "python-multipart==0.0.32" "numpy==2.5.1" "pillow==12.3.0" "ultralytics==8.4.106" "opencv-python-headless==4.13.0.92"
+          python -m pip uninstall -y opencv-python || true
+          python -m pip install --force-reinstall --no-deps "opencv-python-headless==4.13.0.92"
+      - name: Cold-load production checkpoints, measure RSS and infer
+        env:
+          PYTHONPATH: ai-service
+          YOLO_CONFIG_DIR: /tmp/ultralytics
+          OMP_NUM_THREADS: "2"
+          MKL_NUM_THREADS: "2"
+          OPENBLAS_NUM_THREADS: "2"
+        run: python ai-service/scripts/measure_runtime_memory.py

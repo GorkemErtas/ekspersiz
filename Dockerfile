@@ -16,6 +16,10 @@ FROM eclipse-temurin:21-jre
 
 WORKDIR /app
 
+# Tunable Railway-safe heap bounds. Total process RSS also includes native memory.
+# Override JAVA_TOOL_OPTIONS in Railway if profiling or load tests require it.
+ENV JAVA_TOOL_OPTIONS="-Xms128m -Xmx768m"
+
 RUN groupadd --system ekspersiz && \
     useradd --system --gid ekspersiz --home-dir /app --no-create-home ekspersiz && \
     mkdir -p /data/uploads && \

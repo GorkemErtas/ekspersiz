@@ -1,6 +1,8 @@
 import logging
 import os
+from threading import Lock
 
+from fastapi.concurrency import run_in_threadpool
 from fastapi import (
     FastAPI,
     File,
@@ -10,7 +12,6 @@ from fastapi import (
     UploadFile,
 )
 
-from app.damage_analyzer import DamageAnalyzer
 from app.schemas import DamageAnalysisResponse, ImageQualityResponse
 from app.assistant.api_schemas import AssistantPlanRequest, AssistantPlanResponse, RetrievedContext
 from app.assistant.domain_classifier import SemanticDomainClassifier
@@ -29,7 +30,38 @@ app = FastAPI(
     version="1.4.0",
 )
 
-damage_analyzer = DamageAnalyzer()
+# Keep assistant-only requests (and health checks) free of PyTorch/YOLO.
+# Models are initialized once on the first image endpoint request.
+_damage_analyzer = None
+_damage_analyzer_lock = Lock()
+# YOLO predictors are shared mutable objects; serialize inference to avoid
+# parallel PyTorch allocations and reduce peak RSS on a small CPU instance.
+_damage_inference_lock = Lock()
+
+
+def get_damage_analyzer():
+    global _damage_analyzer
+    if _damage_analyzer is None:
+        with _damage_analyzer_lock:
+            if _damage_analyzer is None:
+                from app.damage_analyzer import DamageAnalyzer
+                _damage_analyzer = DamageAnalyzer()
+    return _damage_analyzer
+
+
+def run_damage_operation(operation: str, **kwargs):
+    """Run CPU-heavy inference in a thread without blocking FastAPI's event loop."""
+    with _damage_inference_lock:
+        analyzer = get_damage_analyzer()
+        # Call sites pass only these explicit internal operations.
+        if operation == "analyze":
+            return analyzer.analyze(**kwargs)
+        if operation == "analyze_pair":
+            return analyzer.analyze_pair(**kwargs)
+        if operation == "validate_image_quality":
+            return analyzer.validate_image_quality(**kwargs)
+        raise ValueError("Unsupported damage operation")
+
 
 ALLOWED_CONTENT_TYPES = {
     "image/jpeg",
@@ -47,7 +79,7 @@ async def read_valid_image(image: UploadFile) -> bytes:
             detail="Only JPG, PNG and WEBP images are supported.",
         )
 
-    file_content = await image.read()
+    file_content = await image.read(MAX_IMAGE_SIZE_BYTES + 1)
     if not file_content:
         raise HTTPException(status_code=400, detail="Uploaded image cannot be empty.")
     if len(file_content) > MAX_IMAGE_SIZE_BYTES:
@@ -80,7 +112,9 @@ async def analyze_damage(
         file_content = await read_valid_image(image)
 
         if context_image is None:
-            return damage_analyzer.analyze(
+            return await run_in_threadpool(
+                run_damage_operation,
+                "analyze",
                 file_content=file_content,
                 filename=image.filename or "vehicle.jpg",
             )
@@ -97,7 +131,9 @@ async def analyze_damage(
                 detail="vehicle_region must be FRONT or REAR.",
             )
 
-        return damage_analyzer.analyze_pair(
+        return await run_in_threadpool(
+            run_damage_operation,
+            "analyze_pair",
             damage_file_content=file_content,
             context_file_content=context_file_content,
             filename=image.filename or "vehicle.jpg",
@@ -144,8 +180,10 @@ async def validate_image_quality(
 ) -> ImageQualityResponse:
     try:
         file_content = await read_valid_image(image)
-        return damage_analyzer.validate_image_quality(
-            file_content,
+        return await run_in_threadpool(
+            run_damage_operation,
+            "validate_image_quality",
+            file_content=file_content,
             purpose=purpose,
         )
     except HTTPException:
@@ -164,15 +202,22 @@ async def validate_image_quality(
 
 assistant_router = SemanticDomainClassifier()
 _assistant_retriever = None
+_assistant_retriever_lock = Lock()
 
 
 def get_assistant_retriever():
     global _assistant_retriever
     if _assistant_retriever is None:
-        database_url = os.getenv("DATABASE_URL")
-        if not database_url:
-            raise RuntimeError("DATABASE_URL is required for assistant RAG retrieval")
-        _assistant_retriever = SemanticRetriever(LocalMultilingualEmbedder(), PgVectorKnowledgeStore(database_url), AssistantSettings.from_env())
+        with _assistant_retriever_lock:
+            if _assistant_retriever is None:
+                database_url = os.getenv("DATABASE_URL")
+                if not database_url:
+                    raise RuntimeError("DATABASE_URL is required for assistant RAG retrieval")
+                _assistant_retriever = SemanticRetriever(
+                    LocalMultilingualEmbedder(),
+                    PgVectorKnowledgeStore(database_url),
+                    AssistantSettings.from_env(),
+                )
     return _assistant_retriever
 
 
