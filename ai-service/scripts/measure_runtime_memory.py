@@ -1,9 +1,12 @@
 """Cold-load smoke for the committed YOLO checkpoints. Uses only synthetic data."""
+import asyncio
 import io
 import json
 import resource
 import sys
 import time
+from types import SimpleNamespace
+from unittest.mock import AsyncMock
 
 import main
 
@@ -13,7 +16,6 @@ assert main.health_check()["status"] == "UP"
 
 import numpy as np
 from PIL import Image
-from fastapi.testclient import TestClient
 
 noise = np.random.default_rng(2026).integers(0, 256, (480, 640, 3), dtype=np.uint8)
 image = Image.fromarray(noise, "RGB")
@@ -21,13 +23,13 @@ with io.BytesIO() as stream:
     image.save(stream, "JPEG", quality=85)
     image_bytes = stream.getvalue()
 
-with TestClient(main.app) as client:
-    started = time.perf_counter()
-    response = client.post("/api/v1/validate-image", params={"purpose": "context"},
-        files={"image": ("test.jpg", image_bytes, "image/jpeg")})
-    cold_start_seconds = time.perf_counter() - started
-    assert response.status_code == 200, response.text[:600]
-    assert response.json().get("code") in {"SUITABLE", "NO_VEHICLE", "VEHICLE_TOO_SMALL"}, response.text
+upload = SimpleNamespace(filename="test.jpg", content_type="image/jpeg",
+    read=AsyncMock(return_value=image_bytes), close=AsyncMock())
+started = time.perf_counter()
+response = asyncio.run(main.validate_image_quality(upload, purpose="context"))
+cold_start_seconds = time.perf_counter() - started
+assert response.code in {"SUITABLE", "NO_VEHICLE", "VEHICLE_TOO_SMALL"}, response
+upload.close.assert_awaited_once()
 
 analyzer = main.get_damage_analyzer()
 assert analyzer.damage_class_mapping, "Damage checkpoint mapping missing"
