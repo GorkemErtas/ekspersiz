@@ -97,7 +97,7 @@ Ayrıntılar: [AI Asistan mimarisi](docs/ai-assistant/ARCHITECTURE.md).
 | Sunucu taraflı kota ve rezervasyon | Kontrolsüz kullanım ve eşzamanlı kota aşımını sınırlar. |
 | Ayrı Spring Boot / FastAPI servisleri | İş yükleri bağımsız yönetilebilir; artan trafikte AI çıkarımı için ayrı worker/altyapı gerekebilir. |
 
-**Not:** Bu kararlar maliyet ve kapasiteyi yönetmek için uygulanmıştır; ölçülmüş tasarruf yüzdesi, üretim throughput'u veya gecikme garantisi iddia edilmez.
+**Uygulanan optimizasyonlar (Ekim 2026):** AI modellerinin ihtiyaç anında ve tek sefer yüklenmesi, eşzamanlı çıkarımın sınırlanması, görüntü bellek tahsislerinin azaltılması, JVM heap ve HikariCP havuzu sınırları. Linux heap temizleme seçeneği kodda bulunur ancak **üretimde kapalıdır**. Başlangıç Railway maliyet dökümü, testler, performans ödünleşimleri ve geçerli ayarlar için [optimizasyon kayıtları](docs/cost/OPTIMIZATIONS.md) belgesine bakın. Bu çalışmalar için doğrulanmış aylık tasarruf oranı iddia edilmez.
 
 ## Teknolojiler
 
@@ -145,6 +145,7 @@ Yerel çalıştırma için backend ve AI servisinin ortam değişkenleri (`DATAB
 - [AI Asistan mimarisi](docs/ai-assistant/ARCHITECTURE.md) — yönlendirme, RAG, yetkili araçlar ve kota
 - [AI Asistan dağıtımı](docs/ai-assistant/DEPLOYMENT.md) — Docker, bilgi tabanı ingest ve readiness
 - [AI Asistan değerlendirme senaryoları](docs/ai-assistant/evaluation-v1.jsonl)
+- [Railway maliyet ve bellek optimizasyon kayıtları](docs/cost/OPTIMIZATIONS.md) — kararlar, deneyler, geçerli ayarlar ve izlenecek metrikler
 
 `src/` Spring Boot API'sini, `mobile/` Flutter istemcisini, `ai-service/` AI/ML servisini, `docs/` teknik belgeleri ve ekran görüntülerini içerir.
 
