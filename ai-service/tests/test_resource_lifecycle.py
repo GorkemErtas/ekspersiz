@@ -98,6 +98,28 @@ class ResourceLifecycleTest(unittest.TestCase):
             self.assertEqual("done", asyncio.run(exercise()))
         image.close.assert_awaited_once()
 
+    def test_duplicate_pair_is_rejected_before_yolo_initialization(self):
+        image = types.SimpleNamespace(
+            content_type="image/jpeg",
+            read=AsyncMock(return_value=b"identical-upload"),
+            close=AsyncMock(),
+        )
+        context = types.SimpleNamespace(
+            content_type="image/jpeg",
+            read=AsyncMock(return_value=b"identical-upload"),
+            close=AsyncMock(),
+        )
+        with patch.object(main, "_damage_analyzer", None), patch.object(
+            main, "run_damage_operation", side_effect=AssertionError(
+                "YOLO must not run for exact duplicates"
+            )
+        ):
+            result = asyncio.run(main.validate_image_pair(image, context))
+            self.assertEqual("DUPLICATE_IMAGE", result.code)
+            self.assertIsNone(main._damage_analyzer)
+        image.close.assert_awaited_once()
+        context.close.assert_awaited_once()
+
     def test_embedding_first_load_is_singleton_across_threads(self):
         constructed = []
 
