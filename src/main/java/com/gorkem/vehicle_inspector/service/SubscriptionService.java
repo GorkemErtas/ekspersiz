@@ -49,40 +49,14 @@ public class SubscriptionService {
         this.trialAccessRepository = null;
     }
 
-    public SubscriptionPlan getEffectivePlan(
-            User user
-    ) {
-        if (user.getSubscriptionPlan() == null) {
-            return trialPlan(user);
+    public SubscriptionPlan getEffectivePlan(User user) {
+        SubscriptionPlan plan = user.getSubscriptionPlan();
+        if (plan == null || plan == SubscriptionPlan.FREE) {
+            return SubscriptionPlan.FREE;
         }
-
-        if (user.getSubscriptionPlan()
-                == SubscriptionPlan.FREE) {
-
-            return trialPlan(user);
-        }
-
-        LocalDateTime expiresAt =
-                user.getSubscriptionExpiresAt();
-
-        if (expiresAt != null
-                && !expiresAt.isAfter(
-                LocalDateTime.now(clock)
-        )) {
-
-            return trialPlan(user);
-        }
-
-        return user.getSubscriptionPlan();
-    }
-
-    private SubscriptionPlan trialPlan(User user) {
-        if (trialAccessRepository == null || user.getId() == null) return SubscriptionPlan.FREE;
-        return trialAccessRepository.findByUserId(user.getId())
-                .filter(access -> access.getTrialExpiresAt() != null
-                        && access.getTrialExpiresAt().isAfter(LocalDateTime.now(clock)))
-                .map(access -> SubscriptionPlan.PLUS)
-                .orElse(SubscriptionPlan.FREE);
+        LocalDateTime expiresAt = user.getSubscriptionExpiresAt();
+        return expiresAt != null && !expiresAt.isAfter(LocalDateTime.now(clock))
+                ? SubscriptionPlan.FREE : plan;
     }
 
     public void validatePersonalMonthlyAnalysisLimit(
