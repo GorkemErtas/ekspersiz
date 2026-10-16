@@ -1,5 +1,6 @@
 import unittest
 from collections import OrderedDict
+from hashlib import sha256
 from io import BytesIO
 from unittest.mock import Mock, patch
 
@@ -60,6 +61,52 @@ class DamageAnalyzerResultTest(unittest.TestCase):
         self.analyzer.vehicle_model.predict.assert_called_once()
         self.analyzer.damage_model.predict.assert_called_once()
         verify.assert_called_once()
+
+    def test_pair_analysis_reuses_preflight_boxes_without_duplicate_yolo(self) -> None:
+        damage_bytes = BytesIO()
+        context_bytes = BytesIO()
+        Image.new("RGB", (180, 180), (165, 90, 70)).save(damage_bytes, "JPEG")
+        Image.new("RGB", (420, 280), (145, 95, 80)).save(context_bytes, "JPEG")
+        close = damage_bytes.getvalue()
+        context = context_bytes.getvalue()
+        vehicle = DetectedObject(
+            label="car", confidence=0.9,
+            boundingBox=BoundingBox(x1=20, y1=20, x2=400, y2=260),
+        )
+        damage = DetectedObject(
+            label="SCRATCH", confidence=0.91,
+            boundingBox=BoundingBox(x1=30, y1=30, x2=110, y2=90),
+        )
+        key = (sha256(close).digest(), sha256(context).digest())
+        self.analyzer._pair_validation_cache = OrderedDict({
+            key: (ImageQualityResponse(suitable=True,
+                 code="PAIR_REGION_MATCHED", message="Matched"),
+                 (damage,), (vehicle,))
+        })
+        self.analyzer.vehicle_model = Mock()
+        self.analyzer.damage_model = Mock()
+        self.analyzer.vehicle_part_model = Mock()
+        self.analyzer.damage_confidence_threshold = 0.25
+        self.analyzer.damage_iou_threshold = 0.45
+        self.analyzer.vehicle_confidence_threshold = 0.40
+        self.analyzer.vehicle_part_confidence_threshold = 0.25
+
+        with patch.object(
+            self.analyzer, "validate_image_pair",
+            return_value=ImageQualityResponse(
+                suitable=True, code="PAIR_REGION_MATCHED", message="Matched"
+            ),
+        ), patch.object(
+            self.analyzer, "_extract_detections", side_effect=[[], []]
+        ), patch.object(
+            self.analyzer, "_build_damage_response", return_value="checked"
+        ):
+            result = self.analyzer.analyze_pair(close, context, "damage.jpg")
+
+        self.assertEqual("checked", result)
+        self.analyzer.vehicle_model.predict.assert_not_called()
+        self.analyzer.damage_model.predict.assert_called_once()
+        self.analyzer.vehicle_part_model.predict.assert_called_once()
 
     def test_context_part_is_transferred_only_for_same_damage_type(self) -> None:
         close_scratch = DetectedObject(
