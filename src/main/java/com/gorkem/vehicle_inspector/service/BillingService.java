@@ -306,13 +306,13 @@ public class BillingService {
         plans.add(new BillingPlanResponse(
                 SubscriptionPlan.FREE,
                 "Ücretsiz",
-                "Araç takibi, ayda 1 hasar raporu ve günde 3 AI Asistan sorusu",
+                "Araç takibi, ayda 1 hasar raporu ve ayda 3 AI Asistan sorusu",
                 null,
                 null,
                 BigDecimal.ZERO,
                 "TRY",
                 false,
-                List.of("1 aktif araç", "Ayda 1 detaylı AI raporu", "Günde 3 AI Asistan sorusu")
+                List.of("1 aktif araç", "Ayda 1 detaylı AI raporu", "Ayda 3 AI Asistan sorusu")
         ));
 
         for (BillingProduct product : BillingProduct.values()) {
