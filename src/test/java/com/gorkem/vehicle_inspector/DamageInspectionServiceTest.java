@@ -92,6 +92,8 @@ class DamageInspectionServiceTest {
                 .thenReturn(Path.of("context-image.jpg"));
         lenient().when(ai.validateImage(any(), anyString())).thenReturn(
                 new ImageQualityResponse(true, "SUITABLE", "Fotoğraf analiz için uygun."));
+        lenient().when(ai.validatePair(any(), any())).thenReturn(
+                new ImageQualityResponse(true, "PAIR_REGION_MATCHED", "Fotoğraflar eşleşiyor."));
 
         service = new DamageInspectionService(inspections, vehicles, context,
                 new InspectionAccessService(inspections, context), businesses, users, CLOCK,
@@ -452,6 +454,36 @@ class DamageInspectionServiceTest {
         assertEquals(InspectionStatus.FAILED, result.getStatus());
         assertTrue(result.getAnalysisMessage().contains("çelişen analiz verisi"));
         verifyNoInteractions(reports);
+    }
+
+    @Test
+    void unmatchedPhotoPairDoesNotStartAnalysisOrConsumeQuota() {
+        when(ai.validatePair(any(), any())).thenReturn(
+                new ImageQualityResponse(false, "INSUFFICIENT_VISUAL_OVERLAP",
+                        "Fotoğraflarda aynı hasar bölgesi doğrulanamadı.")
+        );
+
+        UnsuitableInspectionImageException error = assertThrows(
+                UnsuitableInspectionImageException.class,
+                () -> service.analyzeInspection(30L, actor.getEmail(), true, "FRONT")
+        );
+
+        assertTrue(error.getMessage().contains("doğrulanamadı"));
+        assertEquals(InspectionStatus.PENDING, inspection.getStatus());
+        assertNull(inspection.getAnalysisStartedAt());
+        verify(ai, never()).analyze(any(), any(), any());
+        verify(inspections, never()).save(any());
+        verifyNoInteractions(analysisUsageRepository, reports);
+    }
+
+    @Test
+    void validPhotoPairAllowsAnalysisToProceed() {
+        successfulAnalysis();
+        assertEquals(InspectionStatus.COMPLETED,
+                service.analyzeInspection(30L, actor.getEmail(), true, "FRONT")
+                        .getStatus());
+        verify(ai).validatePair(Path.of("image.jpg"), Path.of("context-image.jpg"));
+        verify(ai).analyze(Path.of("image.jpg"), Path.of("context-image.jpg"), "FRONT");
     }
 
     @Test
