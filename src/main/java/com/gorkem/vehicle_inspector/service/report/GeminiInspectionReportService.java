@@ -98,7 +98,7 @@ public class GeminiInspectionReportService {
         }
     }
 
-    private InspectionPriceEstimateResult validatePrice(
+    static InspectionPriceEstimateResult validatePrice(
             InspectionPriceEstimateResult result
     ) {
         if (result == null || result.estimatedMinimumPrice() == null
