@@ -1,4 +1,6 @@
 from io import BytesIO
+from collections import OrderedDict
+from hashlib import sha256
 from pathlib import Path
 import logging
 import re
@@ -178,6 +180,10 @@ class DamageAnalyzer:
         self.vehicle_part_model = YOLO(
             str(self.vehicle_part_model_path)
         )
+
+        # Store only hashes and tiny decisions; never cache uploaded image bytes.
+        # Thread safety is provided by the serialized inference dispatcher.
+        self._pair_validation_cache = OrderedDict()
 
     def validate_image_quality(
             self,
@@ -424,6 +430,15 @@ class DamageAnalyzer:
                 ),
             )
 
+        cache_key = (
+            sha256(damage_file_content).digest(),
+            sha256(context_file_content).digest(),
+        )
+        cache = self._pair_validation_cache
+        if cache_key in cache:
+            cache.move_to_end(cache_key)
+            return cache[cache_key]
+
         damage_image = self._load_image(damage_file_content)
         context_image = self._load_image(context_file_content)
 
@@ -462,9 +477,13 @@ class DamageAnalyzer:
              d.boundingBox.x2, d.boundingBox.y2)
             for d in detected
         ]
-        return ImagePairVerifier().verify(
+        result = ImagePairVerifier().verify(
             damage_image, vehicle_crop, damage_boxes=boxes,
         )
+        cache[cache_key] = result
+        if len(cache) > 64:
+            cache.popitem(last=False)
+        return result
 
     def analyze_pair(
             self,
