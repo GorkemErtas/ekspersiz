@@ -235,13 +235,8 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
     final dateLabel = endsAt == null
         ? null
         : '${endsAt.day.toString().padLeft(2, '0')}.${endsAt.month.toString().padLeft(2, '0')}.${endsAt.year}';
-    final isTrial = status.currentPlan == 'PLUS' && status.productId == null;
-    final cancelled = !isTrial && (status.status == 'CANCELLED' || !status.autoRenewing);
-    final message = isTrial
-        ? (dateLabel == null
-            ? '7 günlük ücretsiz Plus denemeniz aktif. Otomatik ücretlendirme yapılmaz.'
-            : 'Ücretsiz Plus denemeniz $dateLabel tarihine kadar aktif. Sonrasında ücretsiz plana dönersiniz; ücret alınmaz.')
-        : cancelled
+    final cancelled = status.status == 'CANCELLED' || !status.autoRenewing;
+    final message = cancelled
         ? (dateLabel == null
             ? 'Aboneliğiniz iptal edildi. Mevcut haklarınız ödenmiş dönem sonuna kadar devam eder.'
             : 'Aboneliğiniz iptal edildi. Haklarınız $dateLabel tarihine kadar devam eder.')
@@ -261,7 +256,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(
-            isTrial ? Icons.card_giftcard_outlined : cancelled ? Icons.event_available_outlined : Icons.autorenew_rounded,
+            cancelled ? Icons.event_available_outlined : Icons.autorenew_rounded,
             color: theme.colorScheme.primary,
           ),
           const SizedBox(width: 10),
@@ -270,7 +265,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 AppText(message),
-                if (!cancelled && !isTrial) ...[
+                if (!cancelled) ...[
                   const SizedBox(height: 12),
                   OutlinedButton.icon(
                     onPressed: () => _manageSubscription(status),
@@ -337,7 +332,9 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
                     AppText(
                       _isBusiness
                           ? 'Business aylık analiz kotası'
-                          : 'Aylık analiz kotanız',
+                          : _quota!.plan == 'FREE'
+                              ? 'Ücretsiz başlangıç haklarınız'
+                              : 'Aylık analiz kotanız',
                       style:
                           theme.textTheme.titleMedium?.copyWith(
                                 fontWeight: FontWeight.w900,
@@ -347,7 +344,9 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
                     AppText(
                       _isBusiness
                           ? '${_quota!.remaining} / ${_quota!.limit} şirket analizi kaldı'
-                          : 'Bu ay ${_quota!.freeRemaining} / ${_quota!.limit} analiz hakkı kaldı',
+                          : _quota!.plan == 'FREE'
+                              ? 'Kalan: ${_quota!.freeRemaining} / ${_quota!.limit} hasar analizi. Haklar yenilenmez.'
+                              : 'Bu ay ${_quota!.freeRemaining} / ${_quota!.limit} analiz hakkı kaldı',
                       style:
                           theme.textTheme.bodyMedium?.copyWith(
                                 color:
@@ -382,9 +381,12 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
               const SizedBox(width: 9),
               Expanded(
                 child: AppText(
-                  'Temel görsel hasar tespiti ücretsizdir. '
-                  'Detaylı rapor; AI açıklaması, onarım önerileri '
-                  've tahmini maliyet aralığını içerir.',
+                  _quota!.plan == 'FREE'
+                      ? 'Yeni hesaplara 2 hasar analizi ve 3 AI Asistan sorusu '
+                        'tanımlanır. Bu haklar bir defaya mahsustur; '
+                        'tükendiğinde abonelik planlarından devam edebilirsiniz.'
+                      : 'Detaylı rapor; AI açıklaması, onarım önerileri '
+                        've tahmini maliyet aralığını içerir.',
                   style:
                       theme.textTheme.bodySmall?.copyWith(
                             color:
