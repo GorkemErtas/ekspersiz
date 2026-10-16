@@ -2,6 +2,7 @@ package com.gorkem.vehicle_inspector.config;
 
 import com.gorkem.vehicle_inspector.security.JwtAuthenticationFilter;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.http.HttpMethod;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -95,6 +96,11 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests(auth ->
                         auth
+                                // A narrowly scoped machine-to-machine endpoint.
+                                // The controller independently validates its shared secret.
+                                .requestMatchers(HttpMethod.POST,
+                                        "/api/v1/internal/reminders/execute")
+                                .permitAll()
                                 .requestMatchers(
                                         "/api/v1/health",
                                         "/api/v1/app/version",
