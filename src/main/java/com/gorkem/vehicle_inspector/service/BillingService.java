@@ -285,35 +285,25 @@ public class BillingService {
                 .orElse(null);
         SubscriptionPlan effectivePlan =
                 subscriptionService.getEffectivePlan(user);
-        boolean trialActive = effectivePlan == SubscriptionPlan.PLUS
-                && (user.getSubscriptionPlan() == SubscriptionPlan.FREE
-                    || user.getSubscriptionPlan() == null
-                    || (user.getSubscriptionExpiresAt() != null
-                        && !user.getSubscriptionExpiresAt().isAfter(LocalDateTime.now(clock))));
-        LocalDateTime trialEndsAt = trialActive && trialAccessRepository != null
-                ? trialAccessRepository.findByUserId(user.getId())
-                    .map(AiAssistantAccess::getTrialExpiresAt).orElse(null)
-                : null;
-        BillingSubscriptionStatus effectiveStatus =
-                trialActive ? BillingSubscriptionStatus.ACTIVE : billingSubscription == null
-                        ? BillingSubscriptionStatus.NONE
-                        : effectivePlan == SubscriptionPlan.FREE
-                        ? BillingSubscriptionStatus.EXPIRED
-                        : billingSubscription.getStatus();
+        BillingSubscriptionStatus effectiveStatus = billingSubscription == null
+                ? BillingSubscriptionStatus.NONE
+                : effectivePlan == SubscriptionPlan.FREE
+                    ? BillingSubscriptionStatus.EXPIRED
+                    : billingSubscription.getStatus();
 
         BillingStatusResponse status = new BillingStatusResponse(
                 user.ensureBillingCustomerId(),
                 effectivePlan,
                 effectiveStatus,
-                trialActive ? null : billingSubscription == null
+                billingSubscription == null
                         ? null
                         : billingSubscription.getProductId(),
-                !trialActive && effectivePlan != SubscriptionPlan.FREE
+                effectivePlan != SubscriptionPlan.FREE
                         && billingSubscription != null
                         && billingSubscription.isAutoRenewing(),
                 billingSubscription != null
                         && billingSubscription.isSandbox(),
-                trialActive ? trialEndsAt : billingSubscription == null
+                billingSubscription == null
                         ? user.getSubscriptionExpiresAt()
                         : billingSubscription.getCurrentPeriodEndsAt(),
                 trialActive ? null : billingSubscription == null
@@ -332,13 +322,13 @@ public class BillingService {
         plans.add(new BillingPlanResponse(
                 SubscriptionPlan.FREE,
                 "Ücretsiz",
-                "Araç takibi ve temel AI hasar tespiti ücretsiz",
+                "Yeni hesaplara bir kez 2 AI hasar analizi ve 3 AI Asistan sorusu",
                 null,
                 null,
                 BigDecimal.ZERO,
                 "TRY",
                 false,
-                List.of("1 aktif araç", "Temel AI hasar tespiti ücretsiz", "Ayda 1 detaylı AI raporu ücretsiz")
+                List.of("1 aktif araç", "Yeni hesaplara toplam 2 hasar analizi", "Yeni hesaplara toplam 3 AI Asistan sorusu", "Haklar aylık yenilenmez")
         ));
 
         for (BillingProduct product : BillingProduct.values()) {
