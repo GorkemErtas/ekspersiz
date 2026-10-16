@@ -8,6 +8,7 @@ import com.google.genai.types.GenerateContentResponse;
 import com.google.genai.types.Schema;
 import com.google.genai.types.Type;
 import com.gorkem.vehicle_inspector.dto.llm.InspectionLlmRequest;
+import com.gorkem.vehicle_inspector.dto.llm.InspectionPriceEstimateResult;
 import com.gorkem.vehicle_inspector.dto.llm.LlmInspectionReportResult;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -26,281 +27,113 @@ public class GeminiInspectionReportService {
     public GeminiInspectionReportService(
             Client geminiClient,
             ObjectMapper objectMapper,
-            @Value("${application.gemini.model}")
-            String model
+            @Value("${application.gemini.model}") String model
     ) {
         this.geminiClient = geminiClient;
         this.objectMapper = objectMapper;
         this.model = model;
     }
 
-    public LlmInspectionReportResult generateReport(
-            InspectionLlmRequest request
-    ) {
+    /**
+     * Gemini estimates ONLY repair prices and pricing explanations.
+     * Narrative/title/disclaimer are generated locally from the ML results.
+     * Keep the same public result/persistence contract for existing clients.
+     */
+    public LlmInspectionReportResult generateReport(InspectionLlmRequest request) {
         if (request == null) {
-            throw new IllegalArgumentException(
-                    "Rapor isteği boş olamaz."
-            );
+            throw new IllegalArgumentException("Rapor isteği boş olamaz.");
         }
 
-        String prompt =
-                InspectionReportPromptBuilder.build(
-                        request
-                );
-
-        GenerateContentConfig config =
-                GenerateContentConfig.builder()
-                        .responseMimeType(
-                                "application/json"
-                        )
-                        .responseSchema(
-                                createResponseSchema()
-                        )
-                        .candidateCount(1)
-                        .build();
+        String prompt = InspectionReportPromptBuilder.build(request);
+        GenerateContentConfig config = GenerateContentConfig.builder()
+                .responseMimeType("application/json")
+                .responseSchema(createResponseSchema())
+                .candidateCount(1)
+                .build();
 
         GenerateContentResponse response =
-                geminiClient.models.generateContent(
-                        model,
-                        prompt,
-                        config
-                );
-
-        if (response == null) {
-            throw new IllegalStateException(
-                    "Gemini yanıt döndürmedi."
-            );
+                geminiClient.models.generateContent(model, prompt, config);
+        if (response == null || response.text() == null || response.text().isBlank()) {
+            throw new IllegalStateException("Gemini boş fiyat tahmini döndürdü.");
         }
 
-        String responseText =
-                response.text();
-
-        if (responseText == null
-                || responseText.isBlank()) {
-
-            throw new IllegalStateException(
-                    "Gemini boş rapor döndürdü."
-            );
-        }
-
-        LlmInspectionReportResult result =
-                parseResponse(
-                        responseText
-                );
-
-        validateResult(
-                result
+        InspectionPriceEstimateResult price = validatePrice(
+                parsePriceResponse(response.text())
         );
-
-        return result;
+        return InspectionReportNarrativeBuilder.build(request, price);
     }
 
     private Schema createResponseSchema() {
-
         return Schema.builder()
                 .type(Type.Known.OBJECT)
-                .properties(
-                        Map.of(
-                                "title",
-                                Schema.builder()
-                                        .type(Type.Known.STRING)
-                                        .build(),
-
-                                "summary",
-                                Schema.builder()
-                                        .type(Type.Known.STRING)
-                                        .build(),
-
-                                "damageDescription",
-                                Schema.builder()
-                                        .type(Type.Known.STRING)
-                                        .build(),
-
-                                "repairRecommendation",
-                                Schema.builder()
-                                        .type(Type.Known.STRING)
-                                        .build(),
-
-                                "estimatedMinimumPrice",
-                                Schema.builder()
-                                        .type(Type.Known.NUMBER)
-                                        .build(),
-
-                                "estimatedMaximumPrice",
-                                Schema.builder()
-                                        .type(Type.Known.NUMBER)
-                                        .build(),
-
-                                "currency",
-                                Schema.builder()
-                                        .type(Type.Known.STRING)
-                                        .enum_(
-                                                List.of(
-                                                        "TRY"
-                                                )
-                                        )
-                                        .build(),
-
-                                "priceInformation",
-                                Schema.builder()
-                                        .type(Type.Known.STRING)
-                                        .build(),
-
-                                "priceSourceDescription",
-                                Schema.builder()
-                                        .type(Type.Known.STRING)
-                                        .build(),
-
-                                "disclaimer",
-                                Schema.builder()
-                                        .type(Type.Known.STRING)
-                                        .build()
-                        )
-                )
-                .required(
-                        List.of(
-                                "title",
-                                "summary",
-                                "damageDescription",
-                                "repairRecommendation",
-                                "estimatedMinimumPrice",
-                                "estimatedMaximumPrice",
-                                "currency",
-                                "priceInformation",
-                                "priceSourceDescription",
-                                "disclaimer"
-                        )
-                )
+                .properties(Map.of(
+                        "estimatedMinimumPrice", Schema.builder()
+                                .type(Type.Known.NUMBER).build(),
+                        "estimatedMaximumPrice", Schema.builder()
+                                .type(Type.Known.NUMBER).build(),
+                        "currency", Schema.builder()
+                                .type(Type.Known.STRING).enum_(List.of("TRY")).build(),
+                        "priceInformation", Schema.builder()
+                                .type(Type.Known.STRING).build(),
+                        "priceSourceDescription", Schema.builder()
+                                .type(Type.Known.STRING).build()
+                ))
+                .required(List.of(
+                        "estimatedMinimumPrice",
+                        "estimatedMaximumPrice",
+                        "currency",
+                        "priceInformation",
+                        "priceSourceDescription"
+                ))
                 .build();
     }
 
-    private LlmInspectionReportResult parseResponse(
-            String responseText
-    ) {
-
+    private InspectionPriceEstimateResult parsePriceResponse(String json) {
         try {
-            return objectMapper.readValue(
-                    responseText,
-                    LlmInspectionReportResult.class
-            );
-
+            return objectMapper.readValue(json, InspectionPriceEstimateResult.class);
         } catch (JsonProcessingException exception) {
-
             throw new IllegalStateException(
-                    "Gemini raporu JSON formatında okunamadı.",
-                    exception
+                    "Gemini fiyat tahmini JSON formatında okunamadı.", exception
             );
         }
     }
 
-    private void validateResult(
-            LlmInspectionReportResult result
+    private InspectionPriceEstimateResult validatePrice(
+            InspectionPriceEstimateResult result
     ) {
-
-        if (result == null) {
-            throw new IllegalStateException(
-                    "Gemini raporu oluşturulamadı."
-            );
+        if (result == null || result.estimatedMinimumPrice() == null
+                || result.estimatedMaximumPrice() == null) {
+            throw new IllegalStateException("Gemini fiyat tahmini oluşturmadı.");
         }
 
-        validateRequiredText(
-                result.title,
-                "Gemini rapor başlığı oluşturmadı."
-        );
+        BigDecimal minimum = result.estimatedMinimumPrice();
+        BigDecimal maximum = result.estimatedMaximumPrice();
 
-        validateRequiredText(
-                result.summary,
-                "Gemini rapor özeti oluşturmadı."
-        );
-
-        validateRequiredText(
-                result.damageDescription,
-                "Gemini hasar açıklaması oluşturmadı."
-        );
-
-        validateRequiredText(
-                result.repairRecommendation,
-                "Gemini onarım önerisi oluşturmadı."
-        );
-
-        validateRequiredText(
-                result.priceInformation,
-                "Gemini fiyat bilgisi oluşturmadı."
-        );
-
-        validateRequiredText(
-                result.priceSourceDescription,
-                "Gemini fiyat kaynağı açıklaması oluşturmadı."
-        );
-
-        validateRequiredText(
-                result.disclaimer,
-                "Gemini uyarı metni oluşturmadı."
-        );
-
-        if (result.estimatedMinimumPrice == null
-                || result.estimatedMaximumPrice == null) {
-
-            throw new IllegalStateException(
-                    "Gemini fiyat tahmini oluşturmadı."
-            );
+        if (minimum.signum() < 0 || maximum.signum() < 0) {
+            throw new IllegalStateException("Gemini negatif fiyat döndürdü.");
         }
-
-        if (result.estimatedMinimumPrice.signum() < 0
-                || result.estimatedMaximumPrice.signum() < 0) {
-
-            throw new IllegalStateException(
-                    "Gemini negatif fiyat döndürdü."
-            );
+        if (minimum.compareTo(maximum) > 0) {
+            throw new IllegalStateException("Gemini geçersiz fiyat aralığı döndürdü.");
         }
-
-        if (result.estimatedMinimumPrice.compareTo(
-                result.estimatedMaximumPrice
-        ) > 0) {
-
-            throw new IllegalStateException(
-                    "Gemini geçersiz fiyat aralığı döndürdü."
-            );
+        if (result.currency() == null || !"TRY".equalsIgnoreCase(result.currency().trim())) {
+            throw new IllegalStateException("Gemini geçersiz para birimi döndürdü.");
         }
+        requireText(result.priceInformation(), "Gemini fiyat bilgisi oluşturmadı.");
+        requireText(result.priceSourceDescription(), "Gemini fiyat kaynağı açıklaması oluşturmadı.");
 
-        if (result.currency == null
-                || !"TRY".equalsIgnoreCase(
-                result.currency.trim()
-        )) {
-
-            throw new IllegalStateException(
-                    "Gemini geçersiz para birimi döndürdü."
-            );
+        // Preserve the exact pre-existing price interval policy.
+        if (maximum.subtract(minimum).compareTo(BigDecimal.valueOf(10_000)) > 0) {
+            maximum = minimum.add(BigDecimal.valueOf(10_000));
         }
-
-        result.currency = "TRY";
-
-        BigDecimal priceDifference =
-                result.estimatedMaximumPrice.subtract(
-                        result.estimatedMinimumPrice
-                );
-
-        if (priceDifference.compareTo(
-                BigDecimal.valueOf(10_000)
-        ) > 0) {
-
-            result.estimatedMaximumPrice =
-                    result.estimatedMinimumPrice.add(
-                            BigDecimal.valueOf(10_000)
-                    );
-        }
+        return new InspectionPriceEstimateResult(
+                minimum, maximum, "TRY",
+                result.priceInformation(), result.priceSourceDescription()
+        );
     }
 
-    private void validateRequiredText(
-            String value,
-            String errorMessage
-    ) {
-        if (value == null
-                || value.isBlank()) {
-
-            throw new IllegalStateException(
-                    errorMessage
-            );
+    private static void requireText(String value, String message) {
+        if (value == null || value.isBlank()) {
+            throw new IllegalStateException(message);
         }
     }
 }
