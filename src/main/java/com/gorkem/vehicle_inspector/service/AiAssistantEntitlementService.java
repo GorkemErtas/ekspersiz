@@ -1,6 +1,7 @@
 package com.gorkem.vehicle_inspector.service;
 
 import com.gorkem.vehicle_inspector.dto.response.AiAssistantEntitlementResponse;
+import com.gorkem.vehicle_inspector.exception.InsufficientAiAssistantAllowanceException;
 import com.gorkem.vehicle_inspector.entity.*;
 import com.gorkem.vehicle_inspector.repository.*;
 import org.springframework.stereotype.Service;
@@ -87,7 +88,7 @@ public class AiAssistantEntitlementService {
         }
         if (isWelcomeUser(user)) {
             if (user.getWelcomeAssistantRemaining() <= activeWelcomeReservations(user, now)) {
-                throw new IllegalStateException(
+                throw new InsufficientAiAssistantAllowanceException(
                         "3 ücretsiz AI Asistan soru hakkınız tükendi. Abonelik planlarını inceleyin.");
             }
             return;
@@ -108,7 +109,7 @@ public class AiAssistantEntitlementService {
                 throw new IllegalStateException("Şirketin günlük AI Asistan kotası doldu.");
         } else if (isWelcomeUser(user)) {
             if (user.getWelcomeAssistantRemaining() <= activeWelcomeReservations(user, now)) {
-                throw new IllegalStateException(
+                throw new InsufficientAiAssistantAllowanceException(
                         "3 ücretsiz AI Asistan soru hakkınız tükendi. Abonelik planlarını inceleyin.");
             }
         } else {
@@ -216,8 +217,13 @@ public class AiAssistantEntitlementService {
     private void assertAccess(User user, LocalDateTime now) {
         AiAssistantAccess access=accessRepository.findByUserId(user.getId())
                 .orElseGet(() -> accessRepository.save(new AiAssistantAccess(user, now)));
-        if (!hasAssistantAccess(user, access, now))
+        if (!hasAssistantAccess(user, access, now)) {
+            if (isWelcomeUser(user) && user.getWelcomeAssistantRemaining() <= 0) {
+                throw new InsufficientAiAssistantAllowanceException(
+                        "3 ücretsiz AI Asistan soru hakkınız tükendi. Devam etmek için abonelik planlarını inceleyin.");
+            }
             throw new IllegalStateException("AI Asistan erişiminiz aktif değil.");
+        }
     }
 
     private boolean hasAssistantAccess(User user, AiAssistantAccess access, LocalDateTime now) {
