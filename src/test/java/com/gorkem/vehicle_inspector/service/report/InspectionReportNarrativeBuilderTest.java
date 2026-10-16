@@ -12,7 +12,6 @@ import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -52,7 +51,7 @@ class InspectionReportNarrativeBuilderTest {
         assertTrue(result.summary.contains("çizik"));
         assertTrue(result.damageDescription.contains("ön tampon"));
         assertTrue(result.repairRecommendation.contains("boya rötuşu"));
-        assertTrue(result.repairRecommendation.contains("Parça değişimi önerilmemiştir"));
+        assertTrue(result.repairRecommendation.contains("parça değişimi önerilmemiştir"));
         assertFalse(result.damageDescription.contains("ML'in verdiği özet"));
         assertTrue(result.disclaimer.contains("profesyonel ekspertiz"));
         assertEquals(PRICE.estimatedMinimumPrice(), result.estimatedMinimumPrice);
