@@ -16,6 +16,11 @@ class DamageAnalyzerResultTest(unittest.TestCase):
         self.analyzer = DamageAnalyzer.__new__(DamageAnalyzer)
         self.analyzer.damage_recommendation_confidence_threshold = 0.30
 
+    def test_same_image_cannot_be_submitted_as_two_photos(self) -> None:
+        result = self.analyzer.validate_image_pair(b"identical", b"identical")
+        self.assertFalse(result.suitable)
+        self.assertEqual("DUPLICATE_IMAGE", result.code)
+
     def test_context_part_is_transferred_only_for_same_damage_type(self) -> None:
         close_scratch = DetectedObject(
             label="SCRATCH",
