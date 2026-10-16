@@ -17,6 +17,26 @@ import static org.mockito.Mockito.*;
 class AiAssistantChatServiceTest {
 
     @Test
+    void monthlyFreeQuotaExceededStopsBeforeAnyAiCall() {
+        var client = mock(AiAssistantClient.class);
+        var entitlement = mock(AiAssistantEntitlementService.class);
+        var tools = mock(AiAssistantToolContextService.class);
+        var generation = mock(AiAssistantGenerationService.class);
+        var service = new AiAssistantChatService(
+                client, entitlement, tools, generation);
+        doThrow(new com.gorkem.vehicle_inspector.exception.FreeAssistantQuotaExceededException(
+                "Bu ayki ücretsiz sorular tükendi. Abonelik planlarını inceleyin."))
+                .when(entitlement).assertCanAsk("free@example.com");
+
+        assertThrows(
+                com.gorkem.vehicle_inspector.exception.FreeAssistantQuotaExceededException.class,
+                () -> service.chat(new AiAssistantChatRequest(
+                        "Aracımda çizik var mı?", null, List.of()), "free@example.com")
+        );
+        verifyNoInteractions(client, tools, generation);
+    }
+
+    @Test
     void outOfScopeDoesNotConsumeQuota() {
         var client = mock(AiAssistantClient.class);
         var entitlement = mock(AiAssistantEntitlementService.class);
@@ -188,6 +208,6 @@ class AiAssistantChatServiceTest {
         return new AiAssistantEntitlementResponse(
                 com.gorkem.vehicle_inspector.entity.AiAssistantAccessStatus.TRIAL,
                 remaining > 0, 3, 3 - remaining, remaining, 0,
-                null, null, null);
+                null, null, null, "DAILY");
     }
 }

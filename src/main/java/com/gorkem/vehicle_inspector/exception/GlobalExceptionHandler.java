@@ -153,6 +153,13 @@ public class GlobalExceptionHandler {
         );
     }
 
+    @ExceptionHandler(FreeAssistantQuotaExceededException.class)
+    public ResponseEntity<ApiErrorResponse> handleFreeAssistantQuotaExceeded(
+            FreeAssistantQuotaExceededException exception
+    ) {
+        return buildResponse(HttpStatus.PAYMENT_REQUIRED, exception.getMessage());
+    }
+
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<ApiErrorResponse>
     handleIllegalStateException(

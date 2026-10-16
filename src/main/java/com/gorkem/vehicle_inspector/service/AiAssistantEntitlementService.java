@@ -1,6 +1,7 @@
 package com.gorkem.vehicle_inspector.service;
 
 import com.gorkem.vehicle_inspector.dto.response.AiAssistantEntitlementResponse;
+import com.gorkem.vehicle_inspector.exception.FreeAssistantQuotaExceededException;
 import com.gorkem.vehicle_inspector.entity.*;
 import com.gorkem.vehicle_inspector.repository.*;
 import org.springframework.stereotype.Service;
@@ -14,6 +15,7 @@ import java.util.UUID;
 @Service
 public class AiAssistantEntitlementService {
     public static final int DAILY_LIMIT = 3;
+    public static final int FREE_MONTHLY_LIMIT = 3;
     public static final int OUT_OF_SCOPE_LOCK_THRESHOLD = 3;
     private final Duration reservationTtl;
     private final SubscriptionService subscriptions;
@@ -80,6 +82,14 @@ public class AiAssistantEntitlementService {
                 throw new IllegalStateException("Şirketin günlük AI Asistan soru hakkı doldu.");
             return;
         }
+        if (isFreePersonal(user)) {
+            if (freeMonthlyCompleted(user) + freeMonthlyReservations(user, now) >= FREE_MONTHLY_LIMIT) {
+                throw new FreeAssistantQuotaExceededException(
+                        "Bu ayki 3 ücretsiz AI Asistan soru hakkınızı kullandınız. " +
+                        "Devam etmek için abonelik planlarını inceleyin.");
+            }
+            return;
+        }
         AiAssistantDailyUsage usage=findOrCreateUsageForUpdate(user);
         if (usage.getSuccessfulQuestions() + activeReservations(user, now) >= dailyLimit(user))
             throw new IllegalStateException("Bugünkü AI Asistan soru hakkınızı kullandınız.");
@@ -88,12 +98,25 @@ public class AiAssistantEntitlementService {
     @Transactional
     public UUID reserveQuestion(String email) {
         User user=businessContext.requireUser(email); LocalDateTime now=LocalDateTime.now(clock);
+        // Free quota is monthly. Serialize reservations across all dates and devices,
+        // rather than locking only today's daily-usage row.
+        boolean freePersonal = isFreePersonal(user);
+        if (freePersonal && jdbc != null) {
+            jdbc.queryForObject("SELECT id FROM users WHERE id = ? FOR UPDATE",
+                    Long.class, user.getId());
+        }
         assertAccess(user, now);
         BusinessAccount business=businessAccount(user);
         if (business != null) {
             lockBusiness(business);
             if (businessUsed(business) + businessReservations(business, now) >= 10)
                 throw new IllegalStateException("Şirketin günlük AI Asistan kotası doldu.");
+        } else if (freePersonal) {
+            if (freeMonthlyCompleted(user) + freeMonthlyReservations(user, now) >= FREE_MONTHLY_LIMIT) {
+                throw new FreeAssistantQuotaExceededException(
+                        "Bu ayki 3 ücretsiz AI Asistan soru hakkınızı kullandınız. " +
+                        "Devam etmek için abonelik planlarını inceleyin.");
+            }
         } else {
             AiAssistantDailyUsage usage=findOrCreateUsageForUpdate(user);
             if (usage.getSuccessfulQuestions() + activeReservations(user, now) >= dailyLimit(user))
@@ -102,6 +125,7 @@ public class AiAssistantEntitlementService {
         UUID token=UUID.randomUUID();
         AiAssistantQuotaReservation reservation=new AiAssistantQuotaReservation(
                 token, user, LocalDate.now(clock), now, now.plus(reservationTtl));
+        if (freePersonal) reservation.markFreeMonthly();
         if (business != null) reservation.assignBusiness(business);
         reservationRepository.save(reservation);
         return token;
@@ -120,6 +144,10 @@ public class AiAssistantEntitlementService {
             lockBusiness(business);
             reservation.complete(now);
             jdbc.update("INSERT INTO ai_assistant_business_daily_usage (business_account_id, usage_date, successful_questions) VALUES (?, ?, 1) ON CONFLICT (business_account_id, usage_date) DO UPDATE SET successful_questions = ai_assistant_business_daily_usage.successful_questions + 1, updated_at = CURRENT_TIMESTAMP", business.getId(), java.sql.Date.valueOf(reservation.getUsageDate()));
+        } else if (reservation.isFreeMonthly()) {
+            // Completed reservations ARE the monthly Free ledger; do not
+            // charge the paid plan's daily usage counter.
+            reservation.complete(now);
         } else {
             AiAssistantDailyUsage usage=findOrCreateUsageForUpdate(user, reservation.getUsageDate());
             reservation.complete(now);
@@ -162,6 +190,28 @@ public class AiAssistantEntitlementService {
         return Math.toIntExact(reservationRepository.countBusinessActive(business.getId(), LocalDate.now(clock), now));
     }
 
+    private boolean isFreePersonal(User user) {
+        return subscriptions != null
+                && subscriptions.getEffectivePlan(user) == SubscriptionPlan.FREE
+                && businessAccount(user) == null;
+    }
+
+    private LocalDate freeMonthStart() {
+        return LocalDate.now(clock).withDayOfMonth(1);
+    }
+
+    private long freeMonthlyCompleted(User user) {
+        LocalDate start = freeMonthStart();
+        return reservationRepository.countFreeMonthlyCompleted(
+                user.getId(), start, start.plusMonths(1));
+    }
+
+    private long freeMonthlyReservations(User user, LocalDateTime now) {
+        LocalDate start = freeMonthStart();
+        return reservationRepository.countFreeMonthlyReserved(
+                user.getId(), start, start.plusMonths(1), now);
+    }
+
     private int dailyLimit(User user) {
         if (subscriptions == null) return DAILY_LIMIT;
         return switch (subscriptions.getEffectivePlan(user)) {
@@ -187,7 +237,7 @@ public class AiAssistantEntitlementService {
             if (businessAccount(user) != null) return true;
             if (subscriptions.getEffectivePlan(user) != SubscriptionPlan.FREE) return true;
         }
-        // The FREE plan includes three AI Assistant questions every day.
+        // The FREE plan includes three AI Assistant questions per calendar month.
         // Past 7-day Plus trials no longer grant any upgraded plan or limits.
         return subscriptions != null || existingAccess;
     }
@@ -227,16 +277,22 @@ public class AiAssistantEntitlementService {
         int reserved=activeReservations(user, now);
         int out=usage == null ? 0 : usage.getOutOfScopeAttempts();
         BusinessAccount business=businessAccount(user);
+        boolean freePersonal = business == null && isFreePersonal(user);
         int limit=dailyLimit(user);
         if (business != null) {
             limit=10;
             used=businessUsed(business);
             reserved=businessReservations(business, now);
+        } else if (freePersonal) {
+            limit=FREE_MONTHLY_LIMIT;
+            used=Math.toIntExact(freeMonthlyCompleted(user));
+            reserved=Math.toIntExact(freeMonthlyReservations(user, now));
         }
         int remaining=Math.max(0, limit-used-reserved);
         return new AiAssistantEntitlementResponse(
                 assistantStatus(user, access, now), hasAssistantAccess(user, access, now) && remaining > 0,
                 limit, used, remaining, out, null,
-                access.getSubscriptionExpiresAt(), access.getLockedUntil());
+                access.getSubscriptionExpiresAt(), access.getLockedUntil(),
+                freePersonal ? "MONTHLY" : "DAILY");
     }
 }

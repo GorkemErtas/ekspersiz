@@ -29,6 +29,34 @@ public interface AiAssistantQuotaReservationRepository
 
     @Query("""
         select count(r) from AiAssistantQuotaReservation r
+        where r.user.id = :userId
+          and r.usageDate >= :start
+          and r.usageDate < :end
+          and r.quotaPeriod = 'FREE_MONTHLY'
+          and r.status = 'COMPLETED'
+        """)
+    long countFreeMonthlyCompleted(
+            @Param("userId") Long userId,
+            @Param("start") LocalDate start,
+            @Param("end") LocalDate end);
+
+    @Query("""
+        select count(r) from AiAssistantQuotaReservation r
+        where r.user.id = :userId
+          and r.usageDate >= :start
+          and r.usageDate < :end
+          and r.quotaPeriod = 'FREE_MONTHLY'
+          and r.status = 'RESERVED'
+          and r.expiresAt > :now
+        """)
+    long countFreeMonthlyReserved(
+            @Param("userId") Long userId,
+            @Param("start") LocalDate start,
+            @Param("end") LocalDate end,
+            @Param("now") LocalDateTime now);
+
+    @Query("""
+        select count(r) from AiAssistantQuotaReservation r
         where r.businessAccount.id = :businessId and r.usageDate = :date
           and r.status = 'RESERVED' and r.expiresAt > :now
         """)

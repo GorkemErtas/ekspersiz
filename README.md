@@ -113,12 +113,12 @@ Ayrıntılar: [AI Asistan mimarisi](docs/ai-assistant/ARCHITECTURE.md).
 
 | Plan | Araç | Aylık analiz | AI Asistan |
 | --- | ---: | ---: | --- |
-| FREE | 1 | 1 | 3 başarılı yanıt/gün |
+| FREE | 1 | 1 | 3 başarılı yanıt/ay |
 | PLUS | 3 | 5 | 3 başarılı yanıt/gün |
 | PRO | 10 | 10 | 5 başarılı yanıt/gün |
 | BUSINESS | 50 (şirket) | 100 (şirket) | 10 başarılı yanıt/gün (ortak) |
 
-FREE planda **ayda 1 detaylı hasar analizi** ve **günde 3 AI Asistan başarılı yanıtı** bulunur; Plus denemesi sunulmaz. Abonelik iptali, ödenmiş dönemin kalan haklarını hemen sona erdirmez. Hasar analizi ve AI Asistan kullanım kotaları ayrı yönetilir.
+FREE planda **ayda 1 detaylı hasar analizi** ve **ayda 3 AI Asistan başarılı yanıtı** bulunur; Plus denemesi sunulmaz. Abonelik iptali, ödenmiş dönemin kalan haklarını hemen sona erdirmez. Hasar analizi ve AI Asistan kullanım kotaları ayrı yönetilir.
 
 ## Geliştirme ve test
 

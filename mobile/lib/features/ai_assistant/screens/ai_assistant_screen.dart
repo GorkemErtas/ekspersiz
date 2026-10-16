@@ -5,6 +5,7 @@ import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_theme.dart';
 import '../models/ai_assistant_models.dart';
 import '../services/ai_assistant_service.dart';
+import '../../billing/screens/subscription_screen.dart';
 import '../../vehicle/models/vehicle.dart';
 import '../../vehicle/services/vehicle_service.dart';
 
@@ -28,6 +29,18 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
   final List<AiChatMessage> _messages = [];
 
   AiAssistantEntitlement? _entitlement;
+
+  bool get _freeMonthlyExhausted =>
+      _entitlement?.quotaPeriod == 'MONTHLY' &&
+      _entitlement?.remainingToday == 0 &&
+      _entitlement?.status == 'ACTIVE';
+
+  Future<void> _openSubscriptionPlans() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => const SubscriptionScreen()),
+    );
+    if (mounted) await _refreshEntitlementSilently();
+  }
   List<Vehicle> _vehicles = const [];
   Vehicle? _selectedVehicle;
   bool _loading = true;
@@ -145,7 +158,12 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
       if (mounted) setState(() => _listening = false);
     }
     final question = _controller.text.trim();
-    if (question.isEmpty || _sending || !(_entitlement?.canAsk ?? false)) return;
+    if (question.isEmpty || _sending) return;
+    if (_freeMonthlyExhausted) {
+      await _openSubscriptionPlans();
+      return;
+    }
+    if (!(_entitlement?.canAsk ?? false)) return;
 
     final history = List<AiChatMessage>.from(_messages);
     setState(() {
@@ -177,6 +195,7 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
                 : current.usedToday,
             remainingToday: reply.remainingToday,
             outOfScopeAttempts: current.outOfScopeAttempts,
+            quotaPeriod: current.quotaPeriod,
             trialExpiresAt: current.trialExpiresAt,
             lockedUntil: current.lockedUntil,
           );
@@ -190,10 +209,20 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() {
+        if (e.statusCode == 402 && _messages.isNotEmpty &&
+            _messages.last.isUser && _messages.last.text == question) {
+          // The question was not answered or billed; keep it in the composer.
+          _messages.removeLast();
+          _controller.text = question;
+        }
         _error = e.message;
-        _retryQuestion = question;
+        _retryQuestion = e.statusCode == 402 ? null : question;
         _sending = false;
       });
+      if (e.statusCode == 402) {
+        await _refreshEntitlementSilently();
+        if (mounted) await _openSubscriptionPlans();
+      }
     }
   }
 
@@ -224,6 +253,10 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
       'INACTIVE' => 'AI Asistan şu anda kullanılamıyor. Abonelik planlarını inceleyebilirsiniz.',
       'LOCKED' => 'Çok sayıda kapsam dışı istek nedeniyle AI Asistan geçici olarak kilitlendi.',
       'EXPIRED' => 'AI Asistan erişiminiz sona erdi. Abonelik planlarını inceleyebilirsiniz.',
+      _ when entitlement.remainingToday <= 0 &&
+          entitlement.quotaPeriod == 'MONTHLY' =>
+        'Bu ayki 3 ücretsiz AI Asistan soru hakkınızı kullandınız. '
+        'Devam etmek için abonelik planlarını inceleyebilirsiniz.',
       _ when entitlement.remainingToday <= 0 =>
         'Bugünkü ${entitlement.dailyLimit} soru hakkınızı kullandınız. Yeni günlük haklarınız yarın yenilenir.',
       _ => 'Aracınız, bakım, muayene, güvenlik veya EksperSiz hakkında bir şey sorun.',
@@ -300,8 +333,20 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
                         borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
                       ),
                       child: Text(
-                        'Bugün kalan soru hakkı: ${_entitlement!.remainingToday}/${_entitlement!.dailyLimit}',
+                        '${_entitlement!.quotaPeriod == 'MONTHLY' ? 'Bu ay' : 'Bugün'} kalan soru hakkı: ${_entitlement!.remainingToday}/${_entitlement!.dailyLimit}',
                         style: Theme.of(context).textTheme.titleSmall,
+                      ),
+                    ),
+                  if (_freeMonthlyExhausted)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: FilledButton.icon(
+                          onPressed: _openSubscriptionPlans,
+                          icon: const Icon(Icons.workspace_premium_outlined),
+                          label: const Text('Abonelik Planlarını İncele'),
+                        ),
                       ),
                     ),
                   if (_error != null)
@@ -422,7 +467,7 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
                         Expanded(
                           child: TextField(
                             controller: _controller,
-                            enabled: !_sending && (_entitlement?.canAsk ?? false),
+                            enabled: !_sending && ((_entitlement?.canAsk ?? false) || _freeMonthlyExhausted),
                             minLines: 1,
                             maxLines: 4,
                             maxLength: 2000,
@@ -445,7 +490,7 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
                         ),
                         const SizedBox(width: 4),
                         IconButton.filled(
-                          onPressed: _sending || !(_entitlement?.canAsk ?? false)
+                          onPressed: _sending || !((_entitlement?.canAsk ?? false) || _freeMonthlyExhausted)
                               ? null
                               : _send,
                           icon: const Icon(Icons.arrow_upward_rounded),

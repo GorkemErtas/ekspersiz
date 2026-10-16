@@ -12,5 +12,6 @@ public record AiAssistantEntitlementResponse(
         int outOfScopeAttemptsToday,
         LocalDateTime trialExpiresAt,
         LocalDateTime subscriptionExpiresAt,
-        LocalDateTime lockedUntil
+        LocalDateTime lockedUntil,
+        String quotaPeriod
 ) {}
