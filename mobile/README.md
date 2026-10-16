@@ -7,7 +7,7 @@ EksperSiz'in Flutter/Dart istemcisi. Araç yönetimi, YOLO tabanlı hasar analiz
 - Araç kaydı, bakım/kilometre, hatırlatmalar, analiz geçmişi ve raporlar.
 - Fotoğraf seçimi, hasar analizi, değerlendirme tutanağı ve PDF paylaşımı.
 - AI Asistan: yazılı sohbet, Türkçe konuşmadan metne giriş, araç bağlamı, günlük hakların görüntülenmesi.
-- FREE/PLUS/PRO/BUSINESS planları ve RevenueCat satın alma akışı; FREE planda ayda 1 analiz ve günde 3 AI Asistan yanıtı.
+- FREE/PLUS/PRO/BUSINESS planları ve RevenueCat satın alma akışı; FREE planda ayda 1 analiz ve ayda 3 AI Asistan yanıtı.
 - Harita/yakındaki servisler, bildirimler/FCM, tema, yerelleştirme ve Android uygulama içi güncelleme kontrolü.
 
 ## Mimari
