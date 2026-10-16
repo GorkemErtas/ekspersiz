@@ -61,18 +61,6 @@ public class AiAssistantEntitlementService {
     }
 
     @Transactional
-    public AiAssistantEntitlementResponse startTrial(String email) {
-        User user=businessContext.requireUser(email); LocalDateTime now=LocalDateTime.now(clock);
-        if (jdbc != null) jdbc.queryForObject("SELECT id FROM users WHERE id = ? FOR UPDATE", Long.class, user.getId());
-        AiAssistantAccess access=accessRepository.findByUserId(user.getId())
-                .orElseGet(() -> new AiAssistantAccess(user, now));
-        if (subscriptions != null && subscriptions.getEffectivePlan(user) != SubscriptionPlan.FREE)
-            throw new IllegalStateException("Deneme yalnızca ücretsiz hesaplarda başlatılabilir.");
-        access.startTrial(now); accessRepository.save(access);
-        return response(user, access, now);
-    }
-
-    @Transactional
     public AiAssistantEntitlementResponse status(String email) {
         User user=businessContext.requireUser(email); LocalDateTime now=LocalDateTime.now(clock);
         AiAssistantAccess access=accessRepository.findByUserId(user.getId())
@@ -199,8 +187,9 @@ public class AiAssistantEntitlementService {
             if (businessAccount(user) != null) return true;
             if (subscriptions.getEffectivePlan(user) != SubscriptionPlan.FREE) return true;
         }
-        return existingAccess && access.getTrialExpiresAt() != null
-                && access.getTrialExpiresAt().isAfter(now);
+        // The FREE plan includes three AI Assistant questions every day.
+        // Past 7-day Plus trials no longer grant any upgraded plan or limits.
+        return subscriptions != null || existingAccess;
     }
 
     private AiAssistantAccessStatus assistantStatus(User user, AiAssistantAccess access, LocalDateTime now) {
@@ -212,8 +201,9 @@ public class AiAssistantEntitlementService {
                 || subscriptions.getEffectivePlan(user) != SubscriptionPlan.FREE)) {
             return AiAssistantAccessStatus.ACTIVE;
         }
-        return access.getTrialExpiresAt() != null && access.getTrialExpiresAt().isAfter(now)
-                ? AiAssistantAccessStatus.TRIAL : AiAssistantAccessStatus.INACTIVE;
+        return subscriptions != null
+                ? AiAssistantAccessStatus.ACTIVE
+                : AiAssistantAccessStatus.INACTIVE;
     }
 
     private AiAssistantDailyUsage findOrCreateUsageForUpdate(User user) {
@@ -246,7 +236,7 @@ public class AiAssistantEntitlementService {
         int remaining=Math.max(0, limit-used-reserved);
         return new AiAssistantEntitlementResponse(
                 assistantStatus(user, access, now), hasAssistantAccess(user, access, now) && remaining > 0,
-                limit, used, remaining, out, access.getTrialExpiresAt(),
+                limit, used, remaining, out, null,
                 access.getSubscriptionExpiresAt(), access.getLockedUntil());
     }
 }
