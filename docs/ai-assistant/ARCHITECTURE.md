@@ -40,15 +40,15 @@
 
 | Plan | AI Asistan başarılı yanıt hakkı |
 | --- | --- |
-| FREE | Günde 3 |
+| FREE | Ayda 3 |
 | PLUS | Günde 3 |
 | PRO | Günde 5 |
 | BUSINESS | Şirket genelinde günde 10 |
 
-- FREE kullanıcılar deneme aktivasyonu gerektirmeden günde 3 başarılı yanıt gönderebilir. Ücretsiz plan, Plus aboneliği veya deneme durumu oluşturmaz.
+- FREE kullanıcılar deneme aktivasyonu gerektirmeden takvim ayı başına 3 başarılı yanıt gönderebilir. Ücretsiz plan, Plus aboneliği veya deneme durumu oluşturmaz.
 - Aktif ücretli plan veya henüz dolmamış abonelik dönemi sunucuda etkin plan olarak değerlendirilir.
 - Başarılı yanıtlar kota tüketir; kapsam dışı, açıklama isteyen ve başarısız istekler tüketmez.
-- Eşzamanlı istekler için süreli kota rezervasyonu; üç kapsam dışı denemeden sonra 24 saatlik kilit mantığı bulunur.
+- Free aylık kota, tamamlanmış ve aktif rezerve sorularla ayrı sayılır; ücretli planların günlük kota kayıtlarından etkilenmez. Eşzamanlı Free rezervasyonları kullanıcı satırı kilidiyle korunur; üç kapsam dışı denemeden sonra 24 saatlik kilit mantığı bulunur.
 - Asistan kotası ile aylık hasar analizi kotası ayrı sayaçlardır.
 
 ## Güvenlik, maliyet ve doğruluk
