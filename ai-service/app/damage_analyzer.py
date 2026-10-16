@@ -401,6 +401,61 @@ class DamageAnalyzer:
             affected_parts=affected_parts,
         )
 
+    def validate_image_pair(
+            self,
+            damage_file_content: bytes,
+            context_file_content: bytes,
+    ) -> ImageQualityResponse:
+        """Verify local vehicle/body-region correspondence before paid analysis.
+
+        This is intentionally conservative: unlike same-model recognition,
+        matched image features are evidence of a shared photographed surface.
+        It cannot establish legal vehicle identity.
+        """
+        from app.image_pair_verifier import ImagePairVerifier
+
+        damage_image = self._load_image(damage_file_content)
+        context_image = self._load_image(context_file_content)
+
+        vehicle_results = self.vehicle_model.predict(
+            source=context_image,
+            conf=self.vehicle_confidence_threshold,
+            verbose=False,
+        )
+        vehicles = [
+            d for d in self._extract_detections(vehicle_results)
+            if d.label.lower() in self.VEHICLE_LABELS
+        ]
+        if not vehicles:
+            return ImageQualityResponse(
+                suitable=False,
+                code="NO_VEHICLE",
+                message="Geniş açı fotoğrafta araç doğrulanamadı.",
+            )
+        vehicle_crop, _, _ = self._crop_primary_vehicle(
+            image=context_image, vehicle_detections=vehicles,
+        )
+
+        close_results = self.damage_model.predict(
+            source=damage_image,
+            conf=self.damage_confidence_threshold,
+            iou=self.damage_iou_threshold,
+            max_det=20,
+            agnostic_nms=False,
+            verbose=False,
+        )
+        detected = self._extract_detections(
+            close_results, class_name_mapping=self.damage_class_mapping,
+        )
+        boxes = [
+            (d.boundingBox.x1, d.boundingBox.y1,
+             d.boundingBox.x2, d.boundingBox.y2)
+            for d in detected
+        ]
+        return ImagePairVerifier().verify(
+            damage_image, vehicle_crop, damage_boxes=boxes,
+        )
+
     def analyze_pair(
             self,
             damage_file_content: bytes,
