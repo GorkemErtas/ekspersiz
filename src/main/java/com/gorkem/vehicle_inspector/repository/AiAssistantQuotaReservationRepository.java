@@ -29,6 +29,16 @@ public interface AiAssistantQuotaReservationRepository
 
     @Query("""
         select count(r) from AiAssistantQuotaReservation r
+        where r.user.id = :userId
+          and r.status = 'RESERVED'
+          and r.expiresAt > :now
+        """)
+    long countUserActiveAllDates(
+            @Param("userId") Long userId,
+            @Param("now") LocalDateTime now);
+
+    @Query("""
+        select count(r) from AiAssistantQuotaReservation r
         where r.businessAccount.id = :businessId and r.usageDate = :date
           and r.status = 'RESERVED' and r.expiresAt > :now
         """)
