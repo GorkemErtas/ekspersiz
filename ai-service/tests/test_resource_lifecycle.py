@@ -98,6 +98,29 @@ class ResourceLifecycleTest(unittest.TestCase):
             self.assertEqual("done", asyncio.run(exercise()))
         image.close.assert_awaited_once()
 
+    def test_close_photo_quality_does_not_construct_yolo(self):
+        from app.schemas import ImageQualityResponse
+
+        fake_module = types.ModuleType("app.image_preflight")
+        fake_module.validate_close_image_without_model = lambda content: (
+            ImageQualityResponse(suitable=True, code="SUITABLE", message="Okay")
+        )
+        photo = types.SimpleNamespace(
+            filename="damage.jpg",
+            content_type="image/jpeg",
+            read=AsyncMock(return_value=b"valid-photo-bytes"),
+            close=AsyncMock(),
+        )
+        with patch.dict(sys.modules, {"app.image_preflight": fake_module}):
+            with patch.object(main, "_damage_analyzer", None), patch.object(
+                main, "run_damage_operation",
+                side_effect=AssertionError("Do not construct YOLO for close photo quality"),
+            ):
+                result = asyncio.run(main.validate_image_quality(photo, purpose="damage"))
+                self.assertEqual("SUITABLE", result.code)
+                self.assertIsNone(main._damage_analyzer)
+        photo.close.assert_awaited_once()
+
     def test_duplicate_pair_is_rejected_before_yolo_initialization(self):
         image = types.SimpleNamespace(
             content_type="image/jpeg",
