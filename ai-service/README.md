@@ -35,9 +35,13 @@ The mobile flow also runs this check immediately after the second upload.
   a close-up damage detection exists, support its nearby region.
 - Identical image bytes and unrelated or ambiguous photo pairs are rejected
   **before** analysis quota/reservation and Gemini report generation.
-- A bounded 64-entry SHA-256 decision cache prevents redoing expensive
+- A bounded 64-entry SHA-256 cache prevents redoing expensive
   preflight inference when the exact same photos are checked again by
-  the backend. The cache holds hashes and results, never image contents.
+  the backend. It stores only hashes, validation results and small detection
+  boxes, never image contents or model tensors.
+- The paired analysis reuses the cached close-up damage and wide-angle
+  vehicle boxes, skipping two otherwise repeated YOLO inference passes.
+  Context damage and part models still run for localization.
 
 **Important limitation:** local-feature alignment is evidence of shared
 photographed body surface, **not proof of unique vehicle identity**. Smooth
