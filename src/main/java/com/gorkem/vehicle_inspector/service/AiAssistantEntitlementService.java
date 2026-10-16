@@ -291,6 +291,7 @@ public class AiAssistantEntitlementService {
         return new AiAssistantEntitlementResponse(
                 assistantStatus(user, access, now), hasAssistantAccess(user, access, now) && remaining > 0,
                 limit, used, remaining, out, null,
-                access.getSubscriptionExpiresAt(), access.getLockedUntil());
+                access.getSubscriptionExpiresAt(), access.getLockedUntil(),
+                isWelcomeUser(user) ? "WELCOME" : "DAILY");
     }
 }
