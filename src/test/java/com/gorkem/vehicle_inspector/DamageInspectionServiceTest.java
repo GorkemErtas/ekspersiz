@@ -472,6 +472,7 @@ class DamageInspectionServiceTest {
         assertEquals(InspectionStatus.PENDING, inspection.getStatus());
         assertNull(inspection.getAnalysisStartedAt());
         verify(ai, never()).analyze(any(), any(), any());
+        verify(ai, never()).validateImage(any(), anyString());
         verify(inspections, never()).save(any());
         verifyNoInteractions(analysisUsageRepository, reports);
     }
@@ -483,6 +484,10 @@ class DamageInspectionServiceTest {
                 service.analyzeInspection(30L, actor.getEmail(), true, "FRONT")
                         .getStatus());
         verify(ai).validatePair(Path.of("image.jpg"), Path.of("context-image.jpg"));
+        var order = inOrder(ai);
+        order.verify(ai).validatePair(Path.of("image.jpg"), Path.of("context-image.jpg"));
+        order.verify(ai).validateImage(Path.of("image.jpg"), "damage");
+        order.verify(ai).validateImage(Path.of("context-image.jpg"), "context");
         verify(ai).analyze(Path.of("image.jpg"), Path.of("context-image.jpg"), "FRONT");
     }
 
