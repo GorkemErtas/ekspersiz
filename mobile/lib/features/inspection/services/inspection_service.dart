@@ -101,6 +101,19 @@ class InspectionService {
     );
   }
 
+  Future<ImageQualityResult> validateImagePair(int inspectionId) async {
+    final response = await apiClient.post(
+      '/inspections/$inspectionId/pair-quality',
+      timeout: _analysisTimeout,
+    );
+    if (response is! Map) {
+      throw const FormatException(
+        'Fotoğraf eşleşme kontrolü geçerli formatta alınamadı.',
+      );
+    }
+    return ImageQualityResult.fromJson(Map<String, dynamic>.from(response));
+  }
+
   Future<DamageInspection> analyzeInspection(
     int inspectionId, {
     required String vehicleRegion,
