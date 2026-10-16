@@ -1,4 +1,5 @@
 import unittest
+from collections import OrderedDict
 from io import BytesIO
 from unittest.mock import Mock, patch
 
@@ -8,7 +9,7 @@ from app.damage_analyzer import (
     PROJECT_ROOT,
     DamageAnalyzer,
 )
-from app.schemas import BoundingBox, DetectedObject
+from app.schemas import BoundingBox, DetectedObject, ImageQualityResponse
 
 
 class DamageAnalyzerResultTest(unittest.TestCase):
@@ -20,6 +21,45 @@ class DamageAnalyzerResultTest(unittest.TestCase):
         result = self.analyzer.validate_image_pair(b"identical", b"identical")
         self.assertFalse(result.suitable)
         self.assertEqual("DUPLICATE_IMAGE", result.code)
+
+    def test_same_pair_preflight_is_cached_by_content_hash(self) -> None:
+        image_bytes = BytesIO()
+        Image.new("RGB", (160, 160), (160, 100, 50)).save(image_bytes, "JPEG")
+        context_bytes = BytesIO()
+        Image.new("RGB", (160, 160), (140, 110, 60)).save(context_bytes, "JPEG")
+        vehicle = DetectedObject(
+            label="car",
+            confidence=0.9,
+            boundingBox=BoundingBox(x1=10, y1=10, x2=150, y2=150),
+        )
+        self.analyzer._pair_validation_cache = OrderedDict()
+        self.analyzer.vehicle_model = Mock()
+        self.analyzer.damage_model = Mock()
+        self.analyzer.vehicle_confidence_threshold = 0.40
+        self.analyzer.damage_confidence_threshold = 0.25
+        self.analyzer.damage_iou_threshold = 0.45
+        self.analyzer.damage_class_mapping = {0: "SCRATCH"}
+        decision = ImageQualityResponse(
+            suitable=True, code="PAIR_REGION_MATCHED", message="Matched"
+        )
+
+        with patch.object(
+            self.analyzer, "_extract_detections", side_effect=[[vehicle], []]
+        ), patch(
+            "app.image_pair_verifier.ImagePairVerifier.verify", return_value=decision
+        ) as verify:
+            first = self.analyzer.validate_image_pair(
+                image_bytes.getvalue(), context_bytes.getvalue()
+            )
+            second = self.analyzer.validate_image_pair(
+                image_bytes.getvalue(), context_bytes.getvalue()
+            )
+
+        self.assertEqual("PAIR_REGION_MATCHED", first.code)
+        self.assertIs(first, second)
+        self.analyzer.vehicle_model.predict.assert_called_once()
+        self.analyzer.damage_model.predict.assert_called_once()
+        verify.assert_called_once()
 
     def test_context_part_is_transferred_only_for_same_damage_type(self) -> None:
         close_scratch = DetectedObject(
