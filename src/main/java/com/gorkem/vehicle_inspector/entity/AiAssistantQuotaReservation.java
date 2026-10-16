@@ -15,6 +15,8 @@ public class AiAssistantQuotaReservation {
     @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "business_account_id") private BusinessAccount businessAccount;
     @Column(name = "usage_date", nullable = false) private LocalDate usageDate;
     @Column(nullable = false) private String status;
+    @Column(name = "quota_period", nullable = false, length = 16)
+    private String quotaPeriod = "DAILY";
     @Column(name = "expires_at", nullable = false) private LocalDateTime expiresAt;
     @Column(name = "created_at", nullable = false) private LocalDateTime createdAt;
     @Column(name = "completed_at") private LocalDateTime completedAt;
@@ -27,6 +29,9 @@ public class AiAssistantQuotaReservation {
         this.id=id; this.user=user; this.usageDate=usageDate;
         this.status="RESERVED"; this.createdAt=now; this.expiresAt=expiresAt;
     }
+
+    public void markFreeMonthly() { this.quotaPeriod = "FREE_MONTHLY"; }
+    public boolean isFreeMonthly() { return "FREE_MONTHLY".equals(quotaPeriod); }
 
     public void assignBusiness(BusinessAccount business) { this.businessAccount=business; }
     public Long getBusinessAccountId() { return businessAccount == null ? null : businessAccount.getId(); }
