@@ -437,7 +437,7 @@ class DamageAnalyzer:
         cache = self._pair_validation_cache
         if cache_key in cache:
             cache.move_to_end(cache_key)
-            return cache[cache_key]
+            return cache[cache_key][0]
 
         damage_image = self._load_image(damage_file_content)
         context_image = self._load_image(context_file_content)
@@ -480,7 +480,9 @@ class DamageAnalyzer:
         result = ImagePairVerifier().verify(
             damage_image, vehicle_crop, damage_boxes=boxes,
         )
-        cache[cache_key] = result
+        # Reuse just the tiny bounding-box metadata for the eventual analyze
+        # call; no decoded pixel buffers or torch tensors are kept in memory.
+        cache[cache_key] = (result, tuple(detected), tuple(vehicles))
         if len(cache) > 64:
             cache.popitem(last=False)
         return result
@@ -493,41 +495,34 @@ class DamageAnalyzer:
             vehicle_region: str | None = None,
     ) -> DamageAnalysisResponse:
         safe_filename = Path(filename or "vehicle.jpg").name.lower()
-        damage_image = self._load_image(damage_file_content)
-        context_image = self._load_image(context_file_content)
 
-        close_damage_results = self.damage_model.predict(
-            source=damage_image,
-            conf=self.damage_confidence_threshold,
-            iou=self.damage_iou_threshold,
-            max_det=20,
-            agnostic_nms=False,
-            verbose=False,
+        pair_quality = self.validate_image_pair(
+            damage_file_content, context_file_content
         )
-        close_damage_detections = self._extract_detections(
-            close_damage_results,
-            class_name_mapping=self.damage_class_mapping,
+        if not pair_quality.suitable:
+            raise ValueError(pair_quality.message)
+
+        key = (
+            sha256(damage_file_content).digest(),
+            sha256(context_file_content).digest(),
         )
+        _, verified_close_damages, verified_vehicles = self._pair_validation_cache[key]
+        close_damage_detections = [
+            detection.model_copy(deep=True) for detection in verified_close_damages
+        ]
+
 
         if not close_damage_detections:
             return self._build_no_damage_response(
                 filename=safe_filename
             )
 
-        vehicle_results = self.vehicle_model.predict(
-            source=context_image,
-            conf=self.vehicle_confidence_threshold,
-            verbose=False,
-        )
+        # The preflight already ran the close-damage and context-vehicle YOLO
+        # models on these exact bytes. Do not pay for those inferences again.
+        context_image = self._load_image(context_file_content)
         vehicle_detections = [
-            detection
-            for detection in self._extract_detections(vehicle_results)
-            if detection.label.lower() in self.VEHICLE_LABELS
+            detection.model_copy(deep=True) for detection in verified_vehicles
         ]
-        if not vehicle_detections:
-            raise ValueError(
-                "Context image does not contain a recognizable vehicle."
-            )
 
         (
             context_analysis_image,
