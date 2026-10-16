@@ -2,7 +2,7 @@
 import unittest
 
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageDraw
 
 from app.image_pair_verifier import ImagePairVerifier
 
@@ -11,10 +11,25 @@ class ImagePairVerifierTests(unittest.TestCase):
     @staticmethod
     def textured_image(seed: int) -> Image.Image:
         generator = np.random.default_rng(seed)
-        # Fixed high-detail vehicle-like local surface surrogate; tests geometry,
-        # not the ability to identify a real vehicle.
-        image = generator.integers(35, 220, (720, 960, 3), dtype=np.uint8)
-        return Image.fromarray(image, "RGB")
+        # Stable localized shapes survive close-up scaling; pure pixel noise
+        # does not, and is not representative of real image features.
+        image = Image.new("RGB", (960, 720), (135, 150, 165))
+        drawer = ImageDraw.Draw(image)
+        for i in range(500):
+            x = int(generator.integers(20, 940))
+            y = int(generator.integers(20, 700))
+            radius = int(generator.integers(5, 20))
+            color = tuple(int(v) for v in generator.integers(30, 235, 3))
+            drawer.ellipse(
+                (x - radius, y - radius, x + radius, y + radius),
+                fill=color, outline="black", width=2,
+            )
+            if i % 4 == 0:
+                drawer.line(
+                    (x - radius, y + radius, x + radius, y - radius),
+                    fill=(255, 255, 255), width=2,
+                )
+        return image
 
     def test_matching_crop_of_same_surface_is_accepted(self) -> None:
         context = self.textured_image(2026)
