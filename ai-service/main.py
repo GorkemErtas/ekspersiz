@@ -60,8 +60,6 @@ def run_damage_operation(operation: str, **kwargs):
             return analyzer.analyze_pair(**kwargs)
         if operation == "validate_image_quality":
             return analyzer.validate_image_quality(**kwargs)
-        if operation == "validate_image_pair":
-            return analyzer.validate_image_pair(**kwargs)
         raise ValueError("Unsupported damage operation")
 
 
@@ -200,39 +198,6 @@ async def validate_image_quality(
         ) from exc
     finally:
         await image.close()
-
-
-@app.post(
-    "/api/v1/validate-pair",
-    response_model=ImageQualityResponse,
-)
-async def validate_image_pair(
-        image: UploadFile = File(...),
-        context_image: UploadFile = File(...),
-) -> ImageQualityResponse:
-    """Fail closed if the photos lack a shared vehicle/damage surface region."""
-    try:
-        damage_bytes = await read_valid_image(image)
-        context_bytes = await read_valid_image(context_image)
-        return await run_in_threadpool(
-            run_damage_operation,
-            "validate_image_pair",
-            damage_file_content=damage_bytes,
-            context_file_content=context_bytes,
-        )
-    except HTTPException:
-        raise
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-    except Exception as exc:
-        logger.exception("Unexpected failure during image pair verification.")
-        raise HTTPException(
-            status_code=500,
-            detail="Image pair could not be verified.",
-        ) from exc
-    finally:
-        await image.close()
-        await context_image.close()
 
 
 assistant_router = SemanticDomainClassifier()

@@ -587,23 +587,6 @@ public class DamageInspectionService {
             );
         }
 
-        if (hasContextImage) {
-            ImageQualityResponse pairQuality = aiAnalysisClient.validatePair(
-                    fileStorageService.resolveStoredFile(imageValidation.imagePath()),
-                    fileStorageService.resolveStoredFile(contextImageValidation.imagePath())
-            );
-            if (pairQuality == null || pairQuality.code() == null
-                    || pairQuality.message() == null) {
-                throw new AiServiceException(
-                        "İki fotoğrafın tutarlılık kontrolü tamamlanamadı."
-                );
-            }
-            if (!pairQuality.suitable()) {
-                // Reject before PROCESSING, inference result persistence, and credit usage.
-                throw new UnsuitableInspectionImageException(pairQuality.message());
-            }
-        }
-
         AnalysisContext context =
                 transactionTemplate.execute(
                         status -> {
@@ -761,43 +744,6 @@ public class DamageInspectionService {
                 true
         ).quality();
     }
-
-    public ImageQualityResponse validateInspectionImagePair(
-            Long inspectionId,
-            String authenticatedEmail
-    ) {
-        ImagePairPaths paths = transactionTemplate.execute(status -> {
-            User user = businessContextService.requireUser(authenticatedEmail);
-            DamageInspection inspection =
-                    inspectionAccessService.requireInspection(inspectionId, user);
-            validateNotProcessing(inspection);
-            if (inspection.getStatus() == InspectionStatus.COMPLETED) {
-                throw new IllegalStateException(
-                        "Tamamlanan analizin fotoğrafları tekrar doğrulanamaz."
-                );
-            }
-            validateImageExists(inspection);
-            validateContextImageExists(inspection);
-            return new ImagePairPaths(
-                    inspection.getImagePath(), inspection.getContextImagePath()
-            );
-        });
-        if (paths == null) {
-            throw new IllegalStateException("Fotoğraf eşleşmesi kontrol edilemedi.");
-        }
-        ImageQualityResponse response = aiAnalysisClient.validatePair(
-                fileStorageService.resolveStoredFile(paths.damageImagePath()),
-                fileStorageService.resolveStoredFile(paths.contextImagePath())
-        );
-        if (response == null || response.code() == null || response.message() == null) {
-            throw new AiServiceException("Fotoğraf eşleşmesi için geçerli yanıt alınamadı.");
-        }
-        return response;
-    }
-
-    private record ImagePairPaths(
-            String damageImagePath, String contextImagePath
-    ) {}
 
     private ImageValidationContext validateInspectionImageInternal(
             Long inspectionId,
