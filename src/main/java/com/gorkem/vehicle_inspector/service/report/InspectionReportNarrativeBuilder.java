@@ -9,22 +9,29 @@ import com.gorkem.vehicle_inspector.entity.DamageType;
 import com.gorkem.vehicle_inspector.entity.RepairAction;
 import com.gorkem.vehicle_inspector.entity.VehiclePart;
 
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
- * Stable, local Turkish report narrative from the already-validated ML results.
- * No model/API call, speculative diagnoses, or prices are generated here.
+ * Naturally worded Turkish inspection narrative based strictly on existing
+ * structured ML results. No Gemini call and no invented defects or repairs.
+ * Prices and pricing explanations remain untouched and are supplied by Gemini.
  */
 public final class InspectionReportNarrativeBuilder {
 
+    private static final int SUMMARY_LIMIT = 1500;
+    private static final int DESCRIPTION_LIMIT = 3000;
+
     private static final String DISCLAIMER =
-            "Bu rapor yalnızca yüklenen fotoğraflardaki görünür alanların otomatik "
-            + "hasar değerlendirmesine dayanır. Mekanik kontrol veya profesyonel "
-            + "ekspertiz yerine geçmez. Onarım fiyatı yapay zekânın yaklaşık "
-            + "tahminidir; güncel servis teklifi değildir. Kesin onarım yöntemi "
-            + "ve bedeli fiziksel inceleme sonucunda belirlenmelidir.";
+            "Bu rapor, yalnızca yüklenen fotoğraflarda görülebilen hasarların "
+            + "otomatik değerlendirmesine dayanır. Mekanik kontrol veya "
+            + "profesyonel ekspertiz yerine geçmez. Belirtilen fiyat aralığı "
+            + "yapay zekâ tarafından oluşturulmuş yaklaşık bir tahmindir; "
+            + "güncel bir servis teklifi değildir. Kesin onarım işlemi ve "
+            + "maliyeti, aracın fiziksel incelemesiyle belirlenmelidir.";
 
     private InspectionReportNarrativeBuilder() {
     }
@@ -38,11 +45,14 @@ public final class InspectionReportNarrativeBuilder {
 
         List<DamageContext> damages = request.damages() == null
                 ? List.of()
-                : request.damages().stream().filter(Objects::nonNull).toList();
+                : request.damages().stream()
+                        .filter(Objects::nonNull)
+                        .filter(damage -> damage.damageType() != DamageType.NO_VISIBLE_DAMAGE)
+                        .toList();
 
         LlmInspectionReportResult result = new LlmInspectionReportResult();
-        result.title = "Araç Hasar İnceleme Raporu";
-        result.summary = buildSummary(request.damageSeverity(), damages);
+        result.title = "Araç Hasar Değerlendirme Raporu";
+        result.summary = buildSummary(request, damages);
         result.damageDescription = buildDamageDescription(damages);
         result.repairRecommendation = buildRepairRecommendation(damages);
         result.estimatedMinimumPrice = price.estimatedMinimumPrice();
@@ -55,73 +65,155 @@ public final class InspectionReportNarrativeBuilder {
     }
 
     private static String buildSummary(
-            DamageSeverity severity, List<DamageContext> damages
+            InspectionLlmRequest request, List<DamageContext> damages
     ) {
-        String heading = "Görüntüye dayalı değerlendirmede hasar seviyesi "
-                + severityName(severity) + " olarak sınıflandırılmıştır.";
+        String subject = vehicleDescription(request);
         if (damages.isEmpty()) {
-            return heading + " Ayrıntılı hasar ve onarım bilgisi belirlenemedi. "
-                    + "Sonuç yalnızca fotoğraflarda görünen alanlarla sınırlıdır.";
+            return subject + " için yapılan fotoğraf incelemesinde "
+                    + "ayrıntılı bir hasar bulgusu belirlenemedi. "
+                    + "Görünür hasar seviyesi "
+                    + severityName(request.damageSeverity())
+                    + " olarak kaydedildi.";
         }
-        String types = damages.stream()
-                .map(DamageContext::damageType)
-                .filter(Objects::nonNull)
-                .map(InspectionReportNarrativeBuilder::damageName)
+        String findings = damages.stream()
+                .map(InspectionReportNarrativeBuilder::finding)
                 .distinct()
                 .collect(Collectors.joining(", "));
-        String details = types.isBlank()
-                ? ""
-                : " Tespit edilen hasar türleri: " + types + ".";
-        return heading + details
-                + " Sonuç yalnızca fotoğraflarda görünen alanlarla sınırlıdır.";
+        return fit(
+                subject + " için gönderilen fotoğraflarda "
+                + findings + " tespit edildi. "
+                + "Bulgulara göre görünür hasar seviyesi "
+                + severityName(request.damageSeverity())
+                + " olarak değerlendirildi.",
+                SUMMARY_LIMIT
+        );
     }
 
     private static String buildDamageDescription(List<DamageContext> damages) {
         if (damages.isEmpty()) {
-            return "Görüntüdeki hasar türü ve etkilenen araç parçaları "
-                    + "ayrıntılı olarak belirlenemedi.";
+            return "Fotoğraf analizinde hasarın türü ve konumu hakkında "
+                    + "ayrıntılı bilgi elde edilemedi. "
+                    + "Belirlenmeyen araç parçaları veya hasar türleri "
+                    + "hakkında ek varsayımda bulunulmadı.";
         }
-        return damages.stream()
-                .map(damage -> {
-                    String description = "Tespit edilen hasar: "
-                            + damageName(damage.damageType()) + ".";
-                    String parts = partList(damage.affectedParts());
-                    return description + (parts.isEmpty()
-                            ? " Etkilenen araç parçası güvenle belirlenemedi."
-                            : " Etkilenen parçalar: " + parts + ".");
-                })
-                .collect(Collectors.joining("\n"));
+        List<String> sentences = new ArrayList<>();
+        for (int i = 0; i < damages.size(); i++) {
+            DamageContext damage = damages.get(i);
+            String location = partList(damage.affectedParts());
+            String intro = i == 0
+                    ? "Görüntülerin incelenmesi sonucunda "
+                    : "Ayrıca ";
+            String sentence = location.isBlank()
+                    ? intro + damageName(damage.damageType())
+                        + " tespit edildi. Etkilenen araç parçası "
+                        + "güvenle belirlenemedi."
+                    : intro + location + " bölgesinde "
+                        + damageName(damage.damageType()) + " tespit edildi.";
+            sentences.add(sentence);
+        }
+        sentences.add(
+                "Bu değerlendirme fotoğraflarda görülebilen alanlarla sınırlıdır."
+        );
+        return joinWithinLimit(sentences, DESCRIPTION_LIMIT);
     }
 
     private static String buildRepairRecommendation(List<DamageContext> damages) {
         if (damages.isEmpty()) {
-            return "Analiz verilerinde onarım işlemi belirtilmemiştir. "
-                    + "Uygun yöntem için araç fiziksel olarak incelenmelidir.";
+            return "Analiz sonucunda belirli bir onarım işlemi önerilemedi. "
+                    + "Uygun yöntemin belirlenmesi için aracın fiziksel olarak "
+                    + "incelenmesi gerekir.";
         }
-        return damages.stream()
-                .map(damage -> {
-                    String prefix = damageName(damage.damageType()) + " için "
-                            + "önerilen işlem: "
-                            + repairName(damage.recommendedAction()) + ".";
-                    String replacement = Boolean.TRUE.equals(
-                            damage.partReplacementRequired())
-                            ? " Analiz sonucunda parça değişimi önerilmiştir."
-                            : " Analizde parça değişimi önerilmemiştir.";
-                    return prefix + replacement;
-                })
-                .collect(Collectors.joining("\n"));
+        List<String> sentences = new ArrayList<>();
+        for (DamageContext damage : damages) {
+            String location = partList(damage.affectedParts());
+            String subject = location.isBlank()
+                    ? damageName(damage.damageType())
+                    : location + " bölgesindeki " + damageName(damage.damageType());
+            RepairAction action = damage.recommendedAction();
+            String sentence = action == null || action == RepairAction.NO_ACTION
+                    ? subject + " için analizde bir onarım işlemi belirtilmedi."
+                    : subject + " için " + repairName(action)
+                        + " öneriliyor.";
+            if (Boolean.TRUE.equals(damage.partReplacementRequired())
+                    && action != RepairAction.PART_REPLACEMENT
+                    && action != RepairAction.GLASS_REPLACEMENT
+                    && action != RepairAction.HEADLIGHT_REPLACEMENT) {
+                sentence += " Aynı parça için değişim gereksinimi de belirtildi.";
+            }
+            sentences.add(sentence);
+        }
+        sentences.add("Önerilen işlemin uygulanabilirliği ve kapsamı, "
+                + "serviste yapılacak fiziksel inceleme sonrasında netleştirilmelidir.");
+        return joinWithinLimit(sentences, DESCRIPTION_LIMIT);
+    }
+
+    private static String vehicleDescription(InspectionLlmRequest request) {
+        if (request.vehicle() == null) {
+            return "Araç";
+        }
+        String brand = clean(request.vehicle().brand());
+        String model = clean(request.vehicle().model());
+        String name = (brand + " " + model).trim();
+        Integer year = request.vehicle().modelYear();
+        if (year != null && year >= 1900 && year <= 2100) {
+            name = year + " model " + name;
+        }
+        return name.isBlank() ? "Araç" : name;
+    }
+
+    private static String clean(String raw) {
+        return raw == null ? "" : raw.replaceAll("[\\p{Cntrl}]+", " ").trim();
+    }
+
+    private static String finding(DamageContext damage) {
+        String location = partList(damage.affectedParts());
+        return location.isBlank()
+                ? damageName(damage.damageType())
+                : location + " bölgesinde " + damageName(damage.damageType());
     }
 
     private static String partList(List<VehiclePart> parts) {
-        if (parts == null) {
+        if (parts == null || parts.isEmpty()) {
             return "";
         }
-        return parts.stream()
-                .filter(Objects::nonNull)
-                .filter(part -> part != VehiclePart.UNKNOWN)
-                .map(InspectionReportNarrativeBuilder::partName)
-                .distinct()
-                .collect(Collectors.joining(", "));
+        List<String> names = new ArrayList<>(
+                parts.stream()
+                        .filter(Objects::nonNull)
+                        .filter(part -> part != VehiclePart.UNKNOWN)
+                        .map(InspectionReportNarrativeBuilder::partName)
+                        .collect(Collectors.toCollection(LinkedHashSet::new))
+        );
+        if (names.isEmpty()) {
+            return "";
+        }
+        if (names.size() == 1) {
+            return names.getFirst();
+        }
+        return String.join(", ", names.subList(0, names.size() - 1))
+                + " ve " + names.getLast();
+    }
+
+    private static String joinWithinLimit(List<String> sentences, int limit) {
+        StringBuilder result = new StringBuilder();
+        for (String sentence : sentences) {
+            int addition = sentence.length() + (result.isEmpty() ? 0 : 1);
+            if (result.length() + addition > limit) {
+                break;
+            }
+            if (!result.isEmpty()) {
+                result.append(' ');
+            }
+            result.append(sentence);
+        }
+        return result.toString();
+    }
+
+    private static String fit(String value, int limit) {
+        if (value.length() <= limit) {
+            return value;
+        }
+        // Avoid a database length violation for unusually many ML findings.
+        return value.substring(0, Math.max(0, limit - 1)).stripTrailing() + "…";
     }
 
     private static String severityName(DamageSeverity severity) {
@@ -139,7 +231,7 @@ public final class InspectionReportNarrativeBuilder {
 
     private static String damageName(DamageType type) {
         if (type == null) {
-            return "belirlenemeyen hasar";
+            return "türü belirlenemeyen hasar";
         }
         return switch (type) {
             case NO_VISIBLE_DAMAGE -> "görünür hasar yok";
@@ -147,21 +239,18 @@ public final class InspectionReportNarrativeBuilder {
             case PAINT_DAMAGE -> "boya hasarı";
             case DENT -> "göçük";
             case CRACK -> "çatlak";
-            case BROKEN_PART -> "kırık parça";
+            case BROKEN_PART -> "parça kırığı";
             case BROKEN_GLASS -> "cam kırığı";
             case DEFORMATION -> "deformasyon";
         };
     }
 
     private static String repairName(RepairAction action) {
-        if (action == null) {
-            return "belirlenemedi";
-        }
         return switch (action) {
             case NO_ACTION -> "onarım önerilmiyor";
-            case POLISHING -> "pasta ve polisaj";
+            case POLISHING -> "pasta ve polisaj işlemi";
             case PAINT_TOUCH_UP -> "boya rötuşu";
-            case FULL_PAINTING -> "boyama";
+            case FULL_PAINTING -> "boyama işlemi";
             case PAINTLESS_DENT_REPAIR -> "boyasız göçük düzeltme";
             case DENT_REPAIR -> "göçük onarımı";
             case PLASTIC_REPAIR -> "plastik parça onarımı";

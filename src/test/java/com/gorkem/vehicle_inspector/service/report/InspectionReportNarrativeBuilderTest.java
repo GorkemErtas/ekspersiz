@@ -46,12 +46,12 @@ class InspectionReportNarrativeBuilderTest {
 
         var result = InspectionReportNarrativeBuilder.build(inspection, PRICE);
 
-        assertEquals("Araç Hasar İnceleme Raporu", result.title);
+        assertEquals("Araç Hasar Değerlendirme Raporu", result.title);
         assertTrue(result.summary.contains("hafif"));
         assertTrue(result.summary.contains("çizik"));
         assertTrue(result.damageDescription.contains("ön tampon"));
         assertTrue(result.repairRecommendation.contains("boya rötuşu"));
-        assertTrue(result.repairRecommendation.contains("parça değişimi önerilmemiştir"));
+        assertFalse(result.repairRecommendation.contains("parça değişimi önerilmemiştir"));
         assertFalse(result.damageDescription.contains("ML'in verdiği özet"));
         assertTrue(result.disclaimer.contains("profesyonel ekspertiz"));
         assertEquals(PRICE.estimatedMinimumPrice(), result.estimatedMinimumPrice);
@@ -77,13 +77,14 @@ class InspectionReportNarrativeBuilderTest {
         var report = InspectionReportNarrativeBuilder.build(inspection, PRICE);
 
         assertTrue(report.summary.contains("orta"));
-        assertTrue(report.summary.contains("çizik, cam kırığı"));
+        assertTrue(report.summary.contains("çizik"));
+        assertTrue(report.summary.contains("cam kırığı"));
         assertTrue(report.damageDescription.contains("ön kapı"));
         assertTrue(report.damageDescription.contains("arka kapı camı"));
         assertFalse(report.damageDescription.contains("belirlenemeyen parça"));
         assertTrue(report.repairRecommendation.contains("pasta ve polisaj"));
         assertTrue(report.repairRecommendation.contains("cam değişimi"));
-        assertTrue(report.repairRecommendation.contains("parça değişimi önerilmiştir"));
+        assertFalse(report.repairRecommendation.contains("değişim gereksinimi de belirtildi"));
     }
 
     @Test
@@ -100,7 +101,51 @@ class InspectionReportNarrativeBuilderTest {
         var empty = InspectionReportNarrativeBuilder.build(
                 request(DamageSeverity.UNKNOWN, null), PRICE);
         assertTrue(empty.summary.contains("belirsiz"));
-        assertTrue(empty.repairRecommendation.contains("belirtilmemiştir"));
+        assertTrue(empty.repairRecommendation.contains("önerilemedi"));
+    }
+
+    @Test
+    void fluentSingleDamageNarrativeKeepsVehicleAndDoesNotAddUnseenClaims() {
+        var report = InspectionReportNarrativeBuilder.build(
+                request(DamageSeverity.MINOR, List.of(
+                        new DamageContext(DamageType.SCRATCH, RepairAction.PAINT_TOUCH_UP,
+                                false, List.of(VehiclePart.FRONT_BUMPER)))),
+                PRICE
+        );
+
+        assertEquals("Araç Hasar Değerlendirme Raporu", report.title);
+        assertTrue(report.summary.startsWith("2021 model Toyota Corolla"));
+        assertTrue(report.summary.contains(
+                "ön tampon bölgesinde çizik tespit edildi"));
+        assertTrue(report.damageDescription.startsWith(
+                "Görüntülerin incelenmesi sonucunda"));
+        assertTrue(report.damageDescription.endsWith(
+                "fotoğraflarda görülebilen alanlarla sınırlıdır."));
+        assertTrue(report.repairRecommendation.contains(
+                "ön tampon bölgesindeki çizik için boya rötuşu öneriliyor"));
+        assertTrue(report.repairRecommendation.contains("fiziksel inceleme"));
+        assertFalse(report.damageDescription.contains("Tespit edilen hasar:"));
+        assertFalse(report.repairRecommendation.contains("Önerilen işlem:"));
+        assertFalse(report.damageDescription.contains("parça değişimi"));
+    }
+
+    @Test
+    void multipleDifferentFindingsReadLikeParagraphsAndKeepPriceIdentical() {
+        var report = InspectionReportNarrativeBuilder.build(
+                request(DamageSeverity.MODERATE, List.of(
+                        new DamageContext(DamageType.SCRATCH, RepairAction.POLISHING,
+                                false, List.of(VehiclePart.FRONT_DOOR)),
+                        new DamageContext(DamageType.DENT, RepairAction.DENT_REPAIR,
+                                false, List.of(VehiclePart.QUARTER_PANEL)))),
+                PRICE
+        );
+        assertTrue(report.summary.contains("ön kapı bölgesinde çizik"));
+        assertTrue(report.summary.contains("arka yan panel bölgesinde göçük"));
+        assertTrue(report.damageDescription.contains("Ayrıca"));
+        assertTrue(report.repairRecommendation.contains("göçük onarımı"));
+        assertEquals(PRICE.estimatedMinimumPrice(), report.estimatedMinimumPrice);
+        assertEquals(PRICE.estimatedMaximumPrice(), report.estimatedMaximumPrice);
+        assertEquals(PRICE.priceInformation(), report.priceInformation);
     }
 
     @Test
@@ -156,6 +201,8 @@ class InspectionReportNarrativeBuilderTest {
         assertTrue(prompt.contains("REAR_BUMPER"));
         assertTrue(prompt.contains("gerçek zamanlı"));
         assertTrue(prompt.contains("TOPLAM ONARIM FİYATI"));
-        assertFalse(prompt.contains("ML'in verdiği özet"));
+        assertTrue(prompt.contains("ML'in verdiği özet"));
+        assertTrue(prompt.contains("0.91"));
+        assertTrue(prompt.contains("ML güven skoru"));
     }
 }
