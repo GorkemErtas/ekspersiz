@@ -74,6 +74,15 @@ public class AnalysisQuotaService {
         }
 
         SubscriptionPlan plan = subscriptions.getEffectivePlan(user);
+        if (plan == SubscriptionPlan.FREE) {
+            long legacyCredits = analysisCreditService == null
+                    ? 0 : analysisCreditService.getBalance(user);
+            long remaining = user.getWelcomeAnalysisRemaining();
+            return new AnalysisQuotaResponse(
+                    plan, 2 - remaining, 2,
+                    remaining + legacyCredits, remaining, legacyCredits
+            );
+        }
         int limit = plan == SubscriptionPlan.BUSINESS
                 ? 1 : subscriptions.monthlyAnalysisLimit(plan);
         long used = usages.countByUser_IdAndStartedAtGreaterThanEqualAndStartedAtLessThan(
