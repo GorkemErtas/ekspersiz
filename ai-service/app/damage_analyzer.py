@@ -318,6 +318,21 @@ class DamageAnalyzer:
             verbose=False,
         )
 
+        damage_detections = (
+            self._extract_detections(
+                damage_results,
+                class_name_mapping=(
+                    self.damage_class_mapping
+                ),
+            )
+        )
+
+        if not damage_detections:
+            return self._build_no_damage_response(
+                filename=safe_filename
+            )
+
+
         vehicle_part_results = (
             self.vehicle_part_model.predict(
                 source=analysis_image,
@@ -330,20 +345,13 @@ class DamageAnalyzer:
             )
         )
 
-        damage_detections = (
-            self._extract_detections(
-                damage_results,
-                class_name_mapping=(
-                    self.damage_class_mapping
-                ),
-            )
-        )
 
         vehicle_part_detections = (
             self._extract_detections(
                 vehicle_part_results
             )
         )
+
 
         damage_detections = (
             self._translate_detections(
@@ -361,10 +369,6 @@ class DamageAnalyzer:
             )
         )
 
-        if not damage_detections:
-            return self._build_no_damage_response(
-                filename=safe_filename
-            )
 
         matched_damage_detections = (
             self._assign_parts_to_damage_detections(
