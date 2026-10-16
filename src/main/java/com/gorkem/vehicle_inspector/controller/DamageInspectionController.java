@@ -222,6 +222,18 @@ public class DamageInspectionController {
         );
     }
 
+    @PostMapping("/{inspectionId}/pair-quality")
+    public ResponseEntity<ImageQualityResponse> validateInspectionImagePair(
+            @PathVariable Long inspectionId,
+            Authentication authentication
+    ) {
+        return ResponseEntity.ok(
+                inspectionService.validateInspectionImagePair(
+                        inspectionId, authentication.getName()
+                )
+        );
+    }
+
     @PostMapping("/{inspectionId}/context-image-quality")
     public ResponseEntity<ImageQualityResponse>
     validateInspectionContextImage(

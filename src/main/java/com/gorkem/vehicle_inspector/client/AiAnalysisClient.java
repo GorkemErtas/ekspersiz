@@ -86,6 +86,30 @@ private static final long[] RETRY_DELAYS_MS = {
         );
     }
 
+    public ImageQualityResponse validatePair(
+            Path damageImagePath,
+            Path contextImagePath
+    ) {
+        validateImagePath(damageImagePath);
+        validateImagePath(contextImagePath);
+
+        MultiValueMap<String, Object> multipartBody =
+                new LinkedMultiValueMap<>();
+        multipartBody.add(
+                "image",
+                buildImagePart(damageImagePath, "image")
+        );
+        multipartBody.add(
+                "context_image",
+                buildImagePart(contextImagePath, "context_image")
+        );
+        return postMultipart(
+                multipartBody,
+                "/api/v1/validate-pair",
+                ImageQualityResponse.class
+        );
+    }
+
     public ImageQualityResponse validateImage(
             Path imagePath
     ) {
