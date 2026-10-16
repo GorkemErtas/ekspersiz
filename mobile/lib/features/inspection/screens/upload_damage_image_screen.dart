@@ -214,6 +214,20 @@ class _UploadDamageImageScreenState extends State<UploadDamageImageScreen> {
               contentType: contentType,
             );
 
+      if (_isContextStep) {
+        // Cheap CPU-only filter runs before the YOLO-backed context check.
+        final pairQuality = await _inspectionService.validateImagePair(
+          widget.inspection.id,
+        );
+        if (!mounted) return;
+        if (!pairQuality.suitable) {
+          setState(() {
+            _qualityIssue = pairQuality.message;
+          });
+          return;
+        }
+      }
+
       final quality = _isContextStep
           ? await _inspectionService.validateContextImageQuality(
               widget.inspection.id,
@@ -240,19 +254,6 @@ class _UploadDamageImageScreenState extends State<UploadDamageImageScreen> {
           _selectedContentType = null;
           _selectedFilename = null;
           _qualityIssue = null;
-        });
-        return;
-      }
-
-      final pairQuality = await _inspectionService.validateImagePair(
-        widget.inspection.id,
-      );
-      if (!mounted) {
-        return;
-      }
-      if (!pairQuality.suitable) {
-        setState(() {
-          _qualityIssue = pairQuality.message;
         });
         return;
       }
