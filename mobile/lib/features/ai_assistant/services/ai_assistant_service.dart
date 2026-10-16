@@ -11,11 +11,6 @@ class AiAssistantService {
     return AiAssistantEntitlement.fromJson(data as Map<String, dynamic>);
   }
 
-  Future<AiAssistantEntitlement> startTrial() async {
-    final data = await apiClient.post('/ai-assistant/trial');
-    return AiAssistantEntitlement.fromJson(data as Map<String, dynamic>);
-  }
-
   Future<AiAssistantReply> ask(
     String question, {
     int? vehicleId,

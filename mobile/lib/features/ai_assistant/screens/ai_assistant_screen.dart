@@ -221,9 +221,9 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
 
   String _accessMessage(AiAssistantEntitlement entitlement) {
     return switch (entitlement.status) {
-      'INACTIVE' => 'AI Asistan için profilinizden Plus denemesini başlatın veya bir plan satın alın.',
+      'INACTIVE' => 'AI Asistan şu anda kullanılamıyor. Abonelik planlarını inceleyebilirsiniz.',
       'LOCKED' => 'Çok sayıda kapsam dışı istek nedeniyle AI Asistan geçici olarak kilitlendi.',
-      'EXPIRED' => 'AI Asistan deneme süreniz sona erdi.',
+      'EXPIRED' => 'AI Asistan erişiminiz sona erdi. Abonelik planlarını inceleyebilirsiniz.',
       _ when entitlement.remainingToday <= 0 =>
         'Bugünkü ${entitlement.dailyLimit} soru hakkınızı kullandınız. Yeni günlük haklarınız yarın yenilenir.',
       _ => 'Aracınız, bakım, muayene, güvenlik veya EksperSiz hakkında bir şey sorun.',

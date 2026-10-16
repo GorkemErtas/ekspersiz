@@ -75,6 +75,15 @@ class SubscriptionServiceTest {
     }
 
     @Test
+    void freePlanAlwaysRemainsFreeWithoutPlusTrialPromotion() {
+        plan(SubscriptionPlan.FREE);
+        org.junit.jupiter.api.Assertions.assertEquals(
+                SubscriptionPlan.FREE, service.getEffectivePlan(user));
+        org.junit.jupiter.api.Assertions.assertEquals(
+                1, service.monthlyAnalysisLimit(SubscriptionPlan.FREE));
+    }
+
+    @Test
     void freeUserFirstMonthlyAnalysisIsAllowed() {
         plan(SubscriptionPlan.FREE);
 

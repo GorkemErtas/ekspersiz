@@ -18,7 +18,7 @@ Flutter mobil uygulaması, Java/Spring Boot API'si ve Python/FastAPI AI servisin
 - **Araç yönetimi:** Araç profilleri, kilometre/bakım kayıtları, muayene ve bakım hatırlatmaları, birleşik araç geçmişi.
 - **AI Asistan:** Araç, bakım ve muayene soruları; uygulama bilgi tabanı; yetkili kullanıcının araç, hasar ve hatırlatma kayıtları; Türkçe sesli giriş.
 - **Entegrasyonlar:** Yakındaki servisler (Google Maps/Places), uygulama içi ve FCM bildirimleri, e-posta/Google ile giriş.
-- **Planlar:** FREE, PLUS, PRO ve BUSINESS; RevenueCat abonelikleri, 7 günlük tek kullanımlık PLUS denemesi, şirket üyeleri ve paylaşımlı kotalar.
+- **Planlar:** FREE, PLUS, PRO ve BUSINESS; RevenueCat abonelikleri, FREE planın aylık hasar ve günlük asistan hakları, şirket üyeleri ve paylaşımlı kotalar.
 
 ## Sistem mimarisi
 
@@ -113,12 +113,12 @@ Ayrıntılar: [AI Asistan mimarisi](docs/ai-assistant/ARCHITECTURE.md).
 
 | Plan | Araç | Aylık analiz | AI Asistan |
 | --- | ---: | ---: | --- |
-| FREE | 1 | 1 | Yok |
+| FREE | 1 | 1 | 3 başarılı yanıt/gün |
 | PLUS | 3 | 5 | 3 başarılı yanıt/gün |
 | PRO | 10 | 10 | 5 başarılı yanıt/gün |
 | BUSINESS | 50 (şirket) | 100 (şirket) | 10 başarılı yanıt/gün (ortak) |
 
-FREE kullanıcılar **bir defaya mahsus 7 günlük PLUS denemesi** başlatabilir; ödeme yöntemi ve otomatik ücretli geçiş gerekmez. Abonelik iptali, ödenmiş dönemin kalan haklarını hemen sona erdirmez. Hasar analizi ve AI Asistan kullanım kotaları ayrı yönetilir.
+FREE planda **ayda 1 detaylı hasar analizi** ve **günde 3 AI Asistan başarılı yanıtı** bulunur; Plus denemesi sunulmaz. Abonelik iptali, ödenmiş dönemin kalan haklarını hemen sona erdirmez. Hasar analizi ve AI Asistan kullanım kotaları ayrı yönetilir.
 
 ## Geliştirme ve test
 

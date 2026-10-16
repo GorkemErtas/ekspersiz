@@ -26,10 +26,6 @@ public class AiAssistantAccess {
     public AiAssistantAccess(User user, LocalDateTime now) {
         this.user = user; this.createdAt = now; this.updatedAt = now;
     }
-    public void startTrial(LocalDateTime now) {
-        if (trialStartedAt != null) throw new IllegalStateException("AI Asistan deneme hakkı daha önce kullanılmış.");
-        trialStartedAt = now; trialExpiresAt = now.plusDays(7); status = AiAssistantAccessStatus.TRIAL; updatedAt = now;
-    }
     public void activateSubscription(LocalDateTime startedAt, LocalDateTime expiresAt) {
         subscriptionStartedAt = startedAt; subscriptionExpiresAt = expiresAt; status = AiAssistantAccessStatus.ACTIVE; lockedUntil = null; updatedAt = startedAt;
     }
@@ -39,13 +35,13 @@ public class AiAssistantAccess {
             lockedUntil = null;
             status = subscriptionExpiresAt == null && subscriptionStartedAt != null ? AiAssistantAccessStatus.ACTIVE
                     : subscriptionExpiresAt != null && subscriptionExpiresAt.isAfter(now) ? AiAssistantAccessStatus.ACTIVE
-                    : trialExpiresAt != null && trialExpiresAt.isAfter(now) ? AiAssistantAccessStatus.TRIAL : AiAssistantAccessStatus.EXPIRED;
+                    : AiAssistantAccessStatus.EXPIRED;
         }
         if (status == AiAssistantAccessStatus.TRIAL && trialExpiresAt != null && !trialExpiresAt.isAfter(now)) status = AiAssistantAccessStatus.EXPIRED;
         if (status == AiAssistantAccessStatus.ACTIVE && subscriptionExpiresAt != null && !subscriptionExpiresAt.isAfter(now)) status = AiAssistantAccessStatus.EXPIRED;
         updatedAt = now;
     }
-    public boolean canAsk(LocalDateTime now) { refresh(now); return status == AiAssistantAccessStatus.TRIAL || status == AiAssistantAccessStatus.ACTIVE; }
+    public boolean canAsk(LocalDateTime now) { refresh(now); return status == AiAssistantAccessStatus.ACTIVE; }
     public AiAssistantAccessStatus getStatus() { return status; }
     public LocalDateTime getTrialStartedAt() { return trialStartedAt; }
     public LocalDateTime getTrialExpiresAt() { return trialExpiresAt; }

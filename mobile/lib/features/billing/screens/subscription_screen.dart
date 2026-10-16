@@ -235,13 +235,9 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
     final dateLabel = endsAt == null
         ? null
         : '${endsAt.day.toString().padLeft(2, '0')}.${endsAt.month.toString().padLeft(2, '0')}.${endsAt.year}';
-    final isTrial = status.currentPlan == 'PLUS' && status.productId == null;
-    final cancelled = !isTrial && (status.status == 'CANCELLED' || !status.autoRenewing);
-    final message = isTrial
-        ? (dateLabel == null
-            ? '7 günlük ücretsiz Plus denemeniz aktif. Otomatik ücretlendirme yapılmaz.'
-            : 'Ücretsiz Plus denemeniz $dateLabel tarihine kadar aktif. Sonrasında ücretsiz plana dönersiniz; ücret alınmaz.')
-        : cancelled
+    final cancelled =
+        status.status == 'CANCELLED' || !status.autoRenewing;
+    final message = cancelled
         ? (dateLabel == null
             ? 'Aboneliğiniz iptal edildi. Mevcut haklarınız ödenmiş dönem sonuna kadar devam eder.'
             : 'Aboneliğiniz iptal edildi. Haklarınız $dateLabel tarihine kadar devam eder.')
@@ -261,7 +257,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(
-            isTrial ? Icons.card_giftcard_outlined : cancelled ? Icons.event_available_outlined : Icons.autorenew_rounded,
+            cancelled ? Icons.event_available_outlined : Icons.autorenew_rounded,
             color: theme.colorScheme.primary,
           ),
           const SizedBox(width: 10),
@@ -270,7 +266,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 AppText(message),
-                if (!cancelled && !isTrial) ...[
+                if (!cancelled) ...[
                   const SizedBox(height: 12),
                   OutlinedButton.icon(
                     onPressed: () => _manageSubscription(status),

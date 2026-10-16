@@ -45,7 +45,6 @@ public class BillingService {
     private final ObjectMapper objectMapper;
     private final Clock clock;
     private final AnalysisCreditService analysisCreditService;
-    private final com.gorkem.vehicle_inspector.repository.AiAssistantAccessRepository trialAccessRepository;
 
     @Autowired
     public BillingService(
@@ -57,8 +56,7 @@ public class BillingService {
             RevenueCatWebhookVerifier webhookVerifier,
             ObjectMapper objectMapper,
             Clock clock,
-            AnalysisCreditService analysisCreditService,
-            com.gorkem.vehicle_inspector.repository.AiAssistantAccessRepository trialAccessRepository
+            AnalysisCreditService analysisCreditService
     ) {
         this.userRepository = userRepository;
         this.subscriptionRepository = subscriptionRepository;
@@ -69,20 +67,6 @@ public class BillingService {
         this.objectMapper = objectMapper;
         this.clock = clock;
         this.analysisCreditService = analysisCreditService;
-        this.trialAccessRepository = trialAccessRepository;
-    }
-
-    public BillingService(UserRepository userRepository,
-            BillingSubscriptionRepository subscriptionRepository,
-            BillingWebhookEventRepository webhookEventRepository,
-            SubscriptionService subscriptionService,
-            RevenueCatClient revenueCatClient,
-            RevenueCatWebhookVerifier webhookVerifier,
-            ObjectMapper objectMapper, Clock clock,
-            AnalysisCreditService analysisCreditService) {
-        this(userRepository, subscriptionRepository, webhookEventRepository,
-                subscriptionService, revenueCatClient, webhookVerifier,
-                objectMapper, clock, analysisCreditService, null);
     }
 
     public BillingService(
@@ -97,7 +81,7 @@ public class BillingService {
     ) {
         this(userRepository, subscriptionRepository, webhookEventRepository,
                 subscriptionService, revenueCatClient, webhookVerifier,
-                objectMapper, clock, null, null);
+                objectMapper, clock, null);
     }
 
     @Transactional
@@ -285,19 +269,9 @@ public class BillingService {
                 .orElse(null);
         SubscriptionPlan effectivePlan =
                 subscriptionService.getEffectivePlan(user);
-        boolean trialActive = effectivePlan == SubscriptionPlan.PLUS
-                && (user.getSubscriptionPlan() == SubscriptionPlan.FREE
-                    || user.getSubscriptionPlan() == null
-                    || (user.getSubscriptionExpiresAt() != null
-                        && !user.getSubscriptionExpiresAt().isAfter(LocalDateTime.now(clock))));
-        LocalDateTime trialEndsAt = trialActive && trialAccessRepository != null
-                ? trialAccessRepository.findByUserId(user.getId())
-                    .map(AiAssistantAccess::getTrialExpiresAt).orElse(null)
-                : null;
         BillingSubscriptionStatus effectiveStatus =
-                trialActive ? BillingSubscriptionStatus.ACTIVE : billingSubscription == null
-                        ? BillingSubscriptionStatus.NONE
-                        : effectivePlan == SubscriptionPlan.FREE
+                billingSubscription == null ? BillingSubscriptionStatus.NONE
+                    : effectivePlan == SubscriptionPlan.FREE
                         ? BillingSubscriptionStatus.EXPIRED
                         : billingSubscription.getStatus();
 
@@ -305,18 +279,18 @@ public class BillingService {
                 user.ensureBillingCustomerId(),
                 effectivePlan,
                 effectiveStatus,
-                trialActive ? null : billingSubscription == null
+                billingSubscription == null
                         ? null
                         : billingSubscription.getProductId(),
-                !trialActive && effectivePlan != SubscriptionPlan.FREE
+                effectivePlan != SubscriptionPlan.FREE
                         && billingSubscription != null
                         && billingSubscription.isAutoRenewing(),
                 billingSubscription != null
                         && billingSubscription.isSandbox(),
-                trialActive ? trialEndsAt : billingSubscription == null
+                billingSubscription == null
                         ? user.getSubscriptionExpiresAt()
                         : billingSubscription.getCurrentPeriodEndsAt(),
-                trialActive ? null : billingSubscription == null
+                billingSubscription == null
                         ? null
                         : billingSubscription.getManagementUrl(),
                 billingSubscription == null
@@ -332,13 +306,13 @@ public class BillingService {
         plans.add(new BillingPlanResponse(
                 SubscriptionPlan.FREE,
                 "Ücretsiz",
-                "Araç takibi ve temel AI hasar tespiti ücretsiz",
+                "Araç takibi, ayda 1 hasar raporu ve günde 3 AI Asistan sorusu",
                 null,
                 null,
                 BigDecimal.ZERO,
                 "TRY",
                 false,
-                List.of("1 aktif araç", "Temel AI hasar tespiti ücretsiz", "Ayda 1 detaylı AI raporu ücretsiz")
+                List.of("1 aktif araç", "Ayda 1 detaylı AI raporu", "Günde 3 AI Asistan sorusu")
         ));
 
         for (BillingProduct product : BillingProduct.values()) {

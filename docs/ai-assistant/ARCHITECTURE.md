@@ -36,16 +36,16 @@
 
 `VEHICLE_GENERAL`, `INSPECTION`, `MAINTENANCE`, `DRIVING_USAGE`, `SAFETY`, `VEHICLE_SPEC`, `USER_VEHICLE`, `DAMAGE_HISTORY`, `REMINDER`, `APP_HELP`, `OUT_OF_SCOPE`.
 
-## Plan, deneme ve kota
+## Plan ve kota
 
 | Plan | AI Asistan başarılı yanıt hakkı |
 | --- | --- |
-| FREE | Erişim yok |
+| FREE | Günde 3 |
 | PLUS | Günde 3 |
 | PRO | Günde 5 |
 | BUSINESS | Şirket genelinde günde 10 |
 
-- FREE kullanıcı, **profilden bir kez 7 günlük PLUS denemesi** başlatabilir; ödeme yöntemi veya otomatik ücretli dönüşüm yoktur.
+- FREE kullanıcılar deneme aktivasyonu gerektirmeden günde 3 başarılı yanıt gönderebilir. Ücretsiz plan, Plus aboneliği veya deneme durumu oluşturmaz.
 - Aktif ücretli plan veya henüz dolmamış abonelik dönemi sunucuda etkin plan olarak değerlendirilir.
 - Başarılı yanıtlar kota tüketir; kapsam dışı, açıklama isteyen ve başarısız istekler tüketmez.
 - Eşzamanlı istekler için süreli kota rezervasyonu; üç kapsam dışı denemeden sonra 24 saatlik kilit mantığı bulunur.
