@@ -22,35 +22,6 @@ deterministic domain result, never a learned damage class.
 All three production weights are deployment artifacts ignored by Git and must
 be present at the paths above. The service has no runtime model override.
 
-## Two-photo correspondence preflight (PR #13)
-
-Before a two-photo inspection is allowed to enter `PROCESSING`, the backend
-calls the AI `/api/v1/validate-pair` endpoint with the close-up and wide shot.
-The mobile flow also runs this check immediately after the second upload.
-
-- The wide shot must contain a YOLO-detected vehicle.
-- OpenCV SIFT + mutual descriptor matching and RANSAC must find geometrically
-  consistent shared details **within the detected vehicle crop**.
-- Matches must cover a meaningful area (not only a repeated logo), and, when
-  a close-up damage detection exists, support its nearby region.
-- Identical image bytes and unrelated or ambiguous photo pairs are rejected
-  **before** analysis quota/reservation and Gemini report generation.
-- A bounded 64-entry SHA-256 cache prevents redoing expensive
-  preflight inference when the exact same photos are checked again by
-  the backend. It stores only hashes, validation results and small detection
-  boxes, never image contents or model tensors.
-- The paired analysis reuses the cached close-up damage and wide-angle
-  vehicle boxes, skipping two otherwise repeated YOLO inference passes.
-  Context damage and part models still run for localization.
-
-**Important limitation:** local-feature alignment is evidence of shared
-photographed body surface, **not proof of unique vehicle identity**. Smooth
-paint, major perspective changes, glare and severe zoom differences may
-cause valid photo pairs to be rejected. Users should capture the same damage
-and distinctive surrounding details in both shots. This must be tested on
-representative real-world paired photos before a release; synthetic CI images
-do not validate false-rejection rates. Model weights and thresholds are not changed.
-
 ## Detection V2 dataset and training
 
 - Dataset config: `datasets/vehicle_damage_detection_v2/data.yaml`

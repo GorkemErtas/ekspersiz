@@ -244,19 +244,6 @@ class _UploadDamageImageScreenState extends State<UploadDamageImageScreen> {
         return;
       }
 
-      final pairQuality = await _inspectionService.validateImagePair(
-        widget.inspection.id,
-      );
-      if (!mounted) {
-        return;
-      }
-      if (!pairQuality.suitable) {
-        setState(() {
-          _qualityIssue = pairQuality.message;
-        });
-        return;
-      }
-
       Navigator.of(context).pushReplacement(
         MaterialPageRoute<void>(
           builder: (_) => AnalyzingScreen(
@@ -425,9 +412,9 @@ class _UploadDamageImageScreenState extends State<UploadDamageImageScreen> {
                       ? 'Biraz geri çekilin'
                       : 'Hasarı yakından görüntüleyin',
                   subtitle: _isContextStep
-                      ? 'İlk fotoğraftaki aynı hasar bölgesini, çevresindeki '
-                            'ayırt edici araç detaylarıyla birlikte daha geniş açıdan çekin. '
-                            'İki fotoğrafın ortak yüzeyi doğrulanmadan analiz başlamaz.'
+                      ? 'Hasar net görünmeye devam ederken çevresindeki araç '
+                            'parçalarını da kadraja alın. Bu fotoğraf, hasarın '
+                            'aracın hangi bölümünde olduğunu belirlemek için kullanılacak.'
                       : 'Hasarlı bölgeyi yakından ve net şekilde görüntüleyin. '
                             'Çizik, ezik, çatlak veya kırık bölgenin ayrıntıları '
                             'belirgin olsun.',
