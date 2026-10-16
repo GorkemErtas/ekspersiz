@@ -61,18 +61,6 @@ public class AiAssistantEntitlementService {
     }
 
     @Transactional
-    public AiAssistantEntitlementResponse startTrial(String email) {
-        User user=businessContext.requireUser(email); LocalDateTime now=LocalDateTime.now(clock);
-        if (jdbc != null) jdbc.queryForObject("SELECT id FROM users WHERE id = ? FOR UPDATE", Long.class, user.getId());
-        AiAssistantAccess access=accessRepository.findByUserId(user.getId())
-                .orElseGet(() -> new AiAssistantAccess(user, now));
-        if (subscriptions != null && subscriptions.getEffectivePlan(user) != SubscriptionPlan.FREE)
-            throw new IllegalStateException("Deneme yalnızca ücretsiz hesaplarda başlatılabilir.");
-        access.startTrial(now); accessRepository.save(access);
-        return response(user, access, now);
-    }
-
-    @Transactional
     public AiAssistantEntitlementResponse status(String email) {
         User user=businessContext.requireUser(email); LocalDateTime now=LocalDateTime.now(clock);
         AiAssistantAccess access=accessRepository.findByUserId(user.getId())
@@ -84,12 +72,24 @@ public class AiAssistantEntitlementService {
     @Transactional
     public void assertCanAsk(String email) {
         User user=businessContext.requireUser(email); LocalDateTime now=LocalDateTime.now(clock);
+        // Serialize reservations for the same user, even across separate devices.
+        if (jdbc != null) {
+            jdbc.queryForObject("SELECT id FROM users WHERE id = ? FOR UPDATE",
+                    Long.class, user.getId());
+        }
         assertAccess(user, now);
         BusinessAccount business=businessAccount(user);
         if (business != null) {
             lockBusiness(business);
             if (businessUsed(business) + businessReservations(business, now) >= 10)
                 throw new IllegalStateException("Şirketin günlük AI Asistan soru hakkı doldu.");
+            return;
+        }
+        if (isWelcomeUser(user)) {
+            if (user.getWelcomeAssistantRemaining() <= activeWelcomeReservations(user, now)) {
+                throw new IllegalStateException(
+                        "3 ücretsiz AI Asistan soru hakkınız tükendi. Abonelik planlarını inceleyin.");
+            }
             return;
         }
         AiAssistantDailyUsage usage=findOrCreateUsageForUpdate(user);
@@ -106,6 +106,11 @@ public class AiAssistantEntitlementService {
             lockBusiness(business);
             if (businessUsed(business) + businessReservations(business, now) >= 10)
                 throw new IllegalStateException("Şirketin günlük AI Asistan kotası doldu.");
+        } else if (isWelcomeUser(user)) {
+            if (user.getWelcomeAssistantRemaining() <= activeWelcomeReservations(user, now)) {
+                throw new IllegalStateException(
+                        "3 ücretsiz AI Asistan soru hakkınız tükendi. Abonelik planlarını inceleyin.");
+            }
         } else {
             AiAssistantDailyUsage usage=findOrCreateUsageForUpdate(user);
             if (usage.getSuccessfulQuestions() + activeReservations(user, now) >= dailyLimit(user))
@@ -133,6 +138,20 @@ public class AiAssistantEntitlementService {
             reservation.complete(now);
             jdbc.update("INSERT INTO ai_assistant_business_daily_usage (business_account_id, usage_date, successful_questions) VALUES (?, ?, 1) ON CONFLICT (business_account_id, usage_date) DO UPDATE SET successful_questions = ai_assistant_business_daily_usage.successful_questions + 1, updated_at = CURRENT_TIMESTAMP", business.getId(), java.sql.Date.valueOf(reservation.getUsageDate()));
         } else {
+            boolean welcome = isWelcomeUser(user);
+            if (welcome && jdbc != null) {
+                // Atomic, non-renewing debit; rollback rolls back the reservation too.
+                int updated = jdbc.update(
+                        "UPDATE users SET welcome_assistant_remaining = " +
+                                "welcome_assistant_remaining - 1 " +
+                                "WHERE id = ? AND welcome_assistant_remaining > 0",
+                        user.getId());
+                if (updated != 1) {
+                    throw new IllegalStateException("Ücretsiz AI Asistan sorularınız tükendi.");
+                }
+            } else if (welcome) {
+                user.consumeWelcomeAssistantQuestion();
+            }
             AiAssistantDailyUsage usage=findOrCreateUsageForUpdate(user, reservation.getUsageDate());
             reservation.complete(now);
             usage.recordSuccessful(now);
@@ -183,6 +202,17 @@ public class AiAssistantEntitlementService {
         };
     }
 
+    private boolean isWelcomeUser(User user) {
+        return subscriptions != null
+                && businessAccount(user) == null
+                && subscriptions.getEffectivePlan(user) == SubscriptionPlan.FREE;
+    }
+
+    private int activeWelcomeReservations(User user, LocalDateTime now) {
+        return Math.toIntExact(
+                reservationRepository.countUserActiveAllDates(user.getId(), now));
+    }
+
     private void assertAccess(User user, LocalDateTime now) {
         AiAssistantAccess access=accessRepository.findByUserId(user.getId())
                 .orElseGet(() -> accessRepository.save(new AiAssistantAccess(user, now)));
@@ -199,8 +229,10 @@ public class AiAssistantEntitlementService {
             if (businessAccount(user) != null) return true;
             if (subscriptions.getEffectivePlan(user) != SubscriptionPlan.FREE) return true;
         }
-        return existingAccess && access.getTrialExpiresAt() != null
-                && access.getTrialExpiresAt().isAfter(now);
+        // Free users only have the one-time three-question welcome entitlement.
+        return subscriptions != null
+                ? user.getWelcomeAssistantRemaining() > 0
+                : existingAccess;
     }
 
     private AiAssistantAccessStatus assistantStatus(User user, AiAssistantAccess access, LocalDateTime now) {
@@ -212,8 +244,8 @@ public class AiAssistantEntitlementService {
                 || subscriptions.getEffectivePlan(user) != SubscriptionPlan.FREE)) {
             return AiAssistantAccessStatus.ACTIVE;
         }
-        return access.getTrialExpiresAt() != null && access.getTrialExpiresAt().isAfter(now)
-                ? AiAssistantAccessStatus.TRIAL : AiAssistantAccessStatus.INACTIVE;
+        return hasAssistantAccess(user, access, now)
+                ? AiAssistantAccessStatus.ACTIVE : AiAssistantAccessStatus.INACTIVE;
     }
 
     private AiAssistantDailyUsage findOrCreateUsageForUpdate(User user) {
@@ -242,11 +274,17 @@ public class AiAssistantEntitlementService {
             limit=10;
             used=businessUsed(business);
             reserved=businessReservations(business, now);
+        } else if (isWelcomeUser(user)) {
+            // Existing response fields remain compatible; for FREE they report
+            // lifetime welcome quota, never a daily quota.
+            limit=3;
+            used=3 - user.getWelcomeAssistantRemaining();
+            reserved=activeWelcomeReservations(user, now);
         }
         int remaining=Math.max(0, limit-used-reserved);
         return new AiAssistantEntitlementResponse(
                 assistantStatus(user, access, now), hasAssistantAccess(user, access, now) && remaining > 0,
-                limit, used, remaining, out, access.getTrialExpiresAt(),
+                limit, used, remaining, out, null,
                 access.getSubscriptionExpiresAt(), access.getLockedUntil());
     }
 }
