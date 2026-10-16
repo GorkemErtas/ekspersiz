@@ -249,6 +249,75 @@ class DamageAnalyzerResultTest(unittest.TestCase):
             DEFAULT_DAMAGE_MODEL_PATH,
         )
 
+    def test_clean_single_image_skips_unused_part_inference(self) -> None:
+        image_bytes = BytesIO()
+        Image.new("RGB", (128, 128), (180, 180, 180)).save(image_bytes, "JPEG")
+        vehicle = DetectedObject(
+            label="car",
+            confidence=0.9,
+            boundingBox=BoundingBox(x1=10, y1=10, x2=110, y2=110),
+        )
+        self.analyzer.vehicle_model = Mock()
+        self.analyzer.damage_model = Mock()
+        self.analyzer.vehicle_part_model = Mock()
+        self.analyzer.vehicle_confidence_threshold = 0.40
+        self.analyzer.damage_confidence_threshold = 0.25
+        self.analyzer.damage_iou_threshold = 0.45
+        self.analyzer.damage_class_mapping = {0: "SCRATCH"}
+
+        with patch.object(
+            self.analyzer, "_extract_detections", side_effect=[[vehicle], []]
+        ) as extract:
+            result = self.analyzer.analyze(image_bytes.getvalue(), "clean.jpg")
+
+        self.assertEqual("NONE", result.damageSeverity.value)
+        self.assertEqual(
+            ["NO_VISIBLE_DAMAGE"], [damage.value for damage in result.damageTypes]
+        )
+        self.analyzer.vehicle_model.predict.assert_called_once()
+        self.analyzer.damage_model.predict.assert_called_once()
+        self.analyzer.vehicle_part_model.predict.assert_not_called()
+        self.assertEqual(2, extract.call_count)
+
+    def test_damaged_single_image_keeps_part_inference_and_mapping(self) -> None:
+        image_bytes = BytesIO()
+        Image.new("RGB", (128, 128), (180, 180, 180)).save(image_bytes, "JPEG")
+        vehicle = DetectedObject(
+            label="car",
+            confidence=0.9,
+            boundingBox=BoundingBox(x1=10, y1=10, x2=110, y2=110),
+        )
+        damage = DetectedObject(
+            label="SCRATCH",
+            confidence=0.95,
+            boundingBox=BoundingBox(x1=10, y1=10, x2=30, y2=30),
+        )
+        part = DetectedObject(
+            label="front-bumper",
+            confidence=0.90,
+            boundingBox=BoundingBox(x1=8, y1=8, x2=40, y2=40),
+        )
+        self.analyzer.vehicle_model = Mock()
+        self.analyzer.damage_model = Mock()
+        self.analyzer.vehicle_part_model = Mock()
+        self.analyzer.vehicle_confidence_threshold = 0.40
+        self.analyzer.damage_confidence_threshold = 0.25
+        self.analyzer.damage_iou_threshold = 0.45
+        self.analyzer.vehicle_part_confidence_threshold = 0.25
+        self.analyzer.damage_class_mapping = {0: "SCRATCH"}
+        self.analyzer.minimum_part_overlap_ratio = 0.25
+        self.analyzer.affected_part_damage_confidence_threshold = 0.50
+
+        with patch.object(
+            self.analyzer, "_extract_detections", side_effect=[[vehicle], [damage], [part]]
+        ) as extract:
+            result = self.analyzer.analyze(image_bytes.getvalue(), "damaged.jpg")
+
+        self.assertEqual(["SCRATCH"], [value.value for value in result.damageTypes])
+        self.assertEqual(["FRONT_BUMPER"], [value.value for value in result.affectedParts])
+        self.analyzer.vehicle_part_model.predict.assert_called_once()
+        self.assertEqual(3, extract.call_count)
+
     def test_image_without_a_recognizable_vehicle_is_rejected(self) -> None:
         image_bytes = BytesIO()
         Image.new("RGB", (4, 4), "white").save(image_bytes, format="JPEG")
