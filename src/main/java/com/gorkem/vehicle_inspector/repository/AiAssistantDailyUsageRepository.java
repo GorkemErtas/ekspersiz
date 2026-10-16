@@ -14,6 +14,18 @@ public interface AiAssistantDailyUsageRepository extends JpaRepository<AiAssista
     @Query("select u from AiAssistantDailyUsage u where u.user.id = :userId and u.usageDate = :date")
     Optional<AiAssistantDailyUsage> findForUpdate(@Param("userId") Long userId, @Param("date") LocalDate date);
 
+    @Query("""
+        select coalesce(sum(u.successfulQuestions), 0)
+        from AiAssistantDailyUsage u
+        where u.user.id = :userId
+          and u.usageDate >= :start
+          and u.usageDate < :end
+        """)
+    long sumSuccessfulQuestionsInPeriod(
+            @Param("userId") Long userId,
+            @Param("start") LocalDate start,
+            @Param("end") LocalDate end);
+
     @Modifying
     @Query(value = """
         INSERT INTO ai_assistant_daily_usage
