@@ -75,6 +75,15 @@ def run_model_free_close_quality(file_content: bytes) -> ImageQualityResponse:
 def run_model_free_pair_precheck(
         damage_file_content: bytes, context_file_content: bytes
 ) -> ImageQualityResponse | None:
+    # Byte-identical uploads need neither OpenCV imports nor model loading.
+    if damage_file_content == context_file_content:
+        return ImageQualityResponse(
+            suitable=False, code="DUPLICATE_IMAGE",
+            message=(
+                "Aynı fotoğraf iki kez yüklendi. Hasarı yakından ve "
+                "aynı hasarı araç üzerinde daha geniş açıdan çekin."
+            ),
+        )
     with _damage_inference_lock:
         from app.image_preflight import reject_obviously_unrelated_pair
         return reject_obviously_unrelated_pair(
