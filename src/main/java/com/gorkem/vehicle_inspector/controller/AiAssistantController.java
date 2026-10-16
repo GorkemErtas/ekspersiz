@@ -32,8 +32,4 @@ public class AiAssistantController {
         return entitlement.status(authentication.getName());
     }
 
-    @PostMapping("/trial")
-    public AiAssistantEntitlementResponse startTrial(Authentication authentication) {
-        return entitlement.startTrial(authentication.getName());
-    }
 }
