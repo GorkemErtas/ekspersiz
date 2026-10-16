@@ -153,6 +153,13 @@ public class GlobalExceptionHandler {
         );
     }
 
+    @ExceptionHandler(InsufficientAiAssistantAllowanceException.class)
+    public ResponseEntity<ApiErrorResponse> handleAssistantAllowance(
+            InsufficientAiAssistantAllowanceException exception
+    ) {
+        return buildResponse(HttpStatus.PAYMENT_REQUIRED, exception.getMessage());
+    }
+
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<ApiErrorResponse>
     handleIllegalStateException(
