@@ -53,6 +53,8 @@ public final class InspectionReportPromptBuilder {
                 Şehir: %s
                 Analiz tarihi: %s
                 Hasar seviyesi: %s
+                ML güven skoru: %s
+                ML analiz mesajı: %s
                 Hasarlar ve önerilen onarımlar:
                 %s
                 </inspection_data>
@@ -89,6 +91,8 @@ public final class InspectionReportPromptBuilder {
                         safe(request.city()),
                         safe(request.analysisDate()),
                         safe(request.damageSeverity()),
+                        safe(request.confidenceScore()),
+                        safe(request.analysisMessage()),
                         damageText
                 );
     }
