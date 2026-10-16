@@ -188,6 +188,6 @@ class AiAssistantChatServiceTest {
         return new AiAssistantEntitlementResponse(
                 com.gorkem.vehicle_inspector.entity.AiAssistantAccessStatus.TRIAL,
                 remaining > 0, 3, 3 - remaining, remaining, 0,
-                null, null, null);
+                null, null, null, "DAILY");
     }
 }
