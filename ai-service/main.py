@@ -65,6 +65,23 @@ def run_damage_operation(operation: str, **kwargs):
         raise ValueError("Unsupported damage operation")
 
 
+def run_model_free_close_quality(file_content: bytes) -> ImageQualityResponse:
+    # Same lock as inference limits simultaneous full-image decodes / peak RSS.
+    with _damage_inference_lock:
+        from app.image_preflight import validate_close_image_without_model
+        return validate_close_image_without_model(file_content)
+
+
+def run_model_free_pair_precheck(
+        damage_file_content: bytes, context_file_content: bytes
+) -> ImageQualityResponse | None:
+    with _damage_inference_lock:
+        from app.image_preflight import reject_obviously_unrelated_pair
+        return reject_obviously_unrelated_pair(
+            damage_file_content, context_file_content
+        )
+
+
 ALLOWED_CONTENT_TYPES = {
     "image/jpeg",
     "image/png",
@@ -133,6 +150,18 @@ async def analyze_damage(
                 detail="vehicle_region must be FRONT or REAR.",
             )
 
+        # For direct AI calls that bypass backend photo validation, reject
+        # obvious mismatches before loading any YOLO model into memory.
+        if _damage_analyzer is None:
+            quick_rejection = await run_in_threadpool(
+                run_model_free_pair_precheck,
+                file_content, context_file_content,
+            )
+            if quick_rejection is not None:
+                raise HTTPException(
+                    status_code=422, detail=quick_rejection.message
+                )
+
         return await run_in_threadpool(
             run_damage_operation,
             "analyze_pair",
@@ -182,6 +211,10 @@ async def validate_image_quality(
 ) -> ImageQualityResponse:
     try:
         file_content = await read_valid_image(image)
+        if purpose == "damage":
+            return await run_in_threadpool(
+                run_model_free_close_quality, file_content
+            )
         return await run_in_threadpool(
             run_damage_operation,
             "validate_image_quality",
@@ -214,6 +247,12 @@ async def validate_image_pair(
     try:
         damage_bytes = await read_valid_image(image)
         context_bytes = await read_valid_image(context_image)
+        quick_rejection = await run_in_threadpool(
+            run_model_free_pair_precheck,
+            damage_bytes, context_bytes,
+        )
+        if quick_rejection is not None:
+            return quick_rejection
         return await run_in_threadpool(
             run_damage_operation,
             "validate_image_pair",
