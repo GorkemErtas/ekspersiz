@@ -414,6 +414,16 @@ class DamageAnalyzer:
         """
         from app.image_pair_verifier import ImagePairVerifier
 
+        if damage_file_content == context_file_content:
+            return ImageQualityResponse(
+                suitable=False,
+                code="DUPLICATE_IMAGE",
+                message=(
+                    "Aynı fotoğraf iki kez yüklendi. Hasarı yakından ve "
+                    "aynı hasarı araç üzerinde daha geniş açıdan çekin."
+                ),
+            )
+
         damage_image = self._load_image(damage_file_content)
         context_image = self._load_image(context_file_content)
 
