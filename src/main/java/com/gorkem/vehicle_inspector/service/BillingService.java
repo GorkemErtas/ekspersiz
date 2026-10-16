@@ -45,7 +45,6 @@ public class BillingService {
     private final ObjectMapper objectMapper;
     private final Clock clock;
     private final AnalysisCreditService analysisCreditService;
-    private final com.gorkem.vehicle_inspector.repository.AiAssistantAccessRepository trialAccessRepository;
 
     @Autowired
     public BillingService(
@@ -57,8 +56,7 @@ public class BillingService {
             RevenueCatWebhookVerifier webhookVerifier,
             ObjectMapper objectMapper,
             Clock clock,
-            AnalysisCreditService analysisCreditService,
-            com.gorkem.vehicle_inspector.repository.AiAssistantAccessRepository trialAccessRepository
+            AnalysisCreditService analysisCreditService
     ) {
         this.userRepository = userRepository;
         this.subscriptionRepository = subscriptionRepository;
@@ -69,20 +67,6 @@ public class BillingService {
         this.objectMapper = objectMapper;
         this.clock = clock;
         this.analysisCreditService = analysisCreditService;
-        this.trialAccessRepository = trialAccessRepository;
-    }
-
-    public BillingService(UserRepository userRepository,
-            BillingSubscriptionRepository subscriptionRepository,
-            BillingWebhookEventRepository webhookEventRepository,
-            SubscriptionService subscriptionService,
-            RevenueCatClient revenueCatClient,
-            RevenueCatWebhookVerifier webhookVerifier,
-            ObjectMapper objectMapper, Clock clock,
-            AnalysisCreditService analysisCreditService) {
-        this(userRepository, subscriptionRepository, webhookEventRepository,
-                subscriptionService, revenueCatClient, webhookVerifier,
-                objectMapper, clock, analysisCreditService, null);
     }
 
     public BillingService(
@@ -97,7 +81,7 @@ public class BillingService {
     ) {
         this(userRepository, subscriptionRepository, webhookEventRepository,
                 subscriptionService, revenueCatClient, webhookVerifier,
-                objectMapper, clock, null, null);
+                objectMapper, clock, null);
     }
 
     @Transactional
