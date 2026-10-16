@@ -88,6 +88,7 @@ class DamageAnalyzerResultTest(unittest.TestCase):
         self.analyzer.vehicle_part_model = Mock()
         self.analyzer.damage_confidence_threshold = 0.25
         self.analyzer.damage_iou_threshold = 0.45
+        self.analyzer.damage_class_mapping = {0: "SCRATCH"}
         self.analyzer.vehicle_confidence_threshold = 0.40
         self.analyzer.vehicle_part_confidence_threshold = 0.25
         self.analyzer.affected_part_damage_confidence_threshold = 0.50
