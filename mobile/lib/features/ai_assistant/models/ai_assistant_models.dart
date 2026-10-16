@@ -6,6 +6,7 @@ class AiAssistantEntitlement {
     required this.usedToday,
     required this.remainingToday,
     required this.outOfScopeAttempts,
+    this.quotaPeriod = 'DAILY',
     this.trialExpiresAt,
     this.lockedUntil,
   });
@@ -16,6 +17,7 @@ class AiAssistantEntitlement {
   final int usedToday;
   final int remainingToday;
   final int outOfScopeAttempts;
+  final String quotaPeriod;
   final DateTime? trialExpiresAt;
   final DateTime? lockedUntil;
 
@@ -27,6 +29,7 @@ class AiAssistantEntitlement {
         usedToday: json['usedToday'] as int? ?? 0,
         remainingToday: json['remainingToday'] as int? ?? 0,
         outOfScopeAttempts: json['outOfScopeAttemptsToday'] as int? ?? 0,
+        quotaPeriod: json['quotaPeriod'] as String? ?? 'DAILY',
         trialExpiresAt: DateTime.tryParse(json['trialExpiresAt'] as String? ?? ''),
         lockedUntil: DateTime.tryParse(json['lockedUntil'] as String? ?? ''),
       );
