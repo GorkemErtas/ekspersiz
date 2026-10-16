@@ -541,56 +541,41 @@ public class DamageInspectionService {
             String vehicleRegion
     ) {
         String normalizedVehicleRegion = normalizeVehicleRegion(vehicleRegion);
-        ImageValidationContext imageValidation =
-                validateInspectionImageInternal(
-                        inspectionId,
-                        authenticatedEmail,
-                        false
-                );
-        if (!imageValidation.quality().suitable()) {
-            throw new UnsuitableInspectionImageException(
-                    imageValidation.quality().message()
-            );
-        }
-
-        User validationUser =
-                businessContextService.requireUser(
-                        authenticatedEmail
-                );
-        DamageInspection currentInspection =
-                inspectionAccessService.requireInspection(
-                        inspectionId,
-                        validationUser
-                );
-        boolean hasContextImage =
-                currentInspection.getContextImagePath() != null
-                        && !currentInspection.getContextImagePath().isBlank();
-
+        User validationUser = businessContextService.requireUser(authenticatedEmail);
+        DamageInspection currentInspection = inspectionAccessService.requireInspection(
+                inspectionId, validationUser
+        );
+        boolean hasContextImage = currentInspection.getContextImagePath() != null
+                && !currentInspection.getContextImagePath().isBlank();
         if (requireContextImage && !hasContextImage) {
             throw new IllegalStateException(
                     "Analizden önce geniş açı araç fotoğrafı yüklenmelidir."
             );
         }
 
-        ImageValidationContext contextImageValidation =
-                hasContextImage
-                        ? validateInspectionImageInternal(
-                                inspectionId,
-                                authenticatedEmail,
-                                true
-                        )
-                        : null;
-        if (contextImageValidation != null
-                && !contextImageValidation.quality().suitable()) {
-            throw new UnsuitableInspectionImageException(
-                    contextImageValidation.quality().message()
-            );
-        }
+        // Snapshot both paths so any change after the pair check also
+        // invalidates the later PROCESSING transition.
+        String verifiedPairImagePath = hasContextImage
+                ? currentInspection.getImagePath() : null;
+        String verifiedPairContextPath = hasContextImage
+                ? currentInspection.getContextImagePath() : null;
 
+        // Order matters: reject unrelated photos through the CPU-only gate
+        // before single-photo quality checks initialize the YOLO models.
         if (hasContextImage) {
+            validateNotProcessing(currentInspection);
+            if (currentInspection.getStatus() == InspectionStatus.COMPLETED) {
+                throw new IllegalStateException(
+                        "Bu inceleme tamamlandı. Yeni analiz için yeni inceleme oluşturun."
+                );
+            }
+            if (verifiedPairImagePath == null || verifiedPairImagePath.isBlank()) {
+                throw new IllegalStateException("Analiz edilecek fotoğraf bulunamadı.");
+            }
+
             ImageQualityResponse pairQuality = aiAnalysisClient.validatePair(
-                    fileStorageService.resolveStoredFile(imageValidation.imagePath()),
-                    fileStorageService.resolveStoredFile(contextImageValidation.imagePath())
+                    fileStorageService.resolveStoredFile(verifiedPairImagePath),
+                    fileStorageService.resolveStoredFile(verifiedPairContextPath)
             );
             if (pairQuality == null || pairQuality.code() == null
                     || pairQuality.message() == null) {
@@ -599,9 +584,30 @@ public class DamageInspectionService {
                 );
             }
             if (!pairQuality.suitable()) {
-                // Reject before PROCESSING, inference result persistence, and credit usage.
                 throw new UnsuitableInspectionImageException(pairQuality.message());
             }
+        }
+
+        ImageValidationContext imageValidation =
+                validateInspectionImageInternal(
+                        inspectionId, authenticatedEmail, false
+                );
+        if (!imageValidation.quality().suitable()) {
+            throw new UnsuitableInspectionImageException(
+                    imageValidation.quality().message()
+            );
+        }
+
+        ImageValidationContext contextImageValidation = hasContextImage
+                ? validateInspectionImageInternal(
+                        inspectionId, authenticatedEmail, true
+                )
+                : null;
+        if (contextImageValidation != null
+                && !contextImageValidation.quality().suitable()) {
+            throw new UnsuitableInspectionImageException(
+                    contextImageValidation.quality().message()
+            );
         }
 
         AnalysisContext context =
@@ -635,7 +641,14 @@ public class DamageInspectionService {
                                     && !Objects.equals(
                                             inspection.getContextImagePath(),
                                             contextImageValidation.imagePath()
-                                    ))) {
+                                    )) || (hasContextImage
+                                    && (!Objects.equals(
+                                            inspection.getImagePath(),
+                                            verifiedPairImagePath
+                                    ) || !Objects.equals(
+                                            inspection.getContextImagePath(),
+                                            verifiedPairContextPath
+                                    )))) {
                                 throw new IllegalStateException(
                                         "Fotoğraflardan biri değiştirildi. Lütfen analizi tekrar başlatın."
                                 );
