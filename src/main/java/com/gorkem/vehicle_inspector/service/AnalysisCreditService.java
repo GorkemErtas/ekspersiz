@@ -127,23 +127,32 @@ public class AnalysisCreditService {
         User lockedUser = users.findByIdForUpdate(user.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Kullanıcı bulunamadı."));
 
-        LocalDateTime start = now.toLocalDate().withDayOfMonth(1).atStartOfDay();
-        long freeUsed = usages
-                .countByUser_IdAndStartedAtGreaterThanEqualAndStartedAtLessThan(
-                        lockedUser.getId(), start, start.plusMonths(1));
-
         SubscriptionPlan plan = subscriptions.getEffectivePlan(lockedUser);
-        int monthlyLimit = plan == SubscriptionPlan.BUSINESS
-                ? 1 : subscriptions.monthlyAnalysisLimit(plan);
-        if (freeUsed < monthlyLimit) {
-            subscriptions.recordPersonalAnalysisUsage(lockedUser, now);
-            inspection.grantReportAccess(ReportAccessSource.FREE_MONTHLY);
-            return;
+
+        if (plan == SubscriptionPlan.FREE) {
+            if (lockedUser.getWelcomeAnalysisRemaining() > 0) {
+                lockedUser.consumeWelcomeAnalysis();
+                // This right never refills and does not deduct a paid month's quota.
+                inspection.grantReportAccess(ReportAccessSource.FREE_MONTHLY);
+                return;
+            }
+        } else {
+            LocalDateTime start = now.toLocalDate().withDayOfMonth(1).atStartOfDay();
+            long monthlyUsed = usages
+                    .countByUser_IdAndStartedAtGreaterThanEqualAndStartedAtLessThan(
+                            lockedUser.getId(), start, start.plusMonths(1));
+            int monthlyLimit = plan == SubscriptionPlan.BUSINESS
+                    ? 1 : subscriptions.monthlyAnalysisLimit(plan);
+            if (monthlyUsed < monthlyLimit) {
+                subscriptions.recordPersonalAnalysisUsage(lockedUser, now);
+                inspection.grantReportAccess(ReportAccessSource.FREE_MONTHLY);
+                return;
+            }
         }
 
         if (credits.balanceByUserId(lockedUser.getId()) <= 0) {
             throw new InsufficientAnalysisCreditException(
-                    "Aylık detaylı AI analiz hakkınız doldu. Daha yüksek bir abonelik planına geçebilirsiniz."
+                    "Hasar analiz hakkınız kalmadı. Devam etmek için abonelik planlarını inceleyin."
             );
         }
 
@@ -153,6 +162,25 @@ public class AnalysisCreditService {
                 now
         ));
         inspection.grantReportAccess(ReportAccessSource.PURCHASED_CREDIT);
+    }
+
+    /**
+     * Called BEFORE costly YOLO inference for free personal accounts.
+     * The successful analysis later claims the welcome entitlement atomically
+     * under the same pessimistic user lock as report generation.
+     */
+    @Transactional(readOnly = true)
+    public void assertCanAnalyze(User user) {
+        if (user == null || subscriptions.getEffectivePlan(user) != SubscriptionPlan.FREE
+                || businessContext.findMembership(user).isPresent()) {
+            return;
+        }
+        if (user.getWelcomeAnalysisRemaining() <= 0
+                && credits.balanceByUserId(user.getId()) <= 0) {
+            throw new InsufficientAnalysisCreditException(
+                    "2 ücretsiz hasar analiz hakkınız tükendi. Devam etmek için abonelik planlarını inceleyin."
+            );
+        }
     }
 
     private int creditsForProduct(String productId) {
