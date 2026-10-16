@@ -209,6 +209,12 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() {
+        if (e.statusCode == 402 && _messages.isNotEmpty &&
+            _messages.last.isUser && _messages.last.text == question) {
+          // The question was not answered or billed; keep it in the composer.
+          _messages.removeLast();
+          _controller.text = question;
+        }
         _error = e.message;
         _retryQuestion = e.statusCode == 402 ? null : question;
         _sending = false;
