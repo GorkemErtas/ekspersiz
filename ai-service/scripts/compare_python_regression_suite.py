@@ -74,6 +74,13 @@ def main():
                if name not in baseline and outcome in bad]
     if unexpected_missing or newly_failed or new_bad:
         print(f"REGRESSIONS missing={unexpected_missing} newly_failed={newly_failed} new_bad={new_bad}")
+        # Surface new failure tracebacks directly in CI logs for fast diagnosis.
+        # Historical baseline failures are not treated as regressions.
+        current_log = Path("/tmp/ekspersiz-pr-python-tests.log")
+        if current_log.exists():
+            print("=== PR unittest failure details ===", flush=True)
+            for line in current_log.read_text(encoding="utf-8").splitlines()[-180:]:
+                print(line, flush=True)
         raise SystemExit(1)
     if current_exit != baseline_exit and current_exit != 0:
         raise SystemExit("Full suite exit status worsened unexpectedly")
