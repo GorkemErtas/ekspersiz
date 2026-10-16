@@ -1,6 +1,7 @@
 """Fast cheap image gates: no torch, YOLO or neural model required."""
 from io import BytesIO
 import unittest
+from unittest.mock import Mock, patch
 
 import numpy as np
 from PIL import Image, ImageDraw
@@ -48,12 +49,31 @@ class ImagePreflightTests(unittest.TestCase):
         self.assertIsNotNone(outcome)
         self.assertEqual("DUPLICATE_IMAGE", outcome.code)
 
-    def test_unrelated_detailed_surfaces_can_be_rejected_cheaply(self):
+    def test_unrelated_surfaces_are_never_approved_by_cheap_gate(self):
+        # A few accidental matches can make the result inconclusive; only
+        # the full verifier may approve a pair.
         close = image_bytes(surface(14))
         context = image_bytes(surface(28))
         outcome = reject_obviously_unrelated_pair(close, context)
-        self.assertIsNotNone(outcome)
-        self.assertEqual("NO_SHARED_VISUAL_FEATURES", outcome.code)
+        self.assertTrue(outcome is None or not outcome.suitable)
+
+    def test_strong_high_texture_nonmatch_is_rejected_without_yolo(self):
+        close = image_bytes(surface(14))
+        context = image_bytes(surface(28))
+        detector = Mock()
+        detector.detectAndCompute.return_value = (
+            list(range(200)), np.ones((200, 128), dtype=np.float32)
+        )
+        matcher = Mock()
+        matcher.knnMatch.return_value = []
+        with patch(
+            "app.image_preflight.cv2.SIFT_create", return_value=detector
+        ), patch(
+            "app.image_preflight.cv2.BFMatcher", return_value=matcher
+        ):
+            result = reject_obviously_unrelated_pair(close, context)
+        self.assertIsNotNone(result)
+        self.assertEqual("NO_SHARED_VISUAL_FEATURES", result.code)
 
     def test_related_close_and_wide_surfaces_are_passed_to_final_verifier(self):
         wide = surface(14)
