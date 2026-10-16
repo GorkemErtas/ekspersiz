@@ -48,6 +48,12 @@ public class User {
     )
     private SubscriptionPlan subscriptionPlan;
 
+    @Column(name = "welcome_analysis_remaining", nullable = false)
+    private int welcomeAnalysisRemaining;
+
+    @Column(name = "welcome_assistant_remaining", nullable = false)
+    private int welcomeAssistantRemaining;
+
     @Column(
             name = "subscription_started_at"
     )
@@ -95,6 +101,9 @@ public class User {
         this.email = email;
         this.password = password;
         this.subscriptionPlan = SubscriptionPlan.FREE;
+        // Granted only when an actual new account is created.
+        this.welcomeAnalysisRemaining = 2;
+        this.welcomeAssistantRemaining = 3;
         this.billingCustomerId = UUID.randomUUID().toString();
         this.emailVerified = false;
     }
@@ -113,6 +122,28 @@ public class User {
 
     public String getPassword() {
         return password;
+    }
+
+    public int getWelcomeAnalysisRemaining() {
+        return welcomeAnalysisRemaining;
+    }
+
+    public int getWelcomeAssistantRemaining() {
+        return welcomeAssistantRemaining;
+    }
+
+    public void consumeWelcomeAnalysis() {
+        if (welcomeAnalysisRemaining <= 0) {
+            throw new IllegalStateException("Ücretsiz analiz haklarınız tükendi.");
+        }
+        welcomeAnalysisRemaining--;
+    }
+
+    public void consumeWelcomeAssistantQuestion() {
+        if (welcomeAssistantRemaining <= 0) {
+            throw new IllegalStateException("Ücretsiz AI Asistan soru haklarınız tükendi.");
+        }
+        welcomeAssistantRemaining--;
     }
 
     public SubscriptionPlan getSubscriptionPlan() {
