@@ -84,10 +84,13 @@ class ImagePairVerifier:
 
         source = np.float32([close_points[m.queryIdx].pt for m in matches])
         target = np.float32([context_points[m.trainIdx].pt for m in matches])
-        transform, mask = cv2.findHomography(
-            source.reshape(-1, 1, 2), target.reshape(-1, 1, 2),
-            cv2.RANSAC, 4.0,
-        )
+        try:
+            transform, mask = cv2.findHomography(
+                source.reshape(-1, 1, 2), target.reshape(-1, 1, 2),
+                cv2.RANSAC, 4.0,
+            )
+        except cv2.error:
+            return self._rejected("INSUFFICIENT_VISUAL_OVERLAP")
         if transform is None or mask is None or not np.isfinite(transform).all():
             return self._rejected("INSUFFICIENT_VISUAL_OVERLAP")
 
