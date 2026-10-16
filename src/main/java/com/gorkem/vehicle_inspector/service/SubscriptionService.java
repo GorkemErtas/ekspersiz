@@ -26,27 +26,18 @@ public class SubscriptionService {
     private static final int BUSINESS_VEHICLE_LIMIT = 50;
 
     private final AnalysisUsageRepository analysisUsageRepository;
-    private final com.gorkem.vehicle_inspector.repository.AiAssistantAccessRepository trialAccessRepository;
-
-    private final VehicleRepository
-            vehicleRepository;
+    private final VehicleRepository vehicleRepository;
     private final Clock clock;
-    @org.springframework.beans.factory.annotation.Autowired
-    public SubscriptionService(AnalysisUsageRepository analysisUsageRepository,
-            VehicleRepository vehicleRepository, Clock clock,
-            com.gorkem.vehicle_inspector.repository.AiAssistantAccessRepository trialAccessRepository) {
-        this.analysisUsageRepository = analysisUsageRepository;
-        this.vehicleRepository = vehicleRepository;
-        this.clock = clock;
-        this.trialAccessRepository = trialAccessRepository;
-    }
 
-    public SubscriptionService(AnalysisUsageRepository analysisUsageRepository,
-            VehicleRepository vehicleRepository, Clock clock) {
+    @org.springframework.beans.factory.annotation.Autowired
+    public SubscriptionService(
+            AnalysisUsageRepository analysisUsageRepository,
+            VehicleRepository vehicleRepository,
+            Clock clock
+    ) {
         this.analysisUsageRepository = analysisUsageRepository;
         this.vehicleRepository = vehicleRepository;
         this.clock = clock;
-        this.trialAccessRepository = null;
     }
 
     public SubscriptionPlan getEffectivePlan(User user) {
