@@ -541,6 +541,17 @@ public class DamageInspectionService {
             String vehicleRegion
     ) {
         String normalizedVehicleRegion = normalizeVehicleRegion(vehicleRegion);
+        User validationUser =
+                businessContextService.requireUser(authenticatedEmail);
+        DamageInspection currentInspection =
+                inspectionAccessService.requireInspection(
+                        inspectionId, validationUser
+                );
+        if (analysisCreditService != null) {
+            // Reject exhausted new-user allowances before any YOLO quality check.
+            analysisCreditService.assertCanAnalyze(validationUser);
+        }
+
         ImageValidationContext imageValidation =
                 validateInspectionImageInternal(
                         inspectionId,
@@ -553,15 +564,6 @@ public class DamageInspectionService {
             );
         }
 
-        User validationUser =
-                businessContextService.requireUser(
-                        authenticatedEmail
-                );
-        DamageInspection currentInspection =
-                inspectionAccessService.requireInspection(
-                        inspectionId,
-                        validationUser
-                );
         boolean hasContextImage =
                 currentInspection.getContextImagePath() != null
                         && !currentInspection.getContextImagePath().isBlank();
@@ -625,7 +627,9 @@ public class DamageInspectionService {
                             }
 
                             validateNotProcessing(inspection);
-                            if (analysisCreditService == null) {
+                            if (analysisCreditService != null) {
+                                analysisCreditService.assertCanAnalyze(user);
+                            } else {
                                 validateAnalysisLimit(inspection, user);
                             }
                             if (inspection.getStatus() == InspectionStatus.COMPLETED) {
@@ -927,6 +931,16 @@ public class DamageInspectionService {
                     inspection.setAnalysisMessage(
                             aiResponse.getAnalysisMessage()
                     );
+
+                    // A successful free analysis consumes one of the 2
+                    // non-renewing welcome rights. Paid subscriptions retain
+                    // their existing report/quota accounting.
+                    if (analysisCreditService != null
+                            && inspection.getVehicle().getBusinessAccount() == null
+                            && subscriptionService.getEffectivePlan(context.user())
+                                    == SubscriptionPlan.FREE) {
+                        analysisCreditService.grantReportAccess(inspection, context.user());
+                    }
 
                     inspection.setStatus(
                             InspectionStatus.COMPLETED
