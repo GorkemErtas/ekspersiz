@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/widgets/app_state_view.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:mobile/core/localization/app_text.dart';
 
@@ -65,10 +66,16 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
         : Uri.parse('https://play.google.com/store/account/subscriptions');
     try {
       if (!await launchUrl(destination, mode: LaunchMode.externalApplication)) {
-        throw StateError('Abonelik yönetimi açılamadı. Google Play üzerinden aboneliklerinizi kontrol edin.');
+        throw StateError(
+          'Abonelik yönetimi açılamadı. Google Play üzerinden aboneliklerinizi kontrol edin.',
+        );
       }
     } catch (_) {
-      if (mounted) _showMessage('Abonelik yönetimi açılamadı. Google Play > Ödemeler ve abonelikler bölümünü açın.');
+      if (mounted) {
+        _showMessage(
+          'Abonelik yönetimi açılamadı. Google Play > Ödemeler ve abonelikler bölümünü açın.',
+        );
+      }
     }
   }
 
@@ -117,9 +124,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
 
       if (!mounted) return;
 
-      _showMessage(
-        'Aboneliğiniz etkinleştirildi.',
-      );
+      _showMessage('Aboneliğiniz etkinleştirildi.');
     } on BillingPurchaseCancelled {
       return;
     } catch (e) {
@@ -138,11 +143,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
   void _showMessage(String message) {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: AppText(message),
-        ),
-      );
+      ..showSnackBar(SnackBar(content: AppText(message)));
   }
 
   String _message(Object error) {
@@ -155,44 +156,25 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const AppText('Abonelik ve Planlar'),
-      ),
-      body: SafeArea(
-        child: _buildBody(context),
-      ),
+      appBar: AppBar(title: const AppText('Abonelik ve Planlar')),
+      body: SafeArea(child: _buildBody(context)),
     );
   }
 
   Widget _buildBody(BuildContext context) {
     if (_error != null && _quota == null) {
-      return Center(
-        child: FilledButton.icon(
-          onPressed: _load,
-          icon: const Icon(Icons.refresh_rounded),
-          label: const AppText('Tekrar dene'),
-        ),
-      );
+      return AppStateView.error(message: _error!, onActionPressed: _load);
     }
 
     if (_quota == null || _billingData == null) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
+      return const AppStateView.loading();
     }
 
     return Center(
       child: ConstrainedBox(
-        constraints: const BoxConstraints(
-          maxWidth: 720,
-        ),
+        constraints: const BoxConstraints(maxWidth: 720),
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(
-            20,
-            16,
-            20,
-            40,
-          ),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 40),
           children: [
             _buildQuotaCard(context),
             if (_billingData!.overview.status.currentPlan != 'FREE') ...[
@@ -204,7 +186,8 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
             _buildSectionTitle(
               context,
               title: 'Aylık abonelikler',
-              subtitle: 'AI Asistan ve hasar analiz haklarınızı planınıza göre artırın.',
+              subtitle:
+                  'AI Asistan ve hasar analiz haklarınızı planınıza göre artırın.',
             ),
             const SizedBox(height: 14),
             for (final plan in _billingData!.overview.plans.where(
@@ -235,15 +218,14 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
     final dateLabel = endsAt == null
         ? null
         : '${endsAt.day.toString().padLeft(2, '0')}.${endsAt.month.toString().padLeft(2, '0')}.${endsAt.year}';
-    final cancelled =
-        status.status == 'CANCELLED' || !status.autoRenewing;
+    final cancelled = status.status == 'CANCELLED' || !status.autoRenewing;
     final message = cancelled
         ? (dateLabel == null
-            ? 'Aboneliğiniz iptal edildi. Mevcut haklarınız ödenmiş dönem sonuna kadar devam eder.'
-            : 'Aboneliğiniz iptal edildi. Haklarınız $dateLabel tarihine kadar devam eder.')
+              ? 'Aboneliğiniz iptal edildi. Mevcut haklarınız ödenmiş dönem sonuna kadar devam eder.'
+              : 'Aboneliğiniz iptal edildi. Haklarınız $dateLabel tarihine kadar devam eder.')
         : (dateLabel == null
-            ? 'Aboneliğiniz aktif.'
-            : 'Aboneliğiniz aktif. Sonraki yenileme: $dateLabel');
+              ? 'Aboneliğiniz aktif.'
+              : 'Aboneliğiniz aktif. Sonraki yenileme: $dateLabel');
 
     return Container(
       width: double.infinity,
@@ -257,7 +239,9 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(
-            cancelled ? Icons.event_available_outlined : Icons.autorenew_rounded,
+            cancelled
+                ? Icons.event_available_outlined
+                : Icons.autorenew_rounded,
             color: theme.colorScheme.primary,
           ),
           const SizedBox(width: 10),
@@ -295,13 +279,9 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: colors.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(
-          AppTheme.radiusLarge,
-        ),
+        borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
         border: Border.all(
-          color: colors.outlineVariant.withValues(
-            alpha: 0.45,
-          ),
+          color: colors.outlineVariant.withValues(alpha: 0.45),
         ),
       ),
       child: Column(
@@ -313,42 +293,33 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color:
-                      colors.primary.withValues(alpha: 0.12),
-                  borderRadius:
-                      BorderRadius.circular(14),
+                  color: colors.primary.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(14),
                 ),
-                child: Icon(
-                  Icons.auto_awesome_rounded,
-                  color: colors.primary,
-                ),
+                child: Icon(Icons.auto_awesome_rounded, color: colors.primary),
               ),
               const SizedBox(width: 13),
 
               Expanded(
                 child: Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     AppText(
                       _isBusiness
                           ? 'Business aylık analiz kotası'
                           : 'Aylık analiz kotanız',
-                      style:
-                          theme.textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.w900,
-                              ),
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w900,
+                      ),
                     ),
                     const SizedBox(height: 3),
                     AppText(
                       _isBusiness
                           ? '${_quota!.remaining} / ${_quota!.limit} şirket analizi kaldı'
                           : 'Bu ay ${_quota!.freeRemaining} / ${_quota!.limit} analiz hakkı kaldı',
-                      style:
-                          theme.textTheme.bodyMedium?.copyWith(
-                                color:
-                                    colors.onSurfaceVariant,
-                              ),
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: colors.onSurfaceVariant,
+                      ),
                     ),
                   ],
                 ),
@@ -360,9 +331,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
 
           Divider(
             height: 1,
-            color: colors.outlineVariant.withValues(
-              alpha: 0.45,
-            ),
+            color: colors.outlineVariant.withValues(alpha: 0.45),
           ),
 
           const SizedBox(height: 14),
@@ -381,12 +350,10 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
                   'Temel görsel hasar tespiti ücretsizdir. '
                   'Detaylı rapor; AI açıklaması, onarım önerileri '
                   've tahmini maliyet aralığını içerir.',
-                  style:
-                      theme.textTheme.bodySmall?.copyWith(
-                            color:
-                                colors.onSurfaceVariant,
-                            height: 1.45,
-                          ),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: colors.onSurfaceVariant,
+                    height: 1.45,
+                  ),
                 ),
               ),
             ],
@@ -416,8 +383,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
         AppText(
           subtitle,
           style: theme.textTheme.bodyMedium?.copyWith(
-            color:
-                theme.colorScheme.onSurfaceVariant,
+            color: theme.colorScheme.onSurfaceVariant,
           ),
         ),
       ],
@@ -449,41 +415,38 @@ class _SubscriptionPlanCard extends StatelessWidget {
     final fallbackPrice =
         '₺${plan.fallbackMonthlyPrice.toStringAsFixed(2).replaceAll('.', ',')}';
 
-    final price =
-        localizedPrice ?? fallbackPrice;
+    final price = localizedPrice ?? fallbackPrice;
 
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: AppTheme.deepBrandGradient,
-        borderRadius: BorderRadius.circular(
-          AppTheme.radiusLarge,
+        color: theme.colorScheme.surface,
+        border: Border.all(
+          color: active
+              ? theme.colorScheme.primary
+              : theme.colorScheme.outlineVariant,
+          width: active ? 1.5 : 1,
         ),
-        boxShadow:
-            AppTheme.elevatedShadowFor(context),
+        borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            crossAxisAlignment:
-                CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
                 width: 46,
                 height: 46,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(
-                    alpha: 0.12,
-                  ),
-                  borderRadius:
-                      BorderRadius.circular(14),
+                  color: theme.colorScheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(14),
                 ),
                 child: Icon(
                   plan.plan == 'BUSINESS'
                       ? Icons.business_center_rounded
                       : Icons.workspace_premium_rounded,
-                  color: Colors.white,
+                  color: theme.colorScheme.onSurface,
                 ),
               ),
 
@@ -491,8 +454,7 @@ class _SubscriptionPlanCard extends StatelessWidget {
 
               Expanded(
                 child: Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
@@ -500,38 +462,32 @@ class _SubscriptionPlanCard extends StatelessWidget {
                           child: AppText(
                             plan.title,
                             style: TextStyle(
-                              color: Colors.white,
+                              color: theme.colorScheme.onSurface,
                               fontSize: 20,
-                              fontWeight:
-                                  FontWeight.w900,
+                              fontWeight: FontWeight.w900,
                             ),
                           ),
                         ),
 
                         if (active)
                           Container(
-                            padding:
-                                const EdgeInsets.symmetric(
+                            padding: const EdgeInsets.symmetric(
                               horizontal: 9,
                               vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: AppTheme.successColor
-                                  .withValues(
-                                alpha: 0.18,
-                              ),
-                              borderRadius:
-                                  BorderRadius.circular(
+                              color: AppTheme.successColorFor(
+                                context,
+                              ).withValues(alpha: 0.18),
+                              borderRadius: BorderRadius.circular(
                                 AppTheme.radiusPill,
                               ),
                             ),
-                            child: const AppText(
+                            child: AppText(
                               'Aktif',
                               style: TextStyle(
-                                color:
-                                    AppTheme.successColor,
-                                fontWeight:
-                                    FontWeight.w800,
+                                color: AppTheme.successColorFor(context),
+                                fontWeight: FontWeight.w800,
                               ),
                             ),
                           ),
@@ -542,11 +498,10 @@ class _SubscriptionPlanCard extends StatelessWidget {
 
                     AppText(
                       plan.description,
-                      style:
-                          theme.textTheme.bodyMedium
-                              ?.copyWith(
-                        color: Colors.white
-                            .withValues(alpha: 0.72),
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.72,
+                        ),
                         height: 1.35,
                       ),
                     ),
@@ -559,9 +514,7 @@ class _SubscriptionPlanCard extends StatelessWidget {
           const SizedBox(height: 22),
 
           for (final feature in plan.features) ...[
-            _SubscriptionFeature(
-              text: feature,
-            ),
+            _SubscriptionFeature(text: feature),
             const SizedBox(height: 12),
           ],
 
@@ -572,37 +525,30 @@ class _SubscriptionPlanCard extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(
-                  alpha: 0.09,
-                ),
-                borderRadius:
-                    BorderRadius.circular(14),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.09),
+                borderRadius: BorderRadius.circular(14),
               ),
               child: AppText(
                 plan.plan == 'BUSINESS'
                     ? 'Business planınız aktif. Şirket araçları ve analiz kotası ekip üyelerinizle ortaktır.'
                     : '${plan.title} aboneliğiniz aktif. Plan haklarınız kullanımınıza açıktır.',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: theme.colorScheme.onSurface,
                   height: 1.4,
                 ),
               ),
             )
           else ...[
             Row(
-              crossAxisAlignment:
-                  CrossAxisAlignment.end,
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Flexible(
                   child: AppText(
                     price,
                     maxLines: 1,
-                    overflow:
-                        TextOverflow.ellipsis,
-                    style:
-                        theme.textTheme.headlineSmall
-                            ?.copyWith(
-                      color: Colors.white,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      color: theme.colorScheme.onSurface,
                       fontWeight: FontWeight.w900,
                     ),
                   ),
@@ -611,15 +557,13 @@ class _SubscriptionPlanCard extends StatelessWidget {
                 const SizedBox(width: 7),
 
                 Padding(
-                  padding:
-                      const EdgeInsets.only(bottom: 3),
+                  padding: const EdgeInsets.only(bottom: 3),
                   child: AppText(
                     '/ ay',
-                    style:
-                        theme.textTheme.bodyMedium
-                            ?.copyWith(
-                      color: Colors.white
-                          .withValues(alpha: 0.68),
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurface.withValues(
+                        alpha: 0.68,
+                      ),
                     ),
                   ),
                 ),
@@ -632,29 +576,20 @@ class _SubscriptionPlanCard extends StatelessWidget {
               width: double.infinity,
               child: FilledButton(
                 style: FilledButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor:
-                      AppTheme.primaryDark,
+                  backgroundColor: theme.colorScheme.primary,
+                  foregroundColor: theme.colorScheme.onPrimary,
                 ),
                 onPressed:
-                    !storeConfigured ||
-                            busy ||
-                            plan.packageIdentifier ==
-                                null
-                        ? null
-                        : onBuy,
+                    !storeConfigured || busy || plan.packageIdentifier == null
+                    ? null
+                    : onBuy,
                 child: busy
                     ? const SizedBox(
                         width: 18,
                         height: 18,
-                        child:
-                            CircularProgressIndicator(
-                          strokeWidth: 2,
-                        ),
+                        child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const AppText(
-                        'Abone Ol',
-                      ),
+                    : const AppText('Abone Ol'),
               ),
             ),
           ],
@@ -665,23 +600,20 @@ class _SubscriptionPlanCard extends StatelessWidget {
 }
 
 class _SubscriptionFeature extends StatelessWidget {
-  const _SubscriptionFeature({
-    required this.text,
-  });
+  const _SubscriptionFeature({required this.text});
 
   final String text;
 
   @override
   Widget build(BuildContext context) {
     return Row(
-      crossAxisAlignment:
-          CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
+        Padding(
           padding: EdgeInsets.only(top: 1),
           child: Icon(
             Icons.check_circle_rounded,
-            color: AppTheme.successColor,
+            color: AppTheme.successColorFor(context),
             size: 20,
           ),
         ),
@@ -689,8 +621,8 @@ class _SubscriptionFeature extends StatelessWidget {
         Expanded(
           child: AppText(
             text,
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurface,
               fontWeight: FontWeight.w600,
               height: 1.35,
             ),

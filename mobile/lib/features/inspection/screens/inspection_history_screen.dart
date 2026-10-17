@@ -436,7 +436,10 @@ class _InspectionHistoryCard extends StatelessWidget {
 
           const SizedBox(height: 16),
 
-          Row(
+          Wrap(
+            spacing: 12,
+            runSpacing: 10,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               AppStatusBadge(
                 label: severityLabel,
@@ -445,22 +448,25 @@ class _InspectionHistoryCard extends StatelessWidget {
                 compact: true,
               ),
 
-              const Spacer(),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.calendar_today_outlined,
+                    size: 15,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
 
-              Icon(
-                Icons.calendar_today_outlined,
-                size: 15,
-                color: colorScheme.onSurfaceVariant,
-              ),
+                  const SizedBox(width: 5),
 
-              const SizedBox(width: 5),
-
-              AppText(
-                date,
-                style: textTheme.bodySmall?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                  fontWeight: FontWeight.w600,
-                ),
+                  AppText(
+                    date,
+                    style: textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

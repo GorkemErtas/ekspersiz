@@ -9,6 +9,7 @@ import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/app_page_header.dart';
 import '../../../core/widgets/app_section_header.dart';
 import '../../../core/widgets/app_state_view.dart';
+import '../../../core/widgets/app_motion.dart';
 import '../../../core/widgets/primary_button.dart';
 
 import '../../vehicle/models/vehicle.dart';
@@ -627,7 +628,7 @@ class _VehicleSelectionCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
 
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
+          duration: AppMotion.duration(context, AppMotion.fast),
           curve: Curves.easeOut,
           padding: const EdgeInsets.all(16),
 
@@ -696,7 +697,7 @@ class _VehicleSelectionCard extends StatelessWidget {
               const SizedBox(width: 10),
 
               AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
+                duration: AppMotion.duration(context, AppMotion.fast),
                 width: 28,
                 height: 28,
                 decoration: BoxDecoration(

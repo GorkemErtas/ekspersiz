@@ -1,5 +1,7 @@
 import 'package:mobile/core/localization/app_text.dart';
 import 'package:flutter/material.dart';
+import '../../../core/widgets/app_content.dart';
+import '../../../core/widgets/app_page_header.dart';
 
 import '../../../core/network/api_exception.dart';
 import '../models/maintenance_record.dart';
@@ -141,121 +143,131 @@ class _MaintenanceFormScreenState extends State<MaintenanceFormScreen> {
       title: AppText(widget.record == null ? 'Bakım Ekle' : 'Bakımı Düzenle'),
     ),
     body: SafeArea(
-      child: Form(
-        key: _form,
-        child: ListView(
-          padding: const EdgeInsets.all(20),
-          children: [
-            DropdownButtonFormField<String>(
-              initialValue: _type,
-              decoration: InputDecoration(labelText: 'Bakım Türü'.tr),
-              items: _types
-                  .map(
-                    (e) => DropdownMenuItem(value: e, child: AppText(_label(e))),
-                  )
-                  .toList(),
-              onChanged: (v) => setState(() => _type = v!),
-            ),
-            const SizedBox(height: 14),
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const AppText('Bakım Tarihi'),
-              subtitle: AppText(_dateText(_date)),
-              trailing: const Icon(Icons.calendar_month_outlined),
-              onTap: () async {
-                final d = await _pick(_date);
-                if (d != null) setState(() => _date = d);
-              },
-            ),
-            TextFormField(
-              controller: _mileage,
-              keyboardType: TextInputType.number,
-              decoration: InputDecoration(
-                labelText: 'Kilometre'.tr,
-                suffixText: 'km',
+      child: AppContent(
+        child: Form(
+          key: _form,
+          child: ListView(
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+            padding: const EdgeInsets.all(20),
+            children: [
+              const AppPageHeader(
+                icon: Icons.build_outlined,
+                title: 'Bakım bilgileri',
+                subtitle:
+                    'Bakım tarihini, kilometreyi ve yapılan işlemi kaydedin.',
               ),
-              validator: (v) => int.tryParse(v ?? '') == null
-                  ? 'Geçerli kilometre girin.'
-                  : int.parse(v!) < 0 || int.parse(v) > 2000000
-                  ? 'Kilometre 0 ile 2.000.000 arasında olmalıdır.'
-                  : null,
-            ),
-            const SizedBox(height: 14),
-            TextFormField(
-              controller: _cost,
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
-              decoration: InputDecoration(
-                labelText: 'Maliyet (isteğe bağlı)'.tr,
-                suffixText: '₺',
-              ),
-              validator: (v) {
-                final value = v?.trim() ?? '';
-                if (value.isEmpty) return null;
-                final parsed = double.tryParse(value.replaceAll(',', '.'));
-                return parsed == null || parsed < 0
-                    ? 'Geçerli bir maliyet girin.'
-                    : null;
-              },
-            ),
-            const SizedBox(height: 14),
-            TextFormField(
-              controller: _intervalMonths,
-              keyboardType: TextInputType.number,
-              decoration: InputDecoration(
-                labelText: 'Bakım aralığı (ay)'.tr,
-              ),
-              validator: (v) {
-                final value = v?.trim() ?? '';
-                if (value.isEmpty) return null;
-                final parsed = int.tryParse(value);
-                return parsed == null || parsed < 1 || parsed > 600
-                    ? '1-600 arasında ay girin.'
-                    : null;
-              },
-            ),
-            const SizedBox(height: 14),
-            TextFormField(
-              controller: _intervalMileage,
-              keyboardType: TextInputType.number,
-              decoration: InputDecoration(
-                labelText: 'Bakım aralığı (km)'.tr,
-                suffixText: 'km',
-              ),
-              validator: (v) {
-                final value = v?.trim() ?? '';
-                if (value.isEmpty) return null;
-                final parsed = int.tryParse(value);
-                return parsed == null || parsed < 1 || parsed > 2000000
-                    ? 'Geçerli kilometre aralığı girin.'
-                    : null;
-              },
-            ),
-            const SizedBox(height: 8),
-            const AppText(
-              'Üretici veya servis planındaki aralığı girin. Sonraki bakım tarihi ve kilometresi sunucuda hesaplanır.',
-            ),
-            const SizedBox(height: 14),
-            TextFormField(
-              controller: _note,
-              maxLines: 3,
-              maxLength: 1000,
-              decoration: InputDecoration(labelText: 'Not'.tr),
-            ),
-            const SizedBox(height: 24),
-            FilledButton.icon(
-              onPressed: _saving ? null : _save,
-              icon: _saving
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
+              const SizedBox(height: 24),
+              DropdownButtonFormField<String>(
+                isExpanded: true,
+                initialValue: _type,
+                decoration: InputDecoration(labelText: 'Bakım Türü'.tr),
+                items: _types
+                    .map(
+                      (e) =>
+                          DropdownMenuItem(value: e, child: AppText(_label(e))),
                     )
-                  : const Icon(Icons.save_outlined),
-              label: const AppText('Kaydet'),
-            ),
-          ],
+                    .toList(),
+                onChanged: (v) => setState(() => _type = v!),
+              ),
+              const SizedBox(height: 14),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const AppText('Bakım Tarihi'),
+                subtitle: AppText(_dateText(_date)),
+                trailing: const Icon(Icons.calendar_month_outlined),
+                onTap: () async {
+                  final d = await _pick(_date);
+                  if (d != null) setState(() => _date = d);
+                },
+              ),
+              TextFormField(
+                controller: _mileage,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: 'Kilometre'.tr,
+                  suffixText: 'km',
+                ),
+                validator: (v) => int.tryParse(v ?? '') == null
+                    ? 'Geçerli kilometre girin.'
+                    : int.parse(v!) < 0 || int.parse(v) > 2000000
+                    ? 'Kilometre 0 ile 2.000.000 arasında olmalıdır.'
+                    : null,
+              ),
+              const SizedBox(height: 14),
+              TextFormField(
+                controller: _cost,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                decoration: InputDecoration(
+                  labelText: 'Maliyet (isteğe bağlı)'.tr,
+                  suffixText: '₺',
+                ),
+                validator: (v) {
+                  final value = v?.trim() ?? '';
+                  if (value.isEmpty) return null;
+                  final parsed = double.tryParse(value.replaceAll(',', '.'));
+                  return parsed == null || parsed < 0
+                      ? 'Geçerli bir maliyet girin.'
+                      : null;
+                },
+              ),
+              const SizedBox(height: 14),
+              TextFormField(
+                controller: _intervalMonths,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(labelText: 'Bakım aralığı (ay)'.tr),
+                validator: (v) {
+                  final value = v?.trim() ?? '';
+                  if (value.isEmpty) return null;
+                  final parsed = int.tryParse(value);
+                  return parsed == null || parsed < 1 || parsed > 600
+                      ? '1-600 arasında ay girin.'
+                      : null;
+                },
+              ),
+              const SizedBox(height: 14),
+              TextFormField(
+                controller: _intervalMileage,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: 'Bakım aralığı (km)'.tr,
+                  suffixText: 'km',
+                ),
+                validator: (v) {
+                  final value = v?.trim() ?? '';
+                  if (value.isEmpty) return null;
+                  final parsed = int.tryParse(value);
+                  return parsed == null || parsed < 1 || parsed > 2000000
+                      ? 'Geçerli kilometre aralığı girin.'
+                      : null;
+                },
+              ),
+              const SizedBox(height: 8),
+              const AppText(
+                'Üretici veya servis planındaki aralığı girin. Sonraki bakım tarihi ve kilometresi sunucuda hesaplanır.',
+              ),
+              const SizedBox(height: 14),
+              TextFormField(
+                controller: _note,
+                maxLines: 3,
+                maxLength: 1000,
+                decoration: InputDecoration(labelText: 'Not'.tr),
+              ),
+              const SizedBox(height: 24),
+              FilledButton.icon(
+                onPressed: _saving ? null : _save,
+                icon: _saving
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.save_outlined),
+                label: const AppText('Kaydet'),
+              ),
+            ],
+          ),
         ),
       ),
     ),
@@ -274,7 +286,7 @@ class _MaintenanceFormScreenState extends State<MaintenanceFormScreen> {
         'TIMING_SYSTEM': 'Triger / zincir',
         'TRANSMISSION': 'Şanzıman',
         'PERIODIC_MAINTENANCE': 'Periyodik bakım',
-        'CUSTOM': 'Özel bakım'
+        'CUSTOM': 'Özel bakım',
       }[value] ??
-          value;
+      value;
 }

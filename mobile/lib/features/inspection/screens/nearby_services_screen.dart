@@ -309,71 +309,94 @@ class _NearbyServicesScreenState extends State<NearbyServicesScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const AppText('Yakındaki Servisler')),
-      body: Stack(
-        children: [
-          GoogleMap(
-            initialCameraPosition: CameraPosition(
-              target: LatLng(widget.latitude, widget.longitude),
-              zoom: 13,
-            ),
-            markers: _markers,
-            circles: _selectionCircles,
-            myLocationButtonEnabled: false,
-            zoomControlsEnabled: true,
-            zoomGesturesEnabled: true,
-            mapToolbarEnabled: false,
-            onTap: (_) {
-              if (_selectedPlaceId != null) {
-                setState(() {
-                  _selectedPlaceId = null;
-                });
-              }
-            },
-            style: _darkMapStyle,
-
-            onMapCreated: (GoogleMapController controller) {
-              _mapController = controller;
-            },
-          ),
-          if (_isLoading) const Positioned.fill(child: _LoadingOverlay()),
-          if (!_isLoading && _errorMessage != null)
-            Positioned(
-              left: 16,
-              right: 16,
-              top: 16,
-              child: _ErrorCard(
-                message: _errorMessage!,
-                onRetry: _loadServices,
+      body: SafeArea(
+        child: Stack(
+          children: [
+            GoogleMap(
+              initialCameraPosition: CameraPosition(
+                target: LatLng(widget.latitude, widget.longitude),
+                zoom: 13,
               ),
-            ),
-          if (!_isLoading && _errorMessage == null && _services.isEmpty)
-            const Positioned(
-              left: 16,
-              right: 16,
-              bottom: 24,
-              child: _EmptyServicesCard(),
-            ),
-          if (!_isLoading && _errorMessage == null && selectedService != null)
-            Positioned(
-              left: 16,
-              right: 16,
-              bottom: 20,
-              child: _ServiceCard(
-                service: selectedService,
-                distance: _formatDistance(selectedService.distanceKm),
-                rating: _formatRating(selectedService),
-                onDirections: () => _openDirections(selectedService),
-                onClose: () {
+              markers: _markers,
+              circles: _selectionCircles,
+              myLocationButtonEnabled: false,
+              zoomControlsEnabled: true,
+              zoomGesturesEnabled: true,
+              mapToolbarEnabled: false,
+              onTap: (_) {
+                if (_selectedPlaceId != null) {
                   setState(() {
                     _selectedPlaceId = null;
                   });
-                },
-              ),
+                }
+              },
+              style: Theme.of(context).brightness == Brightness.dark
+                  ? _darkMapStyle
+                  : null,
+
+              onMapCreated: (GoogleMapController controller) {
+                _mapController = controller;
+              },
             ),
-        ],
+            if (_isLoading) const Positioned.fill(child: _LoadingOverlay()),
+            if (!_isLoading && _errorMessage != null)
+              Positioned(
+                left: 16,
+                right: 16,
+                top: 16,
+                child: _ErrorCard(
+                  message: _errorMessage!,
+                  onRetry: _loadServices,
+                ),
+              ),
+            if (!_isLoading && _errorMessage == null && _services.isEmpty)
+              const Positioned(
+                left: 16,
+                right: 16,
+                bottom: 24,
+                child: _EmptyServicesCard(),
+              ),
+            if (!_isLoading && _errorMessage == null && selectedService != null)
+              Positioned(
+                left: 16,
+                right: 16,
+                bottom: 20,
+                child: _MapPanel(
+                  child: _ServiceCard(
+                    service: selectedService,
+                    distance: _formatDistance(selectedService.distanceKm),
+                    rating: _formatRating(selectedService),
+                    onDirections: () => _openDirections(selectedService),
+                    onClose: () {
+                      setState(() {
+                        _selectedPlaceId = null;
+                      });
+                    },
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
+}
+
+class _MapPanel extends StatelessWidget {
+  const _MapPanel({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => Center(
+    child: ConstrainedBox(
+      constraints: BoxConstraints(
+        maxWidth: 520,
+        maxHeight: MediaQuery.sizeOf(context).height * .6,
+      ),
+      child: SingleChildScrollView(child: child),
+    ),
+  );
 }
 
 class _ServiceCard extends StatelessWidget {
@@ -397,7 +420,7 @@ class _ServiceCard extends StatelessWidget {
 
     return Material(
       color: theme.colorScheme.surface,
-      elevation: 8,
+      elevation: 2,
       borderRadius: BorderRadius.circular(18),
       clipBehavior: Clip.antiAlias,
       child: Padding(
@@ -456,7 +479,9 @@ class _ServiceCard extends StatelessWidget {
                 const SizedBox(width: 4),
                 AppText(distance),
                 const SizedBox(width: 16),
-                Expanded(child: AppText(rating, overflow: TextOverflow.ellipsis)),
+                Expanded(
+                  child: AppText(rating, overflow: TextOverflow.ellipsis),
+                ),
               ],
             ),
             const SizedBox(height: 12),

@@ -138,9 +138,8 @@ class _InspectionResultScreenState extends State<InspectionResultScreen> {
   Future<void> _openDamageRecord() async {
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (context) => DamageAssessmentRecordScreen(
-          inspection: _inspection,
-        ),
+        builder: (context) =>
+            DamageAssessmentRecordScreen(inspection: _inspection),
       ),
     );
   }
@@ -840,11 +839,13 @@ class _HeroMeta extends StatelessWidget {
 
         const SizedBox(width: 4),
 
-        AppText(
-          text,
-          style: textTheme.bodySmall?.copyWith(
-            color: colorScheme.onSurfaceVariant,
-            fontWeight: FontWeight.w600,
+        Flexible(
+          child: AppText(
+            text,
+            style: textTheme.bodySmall?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
       ],
@@ -874,48 +875,17 @@ class _ConfidenceCard extends StatelessWidget {
 
       child: Column(
         children: [
-          Row(
-            children: [
-              const AppIconBox(
-                icon: Icons.analytics_outlined,
-                size: 42,
-                iconSize: 21,
-                borderRadius: 14,
+          AppSectionHeader(
+            icon: Icons.analytics_outlined,
+            title: 'Model G\u00fcveni',
+            subtitle: 'G\u00f6r\u00fcnt\u00fc analizinin g\u00fcven skoru',
+            trailing: AppText(
+              '%${percentage.toStringAsFixed(1)}',
+              style: textTheme.titleLarge?.copyWith(
+                color: colorScheme.primary,
+                fontWeight: FontWeight.w900,
               ),
-
-              const SizedBox(width: 12),
-
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    AppText(
-                      'Model Güveni',
-                      style: textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-
-                    const SizedBox(height: 2),
-
-                    AppText(
-                      'Görüntü analizinin güven skoru',
-                      style: textTheme.bodySmall?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              AppText(
-                '%${percentage.toStringAsFixed(1)}',
-                style: textTheme.titleLarge?.copyWith(
-                  color: colorScheme.primary,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-            ],
+            ),
           ),
 
           const SizedBox(height: 16),
@@ -998,9 +968,13 @@ class _ResultChip extends StatelessWidget {
 
           const SizedBox(width: 6),
 
-          AppText(
-            label,
-            style: textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w700),
+          Flexible(
+            child: AppText(
+              label,
+              style: textTheme.labelMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ),
         ],
       ),
@@ -1053,15 +1027,13 @@ class _RepairRecommendationTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
+                Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: AppText(
-                        action,
-                        style: textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w900,
-                        ),
+                    AppText(
+                      action,
+                      style: textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w900,
                       ),
                     ),
 
@@ -1119,18 +1091,9 @@ class _AiReportCard extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AppTheme.radiusXLarge),
 
-        gradient: LinearGradient(
-          colors: [
-            colorScheme.primary.withValues(alpha: 0.08),
-            colorScheme.surface,
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: colorScheme.surface,
 
         border: Border.all(color: colorScheme.primary.withValues(alpha: 0.18)),
-
-        boxShadow: AppTheme.softShadowFor(context),
       ),
 
       padding: const EdgeInsets.all(22),
@@ -1203,10 +1166,12 @@ class _ReportSection extends StatelessWidget {
 
             const SizedBox(width: 7),
 
-            AppText(
-              title,
-              style: textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w900,
+            Expanded(
+              child: AppText(
+                title,
+                style: textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w900,
+                ),
               ),
             ),
           ],
@@ -1316,16 +1281,11 @@ class _PriceEstimateCard extends StatelessWidget {
 
                 const SizedBox(height: 7),
 
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerLeft,
-
-                  child: AppText(
-                    '$minimum - $maximum $currency',
-                    style: textTheme.headlineSmall?.copyWith(
-                      color: AppTheme.successColorFor(context),
-                      fontWeight: FontWeight.w900,
-                    ),
+                AppText(
+                  '$minimum - $maximum $currency',
+                  style: textTheme.headlineSmall?.copyWith(
+                    color: AppTheme.successColorFor(context),
+                    fontWeight: FontWeight.w900,
                   ),
                 ),
               ],
@@ -1536,7 +1496,9 @@ class _ReportStatusCard extends StatelessWidget {
           const SizedBox(height: 18),
 
           AppText(
-            isFailed ? 'Detaylı AI raporu oluşturulamadı' : 'Detaylı AI raporu hazır',
+            isFailed
+                ? 'Detaylı AI raporu oluşturulamadı'
+                : 'Detaylı AI raporu hazır',
             textAlign: TextAlign.center,
             style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
           ),
@@ -1581,7 +1543,11 @@ class _ReportStatusCard extends StatelessWidget {
                       )
                     : const Icon(Icons.refresh_rounded),
 
-                label: AppText(inspection.report == null ? 'Detaylı AI Raporu Oluştur' : 'AI Raporunu Tekrar Oluştur'),
+                label: AppText(
+                  inspection.report == null
+                      ? 'Detaylı AI Raporu Oluştur'
+                      : 'AI Raporunu Tekrar Oluştur',
+                ),
               ),
             ),
           ],

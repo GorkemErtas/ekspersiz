@@ -11,7 +11,7 @@ class AppPageHeader extends StatelessWidget {
     required this.title,
     required this.subtitle,
     this.badge,
-    this.iconGradient = true,
+    this.iconGradient = false,
   });
 
   final IconData icon;
@@ -88,11 +88,14 @@ class AppPageHeader extends StatelessWidget {
               const SizedBox(height: 10),
             ],
 
-            AppText(
-              title,
+            Semantics(
+              header: true,
+              child: AppText(
+                title,
 
-              style: textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w900,
+                style: textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w900,
+                ),
               ),
             ),
 

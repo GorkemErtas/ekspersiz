@@ -7,6 +7,7 @@ import 'package:geolocator/geolocator.dart';
 import '../../../core/auth/session_manager.dart';
 import '../../../core/notifications/push_notification_service.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/app_navigation_bar.dart';
 
 import '../../auth/screens/login_screen.dart';
 import '../../auth/models/business_account.dart';
@@ -201,8 +202,6 @@ class _MobileShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return Scaffold(
       extendBody: true,
       body: Builder(
@@ -210,154 +209,9 @@ class _MobileShell extends StatelessWidget {
           return screens[selectedIndex];
         },
       ),
-      bottomNavigationBar: SafeArea(
-        top: false,
-        minimum: const EdgeInsets.fromLTRB(14, 0, 14, 10),
-        child: Container(
-          height: 76,
-          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 5),
-          decoration: BoxDecoration(
-            color: colorScheme.surface.withValues(alpha: 0.97),
-            borderRadius: BorderRadius.circular(26),
-            border: Border.all(
-              color: AppTheme.primaryColor.withValues(alpha: 0.18),
-            ),
-            boxShadow: AppTheme.elevatedShadowFor(context),
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: _NavigationItem(
-                  icon: Icons.home_outlined,
-                  selectedIcon: Icons.home_rounded,
-                  label: 'Ana Sayfa',
-                  selected: selectedIndex == 0,
-                  onTap: () => onDestinationSelected(0),
-                ),
-              ),
-              Expanded(
-                child: _NavigationItem(
-                  icon: Icons.directions_car_outlined,
-                  selectedIcon: Icons.directions_car_rounded,
-                  label: 'Araçlar',
-                  selected: selectedIndex == 1,
-                  onTap: () => onDestinationSelected(1),
-                ),
-              ),
-              Expanded(
-                child: _NavigationItem(
-                  icon: Icons.description_outlined,
-                  selectedIcon: Icons.description_rounded,
-                  label: 'Analizler',
-                  selected: selectedIndex == 2,
-                  onTap: () => onDestinationSelected(2),
-                ),
-              ),
-              Expanded(
-                child: _NavigationItem(
-                  icon: Icons.person_outline_rounded,
-                  selectedIcon: Icons.person_rounded,
-                  label: 'Profil',
-                  selected: selectedIndex == 3,
-                  onTap: () => onDestinationSelected(3),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _NavigationItem extends StatelessWidget {
-  const _NavigationItem({
-    required this.icon,
-    required this.selectedIcon,
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final IconData selectedIcon;
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-
-    return Material(
-      color: Colors.transparent,
-      borderRadius: BorderRadius.circular(20),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
-        child: AnimatedScale(
-          scale: selected ? 1.0 : 0.985,
-          duration: const Duration(milliseconds: 180),
-          curve: Curves.easeOutCubic,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 220),
-            curve: Curves.easeOutCubic,
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 5),
-            decoration: BoxDecoration(
-              gradient: selected ? AppTheme.deepBrandGradient : null,
-              color: selected ? null : Colors.transparent,
-              borderRadius: BorderRadius.circular(20),
-              border: selected
-                  ? Border.all(
-                      color: AppTheme.secondaryColor.withValues(alpha: 0.16),
-                    )
-                  : null,
-              boxShadow: selected
-                  ? [
-                      BoxShadow(
-                        color: AppTheme.primaryColor.withValues(alpha: 0.16),
-                        blurRadius: 18,
-                        offset: const Offset(0, 6),
-                      ),
-                    ]
-                  : null,
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 160),
-                  child: Icon(
-                    selected ? selectedIcon : icon,
-                    key: ValueKey(selected),
-                    size: 22,
-                    color: selected
-                        ? Colors.white
-                        : colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Flexible(
-                  child: AppText(
-                    label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: textTheme.labelSmall?.copyWith(
-                      height: 1.0,
-                      fontSize: 10.5,
-                      fontWeight: selected ? FontWeight.w900 : FontWeight.w600,
-                      color: selected
-                          ? Colors.white
-                          : colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
+      bottomNavigationBar: AppNavigationBar(
+        selectedIndex: selectedIndex,
+        onDestinationSelected: onDestinationSelected,
       ),
     );
   }

@@ -11,7 +11,7 @@ class AppCard extends StatelessWidget {
     this.onTap,
     this.backgroundColor,
     this.borderColor,
-    this.showShadow = true,
+    this.showShadow = false,
   });
 
   final Widget child;
@@ -26,28 +26,32 @@ class AppCard extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final radius = BorderRadius.circular(AppTheme.radiusLarge);
 
-    final card = Ink(
-      width: double.infinity,
-      padding: padding,
-      decoration: BoxDecoration(
-        color: backgroundColor ?? colorScheme.surface,
-        borderRadius: radius,
-        border: Border.all(
-          color:
-              borderColor ?? colorScheme.outlineVariant.withValues(alpha: 0.9),
-        ),
-        boxShadow: showShadow ? AppTheme.softShadowFor(context) : null,
-      ),
-      child: child,
+    final decoration = BoxDecoration(
+      color: backgroundColor ?? colorScheme.surface,
+      borderRadius: radius,
+      border: Border.all(color: borderColor ?? colorScheme.outlineVariant),
+      boxShadow: showShadow ? AppTheme.softShadowFor(context) : null,
     );
 
-    if (onTap == null) return card;
+    if (onTap == null) {
+      return Container(
+        width: double.infinity,
+        padding: padding,
+        decoration: decoration,
+        child: child,
+      );
+    }
 
     return AppPressScale(
       onTap: onTap,
       borderRadius: radius,
-      pressedScale: 0.975,
-      child: card,
+      pressedScale: 0.985,
+      child: Ink(
+        width: double.infinity,
+        padding: padding,
+        decoration: decoration,
+        child: child,
+      ),
     );
   }
 }

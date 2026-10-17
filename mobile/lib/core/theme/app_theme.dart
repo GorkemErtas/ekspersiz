@@ -330,6 +330,8 @@ class AppTheme {
         actionsIconTheme: const IconThemeData(color: foreground, size: 24),
       ),
       inputDecorationTheme: InputDecorationTheme(
+        errorMaxLines: 4,
+        helperMaxLines: 4,
         filled: true,
         fillColor: const Color(0xFFFCFAFD),
         contentPadding: const EdgeInsets.symmetric(
@@ -375,7 +377,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(radiusMedium),
           ),
-          textStyle: const TextStyle(
+          textStyle: textTheme.labelLarge?.copyWith(
             fontSize: 15,
             fontWeight: FontWeight.w800,
             letterSpacing: -0.1,
@@ -393,7 +395,9 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(radiusMedium),
           ),
-          textStyle: const TextStyle(fontWeight: FontWeight.w700),
+          textStyle: textTheme.labelLarge?.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
@@ -403,7 +407,9 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(radiusSmall),
           ),
-          textStyle: const TextStyle(fontWeight: FontWeight.w700),
+          textStyle: textTheme.labelLarge?.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
         ),
       ),
       iconButtonTheme: IconButtonThemeData(
@@ -449,7 +455,7 @@ class AppTheme {
           ),
         ),
         labelTextStyle: WidgetStateProperty.resolveWith(
-          (states) => TextStyle(
+          (states) => textTheme.labelSmall?.copyWith(
             fontSize: 11,
             color: states.contains(WidgetState.selected)
                 ? primaryDark
@@ -471,11 +477,11 @@ class AppTheme {
           color: foregroundMuted,
           size: 24,
         ),
-        selectedLabelTextStyle: const TextStyle(
+        selectedLabelTextStyle: textTheme.labelLarge?.copyWith(
           color: primaryDark,
           fontWeight: FontWeight.w800,
         ),
-        unselectedLabelTextStyle: const TextStyle(
+        unselectedLabelTextStyle: textTheme.labelLarge?.copyWith(
           color: foregroundMuted,
           fontWeight: FontWeight.w600,
         ),
@@ -601,6 +607,11 @@ class AppTheme {
     final baseTextTheme = GoogleFonts.interTextTheme(
       ThemeData.dark(useMaterial3: true).textTheme,
     ).apply(bodyColor: textPrimary, displayColor: textPrimary);
+    final textTheme = _customizeTextTheme(
+      baseTextTheme,
+      textPrimary,
+      textSecondary,
+    );
 
     return ThemeData(
       useMaterial3: true,
@@ -608,59 +619,7 @@ class AppTheme {
       colorScheme: scheme,
       scaffoldBackgroundColor: backgroundColor,
       canvasColor: backgroundColor,
-      textTheme: baseTextTheme.copyWith(
-        displayLarge: baseTextTheme.displayLarge?.copyWith(
-          fontWeight: FontWeight.w900,
-          letterSpacing: -1.6,
-          height: 1.04,
-        ),
-        displayMedium: baseTextTheme.displayMedium?.copyWith(
-          fontWeight: FontWeight.w900,
-          letterSpacing: -1.2,
-          height: 1.06,
-        ),
-        headlineLarge: baseTextTheme.headlineLarge?.copyWith(
-          fontWeight: FontWeight.w900,
-          letterSpacing: -0.9,
-        ),
-        headlineMedium: baseTextTheme.headlineMedium?.copyWith(
-          fontWeight: FontWeight.w900,
-          letterSpacing: -0.7,
-        ),
-        headlineSmall: baseTextTheme.headlineSmall?.copyWith(
-          fontWeight: FontWeight.w800,
-          letterSpacing: -0.45,
-        ),
-        titleLarge: baseTextTheme.titleLarge?.copyWith(
-          fontWeight: FontWeight.w800,
-          letterSpacing: -0.3,
-        ),
-        titleMedium: baseTextTheme.titleMedium?.copyWith(
-          fontWeight: FontWeight.w700,
-        ),
-        titleSmall: baseTextTheme.titleSmall?.copyWith(
-          fontWeight: FontWeight.w700,
-        ),
-        bodyLarge: baseTextTheme.bodyLarge?.copyWith(
-          color: textPrimary,
-          height: 1.5,
-        ),
-        bodyMedium: baseTextTheme.bodyMedium?.copyWith(
-          color: textSecondary,
-          height: 1.5,
-        ),
-        bodySmall: baseTextTheme.bodySmall?.copyWith(
-          color: textSecondary,
-          height: 1.45,
-        ),
-        labelLarge: baseTextTheme.labelLarge?.copyWith(
-          fontWeight: FontWeight.w800,
-        ),
-        labelMedium: baseTextTheme.labelMedium?.copyWith(
-          color: textSecondary,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
+      textTheme: textTheme,
       visualDensity: VisualDensity.standard,
       splashFactory: InkSparkle.splashFactory,
       pageTransitionsTheme: const PageTransitionsTheme(
@@ -672,7 +631,7 @@ class AppTheme {
           TargetPlatform.linux: _SmoothPageTransitionsBuilder(),
         },
       ),
-      appBarTheme: const AppBarTheme(
+      appBarTheme: AppBarTheme(
         centerTitle: false,
         elevation: 0,
         scrolledUnderElevation: 0,
@@ -681,16 +640,18 @@ class AppTheme {
         surfaceTintColor: Colors.transparent,
         titleSpacing: 20,
         toolbarHeight: 64,
-        titleTextStyle: TextStyle(
+        titleTextStyle: textTheme.titleLarge?.copyWith(
           color: textPrimary,
           fontSize: 20,
           fontWeight: FontWeight.w800,
           letterSpacing: -0.4,
         ),
-        iconTheme: IconThemeData(color: textPrimary, size: 24),
-        actionsIconTheme: IconThemeData(color: textPrimary, size: 24),
+        iconTheme: const IconThemeData(color: textPrimary, size: 24),
+        actionsIconTheme: const IconThemeData(color: textPrimary, size: 24),
       ),
       inputDecorationTheme: InputDecorationTheme(
+        errorMaxLines: 4,
+        helperMaxLines: 4,
         filled: true,
         fillColor: const Color(0xFF0E0D11),
         contentPadding: const EdgeInsets.symmetric(
@@ -736,7 +697,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(radiusMedium),
           ),
-          textStyle: const TextStyle(
+          textStyle: textTheme.labelLarge?.copyWith(
             fontSize: 15,
             fontWeight: FontWeight.w800,
             letterSpacing: -0.1,
@@ -754,7 +715,9 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(radiusMedium),
           ),
-          textStyle: const TextStyle(fontWeight: FontWeight.w700),
+          textStyle: textTheme.labelLarge?.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
@@ -764,7 +727,9 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(radiusSmall),
           ),
-          textStyle: const TextStyle(fontWeight: FontWeight.w700),
+          textStyle: textTheme.labelLarge?.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
         ),
       ),
       iconButtonTheme: IconButtonThemeData(
@@ -810,7 +775,7 @@ class AppTheme {
           ),
         ),
         labelTextStyle: WidgetStateProperty.resolveWith(
-          (states) => TextStyle(
+          (states) => textTheme.labelSmall?.copyWith(
             fontSize: 11,
             color: states.contains(WidgetState.selected)
                 ? secondaryColor
@@ -832,11 +797,11 @@ class AppTheme {
           color: textSecondary,
           size: 24,
         ),
-        selectedLabelTextStyle: const TextStyle(
+        selectedLabelTextStyle: textTheme.labelLarge?.copyWith(
           color: secondaryColor,
           fontWeight: FontWeight.w800,
         ),
-        unselectedLabelTextStyle: const TextStyle(
+        unselectedLabelTextStyle: textTheme.labelLarge?.copyWith(
           color: textSecondary,
           fontWeight: FontWeight.w600,
         ),
@@ -934,6 +899,10 @@ class _SmoothPageTransitionsBuilder extends PageTransitionsBuilder {
     Animation<double> secondaryAnimation,
     Widget child,
   ) {
+    if (MediaQuery.disableAnimationsOf(context) ||
+        MediaQuery.accessibleNavigationOf(context)) {
+      return child;
+    }
     final curved = CurvedAnimation(
       parent: animation,
       curve: Curves.easeOutCubic,

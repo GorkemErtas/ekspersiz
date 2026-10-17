@@ -167,7 +167,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           title: const AppText('Hesabınızı silmek istiyor musunuz?'),
           content: const AppText(
             'Bu işlem geri alınamaz. Hesabınız ve hesabınıza ait '
-                'kişisel veriler kalıcı olarak silinecektir.',
+            'kişisel veriler kalıcı olarak silinecektir.',
           ),
           actions: [
             TextButton(
@@ -203,10 +203,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
 
       Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute<void>(
-          builder: (_) => const LoginScreen(),
-        ),
-            (route) => false,
+        MaterialPageRoute<void>(builder: (_) => const LoginScreen()),
+        (route) => false,
       );
     } on ApiException catch (exception) {
       if (!mounted) {
@@ -238,9 +236,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ..hideCurrentSnackBar()
         ..showSnackBar(
           const SnackBar(
-            content: AppText(
-              'Hesap silme işlemi tamamlanamadı.',
-            ),
+            content: AppText('Hesap silme işlemi tamamlanamadı.'),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -265,30 +261,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: const AppText('İptal'),
             ),
             FilledButton.tonalIcon(
-              onPressed:
-              _isDeletingAccount || _isLoggingOut
+              onPressed: _isDeletingAccount || _isLoggingOut
                   ? null
                   : _deleteAccount,
               icon: _isDeletingAccount
                   ? const SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                ),
-              )
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
                   : const Icon(Icons.delete_outline_rounded),
               label: AppText(
-                _isDeletingAccount
-                    ? 'Hesap siliniyor...'
-                    : 'Hesabımı Sil',
+                _isDeletingAccount ? 'Hesap siliniyor...' : 'Hesabımı Sil',
               ),
               style: FilledButton.styleFrom(
                 foregroundColor: Theme.of(context).colorScheme.error,
-                minimumSize: const Size(
-                  double.infinity,
-                  52,
-                ),
+                minimumSize: const Size(double.infinity, 52),
               ),
             ),
             const SizedBox(height: 12),
@@ -370,7 +358,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _currentSubscriptionPlan == 'BUSINESS' &&
         (widget.businessAccount == null || widget.businessAccount!.isOwner);
     final canAcceptBusinessInvitation =
-        _currentSubscriptionPlan != 'BUSINESS' && widget.businessAccount == null;
+        _currentSubscriptionPlan != 'BUSINESS' &&
+        widget.businessAccount == null;
 
     return Scaffold(
       appBar: AppBar(
@@ -380,29 +369,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(
-              maxWidth: AppTheme.maxContentWidth,
-            ),
+            constraints: const BoxConstraints(maxWidth: 760),
             child: ListView(
               padding: AppTheme.pagePadding,
               children: [
-                AppCard(
-                  showShadow: false,
-                  padding: const EdgeInsets.all(24),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
                   child: Column(
                     children: [
                       Container(
-                        width: 96,
-                        height: 96,
+                        width: 72,
+                        height: 72,
                         decoration: BoxDecoration(
-                          gradient: AppTheme.brandGradient,
-                          borderRadius: BorderRadius.circular(30),
+                          color: colorScheme.primaryContainer,
+                          borderRadius: BorderRadius.circular(24),
                         ),
                         alignment: Alignment.center,
                         child: AppText(
                           _initials(),
                           style: textTheme.headlineMedium?.copyWith(
-                            color: Colors.white,
+                            color: colorScheme.onPrimaryContainer,
                             fontWeight: FontWeight.w900,
                           ),
                         ),
@@ -461,7 +447,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       const Divider(height: 1, indent: 82),
                       _ProfileItem(
                         icon: Icons.workspace_premium_outlined,
-                        title: widget.businessAccount != null ? 'Abonelik Planı' : 'Hesap Türü',
+                        title: widget.businessAccount != null
+                            ? 'Abonelik Planı'
+                            : 'Hesap Türü',
                         value: _subscriptionPlanLabel,
                       ),
                       if (widget.businessAccount != null) ...[
@@ -572,8 +560,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton.icon(
-                    onPressed:
-                    _isLoggingOut || _isDeletingAccount
+                    onPressed: _isLoggingOut || _isDeletingAccount
                         ? null
                         : _logout,
                     icon: _isLoggingOut
