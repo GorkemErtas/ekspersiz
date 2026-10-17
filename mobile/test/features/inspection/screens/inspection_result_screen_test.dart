@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/core/network/api_client.dart';
 import 'package:mobile/core/auth/session_manager.dart';
+import 'package:mobile/core/network/api_exception.dart';
 import 'package:mobile/features/inspection/models/damage_inspection.dart';
 import 'package:mobile/features/inspection/models/damage_repair_recommendation.dart';
 import 'package:mobile/features/inspection/models/inspection_report.dart';
@@ -86,11 +87,149 @@ void main() {
     'memory pressure releases the visible encoded and decoded photo',
     (tester) async {
       final service = await _pumpResultScreen(tester, noDamageResult());
+      final api = service.apiClient as _ImageApiClient;
+      final image = tester.widget<Image>(
+        find.byKey(const Key('inspection-analysis-image')),
+      );
+      final key = await image.image.obtainKey(ImageConfiguration.empty);
       service.images.didHaveMemoryPressure();
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('inspection-analysis-image')), findsNothing);
       expect(service.images.entryCount, 0);
+      expect(PaintingBinding.instance.imageCache.containsKey(key), isFalse);
+      expect(
+        find.byKey(const Key('inspection-image-placeholder')),
+        findsOneWidget,
+      );
+      expect(find.text('Analiz fotoğrafı yüklenemedi.'), findsNothing);
+      expect(
+        api.downloads,
+        1,
+        reason: 'Do not reload immediately under memory pressure',
+      );
+
+      await tester.runAsync(() async {
+        await tester.tap(find.text('Fotoğrafı Yeniden Yükle'));
+        await tester.pump();
+        await service.getInspectionImage(1);
+      });
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const Key('inspection-analysis-image')),
+        findsOneWidget,
+      );
+      expect(api.downloads, 2);
+      expect(api.authorizations, 5); // Initial 2 + cache hit + reloading 2.
+    },
+  );
+
+  testWidgets('background cleanup shows a placeholder and resume reauthorizes', (
+    tester,
+  ) async {
+    final service = await _pumpResultScreen(tester, noDamageResult());
+    final api = service.apiClient as _ImageApiClient;
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    // Frames resume at inactive, before resumed triggers the automatic reload.
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('inspection-analysis-image')), findsNothing);
+    expect(
+      find.byKey(const Key('inspection-image-placeholder')),
+      findsOneWidget,
+    );
+    expect(find.text('Analiz fotoğrafı yüklenemedi.'), findsNothing);
+    expect(api.downloads, 1);
+    expect(service.images.entryCount, 0);
+
+    await tester.runAsync(() async {
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pump();
+      await service.getInspectionImage(1);
+    });
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('inspection-analysis-image')), findsOneWidget);
+    expect(api.downloads, 2);
+    expect(api.authorizations, 5);
+  });
+
+  testWidgets(
+    'a real reload failure after cleanup still shows the retry error',
+    (tester) async {
+      final service = await _pumpResultScreen(tester, noDamageResult());
+      final api = service.apiClient as _ImageApiClient;
+      service.images.didHaveMemoryPressure();
+      await tester.pumpAndSettle();
+      api.error = const ApiException(statusCode: 403, message: 'Denied');
+      await tester.tap(find.text('Fotoğrafı Yeniden Yükle'));
+      await tester.pumpAndSettle();
+      expect(find.text('Analiz fotoğrafı yüklenemedi.'), findsOneWidget);
       expect(find.text('Tekrar Dene'), findsOneWidget);
+      expect(find.byKey(const Key('inspection-analysis-image')), findsNothing);
+      expect(service.images.entryCount, 0);
+      expect(api.downloads, 1);
+    },
+  );
+
+  testWidgets(
+    'local invalidation leaves other open photos intact, global cleanup clears both',
+    (tester) async {
+      tester.view.physicalSize = const Size(1600, 1200);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final data = await rootBundle.load('assets/images/ekspersiz_logo.png');
+      final api = _ImageApiClient(data.buffer.asUint8List());
+      final service = InspectionService(apiClient: api);
+      await tester.runAsync(() async {
+        await service.getInspectionImage(1);
+        await service.getInspectionImage(4);
+      });
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Row(
+            children: [
+              Expanded(
+                child: InspectionResultScreen(
+                  key: const Key('result-1'),
+                  inspection: noDamageResult(),
+                  inspectionService: service,
+                ),
+              ),
+              Expanded(
+                child: InspectionResultScreen(
+                  key: const Key('result-4'),
+                  inspection: minorResult(),
+                  inspectionService: service,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final otherPhoto = find.descendant(
+        of: find.byKey(const Key('result-4')),
+        matching: find.byKey(const Key('inspection-analysis-image')),
+      );
+      final unaffected = tester.widget<Image>(otherPhoto);
+      expect(
+        find.byKey(const Key('inspection-analysis-image')),
+        findsNWidgets(2),
+      );
+      service.images.invalidate(1);
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const Key('inspection-analysis-image')),
+        findsOneWidget,
+      );
+      expect(tester.widget<Image>(otherPhoto), same(unaffected));
+      expect(api.downloads, 2);
+      expect(service.images.entryCount, 1);
+
+      SessionManager.invalidateImages(allowImages: false);
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('inspection-analysis-image')), findsNothing);
+      expect(service.images.entryCount, 0);
     },
   );
 
@@ -139,15 +278,22 @@ class _ImageApiClient extends ApiClient {
   _ImageApiClient(this.imageBytes);
 
   final Uint8List imageBytes;
+  int downloads = 0;
+  int authorizations = 0;
+  ApiException? error;
 
   @override
-  Future<dynamic> get(String path) async => {
-    'id': int.parse(path.split('/').last),
-    'imagePath': 'image.jpg',
-  };
+  Future<dynamic> get(String path) async {
+    authorizations++;
+    if (error != null) throw error!;
+    return {'id': int.parse(path.split('/').last), 'imagePath': 'image.jpg'};
+  }
 
   @override
-  Future<Uint8List> getBytes(String path) async => imageBytes;
+  Future<Uint8List> getBytes(String path) async {
+    downloads++;
+    return imageBytes;
+  }
 }
 
 DamageInspection noDamageResult() => DamageInspection(

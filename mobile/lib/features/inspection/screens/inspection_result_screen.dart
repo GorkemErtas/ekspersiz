@@ -50,9 +50,17 @@ class _InspectionResultScreenState extends State<InspectionResultScreen>
 
   void _clearInspectionImage() {
     if (!mounted) return;
+    final invalidation = _inspectionService.images.invalidation;
+    if (invalidation.inspectionId != null &&
+        invalidation.inspectionId != _inspection.id) {
+      return;
+    }
+    // A discarded request can finish after cleanup, even with its card offscreen.
+    _inspectionImageFuture?.ignore();
     setState(() {
       _imageLifetime = Object();
-      _inspectionImageFuture = _hasInspectionImage
+      _inspectionImageFuture =
+          _hasInspectionImage && !invalidation.resourceRelease
           ? Future.value(Uint8List(0))
           : null;
     });
@@ -99,6 +107,9 @@ class _InspectionResultScreenState extends State<InspectionResultScreen>
             forceRefresh: forceRefresh,
           )
         : null;
+    // A fast failure can precede the next frame (or an offscreen card build).
+    // FutureBuilder still receives the same future and displays its real error.
+    _inspectionImageFuture?.ignore();
   }
 
   void _retryInspectionImage() {
@@ -401,12 +412,12 @@ class _InspectionResultScreenState extends State<InspectionResultScreen>
                   ),
                 ),
 
-                if (_inspectionImageFuture != null) ...[
+                if (_hasInspectionImage) ...[
                   const SizedBox(height: 16),
 
                   _InspectionImageCard(
                     key: ValueKey(_imageLifetime),
-                    imageFuture: _inspectionImageFuture!,
+                    imageFuture: _inspectionImageFuture,
                     onRetry: _retryInspectionImage,
                   ),
                 ],
@@ -595,7 +606,7 @@ class _InspectionImageCard extends StatefulWidget {
     required this.onRetry,
   });
 
-  final Future<Uint8List> imageFuture;
+  final Future<Uint8List>? imageFuture;
   final VoidCallback onRetry;
 
   @override
@@ -624,6 +635,36 @@ class _InspectionImageCardState extends State<_InspectionImageCard> {
       child: FutureBuilder<Uint8List>(
         future: widget.imageFuture,
         builder: (context, snapshot) {
+          if (widget.imageFuture == null) {
+            return Container(
+              key: const Key('inspection-image-placeholder'),
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Column(
+                children: [
+                  Icon(
+                    Icons.photo_outlined,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                  const SizedBox(height: 8),
+                  const AppText(
+                    'Fotoğraf bellekte tutulmuyor.',
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 10),
+                  TextButton.icon(
+                    onPressed: widget.onRetry,
+                    icon: const Icon(Icons.refresh_rounded),
+                    label: const AppText('Fotoğrafı Yeniden Yükle'),
+                  ),
+                ],
+              ),
+            );
+          }
           if (snapshot.connectionState != ConnectionState.done) {
             return AspectRatio(
               aspectRatio: 16 / 10,

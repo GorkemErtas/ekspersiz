@@ -33,8 +33,15 @@ class InspectionImageCache extends ChangeNotifier with WidgetsBindingObserver {
   final _tickets = <int, Object>{};
   Object _epoch = Object();
   int _byteCount = 0;
+  ({int? inspectionId, bool resourceRelease}) _invalidation = (
+    inspectionId: null,
+    resourceRelease: false,
+  );
 
   Object get epoch => _epoch;
+
+  /// Scope and cause of the current synchronous listener notification.
+  ({int? inspectionId, bool resourceRelease}) get invalidation => _invalidation;
 
   @visibleForTesting
   int get byteCount => _byteCount;
@@ -187,24 +194,26 @@ class InspectionImageCache extends ChangeNotifier with WidgetsBindingObserver {
     _flights.remove(inspectionId);
     _tickets.remove(inspectionId);
     // Also release completed FutureBuilder snapshots on mounted result routes.
+    _invalidation = (inspectionId: inspectionId, resourceRelease: false);
     notifyListeners();
   }
 
-  void clear() {
+  void clear({bool releaseResources = false}) {
     _epoch = Object();
     _entries.clear();
     _flights.clear();
     _tickets.clear();
     _byteCount = 0;
+    _invalidation = (inspectionId: null, resourceRelease: releaseResources);
     notifyListeners();
   }
 
   @override
-  void didHaveMemoryPressure() => clear();
+  void didHaveMemoryPressure() => clear(releaseResources: true);
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.paused) clear();
+    if (state == AppLifecycleState.paused) clear(releaseResources: true);
   }
 
   @override

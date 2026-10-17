@@ -41,6 +41,10 @@ fotoğraf eski anahtar altında saklanmıyor. Aynı inspection için eşzamanlı
 yetkilendirme ve indirme future'ını paylaşıyor. Açık tekrar deneme kaydı ve eski
 isteğin geçerliliğini iptal ediyor.
 
+Inspection'a özel invalidasyonun bildirimi yalnızca o inspection'ın açık sonuç
+ekranını temizliyor; diğer görüntüler ve devam eden indirmeleri korunuyor. Global
+oturum/yetki invalidasyonu bütün sonuç ekranlarını temizlemeye devam ediyor.
+
 Token yazma/silme/clearAll başlangıcında bellek senkron temizleniyor. Başarılı yeni
 login de yeni kapsam açıyor. Logout, hesap silme, 401 ve bilinen işletme/üyelik
 değişimlerinde eski kapsam kullanılamıyor. 403 fotoğrafları temizliyor fakat tokenı
@@ -67,7 +71,9 @@ dosyaları ve kullanıcı isteğiyle oluşturulan PDF dosyalarının davranış�
 - Bellek baskısı ve uygulamanın arka plana geçmesi RAM cache'ini temizliyor.
   Sonuç ekranındaki future ve görüntü widget'ı da bırakılıyor. Kapatılan/değişen
   görüntünün Flutter ImageCache anahtarı ayrıca evict ediliyor. Resume sunucudan
-  yeniden yetkilendiriyor; bellek baskısı sonrası mevcut tekrar dene düğmesi kullanılabiliyor.
+  yeniden yetkilendiriyor. Bellek/arka plan temizliği hata olarak gösterilmiyor;
+  nötr yer tutucu ve “Fotoğrafı Yeniden Yükle” düğmesi sunuluyor. Bellek baskısında
+  hemen otomatik indirme başlatılmıyor. Gerçek yükleme hatalarında hata kartı korunuyor.
 - Limit yalnızca tutulan encoded cache baytlarının bütçesidir. Aktif ekran,
   in-flight HTTP gövdeleri, upload/picker, codec/native/GPU ve PDF belleği toplamına
   12 MiB garantisi verilmez. İşletim sisteminde anında fiziksel sıfırlama iddiası yoktur.
@@ -106,7 +112,11 @@ oluşturur. Üretim egress baytı, p95 gecikme, gerçek cihaz RAM'i veya fatura 
 ## Doğrulama ve kalan sınırlar
 
 Son doğrulama (`mobile` dizininde): `flutter analyze --no-pub` **0 sorun**;
-`flutter test --no-pub` **99 geçti, 0 başarısız**; `git diff --check` **temiz**.
+`flutter test --no-pub` **106 geçti, 0 başarısız**; `git diff --check` **temiz**.
+Son regresyon testleri aynı anda açık farklı sonuç ekranlarının yerel invalidasyonda
+korunmasını, diğer inspection'ın single-flight indirmesinin sürmesini, bellek ve
+arka plan temizliğinde nötr yer tutucuyu, manuel reload/resume yetkilendirmesini ve
+gerçek reload hatasının hata kartını göstermesini de kapsıyor.
 Hedefli testler yeniden açma, single-flight, aynı orijinal nesnenin yeniden kullanımı,
 fotoğraf değiştirme/silme, oturum değişimi, eski indirme/yükleme completion'ları,
 401/403/404, gerçek HTTP timeout ve bağlantı hatası, bozuk/boş gövde, TTL/LRU,

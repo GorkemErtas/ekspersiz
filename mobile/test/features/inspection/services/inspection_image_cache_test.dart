@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/core/auth/session_manager.dart';
 import 'package:mobile/core/network/api_client.dart';
@@ -115,6 +116,79 @@ void main() {
     await service.getInspectionImage(1, forceRefresh: true);
     expect(api.downloads, 2);
   });
+
+  test(
+    'local invalidation preserves other cached inspections and reports its scope',
+    () async {
+      await service.getInspectionImage(1);
+      await service.getInspectionImage(2);
+      final notifications = <({int? inspectionId, bool resourceRelease})>[];
+      cache.addListener(() => notifications.add(cache.invalidation));
+      cache.invalidate(1);
+      expect(notifications, [(inspectionId: 1, resourceRelease: false)]);
+      expect(cache.entryCount, 1);
+      expect(await service.getInspectionImage(2), same(photo));
+      expect(api.downloads, 2);
+      await service.getInspectionImage(1);
+      expect(api.downloads, 3);
+
+      SessionManager.invalidateImages(allowImages: false);
+      expect(notifications.last, (inspectionId: null, resourceRelease: false));
+      expect(cache.entryCount, 0);
+    },
+  );
+
+  test('local invalidation only cancels the matching flight', () async {
+    final gate = Completer<Uint8List>();
+    api.pending = gate.future;
+    final first = service.getInspectionImage(1);
+    final other = service.getInspectionImage(2);
+    await Future<void>.delayed(Duration.zero);
+    cache.invalidate(1);
+    expect(service.getInspectionImage(2), same(other));
+    final cancelled = expectLater(first, throwsStateError);
+    gate.complete(photo);
+    await cancelled;
+    expect(await other, same(photo));
+    expect(cache.entryCount, 1);
+    expect(api.downloads, 2);
+    expect(await service.getInspectionImage(2), same(photo));
+    expect(api.downloads, 2);
+  });
+
+  for (final background in [false, true]) {
+    test(
+      'resource cleanup ($background background) reports release and cancels stale data',
+      () async {
+        await service.getInspectionImage(1);
+        final gate = Completer<Uint8List>();
+        api.pending = gate.future;
+        final pending = service.getInspectionImage(2);
+        await Future<void>.delayed(Duration.zero);
+        if (background) {
+          cache.didChangeAppLifecycleState(AppLifecycleState.paused);
+        } else {
+          cache.didHaveMemoryPressure();
+        }
+        expect(cache.invalidation, (inspectionId: null, resourceRelease: true));
+        expect(cache.entryCount, 0);
+        expect(cache.byteCount, 0);
+        final cancelled = expectLater(pending, throwsStateError);
+        gate.complete(photo);
+        await cancelled;
+        expect(cache.entryCount, 0);
+        api.pending = null;
+        await service.getInspectionImage(1);
+        expect(api.downloads, 3);
+        SessionManager.invalidateImages();
+        expect(cache.invalidation, (
+          inspectionId: null,
+          resourceRelease: false,
+        ));
+        expect(cache.entryCount, 0);
+      },
+    );
+  }
 
   test('an obsolete completion cannot overwrite a refreshed request', () async {
     final gate = Completer<Uint8List>();
