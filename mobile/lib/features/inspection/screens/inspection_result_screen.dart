@@ -30,9 +30,11 @@ class InspectionResultScreen extends StatefulWidget {
   State<InspectionResultScreen> createState() => _InspectionResultScreenState();
 }
 
-class _InspectionResultScreenState extends State<InspectionResultScreen> {
+class _InspectionResultScreenState extends State<InspectionResultScreen>
+    with WidgetsBindingObserver {
   late DamageInspection _inspection;
-  Future<List<int>>? _inspectionImageFuture;
+  Future<Uint8List>? _inspectionImageFuture;
+  Object _imageLifetime = Object();
 
   bool _isRegeneratingReport = false;
 
@@ -41,7 +43,48 @@ class _InspectionResultScreenState extends State<InspectionResultScreen> {
     super.initState();
 
     _inspection = widget.inspection;
+    _inspectionService.images.addListener(_clearInspectionImage);
+    WidgetsBinding.instance.addObserver(this);
     _loadInspectionImage();
+  }
+
+  void _clearInspectionImage() {
+    if (!mounted) return;
+    setState(() {
+      _imageLifetime = Object();
+      _inspectionImageFuture = _hasInspectionImage
+          ? Future.value(Uint8List(0))
+          : null;
+    });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && mounted) {
+      setState(_loadInspectionImage);
+    }
+  }
+
+  @override
+  void dispose() {
+    _inspectionService.images.removeListener(_clearInspectionImage);
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(InspectionResultScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.inspectionService != widget.inspectionService) {
+      oldWidget.inspectionService.images.removeListener(_clearInspectionImage);
+      _inspectionService.images.addListener(_clearInspectionImage);
+    }
+    if (oldWidget.inspection != widget.inspection ||
+        oldWidget.inspectionService != widget.inspectionService) {
+      _inspection = widget.inspection;
+      _imageLifetime = Object();
+      _loadInspectionImage();
+    }
   }
 
   InspectionService get _inspectionService => widget.inspectionService;
@@ -49,14 +92,20 @@ class _InspectionResultScreenState extends State<InspectionResultScreen> {
   bool get _hasInspectionImage =>
       _inspection.imagePath?.trim().isNotEmpty == true;
 
-  void _loadInspectionImage() {
+  void _loadInspectionImage({bool forceRefresh = false}) {
     _inspectionImageFuture = _hasInspectionImage
-        ? _inspectionService.getInspectionImage(_inspection.id)
+        ? _inspectionService.getInspectionImage(
+            _inspection.id,
+            forceRefresh: forceRefresh,
+          )
         : null;
   }
 
   void _retryInspectionImage() {
-    setState(_loadInspectionImage);
+    setState(() {
+      _imageLifetime = Object();
+      _loadInspectionImage(forceRefresh: true);
+    });
   }
 
   Future<void> _regenerateReport() async {
@@ -93,7 +142,12 @@ class _InspectionResultScreenState extends State<InspectionResultScreen> {
       }
 
       setState(() {
+        final imageChanged = _inspection.imagePath != updated.imagePath;
         _inspection = updated;
+        if (imageChanged) {
+          _imageLifetime = Object();
+          _loadInspectionImage();
+        }
       });
     } catch (exception) {
       if (!mounted) {
@@ -351,6 +405,7 @@ class _InspectionResultScreenState extends State<InspectionResultScreen> {
                   const SizedBox(height: 16),
 
                   _InspectionImageCard(
+                    key: ValueKey(_imageLifetime),
                     imageFuture: _inspectionImageFuture!,
                     onRetry: _retryInspectionImage,
                   ),
@@ -533,14 +588,30 @@ class _InspectionResultScreenState extends State<InspectionResultScreen> {
   }
 }
 
-class _InspectionImageCard extends StatelessWidget {
+class _InspectionImageCard extends StatefulWidget {
   const _InspectionImageCard({
+    super.key,
     required this.imageFuture,
     required this.onRetry,
   });
 
-  final Future<List<int>> imageFuture;
+  final Future<Uint8List> imageFuture;
   final VoidCallback onRetry;
+
+  @override
+  State<_InspectionImageCard> createState() => _InspectionImageCardState();
+}
+
+class _InspectionImageCardState extends State<_InspectionImageCard> {
+  ImageProvider? _provider;
+
+  @override
+  void dispose() {
+    // MemoryImage keys retain encoded bytes in Flutter's global image cache.
+    // Keep that second cache from outliving the screen/session RAM policy.
+    _provider?.evict();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -550,8 +621,8 @@ class _InspectionImageCard extends StatelessWidget {
       icon: Icons.photo_outlined,
       title: 'Analiz Fotoğrafı',
       subtitle: 'Hasar analizi için yüklenen görüntü',
-      child: FutureBuilder<List<int>>(
-        future: imageFuture,
+      child: FutureBuilder<Uint8List>(
+        future: widget.imageFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState != ConnectionState.done) {
             return AspectRatio(
@@ -586,7 +657,7 @@ class _InspectionImageCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 10),
                   TextButton.icon(
-                    onPressed: onRetry,
+                    onPressed: widget.onRetry,
                     icon: const Icon(Icons.refresh_rounded),
                     label: const AppText('Tekrar Dene'),
                   ),
@@ -595,20 +666,40 @@ class _InspectionImageCard extends StatelessWidget {
             );
           }
 
-          return ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: ColoredBox(
-              color: colorScheme.surfaceContainerHighest,
-              child: AspectRatio(
-                aspectRatio: 16 / 10,
-                child: Image.memory(
-                  Uint8List.fromList(bytes),
-                  key: const Key('inspection-analysis-image'),
-                  fit: BoxFit.contain,
-                  semanticLabel: 'Analiz için yüklenen araç fotoğrafı'.tr,
+          return LayoutBuilder(
+            builder: (context, constraints) {
+              final width =
+                  (constraints.maxWidth *
+                          MediaQuery.devicePixelRatioOf(context))
+                      .ceil()
+                      .clamp(1, 1600);
+              final provider = ResizeImage(
+                MemoryImage(bytes),
+                width: width,
+                height: (width * 10 / 16).ceil(),
+                policy: ResizeImagePolicy.fit,
+                allowUpscaling: false,
+              );
+              if (_provider != provider) {
+                _provider?.evict();
+                _provider = provider;
+              }
+              return ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: ColoredBox(
+                  color: colorScheme.surfaceContainerHighest,
+                  child: AspectRatio(
+                    aspectRatio: 16 / 10,
+                    child: Image(
+                      image: provider,
+                      key: const Key('inspection-analysis-image'),
+                      fit: BoxFit.contain,
+                      semanticLabel: 'Analiz için yüklenen araç fotoğrafı'.tr,
+                    ),
+                  ),
                 ),
-              ),
-            ),
+              );
+            },
           );
         },
       ),

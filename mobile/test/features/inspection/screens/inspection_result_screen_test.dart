@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/core/network/api_client.dart';
+import 'package:mobile/core/auth/session_manager.dart';
 import 'package:mobile/features/inspection/models/damage_inspection.dart';
 import 'package:mobile/features/inspection/models/damage_repair_recommendation.dart';
 import 'package:mobile/features/inspection/models/inspection_report.dart';
@@ -10,6 +11,7 @@ import 'package:mobile/features/inspection/services/inspection_service.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  setUp(() => SessionManager.invalidateImages(allowImages: true));
 
   testWidgets('no visible damage renders a completed success explanation', (
     tester,
@@ -64,10 +66,51 @@ void main() {
     expect(find.text('İşlem Gerekmiyor'), findsNothing);
   });
 
+  testWidgets(
+    'session changes remove the visible photo and decoded cache key',
+    (tester) async {
+      await _pumpResultScreen(tester, noDamageResult());
+      final image = tester.widget<Image>(
+        find.byKey(const Key('inspection-analysis-image')),
+      );
+      final key = await image.image.obtainKey(ImageConfiguration.empty);
+      SessionManager.invalidateImages(allowImages: false);
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('inspection-analysis-image')), findsNothing);
+      expect(PaintingBinding.instance.imageCache.containsKey(key), isFalse);
+      expect(find.text('Tekrar Dene'), findsOneWidget);
+    },
+  );
 
+  testWidgets(
+    'memory pressure releases the visible encoded and decoded photo',
+    (tester) async {
+      final service = await _pumpResultScreen(tester, noDamageResult());
+      service.images.didHaveMemoryPressure();
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('inspection-analysis-image')), findsNothing);
+      expect(service.images.entryCount, 0);
+      expect(find.text('Tekrar Dene'), findsOneWidget);
+    },
+  );
+
+  testWidgets('preview decode is bounded and preserves aspect ratio', (
+    tester,
+  ) async {
+    await _pumpResultScreen(tester, noDamageResult());
+    final image = tester.widget<Image>(
+      find.byKey(const Key('inspection-analysis-image')),
+    );
+    final provider = image.image as ResizeImage;
+    expect(provider.width, lessThanOrEqualTo(1600));
+    expect(provider.height, lessThanOrEqualTo(1000));
+    expect(provider.policy, ResizeImagePolicy.fit);
+    expect(provider.allowUpscaling, isFalse);
+    expect(image.fit, BoxFit.contain);
+  });
 }
 
-Future<void> _pumpResultScreen(
+Future<InspectionService> _pumpResultScreen(
   WidgetTester tester,
   DamageInspection inspection,
 ) async {
@@ -76,24 +119,32 @@ Future<void> _pumpResultScreen(
     imageData.offsetInBytes,
     imageData.lengthInBytes,
   );
+  final service = InspectionService(apiClient: _ImageApiClient(imageBytes));
+  // The engine codec uses real async work, outside the widget fake clock.
+  await tester.runAsync(() => service.getInspectionImage(inspection.id));
 
   await tester.pumpWidget(
     MaterialApp(
       home: InspectionResultScreen(
         inspection: inspection,
-        inspectionService: InspectionService(
-          apiClient: _ImageApiClient(imageBytes),
-        ),
+        inspectionService: service,
       ),
     ),
   );
   await tester.pumpAndSettle();
+  return service;
 }
 
 class _ImageApiClient extends ApiClient {
   _ImageApiClient(this.imageBytes);
 
   final Uint8List imageBytes;
+
+  @override
+  Future<dynamic> get(String path) async => {
+    'id': int.parse(path.split('/').last),
+    'imagePath': 'image.jpg',
+  };
 
   @override
   Future<Uint8List> getBytes(String path) async => imageBytes;

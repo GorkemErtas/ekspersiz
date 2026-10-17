@@ -1,13 +1,24 @@
+import 'dart:typed_data';
+
+import '../../../core/auth/session_manager.dart';
 import '../../../core/network/api_client.dart';
 import '../models/damage_inspection.dart';
 import '../models/image_quality_result.dart';
+import 'inspection_image_cache.dart';
 
 class InspectionService {
-  const InspectionService({this.apiClient = const ApiClient()});
+  const InspectionService({
+    this.apiClient = const ApiClient(),
+    this.imageCache,
+  });
 
   static const Duration _analysisTimeout = Duration(seconds: 90);
 
   final ApiClient apiClient;
+  final InspectionImageCache? imageCache;
+
+  InspectionImageCache get images =>
+      imageCache ?? InspectionImageCache.instance;
 
   Future<DamageInspection> createInspection({
     required int vehicleId,
@@ -56,6 +67,9 @@ class InspectionService {
     required String filename,
     required String contentType,
   }) async {
+    images.invalidate(inspectionId);
+    final scope = SessionManager.imageScope.value;
+    final epoch = images.epoch;
     final response = await apiClient.postMultipart(
       '/inspections/$inspectionId/image',
       fileBytes: imageBytes,
@@ -64,7 +78,19 @@ class InspectionService {
       contentType: contentType,
     );
 
-    return _parseInspection(response, 'Hasar fotoğrafı yüklenemedi.');
+    final uploaded = _parseInspection(response, 'Hasar fotoğrafı yüklenemedi.');
+    if (uploaded.id == inspectionId &&
+        uploaded.imagePath != null &&
+        imageBytes is Uint8List) {
+      await images.seed(
+        scope: scope,
+        epoch: epoch,
+        inspectionId: inspectionId,
+        imagePath: uploaded.imagePath!,
+        bytes: imageBytes,
+      );
+    }
+    return uploaded;
   }
 
   Future<DamageInspection> analyzeInspection(
@@ -85,8 +111,22 @@ class InspectionService {
     return _parseInspection(response, 'Hasar analizi tamamlanamadı.');
   }
 
-  Future<List<int>> getInspectionImage(int inspectionId) {
-    return apiClient.getBytes('/inspections/$inspectionId/image');
+  Future<Uint8List> getInspectionImage(
+    int inspectionId, {
+    bool forceRefresh = false,
+  }) {
+    return images.load(
+      inspectionId: inspectionId,
+      forceRefresh: forceRefresh,
+      authorize: () async {
+        final current = await getInspectionById(inspectionId);
+        if (current.id != inspectionId) {
+          throw const FormatException('İnceleme kimliği geçersiz.');
+        }
+        return current.imagePath;
+      },
+      download: () => apiClient.getBytes('/inspections/$inspectionId/image'),
+    );
   }
 
   Future<ImageQualityResult> validateImageQuality(int inspectionId) async {

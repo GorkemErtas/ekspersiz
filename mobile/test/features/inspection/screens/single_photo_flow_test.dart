@@ -11,6 +11,7 @@ import 'package:mobile/core/widgets/primary_button.dart';
 import 'package:mobile/features/inspection/models/damage_inspection.dart';
 import 'package:mobile/features/inspection/screens/analyzing_screen.dart';
 import 'package:mobile/features/inspection/screens/inspection_result_screen.dart';
+import 'package:mobile/features/inspection/screens/inspection_history_screen.dart';
 import 'package:mobile/features/inspection/screens/upload_damage_image_screen.dart';
 import 'package:mobile/features/inspection/services/inspection_service.dart';
 
@@ -30,6 +31,7 @@ const _pending = {
   'reportStatus': 'PENDING',
   'locationCity': 'İstanbul',
 };
+final _uploaded = {..._pending, 'imagePath': 'accepted-photo.png'};
 final _complete = {
   ..._pending,
   'status': 'COMPLETED',
@@ -115,7 +117,11 @@ void main() {
               latin1.decode(requests.single.bodyBytes),
               isNot(contains('context_image')),
             );
-            uploaded.complete(uiJsonResponse(_pending));
+            // Native image validation must finish on the real async clock.
+            await tester.runAsync(() async {
+              uploaded.complete(uiJsonResponse(_uploaded));
+              await Future<void>.delayed(const Duration(milliseconds: 100));
+            });
             await tester.pumpAndSettle();
             expect(find.byType(InspectionResultScreen), findsOneWidget);
             expect(picker.sources, [
@@ -123,11 +129,26 @@ void main() {
             ]);
             expect(
               requests.map((request) => request.url.path.split('/').last),
-              ['image', 'image-quality', 'analyze'],
+              ['image', 'image-quality', 'analyze', '4'],
             );
-            expect(requests.last.url.queryParameters, {
-              'vehicleRegion': region,
-            });
+            expect(requests[2].url.queryParameters, {'vehicleRegion': region});
+            expect(
+              requests.where(
+                (request) =>
+                    request.method == 'GET' &&
+                    request.url.path.endsWith('/image'),
+              ),
+              isEmpty,
+            );
+            await tester.scrollUntilVisible(
+              find.byKey(const Key('inspection-analysis-image')),
+              180,
+              scrollable: find.byType(Scrollable).first,
+            );
+            expect(
+              find.byKey(const Key('inspection-analysis-image')),
+              findsOneWidget,
+            );
             expect(find.text('Görünür Hasar Tespit Edilmedi'), findsWidgets);
             expect(tester.takeException(), isNull);
           },
@@ -142,7 +163,16 @@ void main() {
               });
             }
             if (request.url.path.endsWith('/analyze')) {
-              return uiJsonResponse(_complete);
+              return uiJsonResponse({
+                ..._complete,
+                'imagePath': _uploaded['imagePath'],
+              });
+            }
+            if (request.url.path.endsWith('/inspections/4')) {
+              return uiJsonResponse({
+                ..._complete,
+                'imagePath': _uploaded['imagePath'],
+              });
             }
             throw StateError('Unexpected call: ${request.url}');
           }),
@@ -330,6 +360,44 @@ void main() {
         return uiJsonResponse(_complete);
       }),
     );
+  });
+
+  testWidgets('history can reopen an authorized result without another photo GET', (
+    tester,
+  ) async {
+    final photo = await _photoBytes();
+    final result = {..._complete, 'imagePath': 'history-photo.png'};
+    var downloads = 0;
+    var authorizations = 0;
+    await http.runWithClient(() async {
+      await tester.runAsync(() => const InspectionService().getInspectionImage(4));
+      await tester.pumpWidget(uiTestApp(
+        home: const InspectionHistoryScreen(), reduceMotion: true,
+      ));
+      await tester.pumpAndSettle();
+      for (var open = 0; open < 2; open++) {
+        await tester.tap(find.text('34 ABC 123'));
+        await tester.pumpAndSettle();
+        expect(find.byType(InspectionResultScreen), findsOneWidget);
+        expect(find.byKey(const Key('inspection-analysis-image')), findsOneWidget);
+        expect(downloads, 1);
+        await tester.tap(find.byTooltip('Kapat'));
+        await tester.pumpAndSettle();
+        expect(find.byType(InspectionHistoryScreen), findsOneWidget);
+      }
+      expect(authorizations, 4); // Cold prefetch twice; each reopen once.
+    }, () => MockClient((request) async {
+      if (request.url.path.endsWith('/inspections')) return uiJsonResponse([result]);
+      if (request.url.path.endsWith('/inspections/4/image')) {
+        downloads++;
+        return http.Response.bytes(photo, 200);
+      }
+      if (request.url.path.endsWith('/inspections/4')) {
+        authorizations++;
+        return uiJsonResponse(result);
+      }
+      throw StateError('Unexpected history request: ${request.url}');
+    }));
   });
 }
 

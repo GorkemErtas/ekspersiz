@@ -1,5 +1,7 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+import '../auth/session_manager.dart';
+
 class TokenStorage {
   TokenStorage._();
 
@@ -8,7 +10,9 @@ class TokenStorage {
   static const FlutterSecureStorage _storage = FlutterSecureStorage();
 
   static Future<void> saveAccessToken(String accessToken) async {
+    SessionManager.invalidateImages(allowImages: false);
     await _storage.write(key: _accessTokenKey, value: accessToken);
+    SessionManager.invalidateImages(allowImages: accessToken.isNotEmpty);
   }
 
   static Future<String?> getAccessToken() async {
@@ -22,10 +26,12 @@ class TokenStorage {
   }
 
   static Future<void> deleteAccessToken() async {
+    SessionManager.invalidateImages(allowImages: false);
     await _storage.delete(key: _accessTokenKey);
   }
 
   static Future<void> clearAll() async {
+    SessionManager.invalidateImages(allowImages: false);
     await _storage.deleteAll();
   }
 }
