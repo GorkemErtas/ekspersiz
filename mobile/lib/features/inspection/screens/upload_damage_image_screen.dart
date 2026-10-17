@@ -59,6 +59,15 @@ class _UploadDamageImageScreenState extends State<UploadDamageImageScreen> {
         return;
       }
 
+      // Reject oversized files before allocating their full byte buffer.
+      // Keep the byte-length check below in case the file changes after stat.
+      final fileLength = await image.length();
+      if (!mounted) return;
+      if (fileLength > _maxImageSizeBytes) {
+        _showMessage('Fotoğraf boyutu 10 MB’dan büyük olamaz.');
+        return;
+      }
+
       final bytes = await image.readAsBytes();
 
       if (!mounted) {

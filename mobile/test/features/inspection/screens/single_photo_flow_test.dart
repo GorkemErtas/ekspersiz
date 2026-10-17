@@ -272,6 +272,47 @@ void main() {
     );
   });
 
+  for (final changedAfterStat in [false, true]) {
+    testWidgets(
+      'oversized photo is rejected ${changedAfterStat ? 'after stat changed' : 'before reading bytes'}',
+      (tester) async {
+        final photo = _TrackedPhoto(
+          reportedLength: changedAfterStat ? 16 : 64 * 1024 * 1024,
+          bytes: changedAfterStat
+              ? Uint8List(10 * 1024 * 1024 + 1)
+              : Uint8List(0),
+        );
+        var requests = 0;
+        await http.runWithClient(
+          () async {
+            await tester.pumpWidget(
+              uiTestApp(
+                home: UploadDamageImageScreen(
+                  inspection: DamageInspection.fromJson(_pending),
+                  imagePicker: _MemoryPicker(Uint8List(0), file: photo),
+                ),
+                reduceMotion: true,
+              ),
+            );
+            await tester.pumpAndSettle();
+            await _pickPhoto(tester);
+            expect(photo.reads, changedAfterStat ? 1 : 0);
+            expect(
+              find.text('Fotoğraf boyutu 10 MB’dan büyük olamaz.'),
+              findsOneWidget,
+            );
+            expect(requests, 0);
+            expect(tester.takeException(), isNull);
+          },
+          () => MockClient((_) async {
+            requests++;
+            throw StateError('Oversized photos must not be uploaded');
+          }),
+        );
+      },
+    );
+  }
+
   testWidgets('invalid region is rejected locally before any request', (
     tester,
   ) async {
@@ -330,8 +371,9 @@ Future<void> _selectFront(WidgetTester tester) async {
 }
 
 class _MemoryPicker extends ImagePicker {
-  _MemoryPicker(this.bytes);
+  _MemoryPicker(this.bytes, {this.file});
   final Uint8List bytes;
+  final XFile? file;
   final sources = <ImageSource>[];
 
   @override
@@ -344,10 +386,29 @@ class _MemoryPicker extends ImagePicker {
     bool requestFullMetadata = true,
   }) async {
     sources.add(source);
-    return XFile.fromData(
-      bytes,
-      name: 'damage-${sources.length}.png',
-      mimeType: 'image/png',
-    );
+    return file ??
+        XFile.fromData(
+          bytes,
+          name: 'damage-${sources.length}.png',
+          mimeType: 'image/png',
+        );
+  }
+}
+
+class _TrackedPhoto extends XFile {
+  _TrackedPhoto({required this.reportedLength, required this.bytes})
+    : super('damage.png');
+
+  final int reportedLength;
+  final Uint8List bytes;
+  int reads = 0;
+
+  @override
+  Future<int> length() async => reportedLength;
+
+  @override
+  Future<Uint8List> readAsBytes() async {
+    reads++;
+    return bytes;
   }
 }
