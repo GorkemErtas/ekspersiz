@@ -41,12 +41,14 @@ class AppStatusBadge extends StatelessWidget {
             const SizedBox(width: 5),
           ],
 
-          AppText(
-            label,
-            style: textTheme.labelMedium?.copyWith(
-              color: color,
-              fontWeight: FontWeight.w900,
-              fontSize: compact ? 11 : null,
+          Flexible(
+            child: AppText(
+              label,
+              style: textTheme.labelMedium?.copyWith(
+                color: color,
+                fontWeight: FontWeight.w900,
+                fontSize: compact ? 11 : null,
+              ),
             ),
           ),
         ],

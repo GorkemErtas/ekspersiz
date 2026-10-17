@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_card.dart';
+import '../../../core/widgets/app_content.dart';
+import '../../../core/widgets/app_state_view.dart';
 import '../../auth/models/business_account.dart';
 import '../../vehicle/screens/vehicle_detail_screen.dart';
 import '../../vehicle/services/vehicle_service.dart';
@@ -95,90 +97,95 @@ class _NotificationCenterScreenState extends State<NotificationCenterScreen> {
       title: const AppText('Bildirimler'),
       actions: [
         if (_items.any((item) => !item.read))
-          TextButton(onPressed: _markAllRead, child: const AppText('Tümünü oku')),
+          TextButton(
+            onPressed: _markAllRead,
+            child: const AppText('Tümünü oku'),
+          ),
       ],
     ),
     body: SafeArea(
-      child: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _error != null
-          ? Center(
-              child: FilledButton(
-                onPressed: _load,
-                child: const AppText('Tekrar Dene'),
-              ),
-            )
-          : _items.isEmpty
-          ? const Center(child: AppText('Henüz bildiriminiz yok.'))
-          : RefreshIndicator(
-              onRefresh: _load,
-              child: ListView.separated(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
-                itemCount: _items.length,
-                separatorBuilder: (_, _) => const SizedBox(height: 10),
-                itemBuilder: (context, index) {
-                  final item = _items[index];
-                  final color = _color(item.severity);
-                  return AppCard(
-                    onTap: () => _open(item),
-                    showShadow: false,
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          width: 42,
-                          height: 42,
-                          decoration: BoxDecoration(
-                            color: color.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(14),
+      child: AppContent(
+        child: _loading
+            ? const AppStateView.loading()
+            : _error != null
+            ? AppStateView.error(message: _error!, onActionPressed: _load)
+            : _items.isEmpty
+            ? const AppStateView.empty(
+                icon: Icons.notifications_none_rounded,
+                title: 'Bildirimler',
+                message: 'Hen\u00fcz bildiriminiz yok.',
+              )
+            : RefreshIndicator(
+                onRefresh: _load,
+                child: ListView.separated(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+                  itemCount: _items.length,
+                  separatorBuilder: (_, _) => const SizedBox(height: 10),
+                  itemBuilder: (context, index) {
+                    final item = _items[index];
+                    final color = _color(item.severity);
+                    return AppCard(
+                      onTap: () => _open(item),
+                      showShadow: false,
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            width: 42,
+                            height: 42,
+                            decoration: BoxDecoration(
+                              color: color.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: Icon(
+                              Icons.notifications_rounded,
+                              color: color,
+                            ),
                           ),
-                          child: Icon(
-                            Icons.notifications_rounded,
-                            color: color,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: AppText(
-                                      item.title,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w800,
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: AppText(
+                                        item.title,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w800,
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                  if (!item.read)
-                                    Container(
-                                      width: 8,
-                                      height: 8,
-                                      decoration: const BoxDecoration(
-                                        color: AppTheme.primaryColor,
-                                        shape: BoxShape.circle,
+                                    if (!item.read)
+                                      Container(
+                                        width: 8,
+                                        height: 8,
+                                        decoration: const BoxDecoration(
+                                          color: AppTheme.primaryColor,
+                                          shape: BoxShape.circle,
+                                        ),
                                       ),
-                                    ),
-                                ],
-                              ),
-                              const SizedBox(height: 5),
-                              AppText(item.body),
-                              const SizedBox(height: 8),
-                              AppText(
-                                _date(item.createdAt),
-                                style: Theme.of(context).textTheme.labelSmall,
-                              ),
-                            ],
+                                  ],
+                                ),
+                                const SizedBox(height: 5),
+                                AppText(item.body),
+                                const SizedBox(height: 8),
+                                AppText(
+                                  _date(item.createdAt),
+                                  style: Theme.of(context).textTheme.labelSmall,
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
+                        ],
+                      ),
+                    );
+                  },
+                ),
               ),
-            ),
+      ),
     ),
   );
 }

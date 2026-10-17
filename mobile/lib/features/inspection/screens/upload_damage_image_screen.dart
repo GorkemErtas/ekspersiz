@@ -11,6 +11,7 @@ import '../../../core/widgets/app_icon_box.dart';
 import '../../../core/widgets/app_page_header.dart';
 import '../../../core/widgets/app_status_badge.dart';
 import '../../../core/widgets/primary_button.dart';
+import '../../../core/widgets/app_motion.dart';
 
 import '../models/damage_inspection.dart';
 import '../services/inspection_service.dart';
@@ -218,9 +219,7 @@ class _UploadDamageImageScreenState extends State<UploadDamageImageScreen> {
           ? await _inspectionService.validateContextImageQuality(
               widget.inspection.id,
             )
-          : await _inspectionService.validateImageQuality(
-              widget.inspection.id,
-            );
+          : await _inspectionService.validateImageQuality(widget.inspection.id);
 
       if (!mounted) {
         return;
@@ -306,7 +305,7 @@ class _UploadDamageImageScreenState extends State<UploadDamageImageScreen> {
 
         final textTheme = Theme.of(context).textTheme;
 
-        return Padding(
+        return SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -687,9 +686,10 @@ class _PhotoUploadArea extends StatelessWidget {
         onTap: isUploading ? null : onTap,
 
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
+          duration: AppMotion.duration(context, AppMotion.medium),
 
-          constraints: const BoxConstraints(minHeight: 300, maxHeight: 430),
+          constraints: const BoxConstraints(minHeight: 280),
+          height: hasImage ? 340 : null,
 
           width: double.infinity,
 
@@ -710,7 +710,16 @@ class _PhotoUploadArea extends StatelessWidget {
               ? Stack(
                   fit: StackFit.expand,
                   children: [
-                    Image.memory(imageBytes!, fit: BoxFit.cover),
+                    Image.memory(
+                      imageBytes!,
+                      fit: BoxFit.contain,
+                      cacheWidth:
+                          (MediaQuery.sizeOf(context).width *
+                                  MediaQuery.devicePixelRatioOf(context))
+                              .round()
+                              .clamp(600, 1600),
+                      semanticLabel: 'Seçilen hasar fotoğrafı'.tr,
+                    ),
 
                     Positioned(
                       top: 14,
@@ -752,6 +761,7 @@ class _PhotoUploadArea extends StatelessWidget {
               : Padding(
                   padding: const EdgeInsets.all(28),
                   child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       AppIconBox(

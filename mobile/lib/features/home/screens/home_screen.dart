@@ -5,6 +5,8 @@ import 'dart:async';
 import '../../../core/notifications/push_notification_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_card.dart';
+import '../../../core/widgets/app_loading_card.dart';
+import '../../../core/widgets/app_adaptive_columns.dart';
 import '../../../core/widgets/app_motion.dart';
 import '../../../core/widgets/app_status_badge.dart';
 import '../../../core/widgets/section_title.dart';
@@ -184,9 +186,10 @@ class _HomeScreenState extends State<HomeScreen> {
   Route<T> _premiumRoute<T>(Widget page) {
     return PageRouteBuilder<T>(
       pageBuilder: (_, animation, _) => page,
-      transitionDuration: const Duration(milliseconds: 320),
-      reverseTransitionDuration: const Duration(milliseconds: 240),
-      transitionsBuilder: (_, animation, secondaryAnimation, child) {
+      transitionDuration: AppMotion.duration(context, AppMotion.medium),
+      reverseTransitionDuration: AppMotion.duration(context, AppMotion.medium),
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        if (AppMotion.reduceMotion(context)) return child;
         final curved = CurvedAnimation(
           parent: animation,
           curve: Curves.easeOutCubic,
@@ -448,7 +451,9 @@ class _HomeScreenState extends State<HomeScreen> {
         ..hideCurrentSnackBar()
         ..showSnackBar(
           const SnackBar(
-            content: AppText('Ana araç değiştirilemedi. Lütfen tekrar deneyin.'),
+            content: AppText(
+              'Ana araç değiştirilemedi. Lütfen tekrar deneyin.',
+            ),
           ),
         );
     }
@@ -586,7 +591,7 @@ class _HomeScreenState extends State<HomeScreen> {
               onRefresh: _loadHomeData,
               child: ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: AppTheme.pagePadding,
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 200),
                 children: [
                   AppFadeSlideIn(
                     delay: const Duration(milliseconds: 20),
@@ -619,71 +624,84 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ],
                   const SizedBox(height: AppTheme.spacingL),
-                  AppFadeSlideIn(
-                    delay: const Duration(milliseconds: 120),
-                    child: SectionTitle(
-                      title: widget.businessAccount == null
-                          ? 'Ana Araç'
-                          : 'Şirket Ana Aracı',
-                      actionLabel: _vehicles.length > 1
-                          ? 'Değiştir'
-                          : widget.businessAccount == null
-                          ? 'Araçlarım'
-                          : 'Şirket Araçları',
-                      onActionPressed: _vehicles.length > 1
-                          ? _selectMainVehicle
-                          : widget.onOpenVehicles,
-                    ),
-                  ),
-                  const SizedBox(height: AppTheme.spacingM),
-                  AppFadeSlideIn(
-                    delay: const Duration(milliseconds: 160),
-                    child: _isLoading
-                        ? const _LoadingCard()
-                        : _mainVehicle == null
-                        ? _EmptyVehicleCard(onTap: widget.onOpenVehicles)
-                        : _MainVehicleCard(
-                            vehicle: _mainVehicle!,
-                            mileage: _formatMileage(_mainVehicle!.mileage),
-                            onTap: _selectMainVehicle,
+                  AppAdaptiveColumns(
+                    first: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        AppFadeSlideIn(
+                          delay: const Duration(milliseconds: 120),
+                          child: SectionTitle(
+                            title: widget.businessAccount == null
+                                ? 'Ana Araç'
+                                : 'Şirket Ana Aracı',
+                            actionLabel: _vehicles.length > 1
+                                ? 'Değiştir'
+                                : widget.businessAccount == null
+                                ? 'Araçlarım'
+                                : 'Şirket Araçları',
+                            onActionPressed: _vehicles.length > 1
+                                ? _selectMainVehicle
+                                : widget.onOpenVehicles,
                           ),
-                  ),
-                  const SizedBox(height: AppTheme.spacingL),
-                  AppFadeSlideIn(
-                    delay: const Duration(milliseconds: 210),
-                    child: SectionTitle(
-                      title: widget.businessAccount == null
-                          ? 'Son Analiz'
-                          : 'Şirketin Son Analizi',
-                      actionLabel: 'Geçmiş',
-                      onActionPressed: widget.onOpenInspections,
+                        ),
+                        const SizedBox(height: AppTheme.spacingM),
+                        AppFadeSlideIn(
+                          delay: const Duration(milliseconds: 160),
+                          child: _isLoading
+                              ? const AppLoadingCard()
+                              : _mainVehicle == null
+                              ? _EmptyVehicleCard(onTap: widget.onOpenVehicles)
+                              : _MainVehicleCard(
+                                  vehicle: _mainVehicle!,
+                                  mileage: _formatMileage(
+                                    _mainVehicle!.mileage,
+                                  ),
+                                  onTap: _selectMainVehicle,
+                                ),
+                        ),
+                      ],
                     ),
-                  ),
-                  const SizedBox(height: AppTheme.spacingM),
-                  AppFadeSlideIn(
-                    delay: const Duration(milliseconds: 250),
-                    child: _isLoading
-                        ? const _LoadingCard()
-                        : _latestInspection != null
-                        ? _LatestInspectionCard(
-                            inspection: _latestInspection!,
-                            title: _severityLabel(
-                              _latestInspection!.damageSeverity,
-                            ),
-                            severityLabel: _severityShortLabel(
-                              _latestInspection!.damageSeverity,
-                            ),
-                            severityColor: _severityColor(
-                              _latestInspection!.damageSeverity,
-                            ),
-                            summary: _damageSummary(_latestInspection!),
-                            date: _formatDate(
-                              _latestInspection!.completedAt ??
-                                  _latestInspection!.createdAt,
-                            ),
-                            onTap: _openLatestInspection,
-                          )
-                        : _EmptyAnalysisCard(onTap: _startInspection),
+                    second: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        AppFadeSlideIn(
+                          delay: const Duration(milliseconds: 210),
+                          child: SectionTitle(
+                            title: widget.businessAccount == null
+                                ? 'Son Analiz'
+                                : 'Şirketin Son Analizi',
+                            actionLabel: 'Geçmiş',
+                            onActionPressed: widget.onOpenInspections,
+                          ),
+                        ),
+                        const SizedBox(height: AppTheme.spacingM),
+                        AppFadeSlideIn(
+                          delay: const Duration(milliseconds: 250),
+                          child: _isLoading
+                              ? const AppLoadingCard()
+                              : _latestInspection != null
+                              ? _LatestInspectionCard(
+                                  inspection: _latestInspection!,
+                                  title: _severityLabel(
+                                    _latestInspection!.damageSeverity,
+                                  ),
+                                  severityLabel: _severityShortLabel(
+                                    _latestInspection!.damageSeverity,
+                                  ),
+                                  severityColor: _severityColor(
+                                    _latestInspection!.damageSeverity,
+                                  ),
+                                  summary: _damageSummary(_latestInspection!),
+                                  date: _formatDate(
+                                    _latestInspection!.completedAt ??
+                                        _latestInspection!.createdAt,
+                                  ),
+                                  onTap: _openLatestInspection,
+                                )
+                              : _EmptyAnalysisCard(onTap: _startInspection),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -696,22 +714,19 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 
 class _TrackingOverviewCard extends StatelessWidget {
-  const _TrackingOverviewCard({
-    required this.overview,
-    required this.onTap,
-  });
+  const _TrackingOverviewCard({required this.overview, required this.onTap});
 
   final VehicleOverview overview;
   final VoidCallback onTap;
   String _reminderTypeLabel(String value) => switch (value) {
-'PERIODIC_MAINTENANCE' => 'Periyodik bakım',
-'VEHICLE_INSPECTION' => 'Araç muayenesi',
-'TRAFFIC_INSURANCE' => 'Trafik sigortası',
-'COMPREHENSIVE_INSURANCE' => 'Kasko',
-'TIRE_CHECK' => 'Lastik kontrolü',
-'CUSTOM' => 'Özel hatırlatma',
-_ => 'Hatırlatma',
-};
+    'PERIODIC_MAINTENANCE' => 'Periyodik bakım',
+    'VEHICLE_INSPECTION' => 'Araç muayenesi',
+    'TRAFFIC_INSURANCE' => 'Trafik sigortası',
+    'COMPREHENSIVE_INSURANCE' => 'Kasko',
+    'TIRE_CHECK' => 'Lastik kontrolü',
+    'CUSTOM' => 'Özel hatırlatma',
+    _ => 'Hatırlatma',
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -851,6 +866,7 @@ class _DashboardHeader extends StatelessWidget {
       children: [
         AppPressScale(
           onTap: onProfileTap,
+          semanticLabel: 'Profili aç'.tr,
           borderRadius: BorderRadius.circular(999),
           child: Container(
             width: 50,
@@ -906,10 +922,11 @@ class _DashboardHeader extends StatelessWidget {
         const SizedBox(width: 8),
         AppPressScale(
           onTap: onNotificationTap,
+          semanticLabel: 'Bildirimler, $unreadCount okunmamış'.tr,
           borderRadius: BorderRadius.circular(16),
           child: Container(
-            width: 46,
-            height: 46,
+            width: 48,
+            height: 48,
             decoration: BoxDecoration(
               color: colorScheme.surface,
               borderRadius: BorderRadius.circular(16),
@@ -1020,11 +1037,13 @@ class _HeroAnalysisCard extends StatelessWidget {
                 const SizedBox(height: 18),
                 Row(
                   children: [
-                    AppText(
-                      'Yeni Analiz Başlat',
-                      style: textTheme.labelLarge?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w900,
+                    Flexible(
+                      child: AppText(
+                        'Yeni Analiz Başlat',
+                        style: textTheme.labelLarge?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w900,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 6),
@@ -1082,19 +1101,18 @@ class _MainVehicleCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Flexible(
-                      child: AppText(
-                        vehicle.displayName,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w900,
-                        ),
+                    AppText(
+                      vehicle.displayName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w900,
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(height: 8),
                     AppStatusBadge(
                       label: 'ANA ARAÇ',
                       color: colorScheme.primary,
@@ -1318,21 +1336,6 @@ class _EmptyAnalysisCard extends StatelessWidget {
   }
 }
 
-class _LoadingCard extends StatelessWidget {
-  const _LoadingCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return const AppCard(
-      child: SizedBox(
-        height: 72,
-        child: Center(child: CircularProgressIndicator()),
-      ),
-    );
-  }
-}
-
-
 class _AiAssistantLauncher extends StatelessWidget {
   const _AiAssistantLauncher({required this.onTap});
 
@@ -1353,9 +1356,7 @@ class _AiAssistantLauncher extends StatelessWidget {
           decoration: BoxDecoration(
             gradient: AppTheme.deepBrandGradient,
             borderRadius: BorderRadius.circular(999),
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.16),
-            ),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.16)),
             boxShadow: AppTheme.primaryShadowFor(context),
           ),
           child: Row(

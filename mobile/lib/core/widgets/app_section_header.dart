@@ -23,7 +23,7 @@ class AppSectionHeader extends StatelessWidget {
 
     final textTheme = Theme.of(context).textTheme;
 
-    return Row(
+    final heading = Row(
       crossAxisAlignment: CrossAxisAlignment.start,
 
       children: [
@@ -36,11 +36,14 @@ class AppSectionHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
 
             children: [
-              AppText(
-                title,
+              Semantics(
+                header: true,
+                child: AppText(
+                  title,
 
-                style: textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w900,
+                  style: textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
               ),
 
@@ -60,9 +63,26 @@ class AppSectionHeader extends StatelessWidget {
             ],
           ),
         ),
-
-        if (trailing != null) ...[const SizedBox(width: 12), trailing!],
       ],
+    );
+    if (trailing == null) return heading;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 400 ||
+            MediaQuery.textScalerOf(context).scale(14) > 20) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [heading, const SizedBox(height: 12), trailing!],
+          );
+        }
+        return Row(
+          children: [
+            Expanded(child: heading),
+            const SizedBox(width: 12),
+            trailing!,
+          ],
+        );
+      },
     );
   }
 }

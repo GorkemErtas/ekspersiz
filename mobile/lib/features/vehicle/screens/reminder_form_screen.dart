@@ -1,5 +1,7 @@
 import 'package:mobile/core/localization/app_text.dart';
 import 'package:flutter/material.dart';
+import '../../../core/widgets/app_content.dart';
+import '../../../core/widgets/app_page_header.dart';
 
 import '../../../core/network/api_exception.dart';
 import '../models/vehicle.dart';
@@ -172,57 +174,66 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
       ),
     ),
     body: SafeArea(
-      child: Form(
-        key: _form,
-        child: ListView(
-          padding: const EdgeInsets.all(20),
-          children: [
-            DropdownButtonFormField<String>(
-              initialValue: _type,
-              decoration: InputDecoration(labelText: 'Hatırlatma türü'.tr),
-              items: _types
-                  .map(
-                    (type) => DropdownMenuItem(
-                      value: type,
-                      child: AppText(_label(type)),
-                    ),
-                  )
-                  .toList(),
-              onChanged: (value) => setState(() => _type = value!),
-            ),
-            const SizedBox(height: 16),
-            ..._typeFields(),
-            if (_type == 'CUSTOM') ...[
-              TextFormField(
-                controller: _title,
-                maxLength: 120,
-                decoration: InputDecoration(labelText: 'Başlık'.tr),
-                validator: (value) =>
-                    value!.trim().isEmpty ? 'Başlık girin.' : null,
+      child: AppContent(
+        child: Form(
+          key: _form,
+          child: ListView(
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+            padding: const EdgeInsets.all(20),
+            children: [
+              const AppPageHeader(
+                icon: Icons.event_available_outlined,
+                title: 'Bir sonraki işlemi planlayın',
+                subtitle:
+                    'Bakım, muayene ve sigorta tarihlerini tek yerden takip edin.',
               ),
-              const SizedBox(height: 12),
-            ],
-            TextFormField(
-              controller: _note,
-              maxLines: 3,
-              maxLength: 1000,
-              decoration: InputDecoration(
-                labelText: 'Not (isteğe bağlı)'.tr,
-              ),
-            ),
-            const SizedBox(height: 24),
-            FilledButton.icon(
-              onPressed: _saving ? null : _save,
-              icon: _saving
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
+              const SizedBox(height: 24),
+              DropdownButtonFormField<String>(
+                isExpanded: true,
+                initialValue: _type,
+                decoration: InputDecoration(labelText: 'Hatırlatma türü'.tr),
+                items: _types
+                    .map(
+                      (type) => DropdownMenuItem(
+                        value: type,
+                        child: AppText(_label(type)),
+                      ),
                     )
-                  : const Icon(Icons.save_outlined),
-              label: const AppText('Kaydet'),
-            ),
-          ],
+                    .toList(),
+                onChanged: (value) => setState(() => _type = value!),
+              ),
+              const SizedBox(height: 16),
+              ..._typeFields(),
+              if (_type == 'CUSTOM') ...[
+                TextFormField(
+                  controller: _title,
+                  maxLength: 120,
+                  decoration: InputDecoration(labelText: 'Başlık'.tr),
+                  validator: (value) =>
+                      value!.trim().isEmpty ? 'Başlık girin.' : null,
+                ),
+                const SizedBox(height: 12),
+              ],
+              TextFormField(
+                controller: _note,
+                maxLines: 3,
+                maxLength: 1000,
+                decoration: InputDecoration(labelText: 'Not (isteğe bağlı)'.tr),
+              ),
+              const SizedBox(height: 24),
+              FilledButton.icon(
+                onPressed: _saving ? null : _save,
+                icon: _saving
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.save_outlined),
+                label: const AppText('Kaydet'),
+              ),
+            ],
+          ),
         ),
       ),
     ),
@@ -253,7 +264,7 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
     _dateTile(
       'Son araç muayene tarihi',
       _sourceDate,
-          (value) => _sourceDate = value,
+      (value) => _sourceDate = value,
     ),
     CheckboxListTile(
       contentPadding: EdgeInsets.zero,

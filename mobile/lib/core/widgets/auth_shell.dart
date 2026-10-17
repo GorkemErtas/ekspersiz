@@ -19,99 +19,43 @@ class AuthShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: RadialGradient(
-                  center: Alignment(0.72, -0.78),
-                  radius: 1.15,
-                  colors: isDark
-                      ? const [
-                          Color(0xFF24123B),
-                          Color(0xFF0B090E),
-                          Color(0xFF08070B),
-                        ]
-                      : const [
-                          Color(0xFFEFE2FF),
-                          Color(0xFFF8F4FC),
-                          Color(0xFFFFFFFF),
-                        ],
-                  stops: const [0, 0.52, 1],
-                ),
-              ),
-            ),
-          ),
-          Positioned(
-            left: -110,
-            top: -115,
-            child: _GlowOrb(
-              size: 300,
-              color: AppTheme.primaryColor.withValues(alpha: 0.16),
-            ),
-          ),
-          Positioned(
-            right: -105,
-            top: 70,
-            child: _GlowOrb(
-              size: 270,
-              color: AppTheme.secondaryColor.withValues(alpha: 0.10),
-            ),
-          ),
-          Positioned(
-            left: -70,
-            bottom: -150,
-            child: _GlowOrb(
-              size: 330,
-              color: AppTheme.primaryDark.withValues(alpha: 0.11),
-            ),
-          ),
-          SafeArea(
-            child: Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 28,
-                ),
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(maxWidth: maxWidth),
-                  child: AppFadeSlideIn(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (showBrand) ...[
-                          const _BrandHeader(),
-                          const SizedBox(height: 28),
-                        ],
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(24),
-                          decoration: BoxDecoration(
-                            color: colorScheme.surface.withValues(alpha: 0.94),
-                            borderRadius: BorderRadius.circular(
-                              AppTheme.radiusXLarge,
-                            ),
-                            border: Border.all(
-                              color: AppTheme.primaryColor.withValues(
-                                alpha: 0.14,
-                              ),
-                            ),
-                            boxShadow: AppTheme.elevatedShadowFor(context),
-                          ),
-                          child: child,
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 28),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: maxWidth),
+              child: AppFadeSlideIn(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (showBrand) ...[
+                      const _BrandHeader(),
+                      const SizedBox(height: 28),
+                    ],
+                    Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.all(
+                        MediaQuery.sizeOf(context).width < 360 ? 18 : 24,
+                      ),
+                      decoration: BoxDecoration(
+                        color: colorScheme.surface,
+                        borderRadius: BorderRadius.circular(
+                          AppTheme.radiusXLarge,
                         ),
-                      ],
+                        border: Border.all(color: colorScheme.outlineVariant),
+                      ),
+                      child: child,
                     ),
-                  ),
+                  ],
                 ),
               ),
             ),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -170,30 +114,6 @@ class _BrandHeader extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _GlowOrb extends StatelessWidget {
-  const _GlowOrb({required this.size, required this.color});
-
-  final double size;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return IgnorePointer(
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          color: color,
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(color: color, blurRadius: 100, spreadRadius: 18),
-          ],
-        ),
-      ),
     );
   }
 }

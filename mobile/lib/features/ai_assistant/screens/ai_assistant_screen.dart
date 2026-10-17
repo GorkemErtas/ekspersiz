@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../../core/widgets/app_content.dart';
+import '../../../core/widgets/app_state_view.dart';
+import '../../../core/widgets/app_motion.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 import '../../../core/network/api_exception.dart';
@@ -36,11 +39,12 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
       _entitlement?.status == 'ACTIVE';
 
   Future<void> _openSubscriptionPlans() async {
-    await Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => const SubscriptionScreen()),
-    );
+    await Navigator.of(
+      context,
+    ).push(MaterialPageRoute<void>(builder: (_) => const SubscriptionScreen()));
     if (mounted) await _refreshEntitlementSilently();
   }
+
   List<Vehicle> _vehicles = const [];
   Vehicle? _selectedVehicle;
   bool _loading = true;
@@ -120,7 +124,10 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
       );
       if (!mounted) return;
       if (!available) {
-        setState(() => _error = 'Konuşma tanıma kullanılamıyor. Mikrofon iznini ve cihaz ayarlarını kontrol edin.');
+        setState(
+          () => _error =
+              'Konuşma tanıma kullanılamıyor. Mikrofon iznini ve cihaz ayarlarını kontrol edin.',
+        );
         return;
       }
       _speechPrefix = _controller.text.trimRight();
@@ -138,7 +145,9 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
           final prefix = _speechPrefix.isEmpty ? '' : '$_speechPrefix ';
           _controller.value = TextEditingValue(
             text: '$prefix${result.recognizedWords}',
-            selection: TextSelection.collapsed(offset: ('$prefix${result.recognizedWords}').length),
+            selection: TextSelection.collapsed(
+              offset: ('$prefix${result.recognizedWords}').length,
+            ),
           );
         },
       );
@@ -183,7 +192,13 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
       );
       if (!mounted) return;
       setState(() {
-        _messages.add(AiChatMessage(text: reply.answer, isUser: false, sources: reply.sources));
+        _messages.add(
+          AiChatMessage(
+            text: reply.answer,
+            isUser: false,
+            sources: reply.sources,
+          ),
+        );
         final current = _entitlement;
         if (current != null) {
           _entitlement = AiAssistantEntitlement(
@@ -209,8 +224,10 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() {
-        if (e.statusCode == 402 && _messages.isNotEmpty &&
-            _messages.last.isUser && _messages.last.text == question) {
+        if (e.statusCode == 402 &&
+            _messages.isNotEmpty &&
+            _messages.last.isUser &&
+            _messages.last.text == question) {
           // The question was not answered or billed; keep it in the composer.
           _messages.removeLast();
           _controller.text = question;
@@ -238,7 +255,9 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
 
   Future<void> _retryLastQuestion() async {
     final question = _retryQuestion;
-    if (question == null || _sending || !(_entitlement?.canAsk ?? false)) return;
+    if (question == null || _sending || !(_entitlement?.canAsk ?? false)) {
+      return;
+    }
     if (_messages.isNotEmpty &&
         _messages.last.isUser &&
         _messages.last.text == question) {
@@ -250,25 +269,34 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
 
   String _accessMessage(AiAssistantEntitlement entitlement) {
     return switch (entitlement.status) {
-      'INACTIVE' => 'AI Asistan şu anda kullanılamıyor. Abonelik planlarını inceleyebilirsiniz.',
-      'LOCKED' => 'Çok sayıda kapsam dışı istek nedeniyle AI Asistan geçici olarak kilitlendi.',
-      'EXPIRED' => 'AI Asistan erişiminiz sona erdi. Abonelik planlarını inceleyebilirsiniz.',
-      _ when entitlement.remainingToday <= 0 &&
-          entitlement.quotaPeriod == 'MONTHLY' =>
+      'INACTIVE' =>
+        'AI Asistan şu anda kullanılamıyor. Abonelik planlarını inceleyebilirsiniz.',
+      'LOCKED' =>
+        'Çok sayıda kapsam dışı istek nedeniyle AI Asistan geçici olarak kilitlendi.',
+      'EXPIRED' =>
+        'AI Asistan erişiminiz sona erdi. Abonelik planlarını inceleyebilirsiniz.',
+      _
+          when entitlement.remainingToday <= 0 &&
+              entitlement.quotaPeriod == 'MONTHLY' =>
         'Bu ayki 3 ücretsiz AI Asistan soru hakkınızı kullandınız. '
-        'Devam etmek için abonelik planlarını inceleyebilirsiniz.',
+            'Devam etmek için abonelik planlarını inceleyebilirsiniz.',
       _ when entitlement.remainingToday <= 0 =>
         'Bugünkü ${entitlement.dailyLimit} soru hakkınızı kullandınız. Yeni günlük haklarınız yarın yenilenir.',
-      _ => 'Aracınız, bakım, muayene, güvenlik veya EksperSiz hakkında bir şey sorun.',
+      _ =>
+        'Aracınız, bakım, muayene, güvenlik veya EksperSiz hakkında bir şey sorun.',
     };
   }
 
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!_scrollController.hasClients) return;
+      if (!mounted || !_scrollController.hasClients) return;
+      if (AppMotion.reduceMotion(context)) {
+        _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+        return;
+      }
       _scrollController.animateTo(
         _scrollController.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 250),
+        duration: AppMotion.medium,
         curve: Curves.easeOut,
       );
     });
@@ -288,218 +316,322 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('AI Asistan')),
       body: SafeArea(
-        child: _loading
-            ? const Center(child: CircularProgressIndicator())
-            : Column(
-                children: [
-                  if (_vehicles.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-                      child: DropdownButtonFormField<int>(
-                        initialValue: _selectedVehicle?.id,
-                        decoration: const InputDecoration(
-                          labelText: 'Araç bağlamı',
-                          prefixIcon: Icon(Icons.directions_car_outlined),
-                        ),
-                        items: _vehicles
-                            .map(
-                              (vehicle) => DropdownMenuItem<int>(
-                                value: vehicle.id,
-                                child: Text(
-                                  '${vehicle.displayName} • ${vehicle.modelYear}',
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            )
-                            .toList(growable: false),
-                        onChanged: _sending
-                            ? null
-                            : (id) {
-                                setState(() {
-                                  _selectedVehicle = _vehicles.firstWhere(
-                                    (vehicle) => vehicle.id == id,
-                                  );
-                                });
-                              },
-                      ),
-                    ),
-                  if (_entitlement != null)
-                    Container(
-                      width: double.infinity,
-                      margin: const EdgeInsets.fromLTRB(16, 10, 16, 4),
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: scheme.surfaceContainerHighest,
-                        borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
-                      ),
-                      child: Text(
-                        '${_entitlement!.quotaPeriod == 'MONTHLY' ? 'Bu ay' : 'Bugün'} kalan soru hakkı: ${_entitlement!.remainingToday}/${_entitlement!.dailyLimit}',
-                        style: Theme.of(context).textTheme.titleSmall,
-                      ),
-                    ),
-                  if (_freeMonthlyExhausted)
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-                      child: SizedBox(
-                        width: double.infinity,
-                        child: FilledButton.icon(
-                          onPressed: _openSubscriptionPlans,
-                          icon: const Icon(Icons.workspace_premium_outlined),
-                          label: const Text('Abonelik Planlarını İncele'),
-                        ),
-                      ),
-                    ),
-                  if (_error != null)
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              _error!,
-                              style: TextStyle(color: scheme.error),
+        child: AppContent(
+          maxWidth: 900,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return _loading
+                  ? const AppStateView.loading()
+                  : Column(
+                      children: [
+                        Flexible(
+                          flex: 0,
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(
+                              maxHeight: constraints.maxHeight * .42,
                             ),
-                          ),
-                          if (_retryQuestion != null)
-                            TextButton.icon(
-                              onPressed: _retryLastQuestion,
-                              icon: const Icon(Icons.refresh_rounded),
-                              label: const Text('Tekrar dene'),
-                            ),
-                        ],
-                      ),
-                    ),
-                  Expanded(
-                    child: _messages.isEmpty
-                        ? Center(
-                            child: Padding(
-                              padding: const EdgeInsets.all(28),
-                              child: Text(
-                                _entitlement == null
-                                    ? 'AI Asistan hazırlanıyor.'
-                                    : _accessMessage(_entitlement!),
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                          )
-                        : ListView.builder(
-                            controller: _scrollController,
-                            padding: const EdgeInsets.all(16),
-                            itemCount: _messages.length,
-                            itemBuilder: (context, index) {
-                              final message = _messages[index];
-                              return Align(
-                                alignment: message.isUser
-                                    ? Alignment.centerRight
-                                    : Alignment.centerLeft,
-                                child: Container(
-                                  constraints: const BoxConstraints(maxWidth: 620),
-                                  margin: const EdgeInsets.only(bottom: 10),
-                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-                                  decoration: BoxDecoration(
-                                    color: message.isUser
-                                        ? scheme.primary
-                                        : scheme.surfaceContainerHighest,
-                                    borderRadius: BorderRadius.circular(18),
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(
-                                        message.text,
-                                        style: TextStyle(
-                                          color: message.isUser
-                                              ? scheme.onPrimary
-                                              : scheme.onSurface,
+                            child: SingleChildScrollView(
+                              child: Column(
+                                children: [
+                                  if (_vehicles.isNotEmpty)
+                                    Padding(
+                                      padding: const EdgeInsets.fromLTRB(
+                                        16,
+                                        10,
+                                        16,
+                                        0,
+                                      ),
+                                      child: DropdownButtonFormField<int>(
+                                        isExpanded: true,
+                                        initialValue: _selectedVehicle?.id,
+                                        decoration: const InputDecoration(
+                                          labelText: 'Araç bağlamı',
+                                          prefixIcon: Icon(
+                                            Icons.directions_car_outlined,
+                                          ),
+                                        ),
+                                        items: _vehicles
+                                            .map(
+                                              (
+                                                vehicle,
+                                              ) => DropdownMenuItem<int>(
+                                                value: vehicle.id,
+                                                child: Text(
+                                                  '${vehicle.displayName} • ${vehicle.modelYear}',
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                            )
+                                            .toList(growable: false),
+                                        onChanged: _sending
+                                            ? null
+                                            : (id) {
+                                                setState(() {
+                                                  _selectedVehicle = _vehicles
+                                                      .firstWhere(
+                                                        (vehicle) =>
+                                                            vehicle.id == id,
+                                                      );
+                                                });
+                                              },
+                                      ),
+                                    ),
+                                  if (_entitlement != null)
+                                    Container(
+                                      width: double.infinity,
+                                      margin: const EdgeInsets.fromLTRB(
+                                        16,
+                                        10,
+                                        16,
+                                        4,
+                                      ),
+                                      padding: const EdgeInsets.all(14),
+                                      decoration: BoxDecoration(
+                                        color: scheme.surfaceContainerHighest,
+                                        borderRadius: BorderRadius.circular(
+                                          AppTheme.radiusLarge,
                                         ),
                                       ),
-                                      if (!message.isUser && message.sources.isNotEmpty) ...[
-                                        const SizedBox(height: 10),
-                                        Wrap(
-                                          spacing: 6,
-                                          runSpacing: 6,
-                                          children: message.sources
-                                              .map(
-                                                (source) => Chip(
-                                                  avatar: const Icon(
-                                                    Icons.verified_outlined,
-                                                    size: 16,
-                                                  ),
-                                                  label: Text(
-                                                    source.name,
-                                                    overflow: TextOverflow.ellipsis,
-                                                  ),
-                                                  visualDensity: VisualDensity.compact,
-                                                ),
-                                              )
-                                              .toList(growable: false),
+                                      child: Text(
+                                        '${_entitlement!.quotaPeriod == 'MONTHLY' ? 'Bu ay' : 'Bugün'} kalan soru hakkı: ${_entitlement!.remainingToday}/${_entitlement!.dailyLimit}',
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.titleSmall,
+                                      ),
+                                    ),
+                                  if (_freeMonthlyExhausted)
+                                    Padding(
+                                      padding: const EdgeInsets.fromLTRB(
+                                        16,
+                                        8,
+                                        16,
+                                        4,
+                                      ),
+                                      child: SizedBox(
+                                        width: double.infinity,
+                                        child: FilledButton.icon(
+                                          onPressed: _openSubscriptionPlans,
+                                          icon: const Icon(
+                                            Icons.workspace_premium_outlined,
+                                          ),
+                                          label: const Text(
+                                            'Abonelik Planlarını İncele',
+                                          ),
                                         ),
-                                      ],
-                                    ],
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                  ),
-                  if (_sending)
-                    const Align(
-                      alignment: Alignment.centerLeft,
-                      child: Padding(
-                        padding: EdgeInsets.fromLTRB(24, 4, 24, 6),
-                        child: SizedBox(
-                          width: 22,
-                          height: 22,
-                          child: CircularProgressIndicator(strokeWidth: 2.5),
-                        ),
-                      ),
-                    ),
-                  if (_listening)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16),
-                      child: Text('Dinleniyor… Durdurmak için mikrofona dokunun.'),
-                    ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _controller,
-                            enabled: !_sending && ((_entitlement?.canAsk ?? false) || _freeMonthlyExhausted),
-                            minLines: 1,
-                            maxLines: 4,
-                            maxLength: 2000,
-                            textInputAction: TextInputAction.send,
-                            onSubmitted: (_) => _send(),
-                            decoration: const InputDecoration(
-                              hintText: 'Aracınız hakkında sorun...',
-                              counterText: '',
+                                      ),
+                                    ),
+                                  if (_error != null)
+                                    Padding(
+                                      padding: const EdgeInsets.fromLTRB(
+                                        16,
+                                        8,
+                                        16,
+                                        0,
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              _error!,
+                                              style: TextStyle(
+                                                color: scheme.error,
+                                              ),
+                                            ),
+                                          ),
+                                          if (_retryQuestion != null)
+                                            TextButton.icon(
+                                              onPressed: _retryLastQuestion,
+                                              icon: const Icon(
+                                                Icons.refresh_rounded,
+                                              ),
+                                              label: const Text('Tekrar dene'),
+                                            ),
+                                        ],
+                                      ),
+                                    ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        IconButton(
-                          tooltip: _listening ? 'Dinlemeyi durdur' : 'Sesle yaz',
-                          onPressed: _sending || !(_entitlement?.canAsk ?? false)
-                              ? null
-                              : _toggleListening,
-                          icon: Icon(_listening ? Icons.mic_rounded : Icons.mic_none_rounded),
-                          color: _listening ? scheme.error : scheme.primary,
+                        Expanded(
+                          child: _messages.isEmpty
+                              ? AppStateView.empty(
+                                  icon: Icons.auto_awesome_outlined,
+                                  title: 'AI Asistan',
+                                  message: _entitlement == null
+                                      ? 'AI Asistan hazırlanıyor.'
+                                      : _accessMessage(_entitlement!),
+                                  bottomPadding: 16,
+                                )
+                              : ListView.builder(
+                                  controller: _scrollController,
+                                  padding: const EdgeInsets.all(16),
+                                  itemCount: _messages.length,
+                                  itemBuilder: (context, index) {
+                                    final message = _messages[index];
+                                    return Align(
+                                      alignment: message.isUser
+                                          ? Alignment.centerRight
+                                          : Alignment.centerLeft,
+                                      child: Container(
+                                        constraints: const BoxConstraints(
+                                          maxWidth: 620,
+                                        ),
+                                        margin: const EdgeInsets.only(
+                                          bottom: 10,
+                                        ),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 14,
+                                          vertical: 11,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: message.isUser
+                                              ? scheme.primaryContainer
+                                              : scheme.surface,
+                                          borderRadius: BorderRadius.only(
+                                            topLeft: const Radius.circular(20),
+                                            topRight: const Radius.circular(20),
+                                            bottomLeft: Radius.circular(
+                                              message.isUser ? 20 : 6,
+                                            ),
+                                            bottomRight: Radius.circular(
+                                              message.isUser ? 6 : 20,
+                                            ),
+                                          ),
+                                          border: Border.all(
+                                            color: scheme.outlineVariant,
+                                          ),
+                                        ),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Text(
+                                              message.text,
+                                              style: TextStyle(
+                                                height: 1.5,
+                                                color: message.isUser
+                                                    ? scheme.onPrimaryContainer
+                                                    : scheme.onSurface,
+                                              ),
+                                            ),
+                                            if (!message.isUser &&
+                                                message.sources.isNotEmpty) ...[
+                                              const SizedBox(height: 10),
+                                              Wrap(
+                                                spacing: 6,
+                                                runSpacing: 6,
+                                                children: message.sources
+                                                    .map(
+                                                      (source) => Chip(
+                                                        avatar: const Icon(
+                                                          Icons
+                                                              .verified_outlined,
+                                                          size: 16,
+                                                        ),
+                                                        label: Text(
+                                                          source.name,
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
+                                                        ),
+                                                        visualDensity:
+                                                            VisualDensity
+                                                                .compact,
+                                                      ),
+                                                    )
+                                                    .toList(growable: false),
+                                              ),
+                                            ],
+                                          ],
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
                         ),
-                        const SizedBox(width: 4),
-                        IconButton.filled(
-                          onPressed: _sending || !((_entitlement?.canAsk ?? false) || _freeMonthlyExhausted)
-                              ? null
-                              : _send,
-                          icon: const Icon(Icons.arrow_upward_rounded),
+                        if (_sending)
+                          const Align(
+                            alignment: Alignment.centerLeft,
+                            child: Padding(
+                              padding: EdgeInsets.fromLTRB(24, 4, 24, 6),
+                              child: SizedBox(
+                                width: 22,
+                                height: 22,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.5,
+                                ),
+                              ),
+                            ),
+                          ),
+                        if (_listening)
+                          const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 16),
+                            child: Text(
+                              'Dinleniyor… Durdurmak için mikrofona dokunun.',
+                            ),
+                          ),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: TextField(
+                                  controller: _controller,
+                                  enabled:
+                                      !_sending &&
+                                      ((_entitlement?.canAsk ?? false) ||
+                                          _freeMonthlyExhausted),
+                                  minLines: 1,
+                                  maxLines: constraints.maxHeight < 400 ? 2 : 4,
+                                  maxLength: 2000,
+                                  textInputAction: TextInputAction.send,
+                                  onSubmitted: (_) => _send(),
+                                  decoration: const InputDecoration(
+                                    hintText: 'Aracınız hakkında sorun...',
+                                    counterText: '',
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              IconButton(
+                                tooltip: _listening
+                                    ? 'Dinlemeyi durdur'
+                                    : 'Sesle yaz',
+                                onPressed:
+                                    _sending || !(_entitlement?.canAsk ?? false)
+                                    ? null
+                                    : _toggleListening,
+                                icon: Icon(
+                                  _listening
+                                      ? Icons.mic_rounded
+                                      : Icons.mic_none_rounded,
+                                ),
+                                color: _listening
+                                    ? scheme.error
+                                    : scheme.primary,
+                              ),
+                              const SizedBox(width: 4),
+                              IconButton.filled(
+                                tooltip: 'Gönder',
+                                onPressed:
+                                    _sending ||
+                                        !((_entitlement?.canAsk ?? false) ||
+                                            _freeMonthlyExhausted)
+                                    ? null
+                                    : _send,
+                                icon: const Icon(Icons.arrow_upward_rounded),
+                              ),
+                            ],
+                          ),
                         ),
                       ],
-                    ),
-                  ),
-                ],
-              ),
+                    );
+            },
+          ),
+        ),
       ),
     );
   }

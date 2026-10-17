@@ -7,6 +7,7 @@ import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/app_icon_box.dart';
 import '../../../core/widgets/app_section_header.dart';
 import '../../../core/widgets/app_state_view.dart';
+import '../../../core/widgets/app_motion.dart';
 
 import '../models/damage_inspection.dart';
 import '../services/inspection_service.dart';
@@ -49,9 +50,18 @@ class _AnalyzingScreenState extends State<AnalyzingScreen>
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
 
-    _pulseController.repeat(reverse: true);
-
     WidgetsBinding.instance.addPostFrameCallback((_) => _analyze());
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (AppMotion.reduceMotion(context)) {
+      _pulseController.stop();
+      _pulseController.value = 0.5;
+    } else if (!_hasError && !_pulseController.isAnimating) {
+      _pulseController.repeat(reverse: true);
+    }
   }
 
   @override
@@ -66,7 +76,7 @@ class _AnalyzingScreenState extends State<AnalyzingScreen>
       _errorMessage = null;
     });
 
-    if (!_pulseController.isAnimating) {
+    if (!AppMotion.reduceMotion(context) && !_pulseController.isAnimating) {
       _pulseController.repeat(reverse: true);
     }
 
@@ -237,12 +247,14 @@ class _AnalyzingContent extends StatelessWidget {
 
               const SizedBox(width: 8),
 
-              AppText(
-                'AI ANALİZİ DEVAM EDİYOR',
-                style: textTheme.labelSmall?.copyWith(
-                  color: colorScheme.primary,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 0.4,
+              Flexible(
+                child: AppText(
+                  'AI ANALİZİ DEVAM EDİYOR',
+                  style: textTheme.labelSmall?.copyWith(
+                    color: colorScheme.primary,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0.4,
+                  ),
                 ),
               ),
             ],

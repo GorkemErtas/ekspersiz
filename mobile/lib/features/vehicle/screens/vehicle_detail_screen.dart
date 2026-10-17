@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_card.dart';
+import '../../../core/widgets/app_content.dart';
+import '../../../core/widgets/app_state_view.dart';
 import '../../../core/widgets/theme_toggle_button.dart';
 import '../../auth/models/business_account.dart';
 import '../../inspection/screens/create_inspection_screen.dart';
@@ -167,7 +169,7 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
     _ => AppTheme.successColorFor(context),
   };
   String _type(String value) => switch (value) {
-  // Bakım türleri
+    // Bakım türleri
     'ENGINE_OIL' => 'Motor yağı',
     'OIL_FILTER' => 'Yağ filtresi',
     'AIR_FILTER' => 'Hava filtresi',
@@ -181,20 +183,20 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
     'PERIODIC_MAINTENANCE' => 'Periyodik bakım',
     'CUSTOM' => 'Özel bakım',
 
-  // Hatırlatma türleri
+    // Hatırlatma türleri
     'VEHICLE_INSPECTION' => 'Araç muayenesi',
     'TRAFFIC_INSURANCE' => 'Trafik sigortası',
     'COMPREHENSIVE_INSURANCE' => 'Kasko',
     'TIRE_CHECK' => 'Lastik kontrolü',
 
-  // Hasar seviyeleri
+    // Hasar seviyeleri
     'UNKNOWN' => 'Bilinmiyor',
     'NONE' => 'Hasar yok',
     'MINOR' => 'Hafif',
     'MODERATE' => 'Orta',
     'SEVERE' => 'Ağır',
 
-  // Bilinmeyen backend değerini kullanıcıya ham enum olarak göstermeyelim.
+    // Bilinmeyen backend değerini kullanıcıya ham enum olarak göstermeyelim.
     _ => 'Bilinmiyor',
   };
 
@@ -213,78 +215,69 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
       ],
     ),
     body: SafeArea(
-      child: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _error != null
-          ? Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  AppText(_error!),
-                  const SizedBox(height: 12),
-                  FilledButton(
-                    onPressed: _load,
-                    child: const AppText('Tekrar Dene'),
-                  ),
-                ],
-              ),
-            )
-          : RefreshIndicator(
-              onRefresh: _load,
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 40),
-                children: [
-                  _hero(),
-                  const SizedBox(height: 16),
-                  _statusCard(),
-                  const SizedBox(height: 20),
-                  _sectionHeader(
-                    'Bakım geçmişi',
-                    '${_maintenance.length} kayıt',
-                    Icons.build_outlined,
-                    () => _openMaintenance(),
-                  ),
-                  const SizedBox(height: 10),
-                  if (_maintenance.isEmpty)
-                    _empty('Henüz bakım kaydı yok.')
-                  else
-                    ..._maintenance.map(_maintenanceCard),
-                  const SizedBox(height: 20),
-                  _sectionHeader(
-                    'Hatırlatmalar',
-                    'Muayene, sigorta ve bakım',
-                    Icons.notifications_none_rounded,
-                    () => _openReminder(),
-                  ),
-                  const SizedBox(height: 10),
-                  if (_reminders.isEmpty)
-                    _empty('Henüz hatırlatma yok.')
-                  else
-                    ..._reminders.map(_reminderCard),
-                  const SizedBox(height: 20),
-                  _sectionHeader(
-                    'Araç geçmişi',
-                    'Kronolojik durum ve işlemler',
-                    Icons.timeline_rounded,
-                    null,
-                  ),
-                  const SizedBox(height: 10),
-                  if (_history.isEmpty)
-                    _empty('Henüz geçmiş kaydı yok.')
-                  else
-                    AppCard(
-                      child: Column(
-                        children: [
-                          for (var i = 0; i < _history.length; i++) ...[
-                            if (i > 0) const Divider(),
-                            _historyTile(_history[i]),
-                          ],
-                        ],
-                      ),
+      child: AppContent(
+        child: _loading
+            ? const AppStateView.loading()
+            : _error != null
+            ? AppStateView.error(message: _error!, onActionPressed: _load)
+            : RefreshIndicator(
+                onRefresh: _load,
+                child: ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 40),
+                  children: [
+                    _hero(),
+                    const SizedBox(height: 16),
+                    _statusCard(),
+                    const SizedBox(height: 20),
+                    _sectionHeader(
+                      'Bakım geçmişi',
+                      '${_maintenance.length} kayıt',
+                      Icons.build_outlined,
+                      () => _openMaintenance(),
                     ),
-                ],
+                    const SizedBox(height: 10),
+                    if (_maintenance.isEmpty)
+                      _empty('Henüz bakım kaydı yok.')
+                    else
+                      ..._maintenance.map(_maintenanceCard),
+                    const SizedBox(height: 20),
+                    _sectionHeader(
+                      'Hatırlatmalar',
+                      'Muayene, sigorta ve bakım',
+                      Icons.notifications_none_rounded,
+                      () => _openReminder(),
+                    ),
+                    const SizedBox(height: 10),
+                    if (_reminders.isEmpty)
+                      _empty('Henüz hatırlatma yok.')
+                    else
+                      ..._reminders.map(_reminderCard),
+                    const SizedBox(height: 20),
+                    _sectionHeader(
+                      'Araç geçmişi',
+                      'Kronolojik durum ve işlemler',
+                      Icons.timeline_rounded,
+                      null,
+                    ),
+                    const SizedBox(height: 10),
+                    if (_history.isEmpty)
+                      _empty('Henüz geçmiş kaydı yok.')
+                    else
+                      AppCard(
+                        child: Column(
+                          children: [
+                            for (var i = 0; i < _history.length; i++) ...[
+                              if (i > 0) const Divider(),
+                              _historyTile(_history[i]),
+                            ],
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
               ),
-            ),
+      ),
     ),
   );
 
@@ -351,32 +344,29 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.health_and_safety_outlined,
-              color: c,
-            ),
-            const SizedBox(width: 9),
-            Expanded(
-              child: AppText(
-                'Araç takip durumu',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Icon(Icons.health_and_safety_outlined, color: c),
+              const SizedBox(width: 9),
+              Expanded(
+                child: AppText(
+                  'Araç takip durumu',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
               ),
-            ),
-            const SizedBox(width: 8),
-            Flexible(
-              child: AppText(
-                _status(o.trackingStatus),
+              const SizedBox(width: 8),
+              Flexible(
+                child: AppText(
+                  _status(o.trackingStatus),
                   style: TextStyle(color: c, fontWeight: FontWeight.w800),
-                textAlign: TextAlign.end,
+                  textAlign: TextAlign.end,
+                ),
               ),
-            ),
-          ],
-        ),
+            ],
+          ),
           if (o.latestMaintenance != null) ...[
             const SizedBox(height: 14),
             AppText(
@@ -385,7 +375,9 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
           ],
           if (o.latestDamageSeverity != null) ...[
             const SizedBox(height: 8),
-            AppText('Son görünür hasar sonucu: ${_type(o.latestDamageSeverity!)}'),
+            AppText(
+              'Son görünür hasar sonucu: ${_type(o.latestDamageSeverity!)}',
+            ),
           ],
           const SizedBox(height: 12),
           AppText(

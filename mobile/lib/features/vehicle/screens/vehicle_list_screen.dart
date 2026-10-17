@@ -267,7 +267,7 @@ class _VehicleListScreenState extends State<VehicleListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
+      appBar: AppBar(
         actions: const [ThemeToggleButton(), SizedBox(width: 8)],
         title: AppText(
           widget.businessAccount == null ? 'Araçlarım' : 'Şirket Araçları',
@@ -639,16 +639,22 @@ class _InfoBadge extends StatelessWidget {
           Icon(
             icon,
             size: 14,
-            color: emphasized ? colorScheme.primary : colorScheme.onSurfaceVariant,
+            color: emphasized
+                ? colorScheme.primary
+                : colorScheme.onSurfaceVariant,
           ),
 
           const SizedBox(width: 5),
 
-          AppText(
-            label,
-            style: textTheme.labelMedium?.copyWith(
-              color: emphasized ? colorScheme.primary : colorScheme.onSurfaceVariant,
-              fontWeight: FontWeight.w700,
+          Flexible(
+            child: AppText(
+              label,
+              style: textTheme.labelMedium?.copyWith(
+                color: emphasized
+                    ? colorScheme.primary
+                    : colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
         ],
