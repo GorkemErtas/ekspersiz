@@ -236,6 +236,10 @@ class ApiClient {
       return decodedBody;
     }
 
+    if (response.statusCode == 403) {
+      SessionManager.invalidateImages();
+    }
+
     if (response.statusCode == 401 && clearTokenOnUnauthorized) {
       await TokenStorage.deleteAccessToken();
 

@@ -127,13 +127,15 @@ void main() {
             inspection.noDamageResult(),
             _detailedResult(),
           ]) {
+            final service = InspectionService(
+              apiClient: _ImageApiClient(data.buffer.asUint8List()),
+            );
+            await tester.runAsync(() => service.getInspectionImage(result.id));
             await tester.pumpWidget(
               uiTestApp(
                 home: InspectionResultScreen(
                   inspection: result,
-                  inspectionService: InspectionService(
-                    apiClient: _ImageApiClient(data.buffer.asUint8List()),
-                  ),
+                  inspectionService: service,
                 ),
                 brightness: brightness,
                 textScale: scenario.scale,
@@ -226,6 +228,11 @@ DamageInspection _detailedResult() => DamageInspection.fromJson({
 
 class _ImageApiClient extends ApiClient {
   _ImageApiClient(this.bytes);
+  @override
+  Future<dynamic> get(String path) async => {
+    'id': int.parse(path.split('/').last),
+    'imagePath': 'image.jpg',
+  };
   final Uint8List bytes;
   @override
   Future<Uint8List> getBytes(String path) async => bytes;

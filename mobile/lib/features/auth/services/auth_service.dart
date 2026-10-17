@@ -1,4 +1,5 @@
 import 'package:google_sign_in/google_sign_in.dart';
+import '../../../core/auth/session_manager.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/storage/token_storage.dart';
@@ -200,13 +201,22 @@ class AuthService {
   }
 
   Future<UserProfile> getCurrentUser() async {
+    final scope = SessionManager.imageScope.value;
     final response = await apiClient.get('/auth/me');
 
     if (response is! Map) {
       throw const FormatException('Kullanıcı bilgileri alınamadı.');
     }
 
-    return UserProfile.fromJson(Map<String, dynamic>.from(response));
+    final user = UserProfile.fromJson(Map<String, dynamic>.from(response));
+    if (identical(scope, SessionManager.imageScope.value)) {
+      SessionManager.updateImageUserScope(
+        user.id,
+        user.businessAccount?.id,
+        user.businessAccount?.role,
+      );
+    }
+    return user;
   }
 
   Future<void> deleteAccount() async {

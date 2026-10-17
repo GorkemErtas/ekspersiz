@@ -1,3 +1,4 @@
+import '../../../core/auth/session_manager.dart';
 import '../../../core/network/api_client.dart';
 import '../../auth/models/business_account.dart';
 import '../models/business_member.dart';
@@ -17,6 +18,7 @@ class BusinessService {
       throw const FormatException('Şirket bilgileri alınamadı.');
     }
 
+    SessionManager.invalidateImages();
     return BusinessAccount.fromJson(Map<String, dynamic>.from(response));
   }
 
@@ -32,6 +34,7 @@ class BusinessService {
       '/business-invitations/accept',
       body: {'code': code.trim()},
     );
+    SessionManager.invalidateImages();
   }
 
   Future<List<BusinessMember>> getEmployees() async {
@@ -51,5 +54,6 @@ class BusinessService {
 
   Future<void> removeEmployee(int membershipId) async {
     await apiClient.delete('/business-members/$membershipId');
+    SessionManager.invalidateImages();
   }
 }
