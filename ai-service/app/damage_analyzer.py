@@ -257,13 +257,22 @@ class DamageAnalyzer:
                 code="TOO_DARK",
                 message="Fotoğraf çok karanlık. Daha aydınlık bir ortamda tekrar çekin.",
             )
-        if float(cv2.Laplacian(grayscale, cv2.CV_64F).var()) < self.minimum_blur_score:
+        if self._blur_score(grayscale) < self.minimum_blur_score:
             return ImageQualityResponse(
                 suitable=False,
                 code="TOO_BLURRY",
                 message="Görüntü yeterince net değil. Kamerayı sabit tutup tekrar çekin.",
             )
         return None
+
+    @staticmethod
+    def _blur_score(grayscale: np.ndarray) -> float:
+        laplacian = cv2.Laplacian(grayscale, cv2.CV_64F)
+        # Same float64 population variance as NumPy .var(), reusing this
+        # disposable buffer instead of allocating another full-size array.
+        laplacian -= laplacian.mean()
+        np.square(laplacian, out=laplacian)
+        return float(laplacian.mean())
 
     def _detect_vehicle_parts(self, image: Image.Image) -> list[DetectedObject]:
         results = self.vehicle_part_model.predict(
