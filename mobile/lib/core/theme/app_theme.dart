@@ -38,10 +38,16 @@ class AppTheme {
 
   static const double spacingXS = 4;
   static const double spacingS = 8;
-  static const double spacingM = 16;
-  static const double spacingL = 24;
-  static const double spacingXL = 32;
-  static const double spacingXXL = 40;
+  static const double spacingM = 15;
+  static const double spacingL = 22;
+  static const double spacingXL = 30;
+  static const double spacingXXL = 36;
+
+  static const double pageInset = 18;
+  static const double cardPadding = 18;
+  static const double largeCardPadding = 20;
+  static const double minTouchTarget = 48;
+  static const double primaryButtonHeight = 50;
 
   static const double radiusSmall = 12;
   static const double radiusMedium = 16;
@@ -50,7 +56,12 @@ class AppTheme {
   static const double radiusPill = 999;
 
   static const double maxContentWidth = 1100;
-  static const EdgeInsets pagePadding = EdgeInsets.fromLTRB(20, 16, 20, 110);
+  static const EdgeInsets pagePadding = EdgeInsets.fromLTRB(
+    pageInset,
+    spacingM,
+    pageInset,
+    110,
+  );
   static const EdgeInsets compactPagePadding = EdgeInsets.fromLTRB(
     16,
     12,
@@ -214,28 +225,34 @@ class AppTheme {
     Color secondaryText,
   ) => base.copyWith(
     displayLarge: base.displayLarge?.copyWith(
+      fontSize: 54,
       fontWeight: FontWeight.w900,
       letterSpacing: -1.6,
       height: 1.04,
     ),
     displayMedium: base.displayMedium?.copyWith(
+      fontSize: 42,
       fontWeight: FontWeight.w900,
       letterSpacing: -1.2,
       height: 1.06,
     ),
     headlineLarge: base.headlineLarge?.copyWith(
+      fontSize: 30,
       fontWeight: FontWeight.w900,
       letterSpacing: -0.9,
     ),
     headlineMedium: base.headlineMedium?.copyWith(
+      fontSize: 26,
       fontWeight: FontWeight.w900,
       letterSpacing: -0.7,
     ),
     headlineSmall: base.headlineSmall?.copyWith(
+      fontSize: 22,
       fontWeight: FontWeight.w800,
       letterSpacing: -0.45,
     ),
     titleLarge: base.titleLarge?.copyWith(
+      fontSize: 20,
       fontWeight: FontWeight.w800,
       letterSpacing: -0.3,
     ),
@@ -318,16 +335,16 @@ class AppTheme {
         backgroundColor: Colors.transparent,
         foregroundColor: foreground,
         surfaceTintColor: Colors.transparent,
-        titleSpacing: 20,
-        toolbarHeight: 64,
+        titleSpacing: pageInset,
+        toolbarHeight: 60,
         titleTextStyle: textTheme.titleLarge?.copyWith(
           color: foreground,
-          fontSize: 20,
+          fontSize: 19,
           fontWeight: FontWeight.w800,
           letterSpacing: -0.4,
         ),
-        iconTheme: const IconThemeData(color: foreground, size: 24),
-        actionsIconTheme: const IconThemeData(color: foreground, size: 24),
+        iconTheme: const IconThemeData(color: foreground, size: 22),
+        actionsIconTheme: const IconThemeData(color: foreground, size: 22),
       ),
       inputDecorationTheme: InputDecorationTheme(
         errorMaxLines: 4,
@@ -335,8 +352,8 @@ class AppTheme {
         filled: true,
         fillColor: const Color(0xFFFCFAFD),
         contentPadding: const EdgeInsets.symmetric(
-          horizontal: 18,
-          vertical: 18,
+          horizontal: 16,
+          vertical: 16,
         ),
         hintStyle: const TextStyle(color: Color(0xFF81778B), fontSize: 15),
         labelStyle: const TextStyle(
@@ -372,8 +389,8 @@ class AppTheme {
           foregroundColor: Colors.white,
           disabledBackgroundColor: surfaceHighest,
           disabledForegroundColor: foregroundMuted,
-          minimumSize: const Size.fromHeight(54),
-          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 16),
+          minimumSize: const Size.fromHeight(primaryButtonHeight),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(radiusMedium),
           ),
@@ -388,8 +405,8 @@ class AppTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: foreground,
-          minimumSize: const Size.fromHeight(52),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+          minimumSize: const Size.fromHeight(minTouchTarget),
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
           side: const BorderSide(color: outlineVariant),
           backgroundColor: surface,
           shape: RoundedRectangleBorder(
@@ -402,6 +419,7 @@ class AppTheme {
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
+          minimumSize: const Size(minTouchTarget, minTouchTarget),
           foregroundColor: primaryDark,
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           shape: RoundedRectangleBorder(
@@ -414,6 +432,8 @@ class AppTheme {
       ),
       iconButtonTheme: IconButtonThemeData(
         style: IconButton.styleFrom(
+          minimumSize: const Size(minTouchTarget, minTouchTarget),
+          iconSize: 22,
           foregroundColor: foreground,
           highlightColor: primaryColor.withValues(alpha: 0.10),
           shape: RoundedRectangleBorder(
@@ -438,7 +458,7 @@ class AppTheme {
         space: 1,
       ),
       navigationBarTheme: NavigationBarThemeData(
-        height: 76,
+        height: 72,
         elevation: 0,
         backgroundColor: surface,
         surfaceTintColor: Colors.transparent,
@@ -451,7 +471,7 @@ class AppTheme {
             color: states.contains(WidgetState.selected)
                 ? primaryDark
                 : foregroundMuted,
-            size: states.contains(WidgetState.selected) ? 25 : 23,
+            size: states.contains(WidgetState.selected) ? 24 : 22,
           ),
         ),
         labelTextStyle: WidgetStateProperty.resolveWith(
@@ -472,7 +492,7 @@ class AppTheme {
         indicatorShape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(radiusMedium),
         ),
-        selectedIconTheme: const IconThemeData(color: primaryDark, size: 25),
+        selectedIconTheme: const IconThemeData(color: primaryDark, size: 24),
         unselectedIconTheme: const IconThemeData(
           color: foregroundMuted,
           size: 24,
@@ -508,7 +528,7 @@ class AppTheme {
           color: foreground,
           fontSize: 13,
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       ),
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
@@ -638,16 +658,16 @@ class AppTheme {
         backgroundColor: Colors.transparent,
         foregroundColor: textPrimary,
         surfaceTintColor: Colors.transparent,
-        titleSpacing: 20,
-        toolbarHeight: 64,
+        titleSpacing: pageInset,
+        toolbarHeight: 60,
         titleTextStyle: textTheme.titleLarge?.copyWith(
           color: textPrimary,
-          fontSize: 20,
+          fontSize: 19,
           fontWeight: FontWeight.w800,
           letterSpacing: -0.4,
         ),
-        iconTheme: const IconThemeData(color: textPrimary, size: 24),
-        actionsIconTheme: const IconThemeData(color: textPrimary, size: 24),
+        iconTheme: const IconThemeData(color: textPrimary, size: 22),
+        actionsIconTheme: const IconThemeData(color: textPrimary, size: 22),
       ),
       inputDecorationTheme: InputDecorationTheme(
         errorMaxLines: 4,
@@ -655,8 +675,8 @@ class AppTheme {
         filled: true,
         fillColor: const Color(0xFF0E0D11),
         contentPadding: const EdgeInsets.symmetric(
-          horizontal: 18,
-          vertical: 18,
+          horizontal: 16,
+          vertical: 16,
         ),
         hintStyle: const TextStyle(color: textMuted, fontSize: 15),
         labelStyle: const TextStyle(
@@ -692,8 +712,8 @@ class AppTheme {
           foregroundColor: Colors.white,
           disabledBackgroundColor: const Color(0xFF27232D),
           disabledForegroundColor: textMuted,
-          minimumSize: const Size.fromHeight(54),
-          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 16),
+          minimumSize: const Size.fromHeight(primaryButtonHeight),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(radiusMedium),
           ),
@@ -708,8 +728,8 @@ class AppTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: textPrimary,
-          minimumSize: const Size.fromHeight(52),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+          minimumSize: const Size.fromHeight(minTouchTarget),
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
           side: const BorderSide(color: borderStrong),
           backgroundColor: const Color(0xFF100E13),
           shape: RoundedRectangleBorder(
@@ -722,6 +742,7 @@ class AppTheme {
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
+          minimumSize: const Size(minTouchTarget, minTouchTarget),
           foregroundColor: secondaryColor,
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           shape: RoundedRectangleBorder(
@@ -734,6 +755,8 @@ class AppTheme {
       ),
       iconButtonTheme: IconButtonThemeData(
         style: IconButton.styleFrom(
+          minimumSize: const Size(minTouchTarget, minTouchTarget),
+          iconSize: 22,
           foregroundColor: textPrimary,
           highlightColor: primaryColor.withValues(alpha: 0.12),
           shape: RoundedRectangleBorder(
@@ -758,7 +781,7 @@ class AppTheme {
         space: 1,
       ),
       navigationBarTheme: NavigationBarThemeData(
-        height: 76,
+        height: 72,
         elevation: 0,
         backgroundColor: surfaceColor,
         surfaceTintColor: Colors.transparent,
@@ -771,7 +794,7 @@ class AppTheme {
             color: states.contains(WidgetState.selected)
                 ? secondaryColor
                 : textSecondary,
-            size: states.contains(WidgetState.selected) ? 25 : 23,
+            size: states.contains(WidgetState.selected) ? 24 : 22,
           ),
         ),
         labelTextStyle: WidgetStateProperty.resolveWith(
@@ -792,7 +815,7 @@ class AppTheme {
         indicatorShape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(radiusMedium),
         ),
-        selectedIconTheme: const IconThemeData(color: secondaryColor, size: 25),
+        selectedIconTheme: const IconThemeData(color: secondaryColor, size: 24),
         unselectedIconTheme: const IconThemeData(
           color: textSecondary,
           size: 24,
@@ -828,7 +851,7 @@ class AppTheme {
           color: textPrimary,
           fontSize: 13,
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       ),
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,

@@ -33,9 +33,9 @@ class AppPageHeader extends StatelessWidget {
         final iconWidget = AppIconBox(
           icon: icon,
 
-          size: isWide ? 62 : 56,
+          size: isWide ? 58 : 52,
 
-          iconSize: isWide ? 30 : 28,
+          iconSize: isWide ? 28 : 26,
 
           borderRadius: isWide ? 20 : 18,
 

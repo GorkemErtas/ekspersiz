@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../theme/app_theme.dart';
+
 /// Uses available content width and text size, including inside a navigation rail.
 class AppAdaptiveColumns extends StatelessWidget {
   const AppAdaptiveColumns({
@@ -20,14 +22,18 @@ class AppAdaptiveColumns extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(child: first),
-            const SizedBox(width: 24),
+            const SizedBox(width: AppTheme.spacingL),
             Expanded(child: second),
           ],
         );
       }
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [first, const SizedBox(height: 24), second],
+        children: [
+          first,
+          const SizedBox(height: AppTheme.spacingL),
+          second,
+        ],
       );
     },
   );

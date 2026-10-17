@@ -25,7 +25,10 @@ class AuthShell extends StatelessWidget {
         child: Center(
           child: SingleChildScrollView(
             keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 28),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppTheme.pageInset,
+              vertical: 26,
+            ),
             child: ConstrainedBox(
               constraints: BoxConstraints(maxWidth: maxWidth),
               child: AppFadeSlideIn(
@@ -34,12 +37,14 @@ class AuthShell extends StatelessWidget {
                   children: [
                     if (showBrand) ...[
                       const _BrandHeader(),
-                      const SizedBox(height: 28),
+                      const SizedBox(height: 26),
                     ],
                     Container(
                       width: double.infinity,
                       padding: EdgeInsets.all(
-                        MediaQuery.sizeOf(context).width < 360 ? 18 : 24,
+                        MediaQuery.sizeOf(context).width < 360
+                            ? 17
+                            : AppTheme.spacingL,
                       ),
                       decoration: BoxDecoration(
                         color: colorScheme.surface,
@@ -72,8 +77,8 @@ class _BrandHeader extends StatelessWidget {
     return Column(
       children: [
         Container(
-          width: 96,
-          height: 96,
+          width: 88,
+          height: 88,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(28),
             boxShadow: AppTheme.primaryShadowFor(context),

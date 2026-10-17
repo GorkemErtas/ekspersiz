@@ -1,6 +1,8 @@
 import 'package:mobile/core/localization/app_text.dart';
 import 'package:flutter/material.dart';
 
+import '../theme/app_theme.dart';
+
 import 'app_motion.dart';
 
 class AppStateView extends StatelessWidget {
@@ -86,7 +88,12 @@ class AppStateView extends StatelessWidget {
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
 
-          padding: EdgeInsets.fromLTRB(32, 32, 32, bottomPadding),
+          padding: EdgeInsets.fromLTRB(
+            AppTheme.spacingXL,
+            AppTheme.spacingXL,
+            AppTheme.spacingXL,
+            bottomPadding,
+          ),
 
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 440),
@@ -108,9 +115,9 @@ class AppStateView extends StatelessWidget {
                     },
 
                     child: Container(
-                      width: 92,
+                      width: 84,
 
-                      height: 92,
+                      height: 84,
 
                       decoration: BoxDecoration(
                         color: backgroundColor,
@@ -120,7 +127,7 @@ class AppStateView extends StatelessWidget {
 
                       child: isLoading
                           ? Padding(
-                              padding: const EdgeInsets.all(28),
+                              padding: const EdgeInsets.all(26),
 
                               child: CircularProgressIndicator(
                                 strokeWidth: 3,
@@ -128,11 +135,11 @@ class AppStateView extends StatelessWidget {
                                 color: foregroundColor,
                               ),
                             )
-                          : Icon(icon, size: 44, color: foregroundColor),
+                          : Icon(icon, size: 40, color: foregroundColor),
                     ),
                   ),
 
-                  const SizedBox(height: 24),
+                  const SizedBox(height: AppTheme.spacingL),
 
                   AppText(
                     title,
@@ -159,7 +166,7 @@ class AppStateView extends StatelessWidget {
                   ),
 
                   if (actionLabel != null && onActionPressed != null) ...[
-                    const SizedBox(height: 24),
+                    const SizedBox(height: AppTheme.spacingL),
 
                     FilledButton.tonalIcon(
                       onPressed: onActionPressed,
