@@ -6,9 +6,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 import java.util.Set;
 import java.util.UUID;
 
@@ -67,14 +69,22 @@ public class FileStorageService {
             );
         }
 
-        try {
-            Files.copy(
-                    file.getInputStream(),
-                    destination,
-                    StandardCopyOption
-                            .REPLACE_EXISTING
-            );
+        boolean created = false;
+        try (InputStream input = file.getInputStream();
+             OutputStream output = Files.newOutputStream(
+                     destination, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE)) {
+            created = true;
+            input.transferTo(output);
         } catch (IOException exception) {
+            // Only remove the new file owned by this attempt. Existing photos
+            // must never be overwritten or swept as part of upload cleanup.
+            if (created) {
+                try {
+                    Files.deleteIfExists(destination);
+                } catch (IOException cleanupException) {
+                    exception.addSuppressed(cleanupException);
+                }
+            }
             throw new FileStorageException(
                     "Dosya kaydedilemedi.",
                     exception
@@ -218,10 +228,8 @@ public class FileStorageService {
             MultipartFile file,
             String contentType
     ) {
-        try {
-            byte[] header =
-                    file.getInputStream()
-                            .readNBytes(12);
+        try (InputStream input = file.getInputStream()) {
+            byte[] header = input.readNBytes(12);
 
             boolean valid =
                     switch (contentType) {
