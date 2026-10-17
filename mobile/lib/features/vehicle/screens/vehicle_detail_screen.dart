@@ -224,10 +224,15 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
                 onRefresh: _load,
                 child: ListView(
                   physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 40),
+                  padding: const EdgeInsets.fromLTRB(
+                    AppTheme.pageInset,
+                    AppTheme.spacingM,
+                    AppTheme.pageInset,
+                    40,
+                  ),
                   children: [
                     _hero(),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: AppTheme.spacingM),
                     _statusCard(),
                     const SizedBox(height: 20),
                     _sectionHeader(
@@ -288,8 +293,8 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
         Row(
           children: [
             Container(
-              width: 58,
-              height: 58,
+              width: 54,
+              height: 54,
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.primaryContainer,
                 borderRadius: BorderRadius.circular(18),

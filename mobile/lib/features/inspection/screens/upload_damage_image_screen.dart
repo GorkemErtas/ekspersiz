@@ -374,7 +374,12 @@ class _UploadDamageImageScreenState extends State<UploadDamageImageScreen> {
             constraints: const BoxConstraints(maxWidth: 760),
 
             child: ListView(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 36),
+              padding: const EdgeInsets.fromLTRB(
+                AppTheme.pageInset,
+                AppTheme.spacingM,
+                AppTheme.pageInset,
+                36,
+              ),
 
               children: [
                 const AppPageHeader(
@@ -386,7 +391,7 @@ class _UploadDamageImageScreenState extends State<UploadDamageImageScreen> {
                   badge: 'TEK FOTOĞRAF',
                 ),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: AppTheme.spacingL),
 
                 AppCard(
                   padding: const EdgeInsets.all(18),
@@ -706,7 +711,7 @@ class _PhotoUploadArea extends StatelessWidget {
                   ],
                 )
               : Padding(
-                  padding: const EdgeInsets.all(28),
+                  padding: const EdgeInsets.all(26),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -739,7 +744,7 @@ class _PhotoUploadArea extends StatelessWidget {
                         ),
                       ),
 
-                      const SizedBox(height: 16),
+                      const SizedBox(height: AppTheme.spacingM),
 
                       Container(
                         padding: const EdgeInsets.symmetric(
@@ -863,7 +868,7 @@ class _PhotoTipsCard extends StatelessWidget {
             ],
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: AppTheme.spacingM),
 
           const _PhotoTip(
             icon: Icons.wb_sunny_outlined,

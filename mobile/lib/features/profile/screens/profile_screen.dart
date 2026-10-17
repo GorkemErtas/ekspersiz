@@ -378,8 +378,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: Column(
                     children: [
                       Container(
-                        width: 72,
-                        height: 72,
+                        width: 66,
+                        height: 66,
                         decoration: BoxDecoration(
                           color: colorScheme.primaryContainer,
                           borderRadius: BorderRadius.circular(24),
@@ -393,7 +393,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: AppTheme.spacingM),
                       AppText(
                         widget.fullName,
                         textAlign: TextAlign.center,
@@ -401,7 +401,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           fontWeight: FontWeight.w900,
                         ),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: AppTheme.spacingM),
                       Wrap(
                         spacing: 8,
                         runSpacing: 8,
@@ -556,7 +556,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: AppTheme.spacingL),
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton.icon(
@@ -611,10 +611,13 @@ class _ProfileItem extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppTheme.pageInset,
+        vertical: 14,
+      ),
       child: Row(
         children: [
-          AppIconBox(icon: icon, size: 46, iconSize: 22, borderRadius: 14),
+          AppIconBox(icon: icon, size: 42, iconSize: 21, borderRadius: 14),
           const SizedBox(width: 14),
           Expanded(
             child: Column(
@@ -665,10 +668,13 @@ class _ActionProfileItem extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppTheme.pageInset,
+          vertical: 14,
+        ),
         child: Row(
           children: [
-            AppIconBox(icon: icon, size: 46, iconSize: 22, borderRadius: 14),
+            AppIconBox(icon: icon, size: 42, iconSize: 21, borderRadius: 14),
             const SizedBox(width: 14),
             Expanded(
               child: Column(

@@ -387,7 +387,12 @@ class _InspectionResultScreenState extends State<InspectionResultScreen>
             constraints: const BoxConstraints(maxWidth: 820),
 
             child: ListView(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 40),
+              padding: const EdgeInsets.fromLTRB(
+                AppTheme.pageInset,
+                AppTheme.spacingM,
+                AppTheme.pageInset,
+                40,
+              ),
 
               children: [
                 _ResultHero(
@@ -413,7 +418,7 @@ class _InspectionResultScreenState extends State<InspectionResultScreen>
                 ),
 
                 if (_hasInspectionImage) ...[
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppTheme.spacingM),
 
                   _InspectionImageCard(
                     key: ValueKey(_imageLifetime),
@@ -423,20 +428,20 @@ class _InspectionResultScreenState extends State<InspectionResultScreen>
                 ],
 
                 if (noVisibleDamage) ...[
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppTheme.spacingM),
 
                   const _NoVisibleDamageCard(),
                 ],
 
                 if (!noVisibleDamage &&
                     _inspection.confidenceScore != null) ...[
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppTheme.spacingM),
 
                   _ConfidenceCard(confidence: _inspection.confidenceScore!),
                 ],
 
                 if (!noVisibleDamage && _inspection.damageTypes.isNotEmpty) ...[
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppTheme.spacingM),
 
                   _SectionCard(
                     icon: Icons.car_crash_outlined,
@@ -460,7 +465,7 @@ class _InspectionResultScreenState extends State<InspectionResultScreen>
 
                 if (!noVisibleDamage &&
                     _inspection.affectedParts.isNotEmpty) ...[
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppTheme.spacingM),
 
                   _SectionCard(
                     icon: Icons.directions_car_outlined,
@@ -484,7 +489,7 @@ class _InspectionResultScreenState extends State<InspectionResultScreen>
 
                 if (!noVisibleDamage &&
                     _inspection.repairRecommendations.isNotEmpty) ...[
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppTheme.spacingM),
 
                   _SectionCard(
                     icon: Icons.handyman_outlined,
@@ -532,7 +537,7 @@ class _InspectionResultScreenState extends State<InspectionResultScreen>
                   ),
                 ],
 
-                const SizedBox(height: 16),
+                const SizedBox(height: AppTheme.spacingM),
 
                 if (report != null) ...[
                   _AiReportCard(
@@ -543,7 +548,7 @@ class _InspectionResultScreenState extends State<InspectionResultScreen>
                   ),
 
                   if (!noVisibleDamage) ...[
-                    const SizedBox(height: 16),
+                    const SizedBox(height: AppTheme.spacingM),
 
                     _PriceEstimateCard(
                       minimum: _formatPrice(report.estimatedMinimumPrice),
@@ -565,7 +570,7 @@ class _InspectionResultScreenState extends State<InspectionResultScreen>
                   if (!noVisibleDamage &&
                       _inspection.locationLatitude != null &&
                       _inspection.locationLongitude != null) ...[
-                    const SizedBox(height: 16),
+                    const SizedBox(height: AppTheme.spacingM),
 
                     _NearbyServicesCard(onExplore: _openNearbyServices),
                   ],
@@ -639,7 +644,7 @@ class _InspectionImageCardState extends State<_InspectionImageCard> {
             return Container(
               key: const Key('inspection-image-placeholder'),
               width: double.infinity,
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(AppTheme.cardPadding),
               decoration: BoxDecoration(
                 color: colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(16),
@@ -682,7 +687,7 @@ class _InspectionImageCardState extends State<_InspectionImageCard> {
           if (snapshot.hasError || bytes == null || bytes.isEmpty) {
             return Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(AppTheme.cardPadding),
               decoration: BoxDecoration(
                 color: colorScheme.errorContainer.withValues(alpha: 0.45),
                 borderRadius: BorderRadius.circular(16),
@@ -825,7 +830,7 @@ class _ResultHero extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     return AppCard(
-      padding: const EdgeInsets.all(22),
+      padding: const EdgeInsets.all(AppTheme.largeCardPadding),
 
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -834,8 +839,8 @@ class _ResultHero extends StatelessWidget {
             children: [
               const AppIconBox(
                 icon: Icons.directions_car_filled_rounded,
-                size: 58,
-                iconSize: 29,
+                size: 54,
+                iconSize: 27,
                 borderRadius: 19,
                 iconColor: Colors.white,
                 gradient: LinearGradient(
@@ -1020,7 +1025,7 @@ class _ConfidenceCard extends StatelessWidget {
             ),
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: AppTheme.spacingM),
 
           ClipRRect(
             borderRadius: BorderRadius.circular(AppTheme.radiusPill),
@@ -1054,7 +1059,7 @@ class _SectionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AppCard(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(AppTheme.cardPadding),
 
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1228,7 +1233,7 @@ class _AiReportCard extends StatelessWidget {
         border: Border.all(color: colorScheme.primary.withValues(alpha: 0.18)),
       ),
 
-      padding: const EdgeInsets.all(22),
+      padding: const EdgeInsets.all(AppTheme.largeCardPadding),
 
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1351,7 +1356,7 @@ class _PriceEstimateCard extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
 
     return AppCard(
-      padding: const EdgeInsets.all(22),
+      padding: const EdgeInsets.all(AppTheme.largeCardPadding),
 
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1507,7 +1512,7 @@ class _NearbyServicesCard extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
 
     return AppCard(
-      padding: const EdgeInsets.all(22),
+      padding: const EdgeInsets.all(AppTheme.largeCardPadding),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1592,13 +1597,13 @@ class _ReportStatusCard extends StatelessWidget {
     final isProcessing = isLoading || inspection.isReportProcessing;
 
     return AppCard(
-      padding: const EdgeInsets.all(22),
+      padding: const EdgeInsets.all(AppTheme.largeCardPadding),
 
       child: Column(
         children: [
           Container(
-            width: 72,
-            height: 72,
+            width: 66,
+            height: 66,
 
             decoration: BoxDecoration(
               color: isFailed
@@ -1610,7 +1615,7 @@ class _ReportStatusCard extends StatelessWidget {
 
             child: isProcessing
                 ? Padding(
-                    padding: const EdgeInsets.all(22),
+                    padding: const EdgeInsets.all(AppTheme.largeCardPadding),
                     child: CircularProgressIndicator(
                       strokeWidth: 3,
                       color: colorScheme.primary,
@@ -1620,7 +1625,7 @@ class _ReportStatusCard extends StatelessWidget {
                     isFailed
                         ? Icons.error_outline_rounded
                         : Icons.description_outlined,
-                    size: 34,
+                    size: 32,
                     color: isFailed ? colorScheme.error : colorScheme.primary,
                   ),
           ),

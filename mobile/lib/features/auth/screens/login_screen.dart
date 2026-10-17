@@ -1,6 +1,7 @@
 import 'package:mobile/core/localization/app_text.dart';
 import 'package:flutter/material.dart';
 
+import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/auth_shell.dart';
 import '../../../core/widgets/primary_button.dart';
 
@@ -172,7 +173,6 @@ class _LoginScreenState extends State<LoginScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
             const SizedBox(height: 10),
 
             AppText(
@@ -193,7 +193,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ),
 
-            const SizedBox(height: 28),
+            const SizedBox(height: 26),
 
             TextFormField(
               controller: _emailController,
@@ -210,7 +210,7 @@ class _LoginScreenState extends State<LoginScreen> {
               validator: _validateEmail,
             ),
 
-            const SizedBox(height: 16),
+            const SizedBox(height: AppTheme.spacingM),
 
             TextFormField(
               controller: _passwordController,
@@ -227,7 +227,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 hintText: 'Şifrenizi girin'.tr,
                 prefixIcon: const Icon(Icons.lock_outline_rounded),
                 suffixIcon: IconButton(
-                  tooltip: (_obscurePassword ? 'Şifreyi göster' : 'Şifreyi gizle').tr,
+                  tooltip:
+                      (_obscurePassword ? 'Şifreyi göster' : 'Şifreyi gizle')
+                          .tr,
                   onPressed: _isLoading
                       ? null
                       : () {
@@ -253,16 +255,13 @@ class _LoginScreenState extends State<LoginScreen> {
                 onPressed: _isLoading
                     ? null
                     : () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) =>
-                      const ForgotPasswordScreen(),
-                    ),
-                  );
-                },
-                child: const AppText(
-                  'Şifremi unuttum?',
-                ),
+                        Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) => const ForgotPasswordScreen(),
+                          ),
+                        );
+                      },
+                child: const AppText('Şifremi unuttum?'),
               ),
             ),
 
@@ -275,7 +274,7 @@ class _LoginScreenState extends State<LoginScreen> {
               onPressed: _isLoading ? null : _login,
             ),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: AppTheme.spacingL),
 
             Row(
               children: [
@@ -295,7 +294,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ],
             ),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: AppTheme.spacingL),
 
             SizedBox(
               width: double.infinity,
@@ -314,12 +313,12 @@ class _LoginScreenState extends State<LoginScreen> {
                 onPressed: _isLoading
                     ? null
                     : () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => const RegisterScreen(),
-                    ),
-                  );
-                },
+                        Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) => const RegisterScreen(),
+                          ),
+                        );
+                      },
                 icon: const Icon(Icons.person_add_alt_1_rounded),
                 label: const AppText('Yeni Hesap Oluştur'),
               ),

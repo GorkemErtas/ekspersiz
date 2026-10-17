@@ -386,7 +386,7 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
                                         16,
                                         4,
                                       ),
-                                      padding: const EdgeInsets.all(14),
+                                      padding: const EdgeInsets.all(13),
                                       decoration: BoxDecoration(
                                         color: scheme.surfaceContainerHighest,
                                         borderRadius: BorderRadius.circular(
@@ -467,7 +467,9 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
                                 )
                               : ListView.builder(
                                   controller: _scrollController,
-                                  padding: const EdgeInsets.all(16),
+                                  padding: const EdgeInsets.all(
+                                    AppTheme.spacingM,
+                                  ),
                                   itemCount: _messages.length,
                                   itemBuilder: (context, index) {
                                     final message = _messages[index];

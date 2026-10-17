@@ -119,7 +119,12 @@ class _NotificationCenterScreenState extends State<NotificationCenterScreen> {
                 onRefresh: _load,
                 child: ListView.separated(
                   physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+                  padding: const EdgeInsets.fromLTRB(
+                    AppTheme.pageInset,
+                    AppTheme.spacingM,
+                    AppTheme.pageInset,
+                    32,
+                  ),
                   itemCount: _items.length,
                   separatorBuilder: (_, _) => const SizedBox(height: 10),
                   itemBuilder: (context, index) {

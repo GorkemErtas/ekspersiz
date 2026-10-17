@@ -108,8 +108,8 @@ class _VehicleListScreenState extends State<VehicleListScreen> {
 
         return AlertDialog(
           icon: Container(
-            width: 58,
-            height: 58,
+            width: 54,
+            height: 54,
             decoration: BoxDecoration(
               color: colorScheme.errorContainer,
               borderRadius: BorderRadius.circular(18),
@@ -349,7 +349,12 @@ class _VehicleListScreenState extends State<VehicleListScreen> {
                   child: ListView.separated(
                     physics: const AlwaysScrollableScrollPhysics(),
 
-                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 120),
+                    padding: const EdgeInsets.fromLTRB(
+                      AppTheme.pageInset,
+                      AppTheme.spacingM,
+                      AppTheme.pageInset,
+                      120,
+                    ),
 
                     itemCount: vehicles.length + 1,
 
@@ -464,8 +469,8 @@ class _VehicleCard extends StatelessWidget {
         children: [
           const AppIconBox(
             icon: Icons.directions_car_filled_rounded,
-            size: 64,
-            iconSize: 32,
+            size: 60,
+            iconSize: 30,
             borderRadius: 20,
           ),
 

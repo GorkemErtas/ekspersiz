@@ -187,8 +187,8 @@ class _AnalyzingContent extends StatelessWidget {
           scale: pulseAnimation,
 
           child: Container(
-            width: 112,
-            height: 112,
+            width: 104,
+            height: 104,
 
             decoration: BoxDecoration(
               gradient: AppTheme.brandGradient,
@@ -202,8 +202,8 @@ class _AnalyzingContent extends StatelessWidget {
               alignment: Alignment.center,
               children: [
                 Container(
-                  width: 78,
-                  height: 78,
+                  width: 72,
+                  height: 72,
 
                   decoration: BoxDecoration(
                     border: Border.all(
@@ -215,7 +215,7 @@ class _AnalyzingContent extends StatelessWidget {
 
                 const Icon(
                   Icons.auto_awesome_rounded,
-                  size: 44,
+                  size: 40,
                   color: Colors.white,
                 ),
               ],
@@ -223,7 +223,7 @@ class _AnalyzingContent extends StatelessWidget {
           ),
         ),
 
-        const SizedBox(height: 28),
+        const SizedBox(height: 26),
 
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
@@ -281,7 +281,7 @@ class _AnalyzingContent extends StatelessWidget {
           ),
         ),
 
-        const SizedBox(height: 28),
+        const SizedBox(height: 26),
 
         AppCard(
           showShadow: false,
@@ -339,10 +339,10 @@ class _AnalyzingContent extends StatelessWidget {
           ),
         ),
 
-        const SizedBox(height: 16),
+        const SizedBox(height: AppTheme.spacingM),
 
         AppCard(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(AppTheme.cardPadding),
 
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

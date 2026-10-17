@@ -1,5 +1,6 @@
 import 'package:mobile/core/localization/app_text.dart';
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_content.dart';
 import '../../../core/widgets/app_page_header.dart';
 
@@ -179,7 +180,7 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
           key: _form,
           child: ListView(
             keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(AppTheme.pageInset),
             children: [
               const AppPageHeader(
                 icon: Icons.event_available_outlined,
@@ -187,7 +188,7 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
                 subtitle:
                     'Bakım, muayene ve sigorta tarihlerini tek yerden takip edin.',
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: AppTheme.spacingL),
               DropdownButtonFormField<String>(
                 isExpanded: true,
                 initialValue: _type,
@@ -202,7 +203,7 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
                     .toList(),
                 onChanged: (value) => setState(() => _type = value!),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppTheme.spacingM),
               ..._typeFields(),
               if (_type == 'CUSTOM') ...[
                 TextFormField(
@@ -220,7 +221,7 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
                 maxLength: 1000,
                 decoration: InputDecoration(labelText: 'Not (isteğe bağlı)'.tr),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: AppTheme.spacingL),
               FilledButton.icon(
                 onPressed: _saving ? null : _save,
                 icon: _saving
@@ -321,7 +322,7 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
   List<Widget> _manualFields() => [
     _dateTile('Hedef tarih', _dueDate, (value) => _dueDate = value),
     _numberField(_dueMileage, 'Hedef kilometre'),
-    const SizedBox(height: 16),
+    const SizedBox(height: AppTheme.spacingM),
   ];
 
   Widget _dateTile(

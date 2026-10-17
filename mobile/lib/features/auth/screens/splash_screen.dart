@@ -2,6 +2,7 @@ import 'package:mobile/core/localization/app_text.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 
+import '../../../core/theme/app_theme.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/update/app_update_service.dart';
 import '../../../core/storage/token_storage.dart';
@@ -228,8 +229,8 @@ class _SplashScreenState extends State<SplashScreen> {
                     borderRadius: BorderRadius.circular(28),
                     child: Image.asset(
                       'assets/images/ekspersiz_logo.png',
-                      width: 112,
-                      height: 112,
+                      width: 104,
+                      height: 104,
                       fit: BoxFit.cover,
                       cacheWidth: 256,
                       cacheHeight: 256,
@@ -238,15 +239,15 @@ class _SplashScreenState extends State<SplashScreen> {
                         debugPrint('LOGO ERROR: $error');
 
                         return Container(
-                          width: 112,
-                          height: 112,
+                          width: 104,
+                          height: 104,
                           decoration: BoxDecoration(
                             color: colorScheme.surfaceContainerHigh,
                             borderRadius: BorderRadius.circular(28),
                           ),
                           child: Icon(
                             Icons.directions_car_filled_rounded,
-                            size: 52,
+                            size: 48,
                             color: colorScheme.primary,
                           ),
                         );
@@ -275,7 +276,7 @@ class _SplashScreenState extends State<SplashScreen> {
                     ),
                   ),
 
-                  const SizedBox(height: 32),
+                  const SizedBox(height: AppTheme.spacingXL),
 
                   SizedBox(
                     width: 30,
@@ -286,7 +287,7 @@ class _SplashScreenState extends State<SplashScreen> {
                     ),
                   ),
 
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppTheme.spacingM),
 
                   AppText(
                     'Oturum kontrol ediliyor...',

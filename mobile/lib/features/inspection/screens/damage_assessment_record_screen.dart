@@ -234,7 +234,12 @@ class _DamageAssessmentRecordScreenState
                   child: Form(
                     key: _formKey,
                     child: ListView(
-                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 36),
+                      padding: const EdgeInsets.fromLTRB(
+                        AppTheme.pageInset,
+                        AppTheme.spacingM,
+                        AppTheme.pageInset,
+                        36,
+                      ),
                       children: [
                         _InfoCard(
                           title: record?.isFinalized == true
@@ -243,10 +248,10 @@ class _DamageAssessmentRecordScreenState
                           text: record?.isFinalized == true
                               ? 'Belge No: ${record!.recordNumber}'
                               : 'Olay bilgilerini kendi beyanınıza göre girin. '
-                                'AI analizi olayın nasıl gerçekleştiğini belirlemez.',
+                                    'AI analizi olayın nasıl gerçekleştiğini belirlemez.',
                           finalized: record?.isFinalized == true,
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: AppTheme.spacingM),
                         _Section(
                           title: 'Araç',
                           child: AppText(
@@ -258,7 +263,7 @@ class _DamageAssessmentRecordScreenState
                                 ?.copyWith(fontWeight: FontWeight.w700),
                           ),
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: AppTheme.spacingM),
                         _Section(
                           title: 'Olay Bilgileri',
                           child: Column(
@@ -290,7 +295,7 @@ class _DamageAssessmentRecordScreenState
                             ],
                           ),
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: AppTheme.spacingM),
                         _Section(
                           title: 'Beyan Sahibi',
                           child: _field(
@@ -299,7 +304,7 @@ class _DamageAssessmentRecordScreenState
                             isRequired: true,
                           ),
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: AppTheme.spacingM),
                         const _LegalNotice(),
                         const SizedBox(height: 20),
                         if (!_readOnly) ...[
@@ -364,8 +369,8 @@ class _DamageAssessmentRecordScreenState
       decoration: InputDecoration(labelText: label),
       validator: isRequired
           ? (value) => value == null || value.trim().isEmpty
-              ? 'Bu alan zorunludur.'
-              : null
+                ? 'Bu alan zorunludur.'
+                : null
           : null,
     );
   }
@@ -386,8 +391,9 @@ class _Section extends StatelessWidget {
           children: [
             AppText(
               title,
-              style: Theme.of(context).textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w800),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 14),
             child,
@@ -424,8 +430,9 @@ class _InfoCard extends StatelessWidget {
         children: [
           AppText(
             title,
-            style: Theme.of(context).textTheme.titleMedium
-                ?.copyWith(fontWeight: FontWeight.w900),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
           ),
           const SizedBox(height: 6),
           AppText(text),

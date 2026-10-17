@@ -2,6 +2,7 @@ import 'package:mobile/core/localization/app_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../core/theme/app_theme.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/app_page_header.dart';
@@ -248,14 +249,21 @@ class _BusinessManagementScreenState extends State<BusinessManagementScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: AppText(_isInvitationOnly ? 'Şirket Daveti' : 'Şirket İşlemleri'),
+        title: AppText(
+          _isInvitationOnly ? 'Şirket Daveti' : 'Şirket İşlemleri',
+        ),
       ),
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 760),
             child: ListView(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 36),
+              padding: const EdgeInsets.fromLTRB(
+                AppTheme.pageInset,
+                AppTheme.spacingM,
+                AppTheme.pageInset,
+                36,
+              ),
               children: [
                 AppPageHeader(
                   icon: _isInvitationOnly
@@ -271,18 +279,18 @@ class _BusinessManagementScreenState extends State<BusinessManagementScreen> {
                       : 'Şirket araçları ve analizleri bütün üyeler tarafından ortak kullanılır.',
                   badge: _isInvitationOnly
                       ? 'DAVET'
-                      : account?.roleLabel ?? 'Kurumsal'
+                      : account?.roleLabel ?? 'Kurumsal',
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: AppTheme.spacingL),
                 if (account?.isOwner ?? false) ...[
                   _buildInvitationForm(),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppTheme.spacingM),
                 ],
                 if (account != null && !account.isOwner)
                   _buildAccountSummary(account),
                 if (_canCreateAccount) ...[
                   _buildCreateAccountForm(),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppTheme.spacingM),
                 ],
                 if (account == null) _buildAcceptInvitationForm(),
                 if (account?.isOwner ?? false) _buildEmployeeList(),

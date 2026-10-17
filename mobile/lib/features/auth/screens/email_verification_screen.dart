@@ -214,7 +214,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                 height: 1.5,
               ),
             ),
-            const SizedBox(height: 28),
+            const SizedBox(height: 26),
             TextFormField(
               controller: _codeController,
               autofocus: true,
@@ -272,14 +272,14 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: AppTheme.spacingL),
             PrimaryButton(
               label: 'E-postayı Doğrula',
               icon: Icons.verified_rounded,
               isLoading: _isVerifying,
               onPressed: isBusy ? null : _verifyEmail,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppTheme.spacingM),
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(

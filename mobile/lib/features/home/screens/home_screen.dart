@@ -591,7 +591,12 @@ class _HomeScreenState extends State<HomeScreen> {
               onRefresh: _loadHomeData,
               child: ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 200),
+                padding: const EdgeInsets.fromLTRB(
+                  AppTheme.pageInset,
+                  AppTheme.spacingM,
+                  AppTheme.pageInset,
+                  200,
+                ),
                 children: [
                   AppFadeSlideIn(
                     delay: const Duration(milliseconds: 20),
@@ -982,7 +987,7 @@ class _HeroAnalysisCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(24),
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(AppTheme.cardPadding),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(24),
           gradient: AppTheme.deepBrandGradient,
@@ -1018,7 +1023,7 @@ class _HeroAnalysisCard extends StatelessWidget {
                     size: 22,
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: AppTheme.spacingM),
                 AppText(
                   'AI Hasar Analizi',
                   style: textTheme.headlineSmall?.copyWith(
@@ -1084,8 +1089,8 @@ class _MainVehicleCard extends StatelessWidget {
       child: Row(
         children: [
           Container(
-            width: 62,
-            height: 62,
+            width: 58,
+            height: 58,
             decoration: BoxDecoration(
               color: colorScheme.primaryContainer,
               borderRadius: BorderRadius.circular(19),
@@ -1093,7 +1098,7 @@ class _MainVehicleCard extends StatelessWidget {
             child: Icon(
               Icons.directions_car_filled_rounded,
               color: colorScheme.primary,
-              size: 31,
+              size: 29,
             ),
           ),
           const SizedBox(width: 16),
@@ -1161,8 +1166,8 @@ class _EmptyVehicleCard extends StatelessWidget {
       child: Row(
         children: [
           Container(
-            width: 54,
-            height: 54,
+            width: 50,
+            height: 50,
             decoration: BoxDecoration(
               color: colorScheme.primaryContainer,
               borderRadius: BorderRadius.circular(17),
@@ -1363,8 +1368,8 @@ class _AiAssistantLauncher extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                width: 38,
-                height: 38,
+                width: 36,
+                height: 36,
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.15),
                   shape: BoxShape.circle,

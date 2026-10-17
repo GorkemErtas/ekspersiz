@@ -4,11 +4,18 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/core/network/api_client.dart';
 import 'package:mobile/core/widgets/primary_button.dart';
 import 'package:mobile/features/auth/screens/login_screen.dart';
+import 'package:mobile/features/auth/screens/change_password_screen.dart';
+import 'package:mobile/features/auth/screens/email_verification_screen.dart';
+import 'package:mobile/features/auth/screens/forgot_password_screen.dart';
 import 'package:mobile/features/auth/screens/register_screen.dart';
 import 'package:mobile/features/billing/screens/subscription_screen.dart';
 import 'package:mobile/features/inspection/screens/inspection_result_screen.dart';
 import 'package:mobile/features/inspection/screens/upload_damage_image_screen.dart';
 import 'package:mobile/features/inspection/services/inspection_service.dart';
+import 'package:mobile/features/inspection/screens/damage_assessment_record_screen.dart';
+import 'package:mobile/features/inspection/models/damage_assessment_record.dart';
+import 'package:mobile/features/inspection/services/damage_assessment_record_service.dart';
+import 'package:mobile/features/vehicle/screens/add_vehicle_screen.dart';
 import 'package:mobile/features/inspection/models/damage_inspection.dart';
 import 'package:mobile/features/profile/screens/profile_screen.dart';
 import 'package:mobile/features/vehicle/models/vehicle.dart';
@@ -36,6 +43,8 @@ void main() {
   for (final brightness in Brightness.values) {
     for (final scenario in [
       (size: const Size(320, 640), scale: 2.0),
+      (size: const Size(390, 844), scale: 1.0),
+      (size: const Size(430, 932), scale: 1.5),
       (size: const Size(844, 390), scale: 1.5),
       (size: const Size(1024, 768), scale: 1.0),
     ]) {
@@ -46,8 +55,18 @@ void main() {
         final screens = <Widget>[
           const LoginScreen(),
           const RegisterScreen(),
+          const ForgotPasswordScreen(),
+          const EmailVerificationScreen(
+            email: 'uzun.kullanici.adresi@example.com',
+          ),
+          const ChangePasswordScreen(),
+          const AddVehicleScreen(),
           const MaintenanceFormScreen(vehicleId: 1, currentMileage: 50000),
           const ReminderFormScreen(vehicle: _vehicle),
+          DamageAssessmentRecordScreen(
+            inspection: inspection.noDamageResult(),
+            service: const _EmptyRecordService(),
+          ),
           const ProfileScreen(
             fullName: 'Uzun İsimli Kullanıcı Hesabı',
             email: 'uzun.kullanici.adresi@example.com',
@@ -189,6 +208,13 @@ void main() {
     expect(form.validate(), isFalse);
     expect(tester.takeException(), isNull);
   });
+}
+
+class _EmptyRecordService extends DamageAssessmentRecordService {
+  const _EmptyRecordService();
+
+  @override
+  Future<DamageAssessmentRecord?> get(int inspectionId) async => null;
 }
 
 DamageInspection _detailedResult() => DamageInspection.fromJson({
