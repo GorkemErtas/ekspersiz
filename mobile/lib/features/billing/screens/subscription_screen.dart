@@ -174,7 +174,12 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 720),
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 40),
+          padding: const EdgeInsets.fromLTRB(
+            AppTheme.pageInset,
+            AppTheme.spacingM,
+            AppTheme.pageInset,
+            40,
+          ),
           children: [
             _buildQuotaCard(context),
             if (_billingData!.overview.status.currentPlan != 'FREE') ...[
@@ -182,7 +187,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
               _buildSubscriptionStatus(context, _billingData!.overview.status),
             ],
 
-            const SizedBox(height: 24),
+            const SizedBox(height: AppTheme.spacingL),
             _buildSectionTitle(
               context,
               title: 'Aylık abonelikler',
@@ -276,7 +281,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
     final colors = theme.colorScheme;
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(AppTheme.cardPadding),
       decoration: BoxDecoration(
         color: colors.surfaceContainerLow,
         borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
@@ -327,7 +332,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
             ],
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: AppTheme.spacingM),
 
           Divider(
             height: 1,
@@ -418,7 +423,7 @@ class _SubscriptionPlanCard extends StatelessWidget {
     final price = localizedPrice ?? fallbackPrice;
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(AppTheme.cardPadding),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         border: Border.all(

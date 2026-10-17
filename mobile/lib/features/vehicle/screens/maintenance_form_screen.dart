@@ -1,5 +1,6 @@
 import 'package:mobile/core/localization/app_text.dart';
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_content.dart';
 import '../../../core/widgets/app_page_header.dart';
 
@@ -148,7 +149,7 @@ class _MaintenanceFormScreenState extends State<MaintenanceFormScreen> {
           key: _form,
           child: ListView(
             keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(AppTheme.pageInset),
             children: [
               const AppPageHeader(
                 icon: Icons.build_outlined,
@@ -156,7 +157,7 @@ class _MaintenanceFormScreenState extends State<MaintenanceFormScreen> {
                 subtitle:
                     'Bakım tarihini, kilometreyi ve yapılan işlemi kaydedin.',
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: AppTheme.spacingL),
               DropdownButtonFormField<String>(
                 isExpanded: true,
                 initialValue: _type,
@@ -254,7 +255,7 @@ class _MaintenanceFormScreenState extends State<MaintenanceFormScreen> {
                 maxLength: 1000,
                 decoration: InputDecoration(labelText: 'Not'.tr),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: AppTheme.spacingL),
               FilledButton.icon(
                 onPressed: _saving ? null : _save,
                 icon: _saving

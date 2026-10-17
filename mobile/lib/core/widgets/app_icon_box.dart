@@ -6,8 +6,8 @@ class AppIconBox extends StatelessWidget {
   const AppIconBox({
     super.key,
     required this.icon,
-    this.size = 46,
-    this.iconSize = 23,
+    this.size = 42,
+    this.iconSize = 22,
     this.backgroundColor,
     this.iconColor,
     this.gradient,

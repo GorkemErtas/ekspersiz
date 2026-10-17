@@ -155,7 +155,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                             height: 1.5,
                           ),
                         ),
-                        const SizedBox(height: 24),
+                        const SizedBox(height: AppTheme.spacingL),
                         TextFormField(
                           controller: _currentPasswordController,
                           obscureText: _obscureCurrentPassword,
@@ -167,7 +167,11 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                             hintText: 'Mevcut şifrenizi girin'.tr,
                             prefixIcon: const Icon(Icons.lock_outline_rounded),
                             suffixIcon: IconButton(
-                              tooltip: (_obscureCurrentPassword ? 'Şifreyi göster' : 'Şifreyi gizle').tr,
+                              tooltip:
+                                  (_obscureCurrentPassword
+                                          ? 'Şifreyi göster'
+                                          : 'Şifreyi gizle')
+                                      .tr,
                               onPressed: _isLoading
                                   ? null
                                   : () {
@@ -185,7 +189,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                           ),
                           validator: _validateCurrentPassword,
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: AppTheme.spacingM),
                         TextFormField(
                           controller: _newPasswordController,
                           obscureText: _obscureNewPassword,
@@ -197,7 +201,11 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                             hintText: 'En az 8 karakter'.tr,
                             prefixIcon: const Icon(Icons.password_rounded),
                             suffixIcon: IconButton(
-                              tooltip: (_obscureNewPassword ? 'Şifreyi göster' : 'Şifreyi gizle').tr,
+                              tooltip:
+                                  (_obscureNewPassword
+                                          ? 'Şifreyi göster'
+                                          : 'Şifreyi gizle')
+                                      .tr,
                               onPressed: _isLoading
                                   ? null
                                   : () {
@@ -215,7 +223,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                           ),
                           validator: _validateNewPassword,
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: AppTheme.spacingM),
                         TextFormField(
                           controller: _confirmNewPasswordController,
                           obscureText: _obscureConfirmPassword,
@@ -231,7 +239,11 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                             hintText: 'Yeni şifrenizi tekrar girin'.tr,
                             prefixIcon: const Icon(Icons.lock_reset_rounded),
                             suffixIcon: IconButton(
-                              tooltip: (_obscureConfirmPassword ? 'Şifreyi göster' : 'Şifreyi gizle').tr,
+                              tooltip:
+                                  (_obscureConfirmPassword
+                                          ? 'Şifreyi göster'
+                                          : 'Şifreyi gizle')
+                                      .tr,
                               onPressed: _isLoading
                                   ? null
                                   : () {
@@ -281,7 +293,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                             ],
                           ),
                         ),
-                        const SizedBox(height: 24),
+                        const SizedBox(height: AppTheme.spacingL),
                         PrimaryButton(
                           label: 'Şifreyi Güncelle',
                           icon: Icons.security_update_good_rounded,

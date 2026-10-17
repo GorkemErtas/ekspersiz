@@ -525,7 +525,12 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
               child: ListView(
                 keyboardDismissBehavior:
                     ScrollViewKeyboardDismissBehavior.onDrag,
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 36),
+                padding: const EdgeInsets.fromLTRB(
+                  AppTheme.pageInset,
+                  AppTheme.spacingM,
+                  AppTheme.pageInset,
+                  36,
+                ),
                 children: [
                   AppPageHeader(
                     icon: Icons.directions_car_filled_rounded,
@@ -542,10 +547,10 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                         : '${widget.businessAccount!.companyName} araçları bütün şirket üyeleriyle paylaşılır.',
                   ),
 
-                  const SizedBox(height: 24),
+                  const SizedBox(height: AppTheme.spacingL),
 
                   AppCard(
-                    padding: const EdgeInsets.all(20),
+                    padding: const EdgeInsets.all(AppTheme.cardPadding),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -582,7 +587,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                           validator: _validatePlate,
                         ),
 
-                        const SizedBox(height: 16),
+                        const SizedBox(height: AppTheme.spacingM),
 
                         DropdownButtonFormField<String>(
                           initialValue: _selectedBrand,
@@ -609,7 +614,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                           validator: _validateBrand,
                         ),
 
-                        const SizedBox(height: 16),
+                        const SizedBox(height: AppTheme.spacingM),
 
                         DropdownButtonFormField<String>(
                           initialValue: _selectedModel,
@@ -644,10 +649,10 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                     ),
                   ),
 
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppTheme.spacingM),
 
                   AppCard(
-                    padding: const EdgeInsets.all(20),
+                    padding: const EdgeInsets.all(AppTheme.cardPadding),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -683,7 +688,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                                     validator: _validateModelYear,
                                   ),
 
-                                  const SizedBox(height: 16),
+                                  const SizedBox(height: AppTheme.spacingM),
 
                                   TextFormField(
                                     controller: _mileageController,
@@ -754,146 +759,155 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                     ),
                   ),
 
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppTheme.spacingM),
 
                   AppCard(
                     padding: EdgeInsets.zero,
-                    child: ExpansionTile(
-                      initiallyExpanded: _isEditing,
-                      leading: Icon(
-                        _isEditing
-                            ? Icons.notes_outlined
-                            : Icons.event_note_outlined,
-                      ),
-                      title: AppText(
-                        _isEditing ? 'Araç notları' : 'Araç takip bilgileri',
-                      ),
-                      subtitle: AppText(
-                        _isEditing
-                            ? 'Servis, parça veya kullanım notlarını güncelleyin.'
-                            : 'İsteğe bağlı',
-                      ),
-                      childrenPadding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-                      children: [
-                        if (!_isEditing) ...[
-                          _trackingSectionTitle(
-                            icon: Icons.build_outlined,
-                            title: 'Periyodik bakım',
-                            subtitle:
-                                'Son bakım bilgilerini ve bakım aralığını girin.',
-                          ),
-
-                          _dateTile(
-                            'Son bakım tarihi',
-                            _lastMaintenanceDate,
-                            (value) => _lastMaintenanceDate = value,
-                          ),
-
-                          TextFormField(
-                            controller: _lastMaintenanceMileageController,
-                            keyboardType: TextInputType.number,
-                            decoration: InputDecoration(
-                              labelText: 'Son bakım kilometresi'.tr,
-                              suffixText: 'km',
-                            ),
-                          ),
-
-                          const SizedBox(height: 12),
-
-                          TextFormField(
-                            controller: _maintenanceIntervalMonthsController,
-                            keyboardType: TextInputType.number,
-                            decoration: InputDecoration(
-                              labelText: 'Bakım aralığı (ay)'.tr,
-                              helperText: 'Örn. her 12 ayda bir bakım'.tr,
-                            ),
-                          ),
-
-                          const SizedBox(height: 12),
-
-                          TextFormField(
-                            controller: _maintenanceIntervalMileageController,
-                            keyboardType: TextInputType.number,
-                            decoration: InputDecoration(
-                              labelText: 'Bakım aralığı (km)'.tr,
-                              helperText: 'Örn. her 10.000 km’de bir bakım'.tr,
-                              suffixText: 'km',
-                            ),
-                          ),
-
-                          _trackingDivider(),
-
-                          _trackingSectionTitle(
-                            icon: Icons.fact_check_outlined,
-                            title: 'Araç muayenesi',
-                            subtitle:
-                                'Son muayene tarihine göre bir sonraki muayeneyi hesaplayalım.',
-                          ),
-
-                          _inspectionSection(),
-
-                          _trackingDivider(),
-
-                          _trackingSectionTitle(
-                            icon: Icons.shield_outlined,
-                            title: 'Sigorta ve kasko',
-                            subtitle:
-                                'Poliçelerinizin bitiş tarihlerini takip edin.',
-                          ),
-
-                          _dateTile(
-                            'Trafik sigortası bitiş tarihi',
-                            _trafficInsuranceDate,
-                            (value) => _trafficInsuranceDate = value,
-                          ),
-
-                          _dateTile(
-                            'Kasko bitiş tarihi',
-                            _comprehensiveInsuranceDate,
-                            (value) => _comprehensiveInsuranceDate = value,
-                          ),
-
-                          _trackingDivider(),
-
-                          _trackingSectionTitle(
-                            icon: Icons.tire_repair_outlined,
-                            title: 'Lastik kontrolü',
-                            subtitle:
-                                'Bir sonraki lastik kontrol tarihini belirleyin.',
-                          ),
-
-                          _dateTile(
-                            'Lastik kontrol tarihi',
-                            _tireCheckDate,
-                            (value) => _tireCheckDate = value,
-                          ),
-
-                          _trackingDivider(),
-                        ],
-
-                        if (!_isEditing)
-                          _trackingSectionTitle(
-                            icon: Icons.notes_outlined,
-                            title: 'Araç notları',
-                            subtitle:
-                                'Araçla ilgili eklemek istediğiniz diğer bilgiler.',
-                          ),
-
-                        TextFormField(
-                          controller: _notesController,
-                          maxLines: 3,
-                          maxLength: 1000,
-                          decoration: InputDecoration(
-                            hintText:
-                                'Örn. servis, parça veya kullanım notları'.tr,
-                            alignLabelWithHint: true,
-                          ),
+                    child: Material(
+                      type: MaterialType.transparency,
+                      child: ExpansionTile(
+                        initiallyExpanded: _isEditing,
+                        leading: Icon(
+                          _isEditing
+                              ? Icons.notes_outlined
+                              : Icons.event_note_outlined,
                         ),
-                      ],
+                        title: AppText(
+                          _isEditing ? 'Araç notları' : 'Araç takip bilgileri',
+                        ),
+                        subtitle: AppText(
+                          _isEditing
+                              ? 'Servis, parça veya kullanım notlarını güncelleyin.'
+                              : 'İsteğe bağlı',
+                        ),
+                        childrenPadding: const EdgeInsets.fromLTRB(
+                          20,
+                          0,
+                          20,
+                          20,
+                        ),
+                        children: [
+                          if (!_isEditing) ...[
+                            _trackingSectionTitle(
+                              icon: Icons.build_outlined,
+                              title: 'Periyodik bakım',
+                              subtitle:
+                                  'Son bakım bilgilerini ve bakım aralığını girin.',
+                            ),
+
+                            _dateTile(
+                              'Son bakım tarihi',
+                              _lastMaintenanceDate,
+                              (value) => _lastMaintenanceDate = value,
+                            ),
+
+                            TextFormField(
+                              controller: _lastMaintenanceMileageController,
+                              keyboardType: TextInputType.number,
+                              decoration: InputDecoration(
+                                labelText: 'Son bakım kilometresi'.tr,
+                                suffixText: 'km',
+                              ),
+                            ),
+
+                            const SizedBox(height: 12),
+
+                            TextFormField(
+                              controller: _maintenanceIntervalMonthsController,
+                              keyboardType: TextInputType.number,
+                              decoration: InputDecoration(
+                                labelText: 'Bakım aralığı (ay)'.tr,
+                                helperText: 'Örn. her 12 ayda bir bakım'.tr,
+                              ),
+                            ),
+
+                            const SizedBox(height: 12),
+
+                            TextFormField(
+                              controller: _maintenanceIntervalMileageController,
+                              keyboardType: TextInputType.number,
+                              decoration: InputDecoration(
+                                labelText: 'Bakım aralığı (km)'.tr,
+                                helperText:
+                                    'Örn. her 10.000 km’de bir bakım'.tr,
+                                suffixText: 'km',
+                              ),
+                            ),
+
+                            _trackingDivider(),
+
+                            _trackingSectionTitle(
+                              icon: Icons.fact_check_outlined,
+                              title: 'Araç muayenesi',
+                              subtitle:
+                                  'Son muayene tarihine göre bir sonraki muayeneyi hesaplayalım.',
+                            ),
+
+                            _inspectionSection(),
+
+                            _trackingDivider(),
+
+                            _trackingSectionTitle(
+                              icon: Icons.shield_outlined,
+                              title: 'Sigorta ve kasko',
+                              subtitle:
+                                  'Poliçelerinizin bitiş tarihlerini takip edin.',
+                            ),
+
+                            _dateTile(
+                              'Trafik sigortası bitiş tarihi',
+                              _trafficInsuranceDate,
+                              (value) => _trafficInsuranceDate = value,
+                            ),
+
+                            _dateTile(
+                              'Kasko bitiş tarihi',
+                              _comprehensiveInsuranceDate,
+                              (value) => _comprehensiveInsuranceDate = value,
+                            ),
+
+                            _trackingDivider(),
+
+                            _trackingSectionTitle(
+                              icon: Icons.tire_repair_outlined,
+                              title: 'Lastik kontrolü',
+                              subtitle:
+                                  'Bir sonraki lastik kontrol tarihini belirleyin.',
+                            ),
+
+                            _dateTile(
+                              'Lastik kontrol tarihi',
+                              _tireCheckDate,
+                              (value) => _tireCheckDate = value,
+                            ),
+
+                            _trackingDivider(),
+                          ],
+
+                          if (!_isEditing)
+                            _trackingSectionTitle(
+                              icon: Icons.notes_outlined,
+                              title: 'Araç notları',
+                              subtitle:
+                                  'Araçla ilgili eklemek istediğiniz diğer bilgiler.',
+                            ),
+
+                          TextFormField(
+                            controller: _notesController,
+                            maxLines: 3,
+                            maxLength: 1000,
+                            decoration: InputDecoration(
+                              hintText:
+                                  'Örn. servis, parça veya kullanım notları'.tr,
+                              alignLabelWithHint: true,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
 
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppTheme.spacingM),
 
                   Container(
                     padding: const EdgeInsets.all(16),

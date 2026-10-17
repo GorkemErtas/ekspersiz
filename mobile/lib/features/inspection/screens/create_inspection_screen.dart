@@ -365,7 +365,12 @@ class _CreateInspectionScreenState extends State<CreateInspectionScreen> {
                 }
 
                 return ListView(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 36),
+                  padding: const EdgeInsets.fromLTRB(
+                    AppTheme.pageInset,
+                    AppTheme.spacingM,
+                    AppTheme.pageInset,
+                    36,
+                  ),
 
                   children: [
                     AppPageHeader(
@@ -379,10 +384,10 @@ class _CreateInspectionScreenState extends State<CreateInspectionScreen> {
                       badge: 'YAPAY ZEKÂ İNCELEMESİ',
                     ),
 
-                    const SizedBox(height: 24),
+                    const SizedBox(height: AppTheme.spacingL),
 
                     AppCard(
-                      padding: const EdgeInsets.all(20),
+                      padding: const EdgeInsets.all(AppTheme.cardPadding),
 
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -416,10 +421,10 @@ class _CreateInspectionScreenState extends State<CreateInspectionScreen> {
                       ),
                     ),
 
-                    const SizedBox(height: 16),
+                    const SizedBox(height: AppTheme.spacingM),
 
                     AppCard(
-                      padding: const EdgeInsets.all(20),
+                      padding: const EdgeInsets.all(AppTheme.cardPadding),
 
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,

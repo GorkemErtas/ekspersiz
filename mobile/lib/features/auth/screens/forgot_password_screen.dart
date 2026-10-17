@@ -208,10 +208,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 borderRadius: 18,
                 iconColor: Colors.white,
                 gradient: LinearGradient(
-                  colors: [
-                    AppTheme.primaryColor,
-                    AppTheme.secondaryColor,
-                  ],
+                  colors: [AppTheme.primaryColor, AppTheme.secondaryColor],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -228,7 +225,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: AppTheme.spacingL),
           AppText(
             _codeSent
                 ? 'E-postanıza gönderilen kodu girerek yeni şifrenizi belirleyin.'
@@ -238,7 +235,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               height: 1.5,
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: AppTheme.spacingL),
           if (!_codeSent)
             Form(
               key: _emailFormKey,
@@ -250,14 +247,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     textInputAction: TextInputAction.done,
                     autocorrect: false,
                     enableSuggestions: false,
-                    autofillHints: const [
-                      AutofillHints.email,
-                    ],
+                    autofillHints: const [AutofillHints.email],
                     decoration: const InputDecoration(
                       labelText: 'E-posta',
                       hintText: 'ornek@email.com',
-                      prefixIcon:
-                      Icon(Icons.mail_outline_rounded),
+                      prefixIcon: Icon(Icons.mail_outline_rounded),
                     ),
                     validator: _validateEmail,
                     onFieldSubmitted: (_) {
@@ -266,13 +260,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       }
                     },
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: AppTheme.spacingL),
                   PrimaryButton(
                     label: 'Kod Gönder',
                     icon: Icons.send_rounded,
                     isLoading: _isLoading,
-                    onPressed:
-                    _isLoading ? null : _sendCode,
+                    onPressed: _isLoading ? null : _sendCode,
                   ),
                 ],
               ),
@@ -287,36 +280,31 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     keyboardType: TextInputType.number,
                     textInputAction: TextInputAction.next,
                     maxLength: 6,
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
-                    ],
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     decoration: const InputDecoration(
                       labelText: 'Doğrulama Kodu',
                       hintText: '6 haneli kod',
-                      prefixIcon:
-                      Icon(Icons.pin_outlined),
+                      prefixIcon: Icon(Icons.pin_outlined),
                       counterText: '',
                     ),
                     validator: _validateCode,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppTheme.spacingM),
                   TextFormField(
                     controller: _newPasswordController,
                     obscureText: _obscureNewPassword,
                     textInputAction: TextInputAction.next,
                     decoration: InputDecoration(
                       labelText: 'Yeni Şifre',
-                      prefixIcon:
-                      const Icon(Icons.lock_outline_rounded),
+                      prefixIcon: const Icon(Icons.lock_outline_rounded),
                       suffixIcon: IconButton(
                         onPressed: _isLoading
                             ? null
                             : () {
-                          setState(() {
-                            _obscureNewPassword =
-                            !_obscureNewPassword;
-                          });
-                        },
+                                setState(() {
+                                  _obscureNewPassword = !_obscureNewPassword;
+                                });
+                              },
                         icon: Icon(
                           _obscureNewPassword
                               ? Icons.visibility_outlined
@@ -326,24 +314,23 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     ),
                     validator: _validatePassword,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppTheme.spacingM),
                   TextFormField(
                     controller: _confirmPasswordController,
                     obscureText: _obscureConfirmPassword,
                     textInputAction: TextInputAction.done,
                     decoration: InputDecoration(
                       labelText: 'Yeni Şifre Tekrar',
-                      prefixIcon:
-                      const Icon(Icons.lock_outline_rounded),
+                      prefixIcon: const Icon(Icons.lock_outline_rounded),
                       suffixIcon: IconButton(
                         onPressed: _isLoading
                             ? null
                             : () {
-                          setState(() {
-                            _obscureConfirmPassword =
-                            !_obscureConfirmPassword;
-                          });
-                        },
+                                setState(() {
+                                  _obscureConfirmPassword =
+                                      !_obscureConfirmPassword;
+                                });
+                              },
                         icon: Icon(
                           _obscureConfirmPassword
                               ? Icons.visibility_outlined
@@ -352,15 +339,13 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       ),
                     ),
                     validator: (value) {
-                      final passwordError =
-                      _validatePassword(value);
+                      final passwordError = _validatePassword(value);
 
                       if (passwordError != null) {
                         return passwordError;
                       }
 
-                      if (value !=
-                          _newPasswordController.text) {
+                      if (value != _newPasswordController.text) {
                         return 'Yeni şifreler eşleşmiyor.';
                       }
 
@@ -372,39 +357,34 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       }
                     },
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: AppTheme.spacingL),
                   PrimaryButton(
                     label: 'Şifreyi Değiştir',
                     icon: Icons.lock_reset_rounded,
                     isLoading: _isLoading,
-                    onPressed:
-                    _isLoading ? null : _resetPassword,
+                    onPressed: _isLoading ? null : _resetPassword,
                   ),
                   const SizedBox(height: 12),
                   TextButton(
                     onPressed: _isLoading
                         ? null
                         : () {
-                      setState(() {
-                        _codeSent = false;
-                        _codeController.clear();
-                        _newPasswordController.clear();
-                        _confirmPasswordController.clear();
-                      });
-                    },
-                    child: const AppText(
-                      'E-posta adresini değiştir',
-                    ),
+                            setState(() {
+                              _codeSent = false;
+                              _codeController.clear();
+                              _newPasswordController.clear();
+                              _confirmPasswordController.clear();
+                            });
+                          },
+                    child: const AppText('E-posta adresini değiştir'),
                   ),
                 ],
               ),
             ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppTheme.spacingM),
           Center(
             child: TextButton.icon(
-              onPressed: _isLoading
-                  ? null
-                  : () => Navigator.of(context).pop(),
+              onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
               icon: const Icon(Icons.arrow_back_rounded),
               label: const AppText('Giriş ekranına dön'),
             ),

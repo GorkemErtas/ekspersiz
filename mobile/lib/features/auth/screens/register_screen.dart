@@ -174,7 +174,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
 
           children: [
-
             const SizedBox(height: 10),
 
             AppText(
@@ -195,7 +194,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
             ),
 
-            const SizedBox(height: 28),
+            const SizedBox(height: 26),
 
             TextFormField(
               controller: _fullNameController,
@@ -213,7 +212,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               validator: _validateFullName,
             ),
 
-            const SizedBox(height: 16),
+            const SizedBox(height: AppTheme.spacingM),
 
             TextFormField(
               controller: _emailController,
@@ -234,7 +233,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               validator: _validateEmail,
             ),
 
-            const SizedBox(height: 16),
+            const SizedBox(height: AppTheme.spacingM),
 
             TextFormField(
               controller: _passwordController,
@@ -250,7 +249,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 prefixIcon: const Icon(Icons.lock_outline_rounded),
 
                 suffixIcon: IconButton(
-                  tooltip: (_obscurePassword ? 'Şifreyi göster' : 'Şifreyi gizle').tr,
+                  tooltip:
+                      (_obscurePassword ? 'Şifreyi göster' : 'Şifreyi gizle')
+                          .tr,
 
                   onPressed: _isLoading
                       ? null
@@ -271,7 +272,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               validator: _validatePassword,
             ),
 
-            const SizedBox(height: 16),
+            const SizedBox(height: AppTheme.spacingM),
 
             TextFormField(
               controller: _passwordConfirmController,
@@ -291,7 +292,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 prefixIcon: const Icon(Icons.lock_reset_rounded),
 
                 suffixIcon: IconButton(
-                  tooltip: (_obscurePasswordConfirm ? 'Şifreyi göster' : 'Şifreyi gizle').tr,
+                  tooltip:
+                      (_obscurePasswordConfirm
+                              ? 'Şifreyi göster'
+                              : 'Şifreyi gizle')
+                          .tr,
 
                   onPressed: _isLoading
                       ? null
@@ -348,7 +353,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
             ),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: AppTheme.spacingL),
 
             PrimaryButton(
               label: 'Hesap Oluştur',

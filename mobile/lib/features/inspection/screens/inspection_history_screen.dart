@@ -223,7 +223,12 @@ class _InspectionHistoryScreenState extends State<InspectionHistoryScreen> {
                   child: ListView.separated(
                     physics: const AlwaysScrollableScrollPhysics(),
 
-                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 120),
+                    padding: const EdgeInsets.fromLTRB(
+                      AppTheme.pageInset,
+                      AppTheme.spacingM,
+                      AppTheme.pageInset,
+                      120,
+                    ),
 
                     itemCount: inspections.length + 1,
 
@@ -434,7 +439,7 @@ class _InspectionHistoryCard extends StatelessWidget {
             ],
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: AppTheme.spacingM),
 
           Wrap(
             spacing: 12,
