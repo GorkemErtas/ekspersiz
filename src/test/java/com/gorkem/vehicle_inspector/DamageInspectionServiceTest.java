@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockMultipartFile;
@@ -152,8 +153,9 @@ class DamageInspectionServiceTest {
         assertEquals(InspectionStatus.PENDING, inspection.getStatus());
         verify(inspections, never()).save(any());
         verify(ai).validateImage(Path.of("image.jpg"), "damage");
-        verify(ai).validateImage(Path.of("context-image.jpg"), "context");
-        verify(ai, never()).analyze(any(), any());
+        verify(ai, never()).validateImage(Path.of("context-image.jpg"), "context");
+        verify(ai, never()).analyzeSingleImage(any(), any());
+        verify(ai, never()).analyze(any(), any(), any());
         verifyNoInteractions(reports);
     }
 
@@ -256,7 +258,7 @@ class DamageInspectionServiceTest {
     }
 
     @Test
-    void newClientRequiresContextImageBeforeAnalysis() {
+    void legacyClientStillRequiresContextImageWhenExplicitlyRequested() {
         inspection.setContextImagePath(null);
 
         assertThrows(
@@ -268,14 +270,15 @@ class DamageInspectionServiceTest {
                 )
         );
 
-        verify(ai, never()).analyze(any(), any());
+        verify(ai, never()).analyzeSingleImage(any(), any());
+        verify(ai, never()).analyze(any(), any(), any());
         verifyNoInteractions(analysisUsageRepository);
     }
 
     @Test
     void failedAnalysisRetainsReservationAndSameMonthRetryDoesNotConsumeAnotherSlot() {
         when(storage.resolveStoredFile("image.jpg")).thenReturn(Path.of("image.jpg"));
-        when(ai.analyze(any(), any(), any())).thenThrow(new IllegalStateException("AI unavailable"));
+        when(ai.analyzeSingleImage(any(), any())).thenThrow(new IllegalStateException("AI unavailable"));
         assertEquals(InspectionStatus.FAILED, service.analyzeInspection(30L, actor.getEmail()).getStatus());
         assertEquals(NOW, inspection.getAnalysisStartedAt());
 
@@ -289,7 +292,7 @@ class DamageInspectionServiceTest {
                 );
         verify(analysisUsageRepository, times(1))
                 .save(any(AnalysisUsage.class));
-        verify(ai, times(2)).analyze(any(), any(), any());
+        verify(ai, times(2)).analyzeSingleImage(any(), any());
     }
 
     @Test
@@ -307,8 +310,9 @@ class DamageInspectionServiceTest {
         assertThrows(IllegalStateException.class, () -> service.analyzeInspection(30L, actor.getEmail()));
         assertEquals(NOW.minusMonths(1), inspection.getAnalysisStartedAt());
         verify(ai).validateImage(Path.of("image.jpg"), "damage");
-        verify(ai).validateImage(Path.of("context-image.jpg"), "context");
-        verify(ai, never()).analyze(any(), any());
+        verify(ai, never()).validateImage(Path.of("context-image.jpg"), "context");
+        verify(ai, never()).analyzeSingleImage(any(), any());
+        verify(ai, never()).analyze(any(), any(), any());
     }
 
     @Test
@@ -371,7 +375,7 @@ class DamageInspectionServiceTest {
     void reportFailureKeepsCompletedAnalysisAndCreator() {
         when(storage.resolveStoredFile("image.jpg")).thenReturn(Path.of("image.jpg"));
         AiAnalysisResponse response = minorAnalysisResponse();
-        when(ai.analyze(any(), any(), any())).thenReturn(response);
+        when(ai.analyzeSingleImage(any(), any())).thenReturn(response);
         when(reports.generateReport(any())).thenThrow(new IllegalStateException("Gemini unavailable"));
 
         var result = service.analyzeInspection(30L, actor.getEmail());
@@ -386,7 +390,7 @@ class DamageInspectionServiceTest {
         when(storage.resolveStoredFile("image.jpg")).thenReturn(Path.of("image.jpg"));
         AiAnalysisResponse response = new AiAnalysisResponse();
         response.setDamageSeverity(DamageSeverity.NONE);
-        when(ai.analyze(any(), any(), any())).thenReturn(response);
+        when(ai.analyzeSingleImage(any(), any())).thenReturn(response);
 
         var result = service.analyzeInspection(30L, actor.getEmail());
 
@@ -414,7 +418,7 @@ class DamageInspectionServiceTest {
     @Test
     void validMinorDamageRemainsMinorAndUsesGeminiReport() {
         when(storage.resolveStoredFile("image.jpg")).thenReturn(Path.of("image.jpg"));
-        when(ai.analyze(any(), any(), any())).thenReturn(minorAnalysisResponse());
+        when(ai.analyzeSingleImage(any(), any())).thenReturn(minorAnalysisResponse());
         when(reports.generateReport(any())).thenReturn(report());
 
         var result = service.analyzeInspection(30L, actor.getEmail());
@@ -430,7 +434,7 @@ class DamageInspectionServiceTest {
     @Test
     void invalidAiResponseIsTechnicalFailureAndKeepsQuotaReservationForRetry() {
         when(storage.resolveStoredFile("image.jpg")).thenReturn(Path.of("image.jpg"));
-        when(ai.analyze(any(), any(), any())).thenReturn(new AiAnalysisResponse());
+        when(ai.analyzeSingleImage(any(), any())).thenReturn(new AiAnalysisResponse());
 
         var result = service.analyzeInspection(30L, actor.getEmail());
 
@@ -445,7 +449,7 @@ class DamageInspectionServiceTest {
         when(storage.resolveStoredFile("image.jpg")).thenReturn(Path.of("image.jpg"));
         AiAnalysisResponse response = minorAnalysisResponse();
         response.setDamageSeverity(DamageSeverity.NONE);
-        when(ai.analyze(any(), any(), any())).thenReturn(response);
+        when(ai.analyzeSingleImage(any(), any())).thenReturn(response);
 
         var result = service.analyzeInspection(30L, actor.getEmail());
 
@@ -470,7 +474,8 @@ class DamageInspectionServiceTest {
         assertTrue(exception.getMessage().contains("çok karanlık"));
         assertEquals(InspectionStatus.PENDING, inspection.getStatus());
         assertNull(inspection.getAnalysisStartedAt());
-        verify(ai, never()).analyze(any(), any());
+        verify(ai, never()).analyzeSingleImage(any(), any());
+        verify(ai, never()).analyze(any(), any(), any());
         verifyNoInteractions(analysisUsageRepository);
     }
 
@@ -488,15 +493,63 @@ class DamageInspectionServiceTest {
         assertEquals(InspectionStatus.FAILED, inspection.getStatus());
         assertNull(inspection.getAnalysisStartedAt());
         assertTrue(inspection.getAnalysisMessage().contains("unavailable"));
-        verify(ai, never()).analyze(any(), any());
+        verify(ai, never()).analyzeSingleImage(any(), any());
+        verify(ai, never()).analyze(any(), any(), any());
         verifyNoInteractions(analysisUsageRepository);
+    }
+
+    @Test
+    void singlePhotoIgnoresStoredLegacyContextAndForwardsNormalizedRegion() {
+        successfulAnalysis();
+
+        var result = service.analyzeInspection(30L, actor.getEmail(), false, " front ");
+
+        assertEquals(InspectionStatus.COMPLETED, result.getStatus());
+        verify(ai).analyzeSingleImage(Path.of("image.jpg"), "FRONT");
+        verify(ai, never()).validateImage(Path.of("context-image.jpg"), "context");
+        verify(ai, never()).analyze(any(), any(), any());
+        verify(storage, never()).resolveStoredFile("context-image.jpg");
+        verify(storage, never()).deleteStoredFile(any());
+        assertEquals("context-image.jpg", inspection.getContextImagePath());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"FRONT", "REAR"})
+    void singlePhotoDoesNotRequireAContextFile(String region) {
+        inspection.setContextImagePath(null);
+        successfulAnalysis();
+
+        assertEquals(InspectionStatus.COMPLETED,
+                service.analyzeInspection(30L, actor.getEmail(), false, region).getStatus());
+        verify(ai).analyzeSingleImage(Path.of("image.jpg"), region);
+    }
+
+    @Test
+    void legacyExplicitPairChecksBothPhotosAndForwardsRegion() {
+        AiAnalysisResponse response = new AiAnalysisResponse();
+        response.setDamageSeverity(DamageSeverity.NONE);
+        when(ai.analyze(any(), any(), any())).thenReturn(response);
+
+        assertEquals(InspectionStatus.COMPLETED,
+                service.analyzeInspection(30L, actor.getEmail(), true, "rear").getStatus());
+
+        verify(ai).validateImage(Path.of("context-image.jpg"), "context");
+        verify(ai).analyze(Path.of("image.jpg"), Path.of("context-image.jpg"), "REAR");
+        verify(ai, never()).analyzeSingleImage(any(), any());
+    }
+
+    @Test
+    void invalidRegionIsRejectedBeforePhotoOrQuotaOperations() {
+        assertThrows(IllegalArgumentException.class,
+                () -> service.analyzeInspection(30L, actor.getEmail(), false, "SIDE"));
+        verifyNoInteractions(ai, storage, analysisUsageRepository);
     }
 
     private void successfulAnalysis() {
         when(storage.resolveStoredFile("image.jpg")).thenReturn(Path.of("image.jpg"));
         AiAnalysisResponse response = new AiAnalysisResponse();
         response.setDamageSeverity(DamageSeverity.NONE);
-        when(ai.analyze(any(), any(), any())).thenReturn(response);
+        when(ai.analyzeSingleImage(any(), any())).thenReturn(response);
     }
 
     private static AiAnalysisResponse minorAnalysisResponse() {

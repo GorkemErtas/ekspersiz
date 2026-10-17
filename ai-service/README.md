@@ -6,10 +6,13 @@ The production service uses the reviewed CarDD five-class damage detector:
 
 ```text
 image
-  -> yolo11n.pt vehicle detection and primary-vehicle crop
+  -> existing brightness/blur and supported-file validation
+  -> yolo11n.pt vehicle detection and existing primary-vehicle crop
+     (if no vehicle: require a known vehicle part and keep the full input image)
   -> models/candidates/damage_detection_v2_cardd_5class.pt damage detection
   -> models/vehicle_part_best.pt vehicle-part detection
   -> bounding-box overlap matching
+  -> optional FRONT/REAR correction of ambiguous paired parts
   -> deterministic severity and repair recommendation
   -> FastAPI response
 ```
@@ -21,6 +24,10 @@ deterministic domain result, never a learned damage class.
 
 All three production weights are deployment artifacts ignored by Git and must
 be present at the paths above. The service has no runtime model override.
+
+The current mobile flow uploads only `image` and forwards `vehicle_region` through
+the backend. `context_image` / `analyze_pair` remain available only for explicit
+legacy two-photo requests. See [single-photo rollout and regression notes](../docs/SINGLE_PHOTO_ANALYSIS.md).
 
 ## Detection V2 dataset and training
 

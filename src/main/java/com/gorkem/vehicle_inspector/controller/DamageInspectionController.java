@@ -184,6 +184,8 @@ public class DamageInspectionController {
         );
     }
 
+    // requireContext=true is an explicit legacy opt-in, never inferred from stored files.
+    // Region stays optional for older clients; the current mobile UI requires FRONT/REAR.
     @PostMapping("/{inspectionId}/analyze")
     public ResponseEntity<DamageInspectionResponse>
     analyzeInspection(

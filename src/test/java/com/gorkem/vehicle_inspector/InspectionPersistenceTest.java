@@ -135,7 +135,7 @@ class InspectionPersistenceTest {
         when(verificationCodes.generate()).thenReturn("123456");
         when(verificationCodes.hash("123456")).thenReturn("code-hash");
         when(verificationCodes.matches("123456", "code-hash")).thenReturn(true);
-        when(ai.analyze(any())).thenAnswer(call -> {
+        when(ai.analyzeSingleImage(any(), any())).thenAnswer(call -> {
             assertFalse(TransactionSynchronizationManager.isActualTransactionActive());
             AiAnalysisResponse response = new AiAnalysisResponse();
             response.setDamageSeverity(DamageSeverity.NONE);
@@ -561,7 +561,7 @@ class InspectionPersistenceTest {
                             )
             );
             assertNull(inspections.findById(ids[1]).orElseThrow().getAnalysisStartedAt());
-            verify(ai, times(1)).analyze(any());
+            verify(ai, times(1)).analyzeSingleImage(any(), any());
         } finally {
             releaseFirst.countDown();
             executor.shutdownNow();
@@ -574,7 +574,7 @@ class InspectionPersistenceTest {
         Long id = tx.execute(status -> saveInspection(firstVehicle, owner, null, InspectionStatus.PENDING).getId());
         CountDownLatch analyzing = new CountDownLatch(1);
         CountDownLatch finish = new CountDownLatch(1);
-        when(ai.analyze(any())).thenAnswer(call -> {
+        when(ai.analyzeSingleImage(any(), any())).thenAnswer(call -> {
             analyzing.countDown();
             assertTrue(finish.await(10, TimeUnit.SECONDS));
             AiAnalysisResponse response = new AiAnalysisResponse();
@@ -588,7 +588,7 @@ class InspectionPersistenceTest {
             assertThrows(IllegalStateException.class, () -> service.analyzeInspection(id, member.getEmail()));
             finish.countDown();
             request.get(10, TimeUnit.SECONDS);
-            verify(ai, times(1)).analyze(any());
+            verify(ai, times(1)).analyzeSingleImage(any(), any());
         } finally {
             finish.countDown();
             executor.shutdownNow();

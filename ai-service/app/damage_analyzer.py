@@ -4,7 +4,7 @@ import logging
 import re
 from typing import Any
 
-from PIL import Image, UnidentifiedImageError
+from PIL import Image, JpegImagePlugin, PngImagePlugin, WebPImagePlugin, UnidentifiedImageError
 import cv2
 import numpy as np
 from ultralytics import YOLO
@@ -190,25 +190,9 @@ class DamageAnalyzer:
                 "Image validation purpose must be 'damage' or 'context'."
             )
         image = self._load_image(file_content)
-        grayscale = cv2.cvtColor(
-            np.asarray(image),
-            cv2.COLOR_RGB2GRAY,
-        )
-
-        if float(grayscale.mean()) < self.minimum_brightness:
-            return ImageQualityResponse(
-                suitable=False,
-                code="TOO_DARK",
-                message="Fotoğraf çok karanlık. Daha aydınlık bir ortamda tekrar çekin.",
-            )
-
-        blur_score = float(cv2.Laplacian(grayscale, cv2.CV_64F).var())
-        if blur_score < self.minimum_blur_score:
-            return ImageQualityResponse(
-                suitable=False,
-                code="TOO_BLURRY",
-                message="Görüntü yeterince net değil. Kamerayı sabit tutup tekrar çekin.",
-            )
+        quality_issue = self._photometric_quality_issue(image)
+        if quality_issue is not None:
+            return quality_issue
 
         # The close damage photo is intentionally allowed to omit the full
         # vehicle. Its job is to preserve fine damage detail; requiring a
@@ -217,7 +201,7 @@ class DamageAnalyzer:
             return ImageQualityResponse(
                 suitable=True,
                 code="SUITABLE",
-                message="Yakın hasar fotoğrafı analiz için uygun.",
+                message="Hasar fotoğrafı analiz için uygun. Hasar ve çevresindeki parça net görünmeli.",
             )
 
         vehicle_results = self.vehicle_model.predict(
@@ -265,11 +249,40 @@ class DamageAnalyzer:
         box = detection.boundingBox
         return max(0.0, box.x2 - box.x1) * max(0.0, box.y2 - box.y1)
 
+    def _photometric_quality_issue(self, image: Image.Image) -> ImageQualityResponse | None:
+        grayscale = cv2.cvtColor(np.asarray(image), cv2.COLOR_RGB2GRAY)
+        if float(grayscale.mean()) < self.minimum_brightness:
+            return ImageQualityResponse(
+                suitable=False,
+                code="TOO_DARK",
+                message="Fotoğraf çok karanlık. Daha aydınlık bir ortamda tekrar çekin.",
+            )
+        if float(cv2.Laplacian(grayscale, cv2.CV_64F).var()) < self.minimum_blur_score:
+            return ImageQualityResponse(
+                suitable=False,
+                code="TOO_BLURRY",
+                message="Görüntü yeterince net değil. Kamerayı sabit tutup tekrar çekin.",
+            )
+        return None
+
+    def _detect_vehicle_parts(self, image: Image.Image) -> list[DetectedObject]:
+        results = self.vehicle_part_model.predict(
+            source=image,
+            conf=self.vehicle_part_confidence_threshold,
+            iou=0.50,
+            max_det=50,
+            verbose=False,
+        )
+        return self._extract_detections(results)
+
     def analyze(
             self,
             file_content: bytes,
             filename: str,
+            vehicle_region: str | None = None,
     ) -> DamageAnalysisResponse:
+        if vehicle_region not in {None, "FRONT", "REAR"}:
+            raise ValueError("vehicle_region must be FRONT or REAR.")
         safe_filename = Path(
             filename or "vehicle.jpg"
         ).name.lower()
@@ -277,6 +290,9 @@ class DamageAnalyzer:
         image = self._load_image(
             file_content
         )
+        quality_issue = self._photometric_quality_issue(image)
+        if quality_issue is not None:
+            raise ValueError(quality_issue.message)
 
         vehicle_results = self.vehicle_model.predict(
             source=image,
@@ -295,10 +311,20 @@ class DamageAnalyzer:
                in self.VEHICLE_LABELS
         ]
 
+        vehicle_part_detections = None
         if not vehicle_detections:
-            raise ValueError(
-                "Uploaded image does not contain a recognizable vehicle."
-            )
+            # Generic object detectors miss partial vehicles. Require evidence
+            # from the existing part model, never a damage prediction alone.
+            # Keep the original pixels and the existing confidence threshold.
+            vehicle_part_detections = self._detect_vehicle_parts(image)
+            if not any(
+                part.label.strip().lower() in self.VEHICLE_PART_MAPPING
+                for part in vehicle_part_detections
+            ):
+                raise ValueError(
+                    "Fotoğrafta araç veya araç parçası seçilemiyor. "
+                    "Hasarı ve çevresindeki parçayı aynı karede, net ve yeterli ışıkta çekin."
+                )
 
         (
             analysis_image,
@@ -333,24 +359,8 @@ class DamageAnalyzer:
             )
 
 
-        vehicle_part_results = (
-            self.vehicle_part_model.predict(
-                source=analysis_image,
-                conf=(
-                    self.vehicle_part_confidence_threshold
-                ),
-                iou=0.50,
-                max_det=50,
-                verbose=False,
-            )
-        )
-
-
-        vehicle_part_detections = (
-            self._extract_detections(
-                vehicle_part_results
-            )
-        )
+        if vehicle_part_detections is None:
+            vehicle_part_detections = self._detect_vehicle_parts(analysis_image)
 
 
         damage_detections = (
@@ -378,6 +388,7 @@ class DamageAnalyzer:
                 ),
             )
         )
+        self._apply_vehicle_region_constraint(matched_damage_detections, vehicle_region)
 
         primary_damage = max(
             matched_damage_detections,
@@ -1117,13 +1128,28 @@ class DamageAnalyzer:
                 "Uploaded image is empty."
             )
 
+        # Use the same Pillow codecs directly. Ultralytics replaces Image.open
+        # with a HEIF fallback that may try to install a plugin for corrupt input;
+        # this API only accepts JPEG/PNG/WEBP and must never install at request time.
+        if file_content.startswith(b"\xff\xd8"):
+            decoder = JpegImagePlugin.jpeg_factory
+        elif file_content.startswith(b"\x89PNG\r\n\x1a\n"):
+            decoder = PngImagePlugin.PngImageFile
+        elif file_content[:4] == b"RIFF" and file_content[8:12] == b"WEBP":
+            decoder = WebPImagePlugin.WebPImageFile
+        else:
+            raise ValueError("Uploaded file is not a valid JPG, PNG or WEBP image.")
+
         try:
-            with Image.open(
+            with decoder(
                     BytesIO(file_content)
             ) as image:
+                # Image.open normally applies Pillow's existing pixel safety
+                # policy; direct codecs must retain it before verify/convert.
+                Image._decompression_bomb_check(image.size)
                 image.verify()
 
-            with Image.open(
+            with decoder(
                     BytesIO(file_content)
             ) as verified_image:
                 # convert() already owns a new RGB buffer; avoid duplicating it.
@@ -1133,6 +1159,9 @@ class DamageAnalyzer:
                 UnidentifiedImageError,
                 OSError,
                 ValueError,
+                SyntaxError,
+                EOFError,
+                Image.DecompressionBombError,
         ) as exc:
             raise ValueError(
                 "Uploaded file is not a valid image."

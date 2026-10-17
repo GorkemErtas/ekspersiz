@@ -43,13 +43,32 @@ private static final long[] RETRY_DELAYS_MS = {
     public AiAnalysisResponse analyze(
             Path imagePath
     ) {
-        return postImage(
-                imagePath,
-                "/api/v1/analyze",
-                AiAnalysisResponse.class
-        );
+        return analyzeSingleImage(imagePath, null);
     }
 
+    public AiAnalysisResponse analyzeSingleImage(Path imagePath, String vehicleRegion) {
+        validateImagePath(imagePath);
+        MultiValueMap<String, Object> multipartBody = new LinkedMultiValueMap<>();
+        multipartBody.add("image", buildImagePart(imagePath, "image"));
+        if (vehicleRegion != null && !vehicleRegion.isBlank()) {
+            multipartBody.add("vehicle_region", vehicleRegion);
+        }
+        try {
+            return postMultipart(multipartBody, "/api/v1/analyze", AiAnalysisResponse.class);
+        } catch (AiServiceException exception) {
+            if (exception.getCause() instanceof HttpStatusCodeException response
+                    && response.getStatusCode().value() == 400) {
+                throw new AiServiceException(
+                        "Fotoğraf analiz için uygun değil. Hasarı ve çevresindeki araç parçasını "
+                                + "aynı karede, net ve yeterli ışıkta gösteren bir fotoğraf kullanın.",
+                        exception
+                );
+            }
+            throw exception;
+        }
+    }
+
+    // Compatibility for released two-photo clients; new clients never call this overload.
     public AiAnalysisResponse analyze(
             Path imagePath,
             Path contextImagePath

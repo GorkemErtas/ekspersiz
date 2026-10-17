@@ -18,9 +18,14 @@ import '../services/inspection_service.dart';
 import 'analyzing_screen.dart';
 
 class UploadDamageImageScreen extends StatefulWidget {
-  const UploadDamageImageScreen({super.key, required this.inspection});
+  const UploadDamageImageScreen({
+    super.key,
+    required this.inspection,
+    this.imagePicker,
+  });
 
   final DamageInspection inspection;
+  final ImagePicker? imagePicker;
 
   @override
   State<UploadDamageImageScreen> createState() =>
@@ -30,7 +35,7 @@ class UploadDamageImageScreen extends StatefulWidget {
 class _UploadDamageImageScreenState extends State<UploadDamageImageScreen> {
   static const int _maxImageSizeBytes = 10 * 1024 * 1024;
 
-  final ImagePicker _imagePicker = ImagePicker();
+  late final ImagePicker _imagePicker = widget.imagePicker ?? ImagePicker();
 
   final InspectionService _inspectionService = const InspectionService();
 
@@ -41,10 +46,7 @@ class _UploadDamageImageScreenState extends State<UploadDamageImageScreen> {
 
   bool _isUploading = false;
   String? _qualityIssue;
-  int _photoStep = 1;
   String? _vehicleRegion;
-
-  bool get _isContextStep => _photoStep == 2;
 
   Future<void> _pickImage(ImageSource source) async {
     try {
@@ -175,6 +177,7 @@ class _UploadDamageImageScreenState extends State<UploadDamageImageScreen> {
   }
 
   Future<void> _uploadImage() async {
+    if (_isUploading) return;
     final imageBytes = _selectedImageBytes;
 
     final contentType = _selectedContentType;
@@ -183,6 +186,10 @@ class _UploadDamageImageScreenState extends State<UploadDamageImageScreen> {
 
     if (imageBytes == null || contentType == null || filename == null) {
       _showMessage('Lütfen önce bir fotoğraf seçin.');
+      return;
+    }
+    if (_vehicleRegion != 'FRONT' && _vehicleRegion != 'REAR') {
+      _showMessage('Lütfen hasarın bulunduğu ön veya arka yarıyı seçin.');
       return;
     }
 
@@ -201,25 +208,15 @@ class _UploadDamageImageScreenState extends State<UploadDamageImageScreen> {
     });
 
     try {
-      final updatedInspection = _isContextStep
-          ? await _inspectionService.uploadContextImage(
-              inspectionId: widget.inspection.id,
-              imageBytes: imageBytes,
-              filename: filename,
-              contentType: contentType,
-            )
-          : await _inspectionService.uploadImage(
-              inspectionId: widget.inspection.id,
-              imageBytes: imageBytes,
-              filename: filename,
-              contentType: contentType,
-            );
-
-      final quality = _isContextStep
-          ? await _inspectionService.validateContextImageQuality(
-              widget.inspection.id,
-            )
-          : await _inspectionService.validateImageQuality(widget.inspection.id);
+      final updatedInspection = await _inspectionService.uploadImage(
+        inspectionId: widget.inspection.id,
+        imageBytes: imageBytes,
+        filename: filename,
+        contentType: contentType,
+      );
+      final quality = await _inspectionService.validateImageQuality(
+        widget.inspection.id,
+      );
 
       if (!mounted) {
         return;
@@ -228,17 +225,6 @@ class _UploadDamageImageScreenState extends State<UploadDamageImageScreen> {
       if (!quality.suitable) {
         setState(() {
           _qualityIssue = quality.message;
-        });
-        return;
-      }
-
-      if (!_isContextStep) {
-        setState(() {
-          _photoStep = 2;
-          _selectedImageBytes = null;
-          _selectedContentType = null;
-          _selectedFilename = null;
-          _qualityIssue = null;
         });
         return;
       }
@@ -268,21 +254,6 @@ class _UploadDamageImageScreenState extends State<UploadDamageImageScreen> {
         });
       }
     }
-  }
-
-  void _returnToDamagePhoto() {
-    if (_isUploading || !_isContextStep) {
-      return;
-    }
-
-    setState(() {
-      _photoStep = 1;
-      _selectedImageBytes = null;
-      _selectedContentType = null;
-      _selectedFilename = null;
-      _qualityIssue = null;
-      _vehicleRegion = null;
-    });
   }
 
   void _showMessage(String message) {
@@ -321,9 +292,7 @@ class _UploadDamageImageScreenState extends State<UploadDamageImageScreen> {
               const SizedBox(height: 6),
 
               AppText(
-                _isContextStep
-                    ? 'Araç bölgesinin daha geniş fotoğrafını nasıl eklemek istediğinizi seçin.'
-                    : 'Hasarlı bölgenin fotoğrafını nasıl eklemek istediğinizi seçin.',
+                'Hasarı ve çevresindeki araç parçasını gösteren fotoğrafınızı seçin.',
                 style: textTheme.bodyMedium?.copyWith(
                   color: colorScheme.onSurfaceVariant,
                 ),
@@ -388,11 +357,7 @@ class _UploadDamageImageScreenState extends State<UploadDamageImageScreen> {
     final hasImage = _selectedImageBytes != null;
 
     return Scaffold(
-      appBar: AppBar(
-        title: AppText(
-          _isContextStep ? 'Araç Bölgesi Fotoğrafı' : 'Hasar Fotoğrafı',
-        ),
-      ),
+      appBar: AppBar(title: const AppText('Hasar Fotoğrafı')),
 
       body: SafeArea(
         child: Center(
@@ -403,21 +368,13 @@ class _UploadDamageImageScreenState extends State<UploadDamageImageScreen> {
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 36),
 
               children: [
-                AppPageHeader(
-                  icon: _isContextStep
-                      ? Icons.zoom_out_map_rounded
-                      : Icons.image_search_rounded,
-                  title: _isContextStep
-                      ? 'Biraz geri çekilin'
-                      : 'Hasarı yakından görüntüleyin',
-                  subtitle: _isContextStep
-                      ? 'Hasar net görünmeye devam ederken çevresindeki araç '
-                            'parçalarını da kadraja alın. Bu fotoğraf, hasarın '
-                            'aracın hangi bölümünde olduğunu belirlemek için kullanılacak.'
-                      : 'Hasarlı bölgeyi yakından ve net şekilde görüntüleyin. '
-                            'Çizik, ezik, çatlak veya kırık bölgenin ayrıntıları '
-                            'belirgin olsun.',
-                  badge: _isContextStep ? '2 / 2 • GENİŞ AÇI' : '1 / 2 • HASAR',
+                const AppPageHeader(
+                  icon: Icons.image_search_rounded,
+                  title: 'Hasarı ve çevresindeki parçayı gösterin',
+                  subtitle:
+                      'Tek bir net fotoğraf yeterli. Hasarın ayrıntıları ve bulunduğu '
+                      'araç parçası aynı karede görünsün; çok yakından veya uzaktan çekmeyin.',
+                  badge: 'TEK FOTOĞRAF',
                 ),
 
                 const SizedBox(height: 24),
@@ -508,43 +465,28 @@ class _UploadDamageImageScreenState extends State<UploadDamageImageScreen> {
 
                 const SizedBox(height: 18),
 
-                _PhotoTipsCard(isContextStep: _isContextStep),
+                const _PhotoTipsCard(),
 
-                if (_isContextStep) ...[
-                  const SizedBox(height: 18),
-                  _VehicleRegionSelector(
-                    value: _vehicleRegion,
-                    enabled: !_isUploading,
-                    onChanged: (value) {
-                      setState(() => _vehicleRegion = value);
-                    },
-                  ),
-                  const SizedBox(height: 8),
-                  TextButton.icon(
-                    onPressed: _isUploading ? null : _returnToDamagePhoto,
-                    icon: const Icon(Icons.arrow_back_rounded),
-                    label: const AppText('İlk fotoğrafı değiştir'),
-                  ),
-                ],
+                const SizedBox(height: 18),
+
+                _VehicleRegionSelector(
+                  value: _vehicleRegion,
+                  enabled: !_isUploading,
+                  onChanged: (value) => setState(() => _vehicleRegion = value),
+                ),
 
                 const SizedBox(height: 26),
 
                 PrimaryButton(
-                  label: hasImage
-                      ? (_isContextStep ? 'AI Analizini Başlat' : 'Devam Et')
-                      : 'Fotoğraf Seç',
+                  label: hasImage ? 'AI Analizini Başlat' : 'Fotoğraf Seç',
                   icon: hasImage
-                      ? (_isContextStep
-                            ? Icons.auto_awesome_rounded
-                            : Icons.arrow_forward_rounded)
+                      ? Icons.auto_awesome_rounded
                       : Icons.add_a_photo_outlined,
                   isLoading: _isUploading,
                   onPressed: _isUploading
                       ? null
                       : hasImage
-                      ? (_isContextStep && _vehicleRegion == null
-                            ? null
-                            : _uploadImage)
+                      ? (_vehicleRegion == null ? null : _uploadImage)
                       : _showImageSourceSheet,
                 ),
               ],
@@ -584,35 +526,31 @@ class _VehicleRegionSelector extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           AppText(
-            'AI’ın ön ve arka parçaları doğru ayırmasına yardımcı olur.',
+            'Analizden önce bir yarı seçin. AI’ın ön ve arka parçaları ayırmasına yardımcı olur.',
             style: textTheme.bodySmall?.copyWith(
               color: colorScheme.onSurfaceVariant,
             ),
           ),
           const SizedBox(height: 12),
-          SegmentedButton<String>(
-            segments: const [
-              ButtonSegment<String>(
-                value: 'FRONT',
-                icon: Icon(Icons.arrow_upward_rounded),
-                label: AppText('Ön yarı'),
+          Wrap(
+            spacing: 10,
+            runSpacing: 8,
+            children: [
+              ChoiceChip(
+                label: const AppText('Ön yarı'),
+                avatar: const Icon(Icons.arrow_upward_rounded, size: 18),
+                selected: value == 'FRONT',
+                onSelected: enabled ? (_) => onChanged('FRONT') : null,
+                materialTapTargetSize: MaterialTapTargetSize.padded,
               ),
-              ButtonSegment<String>(
-                value: 'REAR',
-                icon: Icon(Icons.arrow_downward_rounded),
-                label: AppText('Arka yarı'),
+              ChoiceChip(
+                label: const AppText('Arka yarı'),
+                avatar: const Icon(Icons.arrow_downward_rounded, size: 18),
+                selected: value == 'REAR',
+                onSelected: enabled ? (_) => onChanged('REAR') : null,
+                materialTapTargetSize: MaterialTapTargetSize.padded,
               ),
             ],
-            selected: value == null ? <String>{} : <String>{value!},
-            emptySelectionAllowed: true,
-            showSelectedIcon: false,
-            onSelectionChanged: enabled
-                ? (selection) {
-                    if (selection.isNotEmpty) {
-                      onChanged(selection.first);
-                    }
-                  }
-                : null,
           ),
         ],
       ),
@@ -880,9 +818,7 @@ class _SelectedFileInfo extends StatelessWidget {
 }
 
 class _PhotoTipsCard extends StatelessWidget {
-  const _PhotoTipsCard({required this.isContextStep});
-
-  final bool isContextStep;
+  const _PhotoTipsCard();
 
   @override
   Widget build(BuildContext context) {
@@ -927,20 +863,19 @@ class _PhotoTipsCard extends StatelessWidget {
 
           const SizedBox(height: 10),
 
-          _PhotoTip(
+          const _PhotoTip(
             icon: Icons.center_focus_strong_outlined,
-            text: isContextStep
-                ? 'Hasar görünür kalırken çevresindeki araç parçalarını da kadraja alın.'
-                : 'Hasarlı bölgenin ayrıntıları net seçilebilsin.',
+            text:
+                'Hasar ayrıntıları ve çevresindeki araç parçası aynı karede net görünsün.',
           ),
 
           const SizedBox(height: 10),
 
-          _PhotoTip(
+          const _PhotoTip(
             icon: Icons.zoom_out_map_rounded,
-            text: isContextStep
-                ? 'İlk fotoğrafa göre biraz daha geri çekilin; aracı çok uzaktan çekmeyin.'
-                : 'Yakın çekim yapabilirsiniz; bulanık görüntülerden kaçının.',
+            text:
+                'Aracın tamamını çekmeniz gerekmez. Yalnızca boya yüzeyini gösteren '
+                'çok yakın veya hasarı küçük bırakan uzak çekimlerden kaçının.',
           ),
         ],
       ),
