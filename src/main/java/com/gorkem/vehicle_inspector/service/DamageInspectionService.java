@@ -573,7 +573,7 @@ public class DamageInspectionService {
         }
 
         ImageValidationContext contextImageValidation =
-                hasContextImage
+                requireContextImage
                         ? validateInspectionImageInternal(
                                 inspectionId,
                                 authenticatedEmail,
@@ -657,7 +657,7 @@ public class DamageInspectionService {
                                     inspection.getId(),
                                     user,
                                     inspection.getImagePath(),
-                                    inspection.getContextImagePath()
+                                    requireContextImage ? inspection.getContextImagePath() : null
                             );
                         }
                 );
@@ -678,8 +678,9 @@ public class DamageInspectionService {
             AiAnalysisResponse aiResponse;
             if (context.contextImagePath() == null
                     || context.contextImagePath().isBlank()) {
-                aiResponse = aiAnalysisClient.analyze(
-                        storedImagePath
+                aiResponse = aiAnalysisClient.analyzeSingleImage(
+                        storedImagePath,
+                        normalizedVehicleRegion
                 );
             } else {
                 Path storedContextImagePath =

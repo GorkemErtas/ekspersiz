@@ -111,17 +111,8 @@ async def analyze_damage(
     try:
         file_content = await read_valid_image(image)
 
-        if context_image is None:
-            return await run_in_threadpool(
-                run_damage_operation,
-                "analyze",
-                file_content=file_content,
-                filename=image.filename or "vehicle.jpg",
-            )
-
-        context_file_content = await read_valid_image(context_image)
         normalized_region = (
-            vehicle_region.upper()
+            vehicle_region.strip().upper()
             if vehicle_region is not None
             else None
         )
@@ -130,6 +121,18 @@ async def analyze_damage(
                 status_code=400,
                 detail="vehicle_region must be FRONT or REAR.",
             )
+
+        if context_image is None:
+            return await run_in_threadpool(
+                run_damage_operation,
+                "analyze",
+                file_content=file_content,
+                filename=image.filename or "vehicle.jpg",
+                vehicle_region=normalized_region,
+            )
+
+        # Compatibility only: old clients explicitly upload both images.
+        context_file_content = await read_valid_image(context_image)
 
         return await run_in_threadpool(
             run_damage_operation,

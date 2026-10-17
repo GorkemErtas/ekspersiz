@@ -15,6 +15,8 @@ class DamageAnalyzerResultTest(unittest.TestCase):
     def setUp(self) -> None:
         self.analyzer = DamageAnalyzer.__new__(DamageAnalyzer)
         self.analyzer.damage_recommendation_confidence_threshold = 0.30
+        self.analyzer.minimum_brightness = 35.0
+        self.analyzer.minimum_blur_score = 20.0
 
     def test_context_part_is_transferred_only_for_same_damage_type(self) -> None:
         close_scratch = DetectedObject(
@@ -251,7 +253,7 @@ class DamageAnalyzerResultTest(unittest.TestCase):
 
     def test_clean_single_image_skips_unused_part_inference(self) -> None:
         image_bytes = BytesIO()
-        Image.new("RGB", (128, 128), (180, 180, 180)).save(image_bytes, "JPEG")
+        Image.effect_noise((128, 128), 80).convert("RGB").save(image_bytes, "JPEG")
         vehicle = DetectedObject(
             label="car",
             confidence=0.9,
@@ -281,7 +283,7 @@ class DamageAnalyzerResultTest(unittest.TestCase):
 
     def test_damaged_single_image_keeps_part_inference_and_mapping(self) -> None:
         image_bytes = BytesIO()
-        Image.new("RGB", (128, 128), (180, 180, 180)).save(image_bytes, "JPEG")
+        Image.effect_noise((128, 128), 80).convert("RGB").save(image_bytes, "JPEG")
         vehicle = DetectedObject(
             label="car",
             confidence=0.9,
@@ -320,12 +322,15 @@ class DamageAnalyzerResultTest(unittest.TestCase):
 
     def test_image_without_a_recognizable_vehicle_is_rejected(self) -> None:
         image_bytes = BytesIO()
-        Image.new("RGB", (4, 4), "white").save(image_bytes, format="JPEG")
+        Image.effect_noise((128, 128), 80).convert("RGB").save(image_bytes, "JPEG")
         self.analyzer.vehicle_model = Mock()
         self.analyzer.vehicle_model.predict.return_value = []
         self.analyzer.vehicle_confidence_threshold = 0.40
+        self.analyzer.vehicle_part_model = Mock()
+        self.analyzer.vehicle_part_model.predict.return_value = []
+        self.analyzer.vehicle_part_confidence_threshold = 0.25
 
-        with self.assertRaisesRegex(ValueError, "recognizable vehicle"):
+        with self.assertRaisesRegex(ValueError, "araç veya araç parçası"):
             self.analyzer.analyze(image_bytes.getvalue(), "empty-road.jpg")
 
     def test_dark_image_is_rejected_before_vehicle_detection(self) -> None:
