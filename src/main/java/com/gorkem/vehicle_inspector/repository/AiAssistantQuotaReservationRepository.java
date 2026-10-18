@@ -71,4 +71,8 @@ public interface AiAssistantQuotaReservationRepository
         where r.status = 'RESERVED' and r.expiresAt <= :now
         """)
     int releaseExpired(@Param("now") LocalDateTime now);
+
+    @Modifying
+    @Query(value = "DELETE FROM ai_assistant_quota_reservations WHERE user_id = :userId", nativeQuery = true)
+    int deleteAllByUserId(@Param("userId") Long userId);
 }
