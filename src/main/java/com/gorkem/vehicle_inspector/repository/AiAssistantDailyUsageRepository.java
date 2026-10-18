@@ -23,4 +23,8 @@ public interface AiAssistantDailyUsageRepository extends JpaRepository<AiAssista
         ON CONFLICT (user_id, usage_date) DO NOTHING
         """, nativeQuery = true)
     void ensureDailyRow(@Param("userId") Long userId, @Param("date") LocalDate date);
+
+    @Modifying
+    @Query(value = "DELETE FROM ai_assistant_daily_usage WHERE user_id = :userId", nativeQuery = true)
+    int deleteAllByUserId(@Param("userId") Long userId);
 }

@@ -62,6 +62,15 @@ class AccountDeletionServiceTest {
     private PasswordResetCodeRepository passwordResetCodeRepository;
 
     @Mock
+    private AiAssistantAccessRepository aiAssistantAccessRepository;
+
+    @Mock
+    private AiAssistantDailyUsageRepository aiAssistantDailyUsageRepository;
+
+    @Mock
+    private AiAssistantQuotaReservationRepository aiAssistantQuotaReservationRepository;
+
+    @Mock
     private FileStorageService fileStorageService;
 
     private AccountDeletionService service;
@@ -82,6 +91,9 @@ class AccountDeletionServiceTest {
                 businessInvitationRepository,
                 businessMemberRepository,
                 passwordResetCodeRepository,
+                aiAssistantAccessRepository,
+                aiAssistantDailyUsageRepository,
+                aiAssistantQuotaReservationRepository,
                 fileStorageService
         );
     }
@@ -131,6 +143,8 @@ class AccountDeletionServiceTest {
         verify(userRepository, never()).delete(any());
         verify(vehicleRepository, never())
                 .deleteAll(any());
+        verifyNoInteractions(aiAssistantAccessRepository, aiAssistantDailyUsageRepository,
+                aiAssistantQuotaReservationRepository);
     }
 
     @Test
@@ -165,6 +179,8 @@ class AccountDeletionServiceTest {
         verify(userRepository, never()).delete(any());
         verify(vehicleRepository, never())
                 .deleteAll(any());
+        verifyNoInteractions(aiAssistantAccessRepository, aiAssistantDailyUsageRepository,
+                aiAssistantQuotaReservationRepository);
     }
 
     @Test
@@ -199,6 +215,15 @@ class AccountDeletionServiceTest {
 
         verify(passwordResetCodeRepository)
                 .deleteByUserId(3L);
+
+        verify(aiAssistantQuotaReservationRepository)
+                .deleteAllByUserId(3L);
+
+        verify(aiAssistantDailyUsageRepository)
+                .deleteAllByUserId(3L);
+
+        verify(aiAssistantAccessRepository)
+                .deleteAllByUserId(3L);
 
         verify(vehicleRepository)
                 .deleteAll(List.of());

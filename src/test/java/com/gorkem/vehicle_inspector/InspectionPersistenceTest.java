@@ -36,6 +36,7 @@ import java.time.*;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.UUID;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -78,6 +79,9 @@ class InspectionPersistenceTest {
     private Vehicle firstVehicle;
     private Vehicle secondVehicle;
     private AnalysisUsageRepository usages;
+    private AiAssistantAccessRepository assistantAccesses;
+    private AiAssistantDailyUsageRepository assistantDailyUsages;
+    private AiAssistantQuotaReservationRepository assistantReservations;
 
     @BeforeAll
     void startContext() {
@@ -101,6 +105,9 @@ class InspectionPersistenceTest {
         reports = app.getBean(GeminiInspectionReportService.class);
         storage = app.getBean(FileStorageService.class);
         usages = app.getBean(AnalysisUsageRepository.class);
+        assistantAccesses = app.getBean(AiAssistantAccessRepository.class);
+        assistantDailyUsages = app.getBean(AiAssistantDailyUsageRepository.class);
+        assistantReservations = app.getBean(AiAssistantQuotaReservationRepository.class);
     }
 
     @AfterAll
@@ -174,6 +181,16 @@ class InspectionPersistenceTest {
     @Test
     void accountDeletionRemovesPersonalVehicleAndInspectionData() {
         Long userId = personal.getId();
+        UUID reservationId = UUID.randomUUID();
+
+        tx.executeWithoutResult(status -> {
+            assistantAccesses.save(new AiAssistantAccess(personal, NOW));
+            assistantDailyUsages.save(new AiAssistantDailyUsage(personal, NOW.toLocalDate(), NOW));
+            assistantReservations.save(new AiAssistantQuotaReservation(
+                    reservationId, personal, NOW.toLocalDate(), NOW, NOW.plusMinutes(5)));
+            // An unrelated user's assistant entitlement must remain untouched.
+            assistantAccesses.save(new AiAssistantAccess(owner, NOW));
+        });
 
         Long vehicleId = tx.execute(status -> {
             Vehicle vehicle = vehicles.save(
@@ -200,6 +217,9 @@ class InspectionPersistenceTest {
         assertNotNull(vehicleId);
         assertTrue(users.findById(userId).isPresent());
         assertTrue(vehicles.findById(vehicleId).isPresent());
+        assertTrue(assistantAccesses.findByUserId(userId).isPresent());
+        assertTrue(assistantDailyUsages.findByUserIdAndUsageDate(userId, NOW.toLocalDate()).isPresent());
+        assertTrue(assistantReservations.existsById(reservationId));
         assertFalse(
                 inspections
                         .findAllByVehicleIdOrderByCreatedAtDesc(vehicleId)
@@ -212,6 +232,10 @@ class InspectionPersistenceTest {
 
         assertTrue(users.findById(userId).isEmpty());
         assertTrue(vehicles.findById(vehicleId).isEmpty());
+        assertTrue(assistantAccesses.findByUserId(userId).isEmpty());
+        assertTrue(assistantDailyUsages.findByUserIdAndUsageDate(userId, NOW.toLocalDate()).isEmpty());
+        assertFalse(assistantReservations.existsById(reservationId));
+        assertTrue(assistantAccesses.findByUserId(owner.getId()).isPresent());
         assertTrue(
                 inspections
                         .findAllByVehicleIdOrderByCreatedAtDesc(vehicleId)
