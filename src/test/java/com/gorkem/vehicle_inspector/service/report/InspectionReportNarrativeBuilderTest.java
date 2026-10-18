@@ -199,7 +199,7 @@ class InspectionReportNarrativeBuilderTest {
         assertTrue(prompt.contains("65000"));
         assertTrue(prompt.contains("PART_REPAIR"));
         assertTrue(prompt.contains("REAR_BUMPER"));
-        assertTrue(prompt.contains("gerçek zamanlı"));
+        assertTrue(prompt.contains("Doğrulanmış güncel web fiyat verisi yoktur"));
         assertTrue(prompt.contains("TOPLAM ONARIM FİYATI"));
         assertTrue(prompt.contains("ML'in verdiği özet"));
         assertTrue(prompt.contains("0.91"));

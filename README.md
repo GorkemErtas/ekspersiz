@@ -14,7 +14,7 @@ Flutter mobil uygulaması, Java/Spring Boot API'si ve Python/FastAPI AI servisin
 ## Özellikler
 
 - **AI hasar analizi:** Fotoğraf kalite kontrolü, araç/hasar/parça tespiti, hasar-parça eşleştirmesi, şiddet sınıflandırması ve onarım önerileri.
-- **Rapor ve tutanak:** Gemini destekli hasar ön değerlendirmesi, tahmini onarım maliyet aralıkları, analiz geçmişi ve PDF olarak paylaşılabilen hasar değerlendirme tutanağı.
+- **Rapor ve tutanak:** ML sonuçlarından yerel hasar anlatımı ve Gemini fiyat tahmini; isteğe bağlı Google Search kaynaklarıyla desteklenen onarım maliyet aralıkları, analiz geçmişi ve PDF tutanağı.
 - **Araç yönetimi:** Araç profilleri, kilometre/bakım kayıtları, muayene ve bakım hatırlatmaları, birleşik araç geçmişi.
 - **AI Asistan:** Araç, bakım ve muayene soruları; uygulama bilgi tabanı; yetkili kullanıcının araç, hasar ve hatırlatma kayıtları; Türkçe sesli giriş.
 - **Entegrasyonlar:** Yakındaki servisler (Google Maps/Places), uygulama içi ve FCM bildirimleri, e-posta/Google ile giriş.
@@ -78,6 +78,12 @@ flowchart TB
 **İşleyiş:** Kapsam dışı veya kanıtı yetersiz sorular ana yanıt modeline gönderilmez. RAG yalnızca EksperSiz uygulama bilgisini içerir; kişisel veriler yetkili backend araçlarıyla alınır. Başarılı yanıtlar günlük kotadan düşülür, başarısız çağrıların rezervasyonu serbest bırakılır.
 
 Ayrıntılar: [AI Asistan mimarisi](docs/ai-assistant/ARCHITECTURE.md).
+
+### Onarım fiyatı tahmini
+
+Fiyat hesaplaması yalnızca ML'in tespit ettiği hasar, önerilen işlem, araç ve şehir bilgilerini kullanır. Backend, varsayılan olarak Google Search grounding ile güncel fiyat örnekleri arar; **yalnızca gerçek web kaynakları dönerse** bu özeti ikinci Gemini çağrısındaki yapılandırılmış fiyat tahminine dahil eder. Doğrulanmış web referansı yoksa veya arama başarısızsa genel piyasa bilgilerine dayalı tahmine döner; güncel fiyat doğrulaması iddia etmez. Parça bazında mükerrer maliyet yazılmaması istenir, farklı fiyat düzeylerini çarpıtabilecek sabit 10.000 TL fiyat aralığı sınırı kullanılmaz. Bunlar yine teklif değil tahmindir.
+
+`PRICE_WEB_SEARCH_ENABLED=false` ile fiyatlar için ekstra Google Search çağrısı kapatılabilir; kapalıyken sistem eskisi gibi tek Gemini çağrısıyla fiyat üretir. Açıkken **başarılı aramada iki Gemini çağrısı ve potansiyel Google Search sorgu ücreti** vardır (özellikle aramalar çok sayıda sorgu çalıştırırsa). Arama maliyetleri, gecikme, kaynak doğruluğu ve yerel servis teklifleriyle sapma izlenmelidir. Asistanın genel web araması bu ayardan bağımsızdır. Üretim için aynı araç/hasar/şehir senaryolarında karşılaştırmalı doğrulama yapılmalıdır.
 
 ## Güvenlik ve veri bütünlüğü
 
