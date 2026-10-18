@@ -36,6 +36,9 @@ build/
 ### Application Files ###
 uploads/
 
+### Video Files ###
+video/
+
 ### Python ###
 ai-service/venv/
 ai-service/__pycache__/
