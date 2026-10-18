@@ -1348,65 +1348,25 @@ class _AiAssistantLauncher extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
     return SafeArea(
       minimum: const EdgeInsets.only(bottom: 82),
       child: AppPressScale(
         onTap: onTap,
+        semanticLabel: 'AI Asistan',
         borderRadius: BorderRadius.circular(999),
         child: Container(
-          constraints: const BoxConstraints(maxWidth: 230),
-          padding: const EdgeInsets.fromLTRB(10, 8, 14, 8),
+          width: 52,
+          height: 52,
           decoration: BoxDecoration(
             gradient: AppTheme.deepBrandGradient,
-            borderRadius: BorderRadius.circular(999),
+            shape: BoxShape.circle,
             border: Border.all(color: Colors.white.withValues(alpha: 0.16)),
             boxShadow: AppTheme.primaryShadowFor(context),
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.15),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.auto_awesome_rounded,
-                  color: Colors.white,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Flexible(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    AppText(
-                      'AI Asistan',
-                      maxLines: 1,
-                      style: textTheme.labelLarge?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    AppText(
-                      'Aracınla ilgili bir şey sor',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: textTheme.labelSmall?.copyWith(
-                        color: Colors.white.withValues(alpha: 0.78),
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+          child: const Icon(
+            Icons.auto_awesome_rounded,
+            color: Colors.white,
+            size: 24,
           ),
         ),
       ),
