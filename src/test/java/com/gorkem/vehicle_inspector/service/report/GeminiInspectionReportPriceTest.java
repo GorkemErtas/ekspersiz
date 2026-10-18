@@ -45,14 +45,14 @@ class GeminiInspectionReportPriceTest {
     }
 
     @Test
-    void preservesExistingMaximumTenThousandLiraPriceSpreadPolicy() {
+    void preservesRealisticRangeWithoutArtificialTenThousandLiraClipping() {
         var price = estimate(
                 BigDecimal.valueOf(2500),
                 BigDecimal.valueOf(45000),
                 "try", "Fiyat açıklaması", "Web fiyatı kullanılmadı"
         );
         var normalized = GeminiInspectionReportService.validatePrice(price);
-        assertEquals(BigDecimal.valueOf(12500), normalized.estimatedMaximumPrice());
+        assertEquals(BigDecimal.valueOf(45000), normalized.estimatedMaximumPrice());
         assertEquals("TRY", normalized.currency());
         assertEquals("Fiyat açıklaması", normalized.priceInformation());
     }
