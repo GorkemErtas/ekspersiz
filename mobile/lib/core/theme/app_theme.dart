@@ -322,7 +322,8 @@ class AppTheme {
       useMaterial3: true,
       brightness: Brightness.light,
       colorScheme: scheme,
-      scaffoldBackgroundColor: background,
+      // The shared AppBackground paints the viewport behind every route.
+      scaffoldBackgroundColor: Colors.transparent,
       canvasColor: background,
       textTheme: textTheme,
       visualDensity: VisualDensity.standard,
@@ -637,7 +638,8 @@ class AppTheme {
       useMaterial3: true,
       brightness: Brightness.dark,
       colorScheme: scheme,
-      scaffoldBackgroundColor: backgroundColor,
+      // Keep surfaces opaque; only page backgrounds reveal AppBackground.
+      scaffoldBackgroundColor: Colors.transparent,
       canvasColor: backgroundColor,
       textTheme: textTheme,
       visualDensity: VisualDensity.standard,

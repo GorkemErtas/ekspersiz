@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile/core/theme/app_theme.dart';
+import 'package:mobile/core/widgets/app_background.dart';
 
 /// Exercises the real theme without HTTP. Font metrics use bundled Roboto,
 /// so these are layout/interaction tests, not Inter typography golden tests.
@@ -86,7 +87,7 @@ Widget uiTestApp({
       disableAnimations: reduceMotion,
       viewInsets: EdgeInsets.only(bottom: keyboardInset),
     ),
-    child: child!,
+    child: AppBackground(child: child!),
   ),
   home: home,
 );
