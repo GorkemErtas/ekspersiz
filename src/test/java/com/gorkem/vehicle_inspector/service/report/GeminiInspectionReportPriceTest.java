@@ -45,16 +45,28 @@ class GeminiInspectionReportPriceTest {
     }
 
     @Test
-    void preservesExistingMaximumTenThousandLiraPriceSpreadPolicy() {
+    void preservesRealisticRangeWithoutArtificialTenThousandLiraClipping() {
         var price = estimate(
                 BigDecimal.valueOf(2500),
                 BigDecimal.valueOf(45000),
                 "try", "Fiyat açıklaması", "Web fiyatı kullanılmadı"
         );
         var normalized = GeminiInspectionReportService.validatePrice(price);
-        assertEquals(BigDecimal.valueOf(12500), normalized.estimatedMaximumPrice());
+        assertEquals(BigDecimal.valueOf(45000), normalized.estimatedMaximumPrice());
         assertEquals("TRY", normalized.currency());
         assertEquals("Fiyat açıklaması", normalized.priceInformation());
+    }
+
+    @Test
+    void removesSourceLinksFromUserFacingPriceInformationWithoutChangingPriceExplanation() {
+        String text = "İzmir boya işçiliği dikkate alındı. Kaynaklar: https://example.com/estimate";
+        assertEquals("İzmir boya işçiliği dikkate alındı.",
+                GeminiInspectionReportService.removeLinks(text));
+        assertEquals("Onarım şekli ve şehir değerlendirildi.",
+                GeminiInspectionReportService.removeLinks(
+                        "Onarım şekli ve şehir değerlendirildi. www.example.org"));
+        assertEquals("Yaklaşık 12.000 TL işçilik.",
+                GeminiInspectionReportService.removeLinks("Yaklaşık 12.000 TL işçilik."));
     }
 
     @Test
