@@ -72,16 +72,16 @@ public class GeminiInspectionReportService {
 
         InspectionPriceEstimateResult rawPrice = validatePrice(parsePriceResponse(response.text()));
 
-        // Source disclosure is determined by metadata, never invented by Gemini.
+        // Keep price evidence internal; do not expose raw URLs in user-facing reports.
         String source = evidence == null
                 ? "Güncel web fiyatı doğrulanamadı veya arama kapalı; genel piyasa, araç, şehir "
                     + "ve ML onarım bilgileri kullanıldı. Güncel bir servis teklifi değildir."
-                : "Google Search ile erişilen kamuya açık fiyat bilgileri dikkate alındı; "
-                    + "servis teklifi değildir. Kaynaklar: " + String.join(", ", evidence.sourceUrls());
+                : "Çevrimiçi piyasa fiyat örnekleri, araç, şehir ve önerilen onarım işlemleri "
+                    + "dikkate alınarak yaklaşık tahmin oluşturuldu. Kesin servis teklifi değildir.";
 
         InspectionPriceEstimateResult price = new InspectionPriceEstimateResult(
                 rawPrice.estimatedMinimumPrice(), rawPrice.estimatedMaximumPrice(),
-                rawPrice.currency(), rawPrice.priceInformation(), source
+                rawPrice.currency(), removeLinks(rawPrice.priceInformation()), source
         );
         return InspectionReportNarrativeBuilder.build(request, price);
     }
@@ -190,6 +190,16 @@ public class GeminiInspectionReportService {
                 minimum, maximum, "TRY",
                 result.priceInformation(), result.priceSourceDescription()
         );
+    }
+
+    // Gemini may occasionally include a source URL even when the prompt forbids it.
+    // Remove only links from its user-facing price explanation; preserve numeric costs.
+    static String removeLinks(String explanation) {
+        if (explanation == null) return null;
+        return explanation.replaceAll("(?i)(?:https?://|www\\.)\\S+", "")
+                .replaceAll("(?i)\\bKaynaklar\\s*:\\s*$", "")
+                .replaceAll(" {2,}", " ")
+                .trim();
     }
 
     private static void requireText(String value, String message) {
