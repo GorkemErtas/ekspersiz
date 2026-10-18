@@ -32,6 +32,9 @@ public class AccountDeletionService {
     private final BusinessInvitationRepository businessInvitationRepository;
     private final BusinessMemberRepository businessMemberRepository;
     private final PasswordResetCodeRepository passwordResetCodeRepository;
+    private final AiAssistantAccessRepository aiAssistantAccessRepository;
+    private final AiAssistantDailyUsageRepository aiAssistantDailyUsageRepository;
+    private final AiAssistantQuotaReservationRepository aiAssistantQuotaReservationRepository;
     private final FileStorageService fileStorageService;
 
     public AccountDeletionService(
@@ -48,6 +51,9 @@ public class AccountDeletionService {
             BusinessInvitationRepository businessInvitationRepository,
             BusinessMemberRepository businessMemberRepository,
             PasswordResetCodeRepository passwordResetCodeRepository,
+            AiAssistantAccessRepository aiAssistantAccessRepository,
+            AiAssistantDailyUsageRepository aiAssistantDailyUsageRepository,
+            AiAssistantQuotaReservationRepository aiAssistantQuotaReservationRepository,
             FileStorageService fileStorageService
     ) {
         this.userRepository = userRepository;
@@ -63,6 +69,9 @@ public class AccountDeletionService {
         this.businessInvitationRepository = businessInvitationRepository;
         this.businessMemberRepository = businessMemberRepository;
         this.passwordResetCodeRepository = passwordResetCodeRepository;
+        this.aiAssistantAccessRepository = aiAssistantAccessRepository;
+        this.aiAssistantDailyUsageRepository = aiAssistantDailyUsageRepository;
+        this.aiAssistantQuotaReservationRepository = aiAssistantQuotaReservationRepository;
         this.fileStorageService = fileStorageService;
     }
 
@@ -143,6 +152,14 @@ public class AccountDeletionService {
         billingSubscriptionRepository.deleteByUserId(userId);
         businessInvitationRepository.deleteByUserId(userId);
         passwordResetCodeRepository.deleteByUserId(userId);
+
+        /*
+         * AI assistant tables hold their own user FKs. Remove these rows
+         * in the same transaction before deleting the parent user.
+         */
+        aiAssistantQuotaReservationRepository.deleteAllByUserId(userId);
+        aiAssistantDailyUsageRepository.deleteAllByUserId(userId);
+        aiAssistantAccessRepository.deleteAllByUserId(userId);
 
         userRepository.delete(user);
 
