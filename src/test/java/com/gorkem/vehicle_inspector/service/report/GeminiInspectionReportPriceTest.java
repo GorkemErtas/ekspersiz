@@ -58,6 +58,18 @@ class GeminiInspectionReportPriceTest {
     }
 
     @Test
+    void removesSourceLinksFromUserFacingPriceInformationWithoutChangingPriceExplanation() {
+        String text = "İzmir boya işçiliği dikkate alındı. Kaynaklar: https://example.com/estimate";
+        assertEquals("İzmir boya işçiliği dikkate alındı.",
+                GeminiInspectionReportService.removeLinks(text));
+        assertEquals("Onarım şekli ve şehir değerlendirildi.",
+                GeminiInspectionReportService.removeLinks(
+                        "Onarım şekli ve şehir değerlendirildi. www.example.org"));
+        assertEquals("Yaklaşık 12.000 TL işçilik.",
+                GeminiInspectionReportService.removeLinks("Yaklaşık 12.000 TL işçilik."));
+    }
+
+    @Test
     void rejectsInvalidPricesAndMissingSourceDescriptions() {
         var valid = estimate(
                 BigDecimal.valueOf(1500), BigDecimal.valueOf(3500),
