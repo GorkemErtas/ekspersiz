@@ -120,7 +120,10 @@ void main() {
               ),
             );
             await tester.pumpAndSettle();
-            expect(find.textContaining('kalan soru hakkı'), findsOneWidget);
+            expect(
+              find.textContaining('Kalan asistan kredisi'),
+              findsOneWidget,
+            );
             expect(tester.takeException(), isNull);
             await tester.enterText(
               find.byType(TextField),

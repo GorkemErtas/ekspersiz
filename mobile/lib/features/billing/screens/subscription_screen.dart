@@ -1,44 +1,44 @@
 import 'package:flutter/material.dart';
-import '../../../core/widgets/app_state_view.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:mobile/core/localization/app_text.dart';
-
+import '../../../core/localization/app_text.dart';
 import '../../../core/theme/app_theme.dart';
-import '../models/analysis_quota.dart';
+import '../../../core/widgets/app_state_view.dart';
 import '../models/billing_plan.dart';
-import '../models/billing_status.dart';
+import '../models/credit_catalog.dart';
 import '../services/analysis_quota_service.dart';
 import '../services/billing_service.dart';
 import '../services/revenue_cat_gateway.dart';
+import '../services/welcome_credit_service.dart';
 
 class SubscriptionScreen extends StatefulWidget {
   const SubscriptionScreen({
     super.key,
     this.billingService = const BillingService(),
     this.quotaService = const AnalysisQuotaService(),
+    this.initialCategory = 0,
+    this.preferCompany = false,
   });
-
   final BillingService billingService;
   final AnalysisQuotaService quotaService;
-
+  final int initialCategory;
+  final bool preferCompany;
   @override
   State<SubscriptionScreen> createState() => _SubscriptionScreenState();
 }
 
 class _SubscriptionScreenState extends State<SubscriptionScreen>
     with WidgetsBindingObserver {
-  BillingService get _billing => widget.billingService;
-  AnalysisQuotaService get _quotaService => widget.quotaService;
-
-  BillingPageData? _billingData;
-  AnalysisQuota? _quota;
-
-  bool _purchaseBusy = false;
+  BillingPageData? _billing;
+  CreditOverview? _credits;
   String? _error;
-
-  bool get _isBusiness =>
-      _quota?.plan == 'BUSINESS' ||
-      _billingData?.overview.status.currentPlan == 'BUSINESS';
+  bool _busy = false;
+  bool _company = false;
+  bool _refreshing = false;
+  late int _category = widget.initialCategory.clamp(0, 2);
+  static const _resources = ['ANALYSIS', 'ASSISTANT', 'SLOT'];
+  static const _labels = ['Hasar analizi', 'AI Asistan', 'Araç slotları'];
+  CreditAccount get _account =>
+      _company ? _credits!.company! : _credits!.personal;
 
   @override
   void initState() {
@@ -48,592 +48,451 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
   }
 
   @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) _load();
-  }
-
-  @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
-  Future<void> _manageSubscription(BillingStatus status) async {
-    final rawUrl = status.managementUrl;
-    final uri = rawUrl == null ? null : Uri.tryParse(rawUrl);
-    final destination = uri != null && uri.scheme == 'https'
-        ? uri
-        : Uri.parse('https://play.google.com/store/account/subscriptions');
-    try {
-      if (!await launchUrl(destination, mode: LaunchMode.externalApplication)) {
-        throw StateError(
-          'Abonelik yönetimi açılamadı. Google Play üzerinden aboneliklerinizi kontrol edin.',
-        );
-      }
-    } catch (_) {
-      if (mounted) {
-        _showMessage(
-          'Abonelik yönetimi açılamadı. Google Play > Ödemeler ve abonelikler bölümünü açın.',
-        );
-      }
-    }
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && !_busy) _load();
   }
 
   Future<void> _load() async {
+    if (_refreshing) return;
+    _refreshing = true;
     try {
-      // Billing.load() reconciles RevenueCat with the backend. Fetching the
-      // quota in parallel can read the old FREE plan before sync finishes,
-      // especially after cancellation while paid access remains valid.
-      final billingData = await _billing.load();
-      final quota = await _quotaService.getQuota();
-
+      final billing = await widget.billingService.load();
+      final credits = await widget.billingService.credits();
       if (!mounted) return;
-
       setState(() {
-        _billingData = billingData;
-        _quota = quota;
+        if (_credits == null && widget.preferCompany) {
+          _company = credits.company != null;
+        }
+        _billing = billing;
+        _credits = credits;
         _error = null;
+        if (credits.company == null) _company = false;
       });
     } catch (e) {
-      if (!mounted) return;
-
-      setState(() {
-        _error = _message(e);
-      });
-    }
-  }
-
-  Future<void> _subscribe(BillingPlan plan) async {
-    if (_purchaseBusy ||
-        _billingData?.overview.status.currentPlan == plan.plan) {
-      return;
-    }
-
-    setState(() {
-      _purchaseBusy = true;
-    });
-
-    try {
-      await _billing.purchase(
-        plan,
-        currentPlan: _billingData!.overview.status.currentPlan,
-        currentProductId: _billingData!.overview.status.productId,
-      );
-
-      await _load();
-
-      if (!mounted) return;
-
-      _showMessage('Aboneliğiniz etkinleştirildi.');
-    } on BillingPurchaseCancelled {
-      return;
-    } catch (e) {
-      if (mounted) {
-        _showMessage(_message(e));
-      }
+      if (mounted) setState(() => _error = _message(e));
     } finally {
-      if (mounted) {
-        setState(() {
-          _purchaseBusy = false;
-        });
-      }
+      _refreshing = false;
     }
   }
 
-  void _showMessage(String message) {
+  String _message(Object e) => e
+      .toString()
+      .replaceFirst('Exception: ', '')
+      .replaceFirst('Bad state: ', '');
+  void _show(String text) {
+    if (!mounted) return;
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: AppText(message)));
+      ..showSnackBar(SnackBar(content: AppText(text)));
   }
 
-  String _message(Object error) {
-    return error
-        .toString()
-        .replaceFirst('Exception: ', '')
-        .replaceFirst('Bad state: ', '');
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const AppText('Abonelik ve Planlar')),
-      body: SafeArea(child: _buildBody(context)),
-    );
-  }
-
-  Widget _buildBody(BuildContext context) {
-    if (_error != null && _quota == null) {
-      return AppStateView.error(message: _error!, onActionPressed: _load);
+  Future<void> _perform(Future<String> Function() action) async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    try {
+      final message = await action();
+      await _load();
+      _show(message);
+    } on BillingPurchaseCancelled {
+      /* A cancelled payment grants nothing. */
+    } on BillingPurchasePending {
+      _show('Ödeme onayı bekleniyor. Onaylanınca kredileriniz eklenecek.');
+    } catch (e) {
+      _show(_message(e));
+    } finally {
+      if (mounted) setState(() => _busy = false);
     }
-
-    if (_quota == null || _billingData == null) {
-      return const AppStateView.loading();
-    }
-
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 720),
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(
-            AppTheme.pageInset,
-            AppTheme.spacingM,
-            AppTheme.pageInset,
-            40,
-          ),
-          children: [
-            _buildQuotaCard(context),
-            if (_billingData!.overview.status.currentPlan != 'FREE') ...[
-              const SizedBox(height: 12),
-              _buildSubscriptionStatus(context, _billingData!.overview.status),
-            ],
-
-            const SizedBox(height: AppTheme.spacingL),
-            _buildSectionTitle(
-              context,
-              title: 'Aylık abonelikler',
-              subtitle:
-                  'AI Asistan ve hasar analiz haklarınızı planınıza göre artırın.',
-            ),
-            const SizedBox(height: 14),
-            for (final plan in _billingData!.overview.plans.where(
-              (item) => item.plan != 'FREE',
-            )) ...[
-              _SubscriptionPlanCard(
-                plan: plan,
-                active: _billingData!.overview.status.currentPlan == plan.plan,
-                busy: _purchaseBusy,
-                storeConfigured: _billingData!.storeConfigured,
-                localizedPrice: plan.packageIdentifier == null
-                    ? null
-                    : _billingData!.localizedPrices[plan.packageIdentifier!],
-                onBuy: () => _subscribe(plan),
-              ),
-              const SizedBox(height: 12),
-            ],
-            const SizedBox(height: 30),
-          ],
-        ),
-      ),
-    );
   }
 
-  Widget _buildSubscriptionStatus(BuildContext context, BillingStatus status) {
-    final theme = Theme.of(context);
-    final endsAt = status.currentPeriodEndsAt?.toLocal();
-    final dateLabel = endsAt == null
-        ? null
-        : '${endsAt.day.toString().padLeft(2, '0')}.${endsAt.month.toString().padLeft(2, '0')}.${endsAt.year}';
-    final cancelled = status.status == 'CANCELLED' || !status.autoRenewing;
-    final message = cancelled
-        ? (dateLabel == null
-              ? 'Aboneliğiniz iptal edildi. Mevcut haklarınız ödenmiş dönem sonuna kadar devam eder.'
-              : 'Aboneliğiniz iptal edildi. Haklarınız $dateLabel tarihine kadar devam eder.')
-        : (dateLabel == null
-              ? 'Aboneliğiniz aktif.'
-              : 'Aboneliğiniz aktif. Sonraki yenileme: $dateLabel');
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-        border: Border.all(color: theme.colorScheme.outlineVariant),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(
-            cancelled
-                ? Icons.event_available_outlined
-                : Icons.autorenew_rounded,
-            color: theme.colorScheme.primary,
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                AppText(message),
-                if (!cancelled) ...[
-                  const SizedBox(height: 12),
-                  OutlinedButton.icon(
-                    onPressed: () => _manageSubscription(status),
-                    icon: const Icon(Icons.cancel_outlined),
-                    label: const AppText('Aboneliği İptal Et'),
-                  ),
-                  const SizedBox(height: 4),
-                  const AppText(
-                    'Google Play üzerinden otomatik yenilemeyi kapatabilirsiniz. '
-                    'Mevcut haklarınız abonelik dönemi bitene kadar devam eder.',
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ],
-      ),
+  Future<void> _purchase(CreditProduct product) => _perform(() async {
+    final confirmed = await widget.billingService.purchaseCredit(product);
+    return confirmed
+        ? 'Satın alma doğrulandı. Bakiyeniz güncellendi.'
+        : 'Ödemeniz doğrulanıyor. Krediler doğrulama tamamlanınca otomatik eklenecek.';
+  });
+  Future<void> _subscribe(BillingPlan plan) => _perform(() async {
+    final result = await widget.billingService.purchase(
+      plan,
+      currentPlan: _billing!.overview.status.currentPlan,
+      currentProductId: _billing!.overview.status.productId,
     );
-  }
-
-  Widget _buildQuotaCard(BuildContext context) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
-
-    return Container(
-      padding: const EdgeInsets.all(AppTheme.cardPadding),
-      decoration: BoxDecoration(
-        color: colors.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
-        border: Border.all(
-          color: colors.outlineVariant.withValues(alpha: 0.45),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: colors.primary.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Icon(Icons.auto_awesome_rounded, color: colors.primary),
-              ),
-              const SizedBox(width: 13),
-
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    AppText(
-                      _isBusiness
-                          ? 'Business aylık analiz kotası'
-                          : 'Aylık analiz kotanız',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    const SizedBox(height: 3),
-                    AppText(
-                      _isBusiness
-                          ? '${_quota!.remaining} / ${_quota!.limit} şirket analizi kaldı'
-                          : 'Bu ay ${_quota!.freeRemaining} / ${_quota!.limit} analiz hakkı kaldı',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: colors.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: AppTheme.spacingM),
-
-          Divider(
-            height: 1,
-            color: colors.outlineVariant.withValues(alpha: 0.45),
-          ),
-
-          const SizedBox(height: 14),
-
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(
-                Icons.info_outline_rounded,
-                size: 19,
-                color: colors.onSurfaceVariant,
-              ),
-              const SizedBox(width: 9),
-              Expanded(
-                child: AppText(
-                  'Temel görsel hasar tespiti ücretsizdir. '
-                  'Detaylı rapor; AI açıklaması, onarım önerileri '
-                  've tahmini maliyet aralığını içerir.',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: colors.onSurfaceVariant,
-                    height: 1.45,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSectionTitle(
-    BuildContext context, {
-    required String title,
-    required String subtitle,
-  }) {
-    final theme = Theme.of(context);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        AppText(
-          title,
-          style: theme.textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.w900,
-          ),
-        ),
-        const SizedBox(height: 5),
-        AppText(
-          subtitle,
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _SubscriptionPlanCard extends StatelessWidget {
-  const _SubscriptionPlanCard({
-    required this.plan,
-    required this.active,
-    required this.busy,
-    required this.storeConfigured,
-    required this.localizedPrice,
-    required this.onBuy,
+    return result.status.currentPlan == 'BUSINESS'
+        ? 'Business aboneliğiniz aktif.'
+        : 'Abonelik değişikliği mağaza tarafından işleniyor.';
+  });
+  Future<void> _restore() => _perform(() async {
+    await widget.billingService.restore();
+    return 'Satın alma bilgileri güncellendi.';
+  });
+  Future<void> _welcome() => _perform(() async {
+    return WelcomeCreditService.claim().timeout(const Duration(seconds: 30));
   });
 
-  final BillingPlan plan;
-  final bool active;
-  final bool busy;
-  final bool storeConfigured;
-  final String? localizedPrice;
-  final VoidCallback onBuy;
-
   @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    final fallbackPrice =
-        '₺${plan.fallbackMonthlyPrice.toStringAsFixed(2).replaceAll('.', ',')}';
-
-    final price = localizedPrice ?? fallbackPrice;
-
-    return Container(
-      padding: const EdgeInsets.all(AppTheme.cardPadding),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        border: Border.all(
-          color: active
-              ? theme.colorScheme.primary
-              : theme.colorScheme.outlineVariant,
-          width: active ? 1.5 : 1,
+  Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(
+      title: const AppText('Krediler ve Paketler'),
+      actions: [
+        IconButton(
+          onPressed: _busy ? null : _load,
+          tooltip: 'Bakiyeyi yenile',
+          icon: const Icon(Icons.refresh),
         ),
-        borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
-      ),
+      ],
+    ),
+    body: SafeArea(
+      child: _credits == null || _billing == null
+          ? (_error == null
+                ? const AppStateView.loading()
+                : AppStateView.error(message: _error!, onActionPressed: _load))
+          : Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 720),
+                child: RefreshIndicator(
+                  onRefresh: _load,
+                  child: ListView(
+                    padding: const EdgeInsets.all(AppTheme.pageInset),
+                    children: [
+                      if (_error != null)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: AppText(_error!),
+                        ),
+                      if (_credits!.company != null) ...[
+                        SegmentedButton<bool>(
+                          segments: const [
+                            ButtonSegment(
+                              value: false,
+                              label: AppText('Kişisel'),
+                            ),
+                            ButtonSegment(
+                              value: true,
+                              label: AppText('Şirket'),
+                            ),
+                          ],
+                          selected: {_company},
+                          onSelectionChanged: _busy
+                              ? null
+                              : (value) =>
+                                    setState(() => _company = value.first),
+                        ),
+                        const SizedBox(height: 16),
+                      ],
+                      _balanceCard(context),
+                      if ([
+                        'PLUS',
+                        'PRO',
+                      ].contains(_billing!.overview.status.currentPlan))
+                        Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const AppText(
+                                  'Önceki aboneliğinizin ödenmiş dönem hakları korunur. Yeni bireysel alımlar kredi paketleriyle yapılır.',
+                                ),
+                                TextButton(
+                                  onPressed: _manage,
+                                  child: const AppText(
+                                    'Önceki aboneliği yönet / iptal et',
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      const SizedBox(height: 20),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: List.generate(
+                          3,
+                          (i) => ChoiceChip(
+                            label: AppText(_labels[i]),
+                            selected: i == _category,
+                            onSelected: (_) => setState(() => _category = i),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      AppText(
+                        _category == 2
+                            ? 'Ek slotlar kalıcıdır. Arşivlenen veya silinen aracın slotunu tekrar kullanabilirsiniz.'
+                            : 'Satın aldığınız krediler süresizdir. Her başarılı işlem 1 kredi kullanır.',
+                      ),
+                      if (!_account.canPurchase)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: AppText(
+                            _account.owner
+                                ? 'Şirket adına kredi alabilmek için Business aboneliğinizi yenileyin.'
+                                : 'Şirket adına satın alımları yalnızca şirket sahibi yapabilir.',
+                          ),
+                        ),
+                      const SizedBox(height: 12),
+                      for (final product in _credits!.products.where(
+                        (p) =>
+                            p.business == _company &&
+                            p.resource == _resources[_category],
+                      ))
+                        _productCard(context, product),
+                      const SizedBox(height: 20),
+                      if (_credits!.company == null || _credits!.company!.owner)
+                        for (final plan in _billing!.overview.plans.where(
+                          (p) => p.plan == 'BUSINESS',
+                        ))
+                          _businessCard(context, plan),
+                      const SizedBox(height: 16),
+                      if (!_company)
+                        TextButton(
+                          onPressed: _busy ? null : _welcome,
+                          child: const AppText(
+                            'Başlangıç kredilerimi kontrol et',
+                          ),
+                        ),
+                      TextButton(
+                        onPressed: _busy || !_billing!.storeConfigured
+                            ? null
+                            : _restore,
+                        child: const AppText(
+                          'Satın alımları geri yükle / kontrol et',
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+    ),
+  );
+  Widget _balanceCard(BuildContext context) => Card(
+    child: Padding(
+      padding: const EdgeInsets.all(AppTheme.cardPadding),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          AppText(
+            _company ? 'Şirketin ortak bakiyesi' : 'Kişisel bakiyeniz',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 20,
+            runSpacing: 12,
             children: [
-              Container(
-                width: 46,
-                height: 46,
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primaryContainer,
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Icon(
-                  plan.plan == 'BUSINESS'
-                      ? Icons.business_center_rounded
-                      : Icons.workspace_premium_rounded,
-                  color: theme.colorScheme.onSurface,
-                ),
-              ),
-
-              const SizedBox(width: 13),
-
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: AppText(
-                            plan.title,
-                            style: TextStyle(
-                              color: theme.colorScheme.onSurface,
-                              fontSize: 20,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                        ),
-
-                        if (active)
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 9,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppTheme.successColorFor(
-                                context,
-                              ).withValues(alpha: 0.18),
-                              borderRadius: BorderRadius.circular(
-                                AppTheme.radiusPill,
-                              ),
-                            ),
-                            child: AppText(
-                              'Aktif',
-                              style: TextStyle(
-                                color: AppTheme.successColorFor(context),
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 4),
-
-                    AppText(
-                      plan.description,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurface.withValues(
-                          alpha: 0.72,
-                        ),
-                        height: 1.35,
-                      ),
-                    ),
-                  ],
-                ),
+              AppText('${_account.available('ANALYSIS')} analiz kredisi'),
+              AppText('${_account.available('ASSISTANT')} asistan kredisi'),
+              AppText(
+                '${_account.usedSlots} / ${_account.totalSlots} araç slotu',
               ),
             ],
           ),
-
-          const SizedBox(height: 22),
-
-          for (final feature in plan.features) ...[
-            _SubscriptionFeature(text: feature),
-            const SizedBox(height: 12),
+          if (_company) ...[
+            const SizedBox(height: 8),
+            AppText(
+              'Dönemlik: ${_account.periodic('ANALYSIS')} analiz · ${_account.periodic('ASSISTANT')} soru. Önce dönemlik krediler kullanılır; dönem sonunda kalan haklar devretmez.',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
           ],
-
-          const SizedBox(height: 8),
-
-          if (active)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.09),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: AppText(
-                plan.plan == 'BUSINESS'
-                    ? 'Business planınız aktif. Şirket araçları ve analiz kotası ekip üyelerinizle ortaktır.'
-                    : '${plan.title} aboneliğiniz aktif. Plan haklarınız kullanımınıza açıktır.',
-                style: TextStyle(
-                  color: theme.colorScheme.onSurface,
-                  height: 1.4,
-                ),
-              ),
-            )
-          else ...[
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
+        ],
+      ),
+    ),
+  );
+  Widget _productCard(BuildContext context, CreditProduct product) {
+    final price = _billing!.storePrices[product.id];
+    final singleId =
+        'eksper_${product.resource.toLowerCase()}_1${_company ? '_business' : ''}';
+    final savings = PriceSavings.compare(
+      price,
+      _billing!.storePrices[singleId],
+      product.quantity,
+    );
+    final available =
+        price != null && _billing!.storeConfigured && _account.canPurchase;
+    final reference = const StorePrice(
+      0,
+      'TRY',
+      '',
+    ).format(product.referencePrice);
+    return Card(
+      margin: const EdgeInsets.only(bottom: 10),
+      child: Padding(
+        padding: const EdgeInsets.all(AppTheme.cardPadding),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Wrap(
+              spacing: 16,
+              runSpacing: 6,
               children: [
-                Flexible(
-                  child: AppText(
-                    price,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.headlineSmall?.copyWith(
-                      color: theme.colorScheme.onSurface,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
+                AppText(
+                  '${product.quantity} ${product.resource == 'SLOT' ? 'ek araç slotu' : 'kredi'}',
+                  style: Theme.of(context).textTheme.titleMedium,
                 ),
-
-                const SizedBox(width: 7),
-
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 3),
-                  child: AppText(
-                    '/ ay',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurface.withValues(
-                        alpha: 0.68,
-                      ),
-                    ),
-                  ),
+                AppText(
+                  price?.label ?? 'Referans fiyat: $reference',
+                  style: Theme.of(context).textTheme.titleMedium,
                 ),
               ],
             ),
-
-            const SizedBox(height: 14),
-
+            if (price != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: AppText(
+                  '${price.format(price.amount / product.quantity)} / ${product.resource == 'SLOT' ? 'slot' : 'kredi'}',
+                ),
+              ),
+            if (savings != null) ...[
+              const SizedBox(height: 6),
+              AppText(
+                'Tekli alım: ${price!.format(savings.regular)}',
+                style: const TextStyle(decoration: TextDecoration.lineThrough),
+              ),
+              AppText(
+                '%${savings.percentLabel} indirim · ${price.format(savings.amount)} tasarruf',
+                style: TextStyle(
+                  color: AppTheme.successColorFor(context),
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+            const SizedBox(height: 10),
             SizedBox(
               width: double.infinity,
               child: FilledButton(
-                style: FilledButton.styleFrom(
-                  backgroundColor: theme.colorScheme.primary,
-                  foregroundColor: theme.colorScheme.onPrimary,
-                ),
-                onPressed:
-                    !storeConfigured || busy || plan.packageIdentifier == null
+                onPressed: _busy || !available
                     ? null
-                    : onBuy,
-                child: busy
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const AppText('Abone Ol'),
+                    : () => _purchase(product),
+                child: AppText(
+                  price == null ? 'Mağazada henüz kullanılamıyor' : 'Satın al',
+                ),
               ),
             ),
+            if (price == null)
+              const AppText('Tahsilat fiyatı mağaza tarafından belirlenir.'),
           ],
-        ],
+        ),
       ),
     );
   }
-}
 
-class _SubscriptionFeature extends StatelessWidget {
-  const _SubscriptionFeature({required this.text});
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: EdgeInsets.only(top: 1),
-          child: Icon(
-            Icons.check_circle_rounded,
-            color: AppTheme.successColorFor(context),
-            size: 20,
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: AppText(
-            text,
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.onSurface,
-              fontWeight: FontWeight.w600,
-              height: 1.35,
+  Widget _businessCard(BuildContext context, BillingPlan plan) {
+    final status = _billing!.overview.status;
+    final price = _billing!.storePrices[plan.packageIdentifier];
+    final analysis = _billing!.storePrices['eksper_analysis_1'];
+    final assistant = _billing!.storePrices['eksper_assistant_1'];
+    final regular =
+        analysis != null &&
+            assistant != null &&
+            price != null &&
+            analysis.currency == price.currency &&
+            assistant.currency == price.currency
+        ? analysis.amount * 100 + assistant.amount * 200
+        : null;
+    final savings = regular != null && regular > price!.amount
+        ? regular - price.amount
+        : null;
+    final active = status.currentPlan == 'BUSINESS';
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(AppTheme.cardPadding),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            AppText(
+              'Business${active ? ' · Aktif' : ''}',
+              style: Theme.of(context).textTheme.titleLarge,
             ),
-          ),
+            const SizedBox(height: 8),
+            AppText(
+              '${price?.label ?? 'Referans: 4.999,99 TL'} / ay',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 12),
+            const AppText(
+              '10 ortak araç slotu\nHer dönemde 100 analiz + 200 asistan kredisi\nÇalışan daveti ve ortak araç yönetimi',
+            ),
+            const SizedBox(height: 8),
+            const AppText(
+              'Haklar şirketin tamamı içindir. Dönemlik krediler devretmez; ayrıca satın alınan krediler süresizdir.',
+            ),
+            if (savings != null) ...[
+              const SizedBox(height: 10),
+              AppText(
+                '100 analiz × ${analysis!.format(analysis.amount)} = ${analysis.format(analysis.amount * 100)}',
+              ),
+              AppText(
+                '200 asistan × ${assistant!.format(assistant.amount)} = ${assistant.format(assistant.amount * 200)}',
+              ),
+              AppText(
+                'Kredilerin tekli alım değeri: ${price!.format(regular!)}',
+              ),
+              AppText(
+                'Tekli alıma göre ${price.format(savings)} (%${(savings / regular * 100).toStringAsFixed(2).replaceAll('.', ',')}) tasarruf.',
+              ),
+              const AppText(
+                'Karşılaştırma tekli kredi fiyatlarıyladır; indirimli paketler dahil değildir.',
+              ),
+            ],
+            const SizedBox(height: 12),
+            if (active) ...[
+              AppText(
+                status.autoRenewing
+                    ? 'Aboneliğiniz otomatik yenilenir.'
+                    : 'Yenileme kapalı. Haklarınız ödenmiş dönem sonuna kadar devam eder.',
+              ),
+              if (status.currentPeriodEndsAt != null)
+                AppText(
+                  'Dönem sonu: ${status.currentPeriodEndsAt!.day}.${status.currentPeriodEndsAt!.month}.${status.currentPeriodEndsAt!.year}',
+                ),
+              TextButton(
+                onPressed: _manage,
+                child: const AppText('Aboneliği yönet / iptal et'),
+              ),
+            ] else
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: _busy || price == null
+                      ? null
+                      : () => _subscribe(plan),
+                  child: AppText(
+                    price == null
+                        ? 'Mağazada henüz kullanılamıyor'
+                        : 'Business’a geç',
+                  ),
+                ),
+              ),
+          ],
         ),
-      ],
+      ),
     );
+  }
+
+  Future<void> _manage() async {
+    final raw = _billing?.overview.status.managementUrl;
+    final uri = raw == null ? null : Uri.tryParse(raw);
+    try {
+      if (!await launchUrl(
+        uri != null && uri.scheme == 'https'
+            ? uri
+            : Uri.parse('https://play.google.com/store/account/subscriptions'),
+        mode: LaunchMode.externalApplication,
+      )) {
+        _show(
+          'Abonelik yönetimi açılamadı. Google Play aboneliklerinizi kontrol edin.',
+        );
+      }
+    } catch (_) {
+      _show('Abonelik yönetimi açılamadı.');
+    }
   }
 }

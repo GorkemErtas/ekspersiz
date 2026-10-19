@@ -9,6 +9,9 @@ import '../../../core/widgets/app_icon_box.dart';
 import '../../../core/widgets/app_state_view.dart';
 import '../../../core/widgets/app_status_badge.dart';
 import '../../auth/models/business_account.dart';
+import '../../billing/models/credit_catalog.dart';
+import '../../billing/services/billing_service.dart';
+import '../../billing/screens/subscription_screen.dart';
 
 import '../models/vehicle.dart';
 import '../services/vehicle_service.dart';
@@ -28,6 +31,7 @@ class _VehicleListScreenState extends State<VehicleListScreen> {
   final VehicleService _vehicleService = const VehicleService();
 
   late Future<List<Vehicle>> _vehiclesFuture;
+  CreditAccount? _creditAccount;
 
   @override
   void initState() {
@@ -38,6 +42,22 @@ class _VehicleListScreenState extends State<VehicleListScreen> {
 
   void _loadVehicles() {
     _vehiclesFuture = _vehicleService.getVehicles();
+    _loadCapacity();
+  }
+
+  Future<void> _loadCapacity() async {
+    try {
+      final credits = await const BillingService().credits();
+      if (mounted) {
+        setState(
+          () => _creditAccount = widget.businessAccount == null
+              ? credits.personal
+              : credits.company,
+        );
+      }
+    } catch (_) {
+      /* Vehicle browsing remains available when balances cannot load. */
+    }
   }
 
   Future<void> _refreshVehicles() async {
@@ -51,6 +71,17 @@ class _VehicleListScreenState extends State<VehicleListScreen> {
   }
 
   Future<void> _openAddVehicleScreen() async {
+    if (_creditAccount != null &&
+        _creditAccount!.usedSlots >= _creditAccount!.totalSlots) {
+      await Navigator.of(context).push<void>(
+        MaterialPageRoute(
+          builder: (_) =>
+              const SubscriptionScreen(initialCategory: 2, preferCompany: true),
+        ),
+      );
+      await _loadCapacity();
+      return;
+    }
     final createdVehicle = await Navigator.of(context).push<Vehicle>(
       MaterialPageRoute<Vehicle>(
         builder: (_) =>
@@ -366,6 +397,7 @@ class _VehicleListScreenState extends State<VehicleListScreen> {
                         return _VehicleHeader(
                           vehicleCount: vehicles.length,
                           businessAccount: widget.businessAccount,
+                          capacity: _creditAccount?.totalSlots,
                         );
                       }
 
@@ -394,10 +426,12 @@ class _VehicleHeader extends StatelessWidget {
   const _VehicleHeader({
     required this.vehicleCount,
     required this.businessAccount,
+    this.capacity,
   });
 
   final int vehicleCount;
   final BusinessAccount? businessAccount;
+  final int? capacity;
 
   @override
   Widget build(BuildContext context) {
@@ -418,7 +452,7 @@ class _VehicleHeader extends StatelessWidget {
         AppText(
           businessAccount == null
               ? 'Kayıtlı araçlarınızı buradan görüntüleyebilir, düzenleyebilir ve yönetebilirsiniz.'
-              : 'Şirket üyelerinin ortak kullandığı araçları buradan yönetebilirsiniz. Aktif araç sınırı şirket genelinde 50’dir.',
+              : 'Şirket üyelerinin ortak kullandığı araçları buradan yönetebilirsiniz. Business 10 ortak slot içerir; ek slotlar kalıcıdır.',
           style: textTheme.bodyLarge?.copyWith(
             color: colorScheme.onSurfaceVariant,
             height: 1.45,
@@ -429,7 +463,9 @@ class _VehicleHeader extends StatelessWidget {
 
         AppStatusBadge(
           icon: Icons.garage_outlined,
-          label: '$vehicleCount kayıtlı araç',
+          label: capacity == null
+              ? '$vehicleCount kayıtlı araç'
+              : '$vehicleCount / $capacity araç slotu · ${((capacity! - vehicleCount).clamp(0, capacity!))} boş',
           color: colorScheme.primary,
           backgroundColor: colorScheme.primaryContainer,
         ),

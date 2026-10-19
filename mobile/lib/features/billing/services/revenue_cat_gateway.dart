@@ -7,6 +7,10 @@ class BillingPurchaseCancelled implements Exception {
   const BillingPurchaseCancelled();
 }
 
+class BillingPurchasePending implements Exception {
+  const BillingPurchasePending();
+}
+
 class RevenueCatGateway {
   const RevenueCatGateway();
 
@@ -67,6 +71,10 @@ class RevenueCatGateway {
           PurchasesErrorCode.purchaseCancelledError) {
         throw const BillingPurchaseCancelled();
       }
+      if (PurchasesErrorHelper.getErrorCode(exception) ==
+          PurchasesErrorCode.paymentPendingError) {
+        throw const BillingPurchasePending();
+      }
 
       rethrow;
     }
@@ -74,5 +82,21 @@ class RevenueCatGateway {
 
   Future<void> restorePurchases() async {
     await Purchases.restorePurchases();
+  }
+
+  Future<String> purchaseConsumable(Package package) async {
+    try {
+      final result = await Purchases.purchase(PurchaseParams.package(package));
+      return result.storeTransaction.transactionIdentifier;
+    } on PlatformException catch (exception) {
+      final code = PurchasesErrorHelper.getErrorCode(exception);
+      if (code == PurchasesErrorCode.purchaseCancelledError) {
+        throw const BillingPurchaseCancelled();
+      }
+      if (code == PurchasesErrorCode.paymentPendingError) {
+        throw const BillingPurchasePending();
+      }
+      rethrow;
+    }
   }
 }

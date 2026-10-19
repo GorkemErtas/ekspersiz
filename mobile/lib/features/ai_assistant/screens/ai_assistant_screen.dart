@@ -34,14 +34,15 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
   AiAssistantEntitlement? _entitlement;
 
   bool get _freeMonthlyExhausted =>
-      _entitlement?.quotaPeriod == 'MONTHLY' &&
-      _entitlement?.remainingToday == 0 &&
-      _entitlement?.status == 'ACTIVE';
+      _entitlement?.remainingToday == 0 && _entitlement?.status == 'ACTIVE';
 
   Future<void> _openSubscriptionPlans() async {
-    await Navigator.of(
-      context,
-    ).push(MaterialPageRoute<void>(builder: (_) => const SubscriptionScreen()));
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) =>
+            const SubscriptionScreen(initialCategory: 1, preferCompany: true),
+      ),
+    );
     if (mounted) await _refreshEntitlementSilently();
   }
 
@@ -270,18 +271,13 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
   String _accessMessage(AiAssistantEntitlement entitlement) {
     return switch (entitlement.status) {
       'INACTIVE' =>
-        'AI Asistan şu anda kullanılamıyor. Abonelik planlarını inceleyebilirsiniz.',
+        'AI Asistan şu anda kullanılamıyor. Krediler ve Paketler ekranını inceleyebilirsiniz.',
       'LOCKED' =>
         'Çok sayıda kapsam dışı istek nedeniyle AI Asistan geçici olarak kilitlendi.',
       'EXPIRED' =>
-        'AI Asistan erişiminiz sona erdi. Abonelik planlarını inceleyebilirsiniz.',
-      _
-          when entitlement.remainingToday <= 0 &&
-              entitlement.quotaPeriod == 'MONTHLY' =>
-        'Bu ayki 3 ücretsiz AI Asistan soru hakkınızı kullandınız. '
-            'Devam etmek için abonelik planlarını inceleyebilirsiniz.',
+        'AI Asistan erişiminiz sona erdi. Krediler ve Paketler ekranını inceleyebilirsiniz.',
       _ when entitlement.remainingToday <= 0 =>
-        'Bugünkü ${entitlement.dailyLimit} soru hakkınızı kullandınız. Yeni günlük haklarınız yarın yenilenir.',
+        'AI Asistan krediniz bitti. Devam etmek için soru kredisi satın alabilirsiniz.',
       _ =>
         'Aracınız, bakım, muayene, güvenlik veya EksperSiz hakkında bir şey sorun.',
     };
@@ -394,7 +390,7 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
                                         ),
                                       ),
                                       child: Text(
-                                        '${_entitlement!.quotaPeriod == 'MONTHLY' ? 'Bu ay' : 'Bugün'} kalan soru hakkı: ${_entitlement!.remainingToday}/${_entitlement!.dailyLimit}',
+                                        'Kalan asistan kredisi: ${_entitlement!.remainingToday} · Yanıt başına 1 kredi',
                                         style: Theme.of(
                                           context,
                                         ).textTheme.titleSmall,
@@ -416,7 +412,7 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
                                             Icons.workspace_premium_outlined,
                                           ),
                                           label: const Text(
-                                            'Abonelik Planlarını İncele',
+                                            'Asistan Kredisi Al',
                                           ),
                                         ),
                                       ),

@@ -16,6 +16,7 @@ import '../../auth/services/auth_service.dart';
 import '../../business/screens/business_management_screen.dart';
 import '../../billing/screens/subscription_screen.dart';
 import '../../billing/services/billing_service.dart';
+import '../../billing/models/credit_catalog.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({
@@ -43,6 +44,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final AuthService _authService = const AuthService();
   final BillingService _billingService = const BillingService();
   String? _verifiedSubscriptionPlan;
+  CreditOverview? _credits;
   String get _currentSubscriptionPlan =>
       _verifiedSubscriptionPlan ?? widget.subscriptionPlan;
 
@@ -63,6 +65,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     } catch (_) {
       // Preserve the authenticated profile plan when billing is unavailable.
     }
+    try {
+      final credits = await _billingService.credits();
+      if (mounted) setState(() => _credits = credits);
+    } catch (_) {
+      // A temporary balance failure must not discard verified subscription status.
+    }
   }
 
   @override
@@ -79,9 +87,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   String get _subscriptionPlanLabel {
     return switch (_currentSubscriptionPlan) {
-      'FREE' => 'Ücretsiz',
-      'PLUS' => 'Plus',
-      'PRO' => 'Pro',
+      'FREE' => 'Kredi hesabı',
+      'PLUS' => 'Kredi hesabı · Önceki dönem hakları aktif',
+      'PRO' => 'Kredi hesabı · Önceki dönem hakları aktif',
       'BUSINESS' => 'Kurumsal',
       _ => _currentSubscriptionPlan,
     };
@@ -477,10 +485,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     children: [
                       _ActionProfileItem(
                         icon: Icons.workspace_premium_outlined,
-                        title: 'Abonelik ve Planlar',
-                        subtitle: widget.businessAccount != null
-                            ? 'Business aboneliğinizi ve şirket analiz kotanızı yönetin.'
-                            : 'Mevcut planınızı, aylık analiz kotanızı ve abonelik seçeneklerini görüntüleyin.',
+                        title: 'Krediler ve Paketler',
+                        subtitle: _credits == null
+                            ? 'Kredi bakiyelerinizi ve araç kapasitenizi yönetin.'
+                            : '${widget.businessAccount != null ? 'Şirket' : 'Kişisel'}: '
+                                  '${(_credits!.company ?? _credits!.personal).available('ANALYSIS')} analiz · '
+                                  '${(_credits!.company ?? _credits!.personal).available('ASSISTANT')} asistan\n'
+                                  '${(_credits!.company ?? _credits!.personal).usedSlots} / ${(_credits!.company ?? _credits!.personal).totalSlots} araç slotu',
                         onTap: _openSubscription,
                       ),
                       const Divider(height: 1, indent: 82),

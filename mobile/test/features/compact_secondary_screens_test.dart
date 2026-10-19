@@ -72,6 +72,27 @@ void main() {
           },
           () => MockClient((request) async {
             final path = request.url.path;
+            if (path.endsWith('/analysis-quota')) {
+              return uiJsonResponse({
+                'plan': 'FREE',
+                'remaining': 5,
+                'purchasedCredits': 5,
+              });
+            }
+            if (path.endsWith('/credits')) {
+              return uiJsonResponse({
+                'personal': {
+                  'canPurchase': true,
+                  'usedSlots': 1,
+                  'totalSlots': 2,
+                  'balances': {
+                    'ANALYSIS': {'available': 5},
+                    'ASSISTANT': {'available': 10},
+                  },
+                },
+                'products': [],
+              });
+            }
             if (path.endsWith('/vehicles')) {
               return uiJsonResponse([uiVehicleJson]);
             }
