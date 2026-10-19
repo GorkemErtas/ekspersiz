@@ -34,13 +34,13 @@ public enum BillingProduct {
             "Ekipler ve ortak şirket araçları için",
             "eksper_business_monthly",
             "business_monthly",
-            new BigDecimal("1499.99"),
+            CreditCatalog.BUSINESS_PRICE,
             false,
             List.of(
-                    "50 ortak aktif araç",
+                    "10 ortak aktif araç",
                     "Şirket genelinde ayda 100 AI analizi",
                     "Çalışan daveti ve ortak geçmiş",
-                    "AI Asistan: ekip için ortak günde 10 soru"
+                    "Her abonelik döneminde 200 ortak AI Asistan kredisi"
             )
     );
 

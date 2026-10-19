@@ -35,6 +35,8 @@ import java.util.Set;
 
 @Service
 public class BillingService {
+    @Autowired
+    private CreditWalletService creditWallets;
 
     private final UserRepository userRepository;
     private final BillingSubscriptionRepository subscriptionRepository;
@@ -116,6 +118,22 @@ public class BillingService {
         String eventType = requiredText(event, "type");
         String appUserId = textOrNull(event.path("app_user_id"));
 
+        String creditProduct = textOrNull(event.path("product_id"));
+        boolean consumable = com.gorkem.vehicle_inspector.service.billing.CreditCatalog.find(creditProduct) != null
+                || (creditProduct != null && Set.of("analysis_1", "analysis_3", "analysis_10").contains(creditProduct));
+        if (creditWallets != null && consumable && Set.of("NON_RENEWING_PURCHASE", "CANCELLATION").contains(eventType)) {
+            // Only the exact authenticated provider customer may receive a consumable; never walk aliases.
+            User buyer=userRepository.findByBillingCustomerId(appUserId).orElse(null);
+            if (buyer==null && !"CANCELLATION".equals(eventType))
+                throw new InvalidBillingWebhookException("Satın alma müşterisi bulunamadı.");
+            long purchasedMillis=event.path("purchased_at_ms").asLong(0);
+            creditWallets.purchase(buyer,creditProduct,requiredText(event,"transaction_id"),
+                    purchasedMillis>0?toLocalDateTime(Instant.ofEpochMilli(purchasedMillis)):null,
+                    "CANCELLATION".equals(eventType));
+            webhookEventRepository.save(new BillingWebhookEvent(eventId,eventType,appUserId,LocalDateTime.now(clock)));
+            return;
+        }
+
         if (!"TEST".equals(eventType)) {
             List<User> users = findWebhookUsers(event);
             if ("NON_RENEWING_PURCHASE".equals(eventType)) {
@@ -189,6 +207,12 @@ public class BillingService {
 
         userRepository.save(user);
         subscriptionRepository.save(billingSubscription);
+        if (creditWallets != null) {
+            for (RevenueCatPurchase purchase : customer.purchases()) {
+                creditWallets.purchase(user,purchase.productId(),purchase.transactionId(),
+                        toLocalDateTime(purchase.purchasedAt()),purchase.refunded());
+            }
+        }
     }
 
     private void applyActiveSubscription(
@@ -305,17 +329,18 @@ public class BillingService {
         List<BillingPlanResponse> plans = new ArrayList<>();
         plans.add(new BillingPlanResponse(
                 SubscriptionPlan.FREE,
-                "Ücretsiz",
-                "Araç takibi, ayda 1 hasar raporu ve ayda 3 AI Asistan sorusu",
+                "Kişisel kredi hesabı",
+                "Süresiz kredi paketleriyle kullandığınız kadar ödeyin",
                 null,
                 null,
                 BigDecimal.ZERO,
                 "TRY",
                 false,
-                List.of("1 aktif araç", "Ayda 1 detaylı AI raporu", "Ayda 3 AI Asistan sorusu")
+                List.of("1 aktif araç", "Uygun cihaz ve hesaplara bir kez 1 analiz + 2 asistan kredisi")
         ));
 
         for (BillingProduct product : BillingProduct.values()) {
+            if (creditWallets != null && product.getPlan() != SubscriptionPlan.BUSINESS) continue;
             plans.add(new BillingPlanResponse(
                     product.getPlan(),
                     product.getTitle(),

@@ -14,6 +14,8 @@ import java.util.UUID;
 
 @Service
 public class AiAssistantEntitlementService {
+    @Autowired
+    private CreditWalletService creditWallets;
     public static final int DAILY_LIMIT = 3;
     public static final int FREE_MONTHLY_LIMIT = 3;
     public static final int OUT_OF_SCOPE_LOCK_THRESHOLD = 3;
@@ -271,6 +273,14 @@ public class AiAssistantEntitlementService {
     }
 
     private AiAssistantEntitlementResponse response(User user, AiAssistantAccess access, LocalDateTime now) {
+        if (creditWallets!=null) {
+            boolean company=businessContext.isBusinessMember(user);
+            var balance=creditWallets.account(user,company).balances().get("ASSISTANT");
+            int available=Math.toIntExact(balance.available());
+            boolean locked=access.getLockedUntil()!=null && access.getLockedUntil().isAfter(now);
+            return new AiAssistantEntitlementResponse(locked?AiAssistantAccessStatus.LOCKED:AiAssistantAccessStatus.ACTIVE,
+                    !locked && available>0,available,0,available,0,null,balance.periodEndsAt(),access.getLockedUntil(),"CREDITS");
+        }
         AiAssistantDailyUsage usage=usageRepository
                 .findByUserIdAndUsageDate(user.getId(), LocalDate.now(clock)).orElse(null);
         int used=usage == null ? 0 : usage.getSuccessfulQuestions();

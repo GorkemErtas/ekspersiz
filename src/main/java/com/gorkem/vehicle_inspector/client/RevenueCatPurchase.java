@@ -7,6 +7,10 @@ public record RevenueCatPurchase(
         String transactionId,
         Instant purchasedAt,
         boolean sandbox,
-        String store
+        String store,
+        boolean refunded
 ) {
+    public RevenueCatPurchase(String productId,String transactionId,Instant purchasedAt,boolean sandbox,String store) {
+        this(productId,transactionId,purchasedAt,sandbox,store,false);
+    }
 }

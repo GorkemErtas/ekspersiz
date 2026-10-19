@@ -261,6 +261,34 @@ class BillingServiceTest {
         );
     }
 
+    @Test
+    void consumableWebhookGrantsOnlyExactCustomerAndDeduplicatesEvent() {
+        var credits=mock(com.gorkem.vehicle_inspector.service.CreditWalletService.class);
+        ReflectionTestUtils.setField(service,"creditWallets",credits);
+        when(users.findByBillingCustomerId(user.getBillingCustomerId())).thenReturn(Optional.of(user));
+        when(webhookEvents.existsByProviderEventId("credit-event")).thenReturn(false,true);
+        String body="""
+            {"event":{"id":"credit-event","type":"NON_RENEWING_PURCHASE","app_user_id":"%s",
+            "aliases":["foreign-customer"],"product_id":"eksper_analysis_5","transaction_id":"store-order","purchased_at_ms":1792400400000}}
+            """.formatted(user.getBillingCustomerId());
+        service.processRevenueCatWebhook("secret",null,body);
+        service.processRevenueCatWebhook("secret",null,body);
+        verify(credits,times(1)).purchase(eq(user),eq("eksper_analysis_5"),eq("store-order"),any(),eq(false));
+        verify(users,never()).findByBillingCustomerId("foreign-customer");
+        verifyNoInteractions(revenueCatClient);
+    }
+
+    @Test
+    void refundAfterAccountDeletionStillReachesTransactionLedger() {
+        var credits=mock(com.gorkem.vehicle_inspector.service.CreditWalletService.class);
+        ReflectionTestUtils.setField(service,"creditWallets",credits);
+        service.processRevenueCatWebhook("secret",null,"""
+            {"event":{"id":"refund-event","type":"CANCELLATION","app_user_id":"deleted-customer",
+            "product_id":"eksper_analysis_5","transaction_id":"store-order"}}
+            """);
+        verify(credits).purchase(isNull(),eq("eksper_analysis_5"),eq("store-order"),isNull(),eq(true));
+    }
+
     private RevenueCatSubscription subscription(
             String productId,
             boolean autoRenewing,

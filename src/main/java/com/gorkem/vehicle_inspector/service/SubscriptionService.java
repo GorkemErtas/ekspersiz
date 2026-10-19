@@ -14,6 +14,8 @@ import java.time.Clock;
 
 @Service
 public class SubscriptionService {
+    @org.springframework.beans.factory.annotation.Autowired
+    private CreditWalletService creditWallets;
 
     private static final int FREE_MONTHLY_ANALYSIS_LIMIT = 1;
     private static final int PLUS_MONTHLY_ANALYSIS_LIMIT = 5;
@@ -143,6 +145,7 @@ public class SubscriptionService {
     public void validateVehicleLimit(
             User user
     ) {
+        if (creditWallets != null) { creditWallets.validateSlots(user, false); return; }
 
         SubscriptionPlan plan =
                 getEffectivePlan(user);
@@ -182,6 +185,7 @@ public class SubscriptionService {
     public void validateBusinessVehicleLimit(
             BusinessAccount businessAccount
     ) {
+        if (creditWallets != null) { creditWallets.validateBusinessSlots(businessAccount.getId()); return; }
         long vehicleCount =
                 vehicleRepository
                         .countByBusinessAccountIdAndArchivedFalse(

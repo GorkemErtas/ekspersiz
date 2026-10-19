@@ -12,6 +12,11 @@ import java.util.LinkedHashMap;
 
 @Service
 public class AiAssistantChatService {
+    @org.springframework.beans.factory.annotation.Autowired
+    private CreditWalletService credits;
+    @org.springframework.beans.factory.annotation.Autowired
+    private BusinessContextService businessContext;
+    private final com.fasterxml.jackson.databind.ObjectMapper creditJson=new com.fasterxml.jackson.databind.ObjectMapper();
     private final AiAssistantClient aiClient;
     private final AiAssistantEntitlementService entitlement;
     private final AiAssistantToolContextService contextService;
@@ -24,7 +29,41 @@ public class AiAssistantChatService {
     }
 
     public AiAssistantChatResponse chat(AiAssistantChatRequest request, String email) {
-        entitlement.assertCanAsk(email);
+        if (credits==null) return answer(request,email,false);
+        var user=businessContext.requireUser(email);
+        // Older clients remain subject to credit enforcement, even without an idempotency key.
+        String key="question:"+(request.requestId()==null?UUID.randomUUID():request.requestId());
+        String hash;
+        try {
+            byte[] payload=creditJson.writeValueAsBytes(java.util.Arrays.asList(request.question(),request.vehicleId(),request.history()));
+            hash=java.util.HexFormat.of().formatHex(java.security.MessageDigest.getInstance("SHA-256").digest(payload));
+        } catch (Exception e) { throw new IllegalStateException("İstek doğrulanamadı.",e); }
+        var reservation=credits.reserve(user,businessContext.isBusinessMember(user),"ASSISTANT",key,hash);
+        if (reservation.completed()) {
+            try { return creditJson.readValue(credits.response(user,reservation.token()),AiAssistantChatResponse.class); }
+            catch (Exception e) { throw new IllegalStateException("Önceki yanıt alınamadı; tekrar kredi düşülmedi.",e); }
+        }
+        boolean completed=false;
+        try {
+            if ("LOCKED".equals(entitlement.status(email).status().name()))
+                throw new IllegalStateException("AI Asistan erişiminiz geçici olarak kilitli.");
+            AiAssistantChatResponse result=answer(request,email,true);
+            if (result.quotaConsumed()) {
+                try { credits.completeWithResponse(user,reservation.token(),creditJson.writeValueAsString(result)); }
+                catch (com.fasterxml.jackson.core.JsonProcessingException e) { throw new IllegalStateException("Yanıt kaydedilemedi.",e); }
+                completed=true;
+            }
+            if (!completed) {
+                credits.release(user,reservation.token());
+                result=new AiAssistantChatResponse(result.intent(),result.answer(),false,
+                        entitlement.status(email).remainingToday(),result.toolsUsed(),result.sources());
+            }
+            return result;
+        } finally { if (!completed) credits.release(user,reservation.token()); }
+    }
+
+    private AiAssistantChatResponse answer(AiAssistantChatRequest request,String email,boolean creditMode) {
+        if (!creditMode) entitlement.assertCanAsk(email);
         List<Map<String, String>> plannerHistory = request.history() == null ? List.of()
                 : request.history().stream()
                     .map(item -> Map.of("role", item.role(), "content", item.content()))
@@ -76,17 +115,17 @@ public class AiAssistantChatService {
             usedTools=List.of(plan.toolName());
         }
 
-        UUID reservationToken=entitlement.reserveQuestion(email);
+        UUID reservationToken=creditMode?null:entitlement.reserveQuestion(email);
         boolean completed=false;
         try {
             String answer=generation.generate(
                     request.question(), plan, toolContext, request.history(), vehicleContext);
-            entitlement.completeReservedQuestion(email, reservationToken);
+            if (!creditMode) entitlement.completeReservedQuestion(email, reservationToken);
             completed=true;
             var status=entitlement.status(email);
             return response(plan, answer, true, status.remainingToday(), usedTools);
         } finally {
-            if (!completed) entitlement.releaseReservedQuestion(email, reservationToken);
+            if (!completed && !creditMode) entitlement.releaseReservedQuestion(email, reservationToken);
         }
     }
 

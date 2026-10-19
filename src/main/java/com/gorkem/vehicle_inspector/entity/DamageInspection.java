@@ -135,6 +135,17 @@ public class DamageInspection {
     @Column(name = "report_access_granted", nullable = false)
     private boolean reportAccessGranted;
 
+    @Column(name="report_attempt")
+    private java.util.UUID reportAttempt;
+    @Column(name="report_started_at")
+    private LocalDateTime reportStartedAt;
+
+    public java.util.UUID beginReport(LocalDateTime now) {
+        reportAttempt=java.util.UUID.randomUUID();reportStartedAt=now;return reportAttempt;
+    }
+    public java.util.UUID getReportAttempt() { return reportAttempt; }
+    public LocalDateTime getReportStartedAt() { return reportStartedAt; }
+
     @Enumerated(EnumType.STRING)
     @Column(name = "report_access_source", length = 30)
     private ReportAccessSource reportAccessSource;

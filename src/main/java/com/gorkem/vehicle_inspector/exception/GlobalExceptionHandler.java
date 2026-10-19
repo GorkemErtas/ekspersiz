@@ -153,6 +153,11 @@ public class GlobalExceptionHandler {
         );
     }
 
+    @ExceptionHandler(org.springframework.dao.PessimisticLockingFailureException.class)
+    public ResponseEntity<ApiErrorResponse> handleCreditContention(org.springframework.dao.PessimisticLockingFailureException exception) {
+        return buildResponse(HttpStatus.CONFLICT,"Başka bir işleminiz tamamlanıyor. Lütfen birkaç saniye sonra tekrar deneyin.");
+    }
+
     @ExceptionHandler(FreeAssistantQuotaExceededException.class)
     public ResponseEntity<ApiErrorResponse> handleFreeAssistantQuotaExceeded(
             FreeAssistantQuotaExceededException exception

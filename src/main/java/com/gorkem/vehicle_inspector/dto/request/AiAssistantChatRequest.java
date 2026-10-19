@@ -8,8 +8,10 @@ import java.util.List;
 public record AiAssistantChatRequest(
         @NotBlank @Size(max = 2000) String question,
         Long vehicleId,
-        @Size(max = 6) List<@Valid HistoryMessage> history
+        @Size(max = 6) List<@Valid HistoryMessage> history,
+        java.util.UUID requestId
 ) {
+    public AiAssistantChatRequest(String question,Long vehicleId,List<HistoryMessage> history) { this(question,vehicleId,history,null); }
     public record HistoryMessage(
             @NotBlank @Size(max = 16) String role,
             @NotBlank @Size(max = 2000) String content
