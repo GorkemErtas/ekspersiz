@@ -108,6 +108,20 @@ class CreditWalletPersistenceTest {
         run(() -> service.purchase(user,"eksper_analysis_1","spent",now(),true));
         buy(user,"eksper_analysis_5","new");assertEquals(4,balance(user,"ANALYSIS"));
     }
+    @Test void delayedStorePurchaseIsAttributedWithinThirtyDaysOnly() {
+        run(() -> service.preparePurchase(user,"eksper_analysis_5"));
+        clock.instant=clock.instant.plus(Duration.ofDays(4));
+        run(() -> service.purchase(user,"eksper_analysis_5","pending-four-days",now(),false));
+        run(() -> service.purchase(user,"eksper_analysis_5","pending-four-days",now(),false));
+        assertTrue(service.purchaseConfirmed(user,"pending-four-days"));
+        assertEquals(5,balance(user,"ANALYSIS"));
+
+        run(() -> service.preparePurchase(other,"eksper_assistant_1"));
+        clock.instant=clock.instant.plus(Duration.ofDays(31));
+        run(() -> service.purchase(other,"eksper_assistant_1","outside-window",now(),false));
+        assertFalse(service.purchaseConfirmed(other,"outside-window"));
+        assertEquals(0,balance(other,"ASSISTANT"));
+    }
     @Test void welcomeCannotBeRepeatedByAccountDeviceOrDeletedEmail() {
         run(() -> service.grantWelcome(user,"device-a","identity-a"));
         run(() -> service.grantWelcome(user,"device-b","identity-a"));
