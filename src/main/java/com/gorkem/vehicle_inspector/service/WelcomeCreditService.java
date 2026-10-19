@@ -13,6 +13,8 @@ import tools.jackson.databind.JsonNode;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.security.MessageDigest;
 import java.time.*;
 import java.util.*;
@@ -26,16 +28,37 @@ public class WelcomeCreditService {
     private final RestTemplate http;
     private final Clock clock;
     private final TransactionTemplate tx;
-    private final String secret,packageName,certificate,project;
+    private final String secret,packageName,certificate,project,serviceAccountJsonBase64;
+    @org.springframework.beans.factory.annotation.Autowired
     public WelcomeCreditService(JdbcTemplate jdbc,CreditWalletService credits,RestTemplate http,Clock clock,
             PlatformTransactionManager manager,
             @Value("${CREDIT_DEVICE_HMAC_KEY:}") String secret,
             @Value("${PLAY_INTEGRITY_PACKAGE:com.gorkem.ekspersiz}") String packageName,
             @Value("${PLAY_INTEGRITY_CERTIFICATE_SHA256:}") String certificate,
-            @Value("${PLAY_INTEGRITY_CLOUD_PROJECT_NUMBER:}") String project) {
+            @Value("${PLAY_INTEGRITY_CLOUD_PROJECT_NUMBER:}") String project,
+            @Value("${PLAY_INTEGRITY_SERVICE_ACCOUNT_JSON_B64:}") String serviceAccountJsonBase64) {
         this.jdbc=jdbc;this.credits=credits;this.http=http;this.clock=clock;this.tx=new TransactionTemplate(manager);
         this.secret=secret;this.packageName=packageName;this.certificate=certificate;this.project=project;
+        this.serviceAccountJsonBase64=serviceAccountJsonBase64 == null ? "" : serviceAccountJsonBase64.trim();
     }
+    // Keep the constructor used by existing unit tests independent of the Railway credential transport.
+    WelcomeCreditService(JdbcTemplate jdbc,CreditWalletService credits,RestTemplate http,Clock clock,
+            PlatformTransactionManager manager,String secret,String packageName,String certificate,String project) {
+        this(jdbc,credits,http,clock,manager,secret,packageName,certificate,project,"");
+    }
+
+    private GoogleCredentials playIntegrityCredentials() throws IOException {
+        GoogleCredentials credentials;
+        if (!serviceAccountJsonBase64.isBlank()) {
+            byte[] bytes=Base64.getDecoder().decode(serviceAccountJsonBase64);
+            credentials=GoogleCredentials.fromStream(new ByteArrayInputStream(bytes));
+        } else {
+            // Workload identity or GOOGLE_APPLICATION_CREDENTIALS path, when available.
+            credentials=GoogleCredentials.getApplicationDefault();
+        }
+        return credentials.createScoped("https://www.googleapis.com/auth/playintegrity");
+    }
+
     public Map<String,Object> challenge(User user,String deviceId) {
         if (secret.length()<32 || certificate.isBlank() || project.isBlank())
             return Map.of("available",false,"message","Ücretsiz başlangıç kredileri için cihaz doğrulaması şu anda kullanılamıyor.");
@@ -62,7 +85,7 @@ public class WelcomeCreditService {
         var challenge=rows.getFirst();
         JsonNode decoded;
         try {
-            GoogleCredentials credentials=GoogleCredentials.getApplicationDefault().createScoped("https://www.googleapis.com/auth/playintegrity");
+            GoogleCredentials credentials=playIntegrityCredentials();
             credentials.refreshIfExpired();
             HttpHeaders headers=new HttpHeaders(); headers.setBearerAuth(credentials.getAccessToken().getTokenValue());
             decoded=http.postForObject("https://playintegrity.googleapis.com/v1/"+packageName+":decodeIntegrityToken",
