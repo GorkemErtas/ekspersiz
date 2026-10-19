@@ -43,8 +43,10 @@ Merkezi katalog: `service/billing/CreditCatalog.java`.
 
 İlk üç satır toplam **22 tekrar satın alınabilir consumable** üründür. Google
 Play Console'da TRY fiyatlarını yukarıdaki tabloya göre yapılandırın. RevenueCat
-current offering içindeki custom package ID, consumable store product ID ile
-aynı olmalıdır. Consumable ürünlere kalıcı subscription entitlement bağlamayın.
+`credits_v1` offering içindeki custom package ID, consumable store product ID ile
+aynı olmalıdır. Yeni Flutter sürümü `credits_v1` offering'ini doğrudan okur;
+mevcut canlı sürüm için RevenueCat current/default offering'ini geçiş sırasında
+değiştirmeyin. `credits_v1` içinde `business_monthly` paketi de bulunmalıdır. Consumable ürünlere kalıcı subscription entitlement bağlamayın.
 Business mevcut aylık ürününde kalır; onaylanan aylık fiyatı **4.999,99 TL** olarak Play Console'da yapılandırılmalıdır. Kodda ve belgelerdeki bu rakam mağazadaki mevcut fiyatı kendiliğinden değiştirmez.
 
 ### Google Play Console 2026 — yeni tek seferlik ürün oluşturma
