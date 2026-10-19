@@ -46,6 +46,19 @@ Play Console'da TRY fiyatlarını yukarıdaki tabloya göre yapılandırın. Rev
 current offering içindeki custom package ID, consumable store product ID ile
 aynı olmalıdır. Consumable ürünlere kalıcı subscription entitlement bağlamayın.
 Business mevcut aylık ürününde kalır; onaylanan aylık fiyatı **4.999,99 TL** olarak Play Console'da yapılandırılmalıdır. Kodda ve belgelerdeki bu rakam mağazadaki mevcut fiyatı kendiliğinden değiştirmez.
+
+### Google Play Console 2026 — yeni tek seferlik ürün oluşturma
+
+1. Play Console > Ekspersiz > **Google Play ile para kazanın > Ürünler > Tek seferlik ürünler** > **Tek seferlik ürün oluştur**.
+2. `Ürün kimliği` olarak tabloda yer alan **tam SKU** girilir (ör. `eksper_analysis_1`). Ad: `1 AI Hasar Analizi Kredisi`. Açıklama: `Ekspersiz'de 1 adet AI hasar analizi için kullanılabilen süresiz kredi.`
+3. Vergi ve uygunluk bilgilerinin uygulamanın gerçek niteliğine göre yapılandırılması gerekir.
+4. **Satın alma seçeneği** oluştururken örnek seçenek kimliği `buy`; satın alma türü **Satın alma (Buy)** olmalı, **Kiralama (Rent)** seçilmemeli. Tekli SKU zaten adet kadar kredi verir: "Miktarlar ve sınırlar" üzerinden ayrıca çoklu adet satışı açılmaz.
+5. Bölge Türkiye, para birimi TRY; ürünün tablodaki ilgili **toplam fiyatı** girilir. Fiyatı ve bölgesel kullanılabilirliği gözden geçirip satın alma seçeneğini etkinleştirin.
+6. RevenueCat ürün kataloğuna **store product ID** üzerinden içeri aktarın; current offering'e **custom package ID = aynı tam SKU** olacak şekilde ekleyin. Tüketilebilir paketlere subscription/lifetime entitlement bağlamayın.
+7. Bütün SKU'lar hazır olsa bile gerçek kullanıcıların yeni satın alma ekranına ulaşabilmesi için backend V14, webhook ve mobil sürümün birlikte doğrulanması gerekir; ürünleri kurmak tek başına krediyi teslim etmez.
+
+Yeni modelde **ürün kimliği**, **satın alma seçeneği kimliği** ve **RevenueCat package kimliği** ayrı kavramlardır; uygulamanın beklediği ilk ve üçüncü kimlik yukarıdaki SKU'dur.
+
 Mevcut aboneler için mağazanın fiyat değişikliği/onay sürecini ayrıca yönetin.
 
 RevenueCat custom App User ID backend'in kalıcı `billing_customer_id` UUID'sidir;
