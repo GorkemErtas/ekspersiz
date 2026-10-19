@@ -236,7 +236,7 @@ public class CreditWalletService {
         String account=resolve(user,product.business(),true);
         lock(account);
         UUID id=UUID.randomUUID();
-        jdbc.update("INSERT INTO credit_purchase_intents(id,customer_id,product_id,account_id,created_at,expires_at) VALUES (?,?,?,?,?,?)",id,user.ensureBillingCustomerId(),productId,account,now(),now().plusHours(24));
+        jdbc.update("INSERT INTO credit_purchase_intents(id,customer_id,product_id,account_id,created_at,expires_at) VALUES (?,?,?,?,?,?)",id,user.ensureBillingCustomerId(),productId,account,now(),now().plusDays(30));
         return id;
     }
 
