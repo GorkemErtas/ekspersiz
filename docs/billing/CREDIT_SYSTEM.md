@@ -45,13 +45,13 @@ Merkezi katalog: `service/billing/CreditCatalog.java`.
 Play Console'da TRY fiyatlarını yukarıdaki tabloya göre yapılandırın. RevenueCat
 current offering içindeki custom package ID, consumable store product ID ile
 aynı olmalıdır. Consumable ürünlere kalıcı subscription entitlement bağlamayın.
-Business mevcut aylık ürününde kalır; TRY fiyatı 4.999,99 TL yapılmalıdır.
+Business mevcut aylık ürününde kalır; onaylanan aylık fiyatı **4.999,99 TL** olarak Play Console'da yapılandırılmalıdır. Kodda ve belgelerdeki bu rakam mağazadaki mevcut fiyatı kendiliğinden değiştirmez.
 Mevcut aboneler için mağazanın fiyat değişikliği/onay sürecini ayrıca yönetin.
 
 RevenueCat custom App User ID backend'in kalıcı `billing_customer_id` UUID'sidir;
 e-posta veya cihaz ID'si değildir. Restore davranışını **Keep with original App
 User ID** olarak ayarlayın. Şirket alımlarının ayrı SKU'ları, kişisel/şirket hedefi
-karışmasını önler. Satın alma öncesi backend 24 saatlik hesap bağlama kaydı açar.
+karışmasını önler. Satın alma öncesi backend 30 günlük hesap bağlama kaydı açar. Bu süre, Google Play'de beklemeye alınan ve daha sonra kesinleşen satın alımların hak kaybı olmadan eşleştirilmesi içindir.
 Doğrulanmış satın alma zamanının bu pencereye düşmesi gerekir; pencere dışında
 kalan/geçmiş niyeti bulunmayan alımlar otomatik kredi üretmez ve destek incelemesi
 gerektirir. Bekleyen ödemenin kaç gün sonra tamamlandığını ve provider purchase
@@ -115,7 +115,7 @@ Sunucu ayarları:
 - `PLAY_INTEGRITY_PACKAGE`: varsayılan `com.gorkem.ekspersiz`.
 - `PLAY_INTEGRITY_CERTIFICATE_SHA256`: Play App Signing sertifikasının base64url SHA-256 özeti.
 - `PLAY_INTEGRITY_CLOUD_PROJECT_NUMBER`: Play uygulamasına bağlı Cloud project number.
-- Google ADC (`GOOGLE_APPLICATION_CREDENTIALS` veya ortam kimliği), Play Integrity API etkin ve decode yetkili.
+- Railway için `PLAY_INTEGRITY_SERVICE_ACCOUNT_JSON_B64`: Play Integrity token decode yetkisi verilmiş servis hesabının JSON dosyasının **tek satırlık Base64** kodlanmış içeriği. Bu secret'ı yalnızca backend service variables içinde saklayın; Flutter'a, GitHub'a veya loglara koymayın. Alternatif olarak `GOOGLE_APPLICATION_CREDENTIALS` ile JSON dosya yolu veya desteklenen Google ADC iş yükü kimliği kullanılabilir. `FIREBASE_CREDENTIALS_JSON` değişkeninin varlığı bu entegrasyon için otomatik kimlik doğrulaması sağlamaz. Google Cloud projesinde API etkin, servis hesabı uygun yetkili ve Play Console bağlantısı tamamlanmış olmalıdır.
 
 Native Android köprüsü Android ID'yi ve Standard Integrity token'ını sağlar.
 Backend 3 dakikalık tek kullanımlık challenge, request hash, paket, imza,
