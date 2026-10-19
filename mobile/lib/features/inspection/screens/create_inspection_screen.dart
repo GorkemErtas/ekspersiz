@@ -17,6 +17,7 @@ import '../../vehicle/services/vehicle_service.dart';
 import '../../auth/models/business_account.dart';
 import '../../billing/screens/subscription_screen.dart';
 import '../../billing/services/analysis_quota_service.dart';
+import '../../billing/models/analysis_quota.dart';
 
 import '../models/damage_inspection.dart';
 import '../services/inspection_service.dart';
@@ -39,6 +40,7 @@ class _CreateInspectionScreenState extends State<CreateInspectionScreen> {
       const AnalysisQuotaService();
 
   late Future<List<Vehicle>> _vehiclesFuture;
+  late Future<AnalysisQuota?> _quotaFuture;
 
   Vehicle? _selectedVehicle;
 
@@ -54,8 +56,17 @@ class _CreateInspectionScreenState extends State<CreateInspectionScreen> {
     super.initState();
 
     _vehiclesFuture = _vehicleService.getVehicles();
+    _quotaFuture = _loadQuota();
 
     _loadCurrentLocation();
+  }
+
+  Future<AnalysisQuota?> _loadQuota() async {
+    try {
+      return await _analysisQuotaService.getQuota();
+    } catch (_) {
+      return null;
+    }
   }
 
   Future<void> _loadCurrentLocation() async {
@@ -264,13 +275,12 @@ class _CreateInspectionScreenState extends State<CreateInspectionScreen> {
     if (!mounted) return false;
     if (quota.remaining > 0) return true;
 
-    final message = quota.plan == 'FREE'
-        ? 'Bu ayki ücretsiz analiz hakkınızı kullandınız.'
-        : 'Bu ayki analiz limitinize ulaştınız.';
+    const message =
+        'Hasar analiz krediniz yetersiz. Başarılı analiz başına 1 kredi kullanılır.';
     final upgrade = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const AppText('Aylık analiz limiti'),
+        title: const AppText('Analiz kredisi gerekli'),
         content: AppText(message),
         actions: [
           TextButton(
@@ -280,14 +290,16 @@ class _CreateInspectionScreenState extends State<CreateInspectionScreen> {
           FilledButton.icon(
             onPressed: () => Navigator.pop(dialogContext, true),
             icon: const Icon(Icons.workspace_premium_outlined),
-            label: const AppText('Planları İncele'),
+            label: const AppText('Analiz Kredisi Al'),
           ),
         ],
       ),
     );
     if (upgrade == true && mounted) {
       await Navigator.of(context).push<void>(
-        MaterialPageRoute<void>(builder: (_) => const SubscriptionScreen()),
+        MaterialPageRoute<void>(
+          builder: (_) => const SubscriptionScreen(preferCompany: true),
+        ),
       );
     }
     return false;
@@ -380,11 +392,23 @@ class _CreateInspectionScreenState extends State<CreateInspectionScreen> {
                           : '${widget.businessAccount!.companyName} analizi',
                       subtitle: widget.businessAccount == null
                           ? 'Aracınızı seçin. Konumunuz otomatik olarak alınacak bir sonraki adımda hasarlı bölgenin fotoğrafını ekleyeceksiniz.'
-                          : 'Şirket aracını seçin. Başlatılan analiz şirketin aylık 100 analiz hakkından ortak olarak kullanılır.',
+                          : 'Şirket aracını seçin. Başarılı analiz, ortak bakiyeden 1 analiz kredisi kullanır.',
                       badge: 'YAPAY ZEKÂ İNCELEMESİ',
                     ),
 
                     const SizedBox(height: AppTheme.spacingL),
+
+                    FutureBuilder<AnalysisQuota?>(
+                      future: _quotaFuture,
+                      builder: (context, snapshot) => Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: AppText(
+                          snapshot.hasData
+                              ? 'Kalan analiz kredisi: ${snapshot.data!.remaining} · Başarılı analiz başına 1 kredi'
+                              : 'Başarılı analiz başına 1 kredi kullanılır. Teknik hata veya reddedilen fotoğrafta kredi alınmaz.',
+                        ),
+                      ),
+                    ),
 
                     AppCard(
                       padding: const EdgeInsets.all(AppTheme.cardPadding),

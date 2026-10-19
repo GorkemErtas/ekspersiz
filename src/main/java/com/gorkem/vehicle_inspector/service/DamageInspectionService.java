@@ -40,6 +40,8 @@ import java.util.Set;
 
 @Service
 public class DamageInspectionService {
+    @Autowired
+    private CreditWalletService creditWallets;
 
     private static final Logger log =
             LoggerFactory.getLogger(
@@ -540,6 +542,27 @@ public class DamageInspectionService {
             boolean requireContextImage,
             String vehicleRegion
     ) {
+        if (creditWallets == null) return analyzeWithReservedCredit(inspectionId,authenticatedEmail,requireContextImage,vehicleRegion,null);
+        User user=businessContextService.requireUser(authenticatedEmail);
+        DamageInspection initial=inspectionAccessService.requireInspection(inspectionId,user);
+        if (initial.getStatus()==InspectionStatus.COMPLETED) {
+            return regenerateReport(inspectionId,authenticatedEmail);
+        }
+        boolean company=initial.getVehicle().getBusinessAccount()!=null;
+        var reservation=creditWallets.reserve(user,company,"ANALYSIS","inspection:"+inspectionId,"inspection:"+inspectionId);
+        if (reservation.completed()) return transactionTemplate.execute(status -> buildResponse(inspectionAccessService.requireInspection(inspectionId,user)));
+        boolean completed=false;
+        try {
+            DamageInspectionResponse response=analyzeWithReservedCredit(inspectionId,authenticatedEmail,requireContextImage,vehicleRegion,reservation.token());
+            completed=response.getStatus()==InspectionStatus.COMPLETED && response.getReportStatus()==ReportStatus.COMPLETED;
+            return response;
+        } finally {
+            if (!completed) creditWallets.release(user,reservation.token());
+        }
+    }
+
+    private DamageInspectionResponse analyzeWithReservedCredit(Long inspectionId,String authenticatedEmail,
+            boolean requireContextImage,String vehicleRegion,java.util.UUID creditToken) {
         String normalizedVehicleRegion = normalizeVehicleRegion(vehicleRegion);
         ImageValidationContext imageValidation =
                 validateInspectionImageInternal(
@@ -625,7 +648,7 @@ public class DamageInspectionService {
                             }
 
                             validateNotProcessing(inspection);
-                            if (analysisCreditService == null) {
+                            if (creditWallets == null && analysisCreditService == null) {
                                 validateAnalysisLimit(inspection, user);
                             }
                             if (inspection.getStatus() == InspectionStatus.COMPLETED) {
@@ -633,7 +656,7 @@ public class DamageInspectionService {
                                         "Bu inceleme tamamlandı. Yeni fotoğraf analizi için yeni bir inceleme oluşturun."
                                 );
                             }
-                            if (inspection.getAnalysisStartedAt() == null) {
+                            if (creditToken != null || inspection.getAnalysisStartedAt() == null) {
                                 inspection.setAnalysisStartedAt(LocalDateTime.now(clock));
                             }
 
@@ -657,7 +680,8 @@ public class DamageInspectionService {
                                     inspection.getId(),
                                     user,
                                     inspection.getImagePath(),
-                                    requireContextImage ? inspection.getContextImagePath() : null
+                                    requireContextImage ? inspection.getContextImagePath() : null,
+                                    creditToken
                             );
                         }
                 );
@@ -728,22 +752,24 @@ public class DamageInspectionService {
             Long inspectionId,
             String authenticatedEmail
     ) {
-        return validateInspectionImageInternal(
-                inspectionId,
-                authenticatedEmail,
-                false
-        ).quality();
+        return validateWithCredit(inspectionId,authenticatedEmail,false);
     }
 
     public ImageQualityResponse validateInspectionContextImage(
             Long inspectionId,
             String authenticatedEmail
     ) {
-        return validateInspectionImageInternal(
-                inspectionId,
-                authenticatedEmail,
-                true
-        ).quality();
+        return validateWithCredit(inspectionId,authenticatedEmail,true);
+    }
+
+    private ImageQualityResponse validateWithCredit(Long inspectionId,String email,boolean contextImage) {
+        if (creditWallets==null) return validateInspectionImageInternal(inspectionId,email,contextImage).quality();
+        User user=businessContextService.requireUser(email);
+        var inspection=inspectionAccessService.requireInspection(inspectionId,user);
+        var reservation=creditWallets.reserve(user,inspection.getVehicle().getBusinessAccount()!=null,"ANALYSIS",
+                "validation:"+inspectionId,"validation:"+inspectionId);
+        try { return validateInspectionImageInternal(inspectionId,email,contextImage).quality(); }
+        finally { creditWallets.release(user,reservation.token()); }
     }
 
     private ImageValidationContext validateInspectionImageInternal(
@@ -899,11 +925,14 @@ public class DamageInspectionService {
                 status -> {
 
                     DamageInspection inspection =
-                            inspectionAccessService.requireInspection(
+                            inspectionAccessService.requireInspectionForUpdate(
                                     context.inspectionId(),
                                     context.user()
                             );
 
+                    if (context.creditToken()!=null) {
+                        creditWallets.assertReservation(context.user(),context.creditToken());
+                    }
                     inspection.clearDetections();
                     inspection.clearRepairRecommendations();
 
@@ -942,7 +971,8 @@ public class DamageInspectionService {
                     );
 
                     inspection.setReportMessage(
-                            "Temel hasar tespiti tamamlandı. Detaylı AI raporunu istediğinizde oluşturabilirsiniz."
+                            creditWallets != null ? "Hasar tespiti tamamlandı. Detaylı rapor hazırlanıyor."
+                                    : "Temel hasar tespiti tamamlandı. Detaylı AI raporunu istediğinizde oluşturabilirsiniz."
                     );
 
                     inspectionRepository.save(
@@ -952,7 +982,7 @@ public class DamageInspectionService {
         );
 
 
-        if (analysisCreditService == null
+        if (creditWallets != null || analysisCreditService == null
                 || aiResponse.getDamageSeverity() == DamageSeverity.NONE) {
             generateReportOutsideTransaction(context);
         }
@@ -1006,7 +1036,7 @@ public class DamageInspectionService {
 
             markReportAsFailed(
                     context.inspectionId(),
-                    context.user()
+                    context.user(), null, context.creditToken()
             );
 
             return;
@@ -1021,7 +1051,9 @@ public class DamageInspectionService {
             saveGeneratedReport(
                     context.inspectionId(),
                     context.user(),
-                    result
+                    result,
+                    context.creditToken(),
+                    null
             );
 
         } catch (RuntimeException exception) {
@@ -1034,7 +1066,7 @@ public class DamageInspectionService {
 
             markReportAsFailed(
                     context.inspectionId(),
-                    context.user()
+                    context.user(), null, context.creditToken()
             );
         }
     }
@@ -1061,11 +1093,8 @@ public class DamageInspectionService {
         return result;
     }
 
-    private void saveGeneratedReport(
-            Long inspectionId,
-            User user,
-            LlmInspectionReportResult result
-    ) {
+    private void saveGeneratedReport(Long inspectionId,User user,LlmInspectionReportResult result,
+            java.util.UUID creditToken,java.util.UUID reportAttempt) {
         if (result == null) {
             throw new IllegalArgumentException(
                     "Rapor sonucu boş olamaz."
@@ -1076,11 +1105,18 @@ public class DamageInspectionService {
                 status -> {
 
                     DamageInspection inspection =
-                            inspectionAccessService.requireInspection(
+                            inspectionAccessService.requireInspectionForUpdate(
                                     inspectionId,
                                     user
                             );
 
+                    if (reportAttempt!=null && !reportAttempt.equals(inspection.getReportAttempt()))
+                        throw new IllegalStateException("Rapor isteğinin süresi doldu.");
+                    if (creditToken!=null) {
+                        creditWallets.complete(user,creditToken);
+                        inspection.grantReportAccess(inspection.getVehicle().getBusinessAccount()!=null
+                                ? ReportAccessSource.BUSINESS : ReportAccessSource.PURCHASED_CREDIT);
+                    }
                     InspectionReport generatedReport =
                             new InspectionReport(
                                     inspection,
@@ -1135,15 +1171,25 @@ public class DamageInspectionService {
             Long inspectionId,
             User user
     ) {
+        markReportAsFailed(inspectionId,user,null);
+    }
+
+    private void markReportAsFailed(Long inspectionId,User user,java.util.UUID attempt) {
+        markReportAsFailed(inspectionId,user,attempt,null);
+    }
+
+    private void markReportAsFailed(Long inspectionId,User user,java.util.UUID attempt,java.util.UUID creditToken) {
         transactionTemplate.executeWithoutResult(
                 status -> {
 
                     DamageInspection inspection =
-                            inspectionAccessService.requireInspection(
+                            inspectionAccessService.requireInspectionForUpdate(
                                     inspectionId,
                                     user
                             );
 
+                    if (attempt!=null && !attempt.equals(inspection.getReportAttempt())) return;
+                    if (creditToken!=null && !creditWallets.reservationActive(user,creditToken)) return;
                     inspection.setReportStatus(
                             ReportStatus.FAILED
                     );
@@ -1178,11 +1224,13 @@ public class DamageInspectionService {
                         status -> {
 
                             DamageInspection inspection =
-                                    inspectionAccessService.requireInspection(
+                                    inspectionAccessService.requireInspectionForUpdate(
                                             context.inspectionId(),
                                             context.user()
                                     );
 
+                            if (context.creditToken()!=null && !creditWallets.reservationActive(context.user(),context.creditToken()))
+                                return buildResponse(inspection);
                             inspection.setStatus(
                                     InspectionStatus.FAILED
                             );
@@ -1245,6 +1293,23 @@ public class DamageInspectionService {
             Long inspectionId,
             String authenticatedEmail
     ) {
+        if (creditWallets==null) return regenerateReservedReport(inspectionId,authenticatedEmail,null);
+        User user=businessContextService.requireUser(authenticatedEmail);
+        var initial=inspectionAccessService.requireInspection(inspectionId,user);
+        if (initial.isReportAccessGranted() && initial.getReportStatus()==ReportStatus.COMPLETED)
+            return transactionTemplate.execute(status -> buildResponse(inspectionAccessService.requireInspection(inspectionId,user)));
+        if (initial.isReportAccessGranted()) return regenerateReservedReport(inspectionId,authenticatedEmail,null);
+        boolean company=initial.getVehicle().getBusinessAccount()!=null;
+        var reservation=creditWallets.reserve(user,company,"ANALYSIS","inspection:"+inspectionId,"inspection:"+inspectionId);
+        boolean completed=reservation.completed();
+        try {
+            var response=regenerateReservedReport(inspectionId,authenticatedEmail,reservation.token());
+            completed=completed || response.getReportStatus()==ReportStatus.COMPLETED;
+            return response;
+        } finally { if (!completed) creditWallets.release(user,reservation.token()); }
+    }
+
+    private DamageInspectionResponse regenerateReservedReport(Long inspectionId,String authenticatedEmail,java.util.UUID creditToken) {
         ReportGenerationContext context =
                 transactionTemplate.execute(
                         status -> {
@@ -1280,7 +1345,7 @@ public class DamageInspectionService {
                                 );
                             }
 
-                            if (analysisCreditService != null
+                            if (creditWallets == null && analysisCreditService != null
                                     && inspection.getDamageSeverity() != DamageSeverity.NONE) {
                                 analysisCreditService.grantReportAccess(inspection, user);
                             }
@@ -1303,10 +1368,12 @@ public class DamageInspectionService {
                                                     inspection
                                             );
 
+                            java.util.UUID attempt=inspection.beginReport(LocalDateTime.now(clock));
                             return new ReportGenerationContext(
                                     inspection.getId(),
                                     user,
-                                    request
+                                    request,
+                                    attempt
                             );
                         }
                 );
@@ -1328,7 +1395,9 @@ public class DamageInspectionService {
             saveGeneratedReport(
                     context.inspectionId(),
                     context.user(),
-                    result
+                    result,
+                    creditToken,
+                    context.attempt()
             );
 
         } catch (RuntimeException exception) {
@@ -1341,7 +1410,8 @@ public class DamageInspectionService {
 
             markReportAsFailed(
                     context.inspectionId(),
-                    context.user()
+                    context.user(),
+                    context.attempt()
             );
         }
 
@@ -1515,6 +1585,15 @@ public class DamageInspectionService {
     }
 
     private void validateNotProcessing(DamageInspection inspection) {
+        if (creditWallets!=null && inspection.getReportStatus()==ReportStatus.PROCESSING
+                && (inspection.getReportStartedAt()==null || inspection.getReportStartedAt().isBefore(LocalDateTime.now(clock).minusMinutes(10)))) {
+            inspection.setReportStatus(ReportStatus.FAILED);
+        }
+        if (creditWallets!=null && inspection.getStatus()==InspectionStatus.PROCESSING
+                && inspection.getAnalysisStartedAt()!=null
+                && inspection.getAnalysisStartedAt().isBefore(LocalDateTime.now(clock).minusMinutes(10))) {
+            inspection.setStatus(InspectionStatus.FAILED);
+        }
         if (inspection.getStatus() == InspectionStatus.PROCESSING
                 || inspection.getReportStatus() == ReportStatus.PROCESSING) {
             throw new IllegalStateException("İnceleme şu anda işleniyor. Lütfen tamamlanmasını bekleyin.");
@@ -1612,8 +1691,12 @@ public class DamageInspectionService {
             Long inspectionId,
             User user,
             String imagePath,
-            String contextImagePath
+            String contextImagePath,
+            java.util.UUID creditToken
     ) {
+        AnalysisContext(Long inspectionId,User user,String imagePath,String contextImagePath) {
+            this(inspectionId,user,imagePath,contextImagePath,null);
+        }
     }
 
     private record ImageValidationContext(
@@ -1627,7 +1710,8 @@ public class DamageInspectionService {
     private record ReportGenerationContext(
             Long inspectionId,
             User user,
-            InspectionLlmRequest request
+            InspectionLlmRequest request,
+            java.util.UUID attempt
     ) {
     }
 

@@ -5,6 +5,7 @@ import '../../../core/network/api_exception.dart';
 import '../../../core/storage/token_storage.dart';
 import '../models/auth_response.dart';
 import '../models/user_profile.dart';
+import '../../billing/services/welcome_credit_service.dart';
 
 class AuthService {
   const AuthService({this.apiClient = const ApiClient()});
@@ -38,6 +39,11 @@ class AuthService {
       }
 
       await TokenStorage.saveAccessToken(authResponse.accessToken);
+      try {
+        await WelcomeCreditService.claim().timeout(const Duration(seconds: 15));
+      } catch (_) {
+        /* Login and paid access remain available. */
+      }
 
       return authResponse;
     } on ApiException catch (exception) {
@@ -58,38 +64,28 @@ class AuthService {
     );
 
     if (googleServerClientId.isEmpty) {
-      throw const FormatException(
-        'Google Sign-In yapılandırması bulunamadı.',
-      );
+      throw const FormatException('Google Sign-In yapılandırması bulunamadı.');
     }
 
     final googleSignIn = GoogleSignIn.instance;
 
-    await googleSignIn.initialize(
-      serverClientId: googleServerClientId,
-    );
+    await googleSignIn.initialize(serverClientId: googleServerClientId);
 
-    final GoogleSignInAccount account =
-    await googleSignIn.authenticate();
+    final GoogleSignInAccount account = await googleSignIn.authenticate();
 
-    final GoogleSignInAuthentication authentication =
-        account.authentication;
+    final GoogleSignInAuthentication authentication = account.authentication;
 
     final String? idToken = authentication.idToken;
 
     if (idToken == null || idToken.trim().isEmpty) {
-      throw const FormatException(
-        'Google kimlik doğrulama tokenı alınamadı.',
-      );
+      throw const FormatException('Google kimlik doğrulama tokenı alınamadı.');
     }
 
     final response = await apiClient.post(
       '/auth/google',
       includeAuth: false,
       clearTokenOnUnauthorized: false,
-      body: {
-        'idToken': idToken,
-      },
+      body: {'idToken': idToken},
     );
 
     if (response is! Map) {
@@ -108,9 +104,12 @@ class AuthService {
       );
     }
 
-    await TokenStorage.saveAccessToken(
-      authResponse.accessToken,
-    );
+    await TokenStorage.saveAccessToken(authResponse.accessToken);
+    try {
+      await WelcomeCreditService.claim().timeout(const Duration(seconds: 15));
+    } catch (_) {
+      /* Retry from the purchase center. */
+    }
 
     return authResponse;
   }
@@ -153,16 +152,12 @@ class AuthService {
     );
   }
 
-  Future<void> forgotPassword({
-    required String email,
-  }) async {
+  Future<void> forgotPassword({required String email}) async {
     await apiClient.post(
       '/auth/forgot-password',
       includeAuth: false,
       clearTokenOnUnauthorized: false,
-      body: {
-        'email': email.trim().toLowerCase(),
-      },
+      body: {'email': email.trim().toLowerCase()},
     );
   }
 

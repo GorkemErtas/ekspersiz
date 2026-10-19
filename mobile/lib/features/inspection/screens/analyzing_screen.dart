@@ -12,6 +12,7 @@ import '../../../core/widgets/app_motion.dart';
 import '../models/damage_inspection.dart';
 import '../services/inspection_service.dart';
 import 'inspection_result_screen.dart';
+import '../../billing/screens/subscription_screen.dart';
 
 class AnalyzingScreen extends StatefulWidget {
   const AnalyzingScreen({
@@ -35,6 +36,7 @@ class _AnalyzingScreenState extends State<AnalyzingScreen>
   late final Animation<double> _pulseAnimation;
 
   bool _hasError = false;
+  bool _creditRequired = false;
   String? _errorMessage;
 
   @override
@@ -73,6 +75,7 @@ class _AnalyzingScreenState extends State<AnalyzingScreen>
   Future<void> _analyze() async {
     setState(() {
       _hasError = false;
+      _creditRequired = false;
       _errorMessage = null;
     });
 
@@ -125,6 +128,8 @@ class _AnalyzingScreenState extends State<AnalyzingScreen>
       setState(() {
         _hasError = true;
         _errorMessage = message;
+        _creditRequired =
+            exception is ApiException && exception.statusCode == 402;
       });
     }
   }
@@ -144,9 +149,22 @@ class _AnalyzingScreenState extends State<AnalyzingScreen>
                   ? AppStateView.error(
                       title: 'Analiz tamamlanamadı',
                       message: _errorMessage ?? 'Beklenmeyen bir hata oluştu.',
-                      actionLabel: 'Analizi Tekrar Dene',
+                      actionLabel: _creditRequired
+                          ? 'Analiz kredisi al'
+                          : 'Analizi Tekrar Dene',
                       actionIcon: Icons.refresh_rounded,
-                      onActionPressed: _analyze,
+                      onActionPressed: _creditRequired
+                          ? () async {
+                              await Navigator.of(context).push(
+                                MaterialPageRoute<void>(
+                                  builder: (_) => const SubscriptionScreen(
+                                    preferCompany: true,
+                                  ),
+                                ),
+                              );
+                              if (mounted) await _analyze();
+                            }
+                          : _analyze,
                     )
                   : SingleChildScrollView(
                       padding: const EdgeInsets.fromLTRB(20, 32, 20, 36),

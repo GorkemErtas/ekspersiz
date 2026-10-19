@@ -61,10 +61,7 @@ void main() {
               inspection: inspection.minorResult(),
             ),
             'plans' => SubscriptionScreen(
-              billingService: billing.FakeBillingService(
-                storeConfigured: false,
-              ),
-              quotaService: billing.FakeQuotaService(),
+              billingService: billing.FakeBillingService(configured: false),
             ),
             _ => const ReminderFormScreen(
               vehicle: Vehicle(

@@ -5,9 +5,9 @@ import 'package:mobile/features/profile/screens/profile_screen.dart';
 
 void main() {
   for (final entry in {
-    'FREE': 'Ücretsiz',
-    'PLUS': 'Plus',
-    'PRO': 'Pro',
+    'FREE': 'Kredi hesabı',
+    'PLUS': 'Kredi hesabı · Önceki dönem hakları aktif',
+    'PRO': 'Kredi hesabı · Önceki dönem hakları aktif',
     'BUSINESS': 'Kurumsal',
   }.entries) {
     testWidgets('profile shows user identity and ${entry.key} subscription', (
@@ -27,8 +27,9 @@ void main() {
       expect(find.text(entry.value), findsWidgets);
       expect(find.text('Bireysel'), findsNothing);
 
-      final accountLabel =
-          entry.key == 'BUSINESS' ? 'Hesap Türü' : 'Hesap Türü';
+      final accountLabel = entry.key == 'BUSINESS'
+          ? 'Hesap Türü'
+          : 'Hesap Türü';
       await tester.scrollUntilVisible(
         find.text(accountLabel),
         150,
@@ -59,7 +60,10 @@ void main() {
       ),
     );
 
-    expect(find.text('Plus'), findsWidgets);
+    expect(
+      find.text('Kredi hesabı · Önceki dönem hakları aktif'),
+      findsWidgets,
+    );
     expect(find.text('Şirket üyesi'), findsWidgets);
 
     expect(find.text('ABC Ekspertiz'), findsOneWidget);

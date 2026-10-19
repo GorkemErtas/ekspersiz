@@ -419,7 +419,7 @@ class DamageInspectionServiceTest {
     void validMinorDamageRemainsMinorAndUsesGeminiReport() {
         when(storage.resolveStoredFile("image.jpg")).thenReturn(Path.of("image.jpg"));
         when(ai.analyzeSingleImage(any(), any())).thenReturn(minorAnalysisResponse());
-        when(reports.generateReport(any())).thenReturn(report());
+        doReturn(report()).when(reports).generateReport(any());
 
         var result = service.analyzeInspection(30L, actor.getEmail());
 
@@ -545,11 +545,83 @@ class DamageInspectionServiceTest {
         verifyNoInteractions(ai, storage, analysisUsageRepository);
     }
 
+    @Test
+    void creditReservationIsRequiredBeforeAnyInference() {
+        var wallet=mock(CreditWalletService.class);
+        ReflectionTestUtils.setField(service,"creditWallets",wallet);
+        when(wallet.reserve(eq(actor),eq(true),eq("ANALYSIS"),anyString(),anyString()))
+                .thenThrow(new com.gorkem.vehicle_inspector.exception.InsufficientAnalysisCreditException("No credits"));
+        assertThrows(com.gorkem.vehicle_inspector.exception.InsufficientAnalysisCreditException.class,
+                () -> service.analyzeInspection(30L,actor.getEmail()));
+        verifyNoInteractions(ai,reports);
+    }
+
+    @Test
+    void successfulCreditAnalysisCommitsOnceAndIncludesReportAccess() {
+        var wallet=mock(CreditWalletService.class);var token=java.util.UUID.randomUUID();
+        ReflectionTestUtils.setField(service,"creditWallets",wallet);
+        when(wallet.reserve(eq(actor),eq(true),eq("ANALYSIS"),anyString(),anyString()))
+                .thenReturn(new CreditWalletService.Reservation(token,false));
+        successfulAnalysis();
+        assertEquals(InspectionStatus.COMPLETED,service.analyzeInspection(30L,actor.getEmail()).getStatus());
+        verify(wallet,times(1)).complete(actor,token);
+        verify(wallet,never()).release(any(),any());
+        assertTrue(inspection.isReportAccessGranted());
+        service.regenerateReport(30L,actor.getEmail());
+        verify(wallet,times(1)).reserve(any(),anyBoolean(),anyString(),anyString(),anyString());
+        verify(wallet,times(1)).complete(actor,token);
+    }
+
+    @Test
+    void invalidPhotoReleasesCreditWithoutCharge() {
+        var wallet=mock(CreditWalletService.class);var token=java.util.UUID.randomUUID();
+        ReflectionTestUtils.setField(service,"creditWallets",wallet);
+        when(wallet.reserve(eq(actor),eq(true),eq("ANALYSIS"),anyString(),anyString()))
+                .thenReturn(new CreditWalletService.Reservation(token,false));
+        when(ai.validateImage(any(),anyString())).thenReturn(new ImageQualityResponse(false,"INVALID","Invalid photo"));
+        assertThrows(UnsuitableInspectionImageException.class,() -> service.analyzeInspection(30L,actor.getEmail()));
+        verify(wallet).release(actor,token);verify(wallet,never()).complete(any(),any());
+        verify(ai,never()).analyzeSingleImage(any(),any());
+    }
+
+    @Test
+    void failedLegacyReportReleasesReservedCredit() {
+        var wallet=mock(CreditWalletService.class);var token=java.util.UUID.randomUUID();
+        ReflectionTestUtils.setField(service,"creditWallets",wallet);
+        when(wallet.reserve(eq(actor),eq(true),eq("ANALYSIS"),anyString(),anyString()))
+                .thenReturn(new CreditWalletService.Reservation(token,false));
+        inspection.setStatus(InspectionStatus.COMPLETED);inspection.setDamageSeverity(DamageSeverity.MINOR);
+        when(reports.generateReport(any())).thenThrow(new IllegalStateException("upstream failure"));
+        assertEquals(ReportStatus.FAILED,service.regenerateReport(30L,actor.getEmail()).getReportStatus());
+        verify(wallet).release(actor,token);verify(wallet,never()).complete(any(),any());
+        assertFalse(inspection.isReportAccessGranted());
+    }
+
     private void successfulAnalysis() {
         when(storage.resolveStoredFile("image.jpg")).thenReturn(Path.of("image.jpg"));
         AiAnalysisResponse response = new AiAnalysisResponse();
         response.setDamageSeverity(DamageSeverity.NONE);
         when(ai.analyzeSingleImage(any(), any())).thenReturn(response);
+    }
+
+    @Test
+    void reportFailureAfterDetectionReleasesCreditAndRetryChargesOnce() {
+        var wallet=mock(CreditWalletService.class);var token=java.util.UUID.randomUUID();
+        ReflectionTestUtils.setField(service,"creditWallets",wallet);
+        when(wallet.reserve(eq(actor),eq(true),eq("ANALYSIS"),anyString(),anyString()))
+                .thenReturn(new CreditWalletService.Reservation(token,false));
+        when(wallet.reservationActive(actor,token)).thenReturn(true);
+        when(storage.resolveStoredFile("image.jpg")).thenReturn(Path.of("image.jpg"));
+        when(ai.analyzeSingleImage(any(),any())).thenReturn(minorAnalysisResponse());
+        when(reports.generateReport(any())).thenThrow(new IllegalStateException("provider unavailable"));
+        assertEquals(ReportStatus.FAILED,service.analyzeInspection(30L,actor.getEmail()).getReportStatus());
+        verify(wallet).release(actor,token);
+        verify(wallet,never()).complete(any(),any());
+        assertFalse(inspection.isReportAccessGranted());
+        doReturn(report()).when(reports).generateReport(any());
+        assertEquals(ReportStatus.COMPLETED,service.regenerateReport(30L,actor.getEmail()).getReportStatus());
+        verify(wallet,times(1)).complete(actor,token);
+        verify(ai,times(1)).analyzeSingleImage(any(),any());
     }
 
     private static AiAnalysisResponse minorAnalysisResponse() {

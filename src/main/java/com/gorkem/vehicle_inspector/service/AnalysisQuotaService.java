@@ -15,6 +15,8 @@ import java.time.LocalDateTime;
 
 @Service
 public class AnalysisQuotaService {
+    @Autowired
+    private CreditWalletService creditWallets;
 
     private final BusinessContextService businessContext;
     private final SubscriptionService subscriptions;
@@ -46,9 +48,15 @@ public class AnalysisQuotaService {
         this(businessContext, subscriptions, usages, clock, null);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public AnalysisQuotaResponse getQuota(String email) {
         User user = businessContext.requireUser(email);
+        if (creditWallets != null) {
+            boolean company=businessContext.findMembership(user).isPresent();
+            var balance=creditWallets.account(user,company).balances().get("ANALYSIS");
+            return new AnalysisQuotaResponse(company ? SubscriptionPlan.BUSINESS : SubscriptionPlan.FREE,
+                    0, Math.toIntExact(balance.available()), balance.available(), balance.periodic(), balance.permanent());
+        }
         LocalDateTime start = monthStart();
         LocalDateTime end = start.plusMonths(1);
 

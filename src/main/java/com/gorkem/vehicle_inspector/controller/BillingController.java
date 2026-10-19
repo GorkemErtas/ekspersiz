@@ -53,6 +53,6 @@ public class BillingController {
                 rawBody
         );
 
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok().build();
     }
 }

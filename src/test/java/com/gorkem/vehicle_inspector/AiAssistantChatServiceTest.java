@@ -15,6 +15,44 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 class AiAssistantChatServiceTest {
+    @Test
+    void creditModeReservesBeforePlannerReleasesFailuresAndReplaysCompletedResponse() throws Exception {
+        var client=mock(AiAssistantClient.class);
+        var entitlement=mock(AiAssistantEntitlementService.class);
+        var generation=mock(AiAssistantGenerationService.class);
+        var service=new AiAssistantChatService(client,entitlement,mock(AiAssistantToolContextService.class),generation);
+        var credits=mock(CreditWalletService.class);
+        var context=mock(BusinessContextService.class);
+        var user=new com.gorkem.vehicle_inspector.entity.User("Test","user@example.com","unused");
+        org.springframework.test.util.ReflectionTestUtils.setField(service,"credits",credits);
+        org.springframework.test.util.ReflectionTestUtils.setField(service,"businessContext",context);
+        when(context.requireUser(user.getEmail())).thenReturn(user);
+        var request=new AiAssistantChatRequest("Lastik basıncı?",null,List.of(),UUID.randomUUID());
+        when(credits.reserve(eq(user),eq(false),eq("ASSISTANT"),anyString(),anyString()))
+                .thenThrow(new com.gorkem.vehicle_inspector.exception.InsufficientAnalysisCreditException("No credits"));
+        assertThrows(com.gorkem.vehicle_inspector.exception.InsufficientAnalysisCreditException.class,() -> service.chat(request,user.getEmail()));
+        verifyNoInteractions(client,generation);
+        var token=UUID.randomUUID();
+        doReturn(new CreditWalletService.Reservation(token,false)).when(credits)
+                .reserve(eq(user),eq(false),eq("ASSISTANT"),anyString(),anyString());
+        when(entitlement.status(user.getEmail())).thenReturn(status(1));
+        when(client.plan(anyString(),anyList(),isNull())).thenThrow(new IllegalStateException("provider unavailable"));
+        assertThrows(IllegalStateException.class,() -> service.chat(request,user.getEmail()));
+        verify(credits).release(user,token);
+        verify(credits,never()).completeWithResponse(any(),any(),anyString());
+        doReturn(plan(true,false,null,List.of())).when(client).plan(anyString(),anyList(),isNull());
+        when(generation.generate(anyString(),any(),isNull(),anyList(),isNull())).thenReturn("Yanıt");
+        var result=service.chat(request,user.getEmail());
+        assertTrue(result.quotaConsumed());
+        var json=org.mockito.ArgumentCaptor.forClass(String.class);
+        verify(credits).completeWithResponse(eq(user),eq(token),json.capture());
+        when(credits.reserve(eq(user),eq(false),eq("ASSISTANT"),anyString(),anyString()))
+                .thenReturn(new CreditWalletService.Reservation(token,true));
+        when(credits.response(user,token)).thenReturn(json.getValue());
+        clearInvocations(client,generation);
+        assertEquals(result,service.chat(request,user.getEmail()));
+        verifyNoInteractions(client,generation);
+    }
 
     @Test
     void monthlyFreeQuotaExceededStopsBeforeAnyAiCall() {

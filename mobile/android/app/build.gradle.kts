@@ -80,3 +80,7 @@ kotlin {
 flutter {
     source = "../.."
 }
+
+dependencies {
+    implementation("com.google.android.play:integrity:1.6.0")
+}

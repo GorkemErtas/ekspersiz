@@ -108,7 +108,8 @@ public class RevenueCatClient {
                     continue;
                 }
                 for (JsonNode value : field.getValue()) {
-                    String transactionId = textOrNull(value.path("id"));
+                    // Webhook transaction_id is the store transaction, not RevenueCat's internal id.
+                    String transactionId = textOrNull(value.path("store_transaction_id"));
                     if (transactionId == null) {
                         continue;
                     }
@@ -117,7 +118,8 @@ public class RevenueCatClient {
                             transactionId,
                             parseInstant(value.path("purchase_date")),
                             value.path("is_sandbox").asBoolean(false),
-                            textOrNull(value.path("store"))
+                            textOrNull(value.path("store")),
+                            value.hasNonNull("refunded_at")
                     ));
                 }
             }

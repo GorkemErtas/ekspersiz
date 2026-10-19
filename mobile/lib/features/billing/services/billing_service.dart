@@ -3,6 +3,7 @@ import 'package:purchases_flutter/purchases_flutter.dart';
 import '../../../core/network/api_client.dart';
 import '../models/billing_overview.dart';
 import '../models/billing_plan.dart';
+import '../models/credit_catalog.dart';
 import 'revenue_cat_gateway.dart';
 
 class BillingPageData {
@@ -10,11 +11,13 @@ class BillingPageData {
     required this.overview,
     required this.storeConfigured,
     required this.localizedPrices,
+    this.storePrices = const {},
   });
 
   final BillingOverview overview;
   final bool storeConfigured;
   final Map<String, String> localizedPrices;
+  final Map<String, StorePrice> storePrices;
 }
 
 class BillingService {
@@ -52,6 +55,14 @@ class BillingService {
         for (final entry in packages.entries)
           entry.key: entry.value.storeProduct.priceString,
       },
+      storePrices: {
+        for (final entry in packages.entries)
+          entry.key: StorePrice(
+            entry.value.storeProduct.price,
+            entry.value.storeProduct.currencyCode,
+            entry.value.storeProduct.priceString,
+          ),
+      },
     );
   }
 
@@ -83,12 +94,45 @@ class BillingService {
                 : StoreReplacementMode.deferred)
           : null,
     );
-    return sync();
+    try {
+      return await sync();
+    } catch (_) {
+      throw const BillingPurchasePending();
+    }
   }
 
   Future<BillingOverview> restore() async {
     await revenueCatGateway.restorePurchases();
     return sync();
+  }
+
+  Future<CreditOverview> credits() async {
+    final data = await apiClient.get('/credits');
+    return CreditOverview.fromJson(Map<String, dynamic>.from(data as Map));
+  }
+
+  Future<bool> purchaseCredit(CreditProduct product) async {
+    final overview = await getOverview();
+    if (!await revenueCatGateway.configure(overview.status.billingCustomerId)) {
+      throw StateError('Satın alma mağazası şu anda kullanılamıyor.');
+    }
+    final packages = await revenueCatGateway.getPackages();
+    final package = packages[product.id];
+    if (package == null || package.storeProduct.identifier != product.id) {
+      throw StateError('Bu paket mağazada henüz yayınlanmadı.');
+    }
+    await apiClient.post('/credits/purchase-intents/${product.id}');
+    final transaction = await revenueCatGateway.purchaseConsumable(package);
+    try {
+      await sync();
+      final result = await apiClient.get(
+        '/credits/purchases/${Uri.encodeComponent(transaction)}',
+      );
+      return result is Map && result['confirmed'] == true;
+    } catch (_) {
+      // The store has already accepted the purchase; backend reconciliation may lag.
+      throw const BillingPurchasePending();
+    }
   }
 
   Future<BillingOverview> getOverview() async {

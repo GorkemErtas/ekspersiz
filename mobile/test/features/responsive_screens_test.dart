@@ -73,8 +73,7 @@ void main() {
             subscriptionPlan: 'PLUS',
           ),
           SubscriptionScreen(
-            billingService: billing.FakeBillingService(storeConfigured: false),
-            quotaService: billing.FakeQuotaService(),
+            billingService: billing.FakeBillingService(configured: false),
           ),
         ];
         for (final screen in screens) {

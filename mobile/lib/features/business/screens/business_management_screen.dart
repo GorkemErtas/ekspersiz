@@ -192,7 +192,9 @@ class _BusinessManagementScreenState extends State<BusinessManagementScreen> {
         ..hideCurrentSnackBar()
         ..showSnackBar(
           SnackBar(
-            content: AppText('${employee.fullName} şirket üyeliğinden çıkarıldı.'),
+            content: AppText(
+              '${employee.fullName} şirket üyeliğinden çıkarıldı.',
+            ),
           ),
         );
     } catch (exception) {
@@ -317,7 +319,7 @@ class _BusinessManagementScreenState extends State<BusinessManagementScreen> {
             ),
             const SizedBox(height: 18),
             AppText(
-              'Şirket genelinde 50 aktif araç ve ayda 100 AI analizi ortak kullanılır.',
+              'Şirket genelinde 10 araç slotu, her dönemde 100 analiz ve 200 AI Asistan kredisi ortak kullanılır.',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: colorScheme.onSurfaceVariant,
                 height: 1.45,
