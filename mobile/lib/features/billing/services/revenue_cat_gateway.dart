@@ -44,7 +44,10 @@ class RevenueCatGateway {
 
   Future<Map<String, Package>> getPackages() async {
     final offerings = await Purchases.getOfferings();
-    final packages = offerings.current?.availablePackages ?? const <Package>[];
+    // Credit purchases use a dedicated offering during rollout so older app
+    // versions can continue to use the existing current/default offering.
+    final offering = offerings.all['credits_v1'] ?? offerings.current;
+    final packages = offering?.availablePackages ?? const <Package>[];
 
     return {for (final package in packages) package.identifier: package};
   }
