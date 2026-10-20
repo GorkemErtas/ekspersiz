@@ -8,6 +8,7 @@ import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_theme.dart';
 import '../models/ai_assistant_models.dart';
 import '../services/ai_assistant_service.dart';
+import '../widgets/assistant_message_body.dart';
 import '../../billing/screens/subscription_screen.dart';
 import '../../vehicle/models/vehicle.dart';
 import '../../vehicle/services/vehicle_service.dart';
@@ -507,15 +508,19 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
                                               CrossAxisAlignment.start,
                                           mainAxisSize: MainAxisSize.min,
                                           children: [
-                                            Text(
-                                              message.text,
-                                              style: TextStyle(
-                                                height: 1.5,
-                                                color: message.isUser
-                                                    ? scheme.onPrimaryContainer
-                                                    : scheme.onSurface,
+                                            if (message.isUser)
+                                              Text(
+                                                message.text,
+                                                style: TextStyle(
+                                                  height: 1.5,
+                                                  color:
+                                                      scheme.onPrimaryContainer,
+                                                ),
+                                              )
+                                            else
+                                              AssistantMessageBody(
+                                                text: message.text,
                                               ),
-                                            ),
                                             if (!message.isUser &&
                                                 message.sources.isNotEmpty) ...[
                                               const SizedBox(height: 10),
