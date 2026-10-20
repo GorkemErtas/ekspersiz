@@ -268,6 +268,72 @@ class AppTheme {
     ),
   );
 
+  // Leave enabled filled/tonal colors to Material so each variant keeps its
+  // ColorScheme roles. Layout and disabled treatment are shared across themes.
+  static ButtonStyle _filledButtonStyle(ColorScheme scheme, TextTheme text) =>
+      FilledButton.styleFrom(
+        disabledBackgroundColor: scheme.surfaceContainerHighest,
+        disabledForegroundColor: scheme.onSurfaceVariant,
+        minimumSize: const Size(minTouchTarget, primaryButtonHeight),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(radiusMedium),
+        ),
+        textStyle: text.labelLarge?.copyWith(
+          fontSize: 15,
+          fontWeight: FontWeight.w700,
+          letterSpacing: -0.1,
+        ),
+        elevation: 0,
+      );
+
+  static ButtonStyle _outlinedButtonStyle(ColorScheme scheme, TextTheme text) =>
+      OutlinedButton.styleFrom(
+        foregroundColor: scheme.onSurface,
+        disabledForegroundColor: scheme.onSurfaceVariant,
+        backgroundColor: scheme.surface,
+        minimumSize: const Size(minTouchTarget, primaryButtonHeight),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(radiusMedium),
+        ),
+        textStyle: text.labelLarge?.copyWith(
+          fontSize: 15,
+          fontWeight: FontWeight.w700,
+        ),
+      ).copyWith(
+        side: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.disabled)) {
+            return BorderSide(color: scheme.outlineVariant);
+          }
+          if (states.contains(WidgetState.focused)) {
+            return BorderSide(color: scheme.primary, width: 2);
+          }
+          return BorderSide(color: scheme.outline, width: 1.2);
+        }),
+      );
+
+  static ButtonStyle _textButtonStyle(ColorScheme scheme, TextTheme text) =>
+      TextButton.styleFrom(
+        minimumSize: const Size(minTouchTarget, minTouchTarget),
+        foregroundColor: scheme.brightness == Brightness.dark
+            ? scheme.secondary
+            : scheme.primary,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(radiusSmall),
+        ),
+        textStyle: text.labelLarge?.copyWith(fontWeight: FontWeight.w700),
+      );
+
+  static ButtonStyle _iconButtonStyle() => IconButton.styleFrom(
+    minimumSize: const Size(minTouchTarget, minTouchTarget),
+    iconSize: 22,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(radiusSmall),
+    ),
+  );
+
   static ThemeData _buildLightTheme() {
     const background = Color(0xFFF8F6FB);
     const surface = Color(0xFFFFFFFF);
@@ -385,63 +451,15 @@ class AppTheme {
         ),
       ),
       filledButtonTheme: FilledButtonThemeData(
-        style: FilledButton.styleFrom(
-          backgroundColor: primaryDark,
-          foregroundColor: Colors.white,
-          disabledBackgroundColor: surfaceHighest,
-          disabledForegroundColor: foregroundMuted,
-          minimumSize: const Size.fromHeight(primaryButtonHeight),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(radiusMedium),
-          ),
-          textStyle: textTheme.labelLarge?.copyWith(
-            fontSize: 15,
-            fontWeight: FontWeight.w800,
-            letterSpacing: -0.1,
-          ),
-          elevation: 0,
-        ),
+        style: _filledButtonStyle(scheme, textTheme),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
-        style: OutlinedButton.styleFrom(
-          foregroundColor: foreground,
-          minimumSize: const Size.fromHeight(minTouchTarget),
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
-          side: const BorderSide(color: outlineVariant),
-          backgroundColor: surface,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(radiusMedium),
-          ),
-          textStyle: textTheme.labelLarge?.copyWith(
-            fontWeight: FontWeight.w700,
-          ),
-        ),
+        style: _outlinedButtonStyle(scheme, textTheme),
       ),
       textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(
-          minimumSize: const Size(minTouchTarget, minTouchTarget),
-          foregroundColor: primaryDark,
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(radiusSmall),
-          ),
-          textStyle: textTheme.labelLarge?.copyWith(
-            fontWeight: FontWeight.w700,
-          ),
-        ),
+        style: _textButtonStyle(scheme, textTheme),
       ),
-      iconButtonTheme: IconButtonThemeData(
-        style: IconButton.styleFrom(
-          minimumSize: const Size(minTouchTarget, minTouchTarget),
-          iconSize: 22,
-          foregroundColor: foreground,
-          highlightColor: primaryColor.withValues(alpha: 0.10),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(radiusSmall),
-          ),
-        ),
-      ),
+      iconButtonTheme: IconButtonThemeData(style: _iconButtonStyle()),
       cardTheme: CardThemeData(
         elevation: 0,
         color: surface,
@@ -598,7 +616,7 @@ class AppTheme {
   static ThemeData _buildDarkTheme() {
     final scheme = const ColorScheme.dark().copyWith(
       primary: primaryColor,
-      onPrimary: Colors.white,
+      onPrimary: const Color(0xFF110818),
       primaryContainer: const Color(0xFF2B1A46),
       onPrimaryContainer: const Color(0xFFE9D5FF),
       secondary: secondaryColor,
@@ -619,7 +637,7 @@ class AppTheme {
       onError: const Color(0xFF260A10),
       errorContainer: dangerSoft,
       onErrorContainer: const Color(0xFFFFD9DF),
-      outline: borderStrong,
+      outline: const Color(0xFF746880),
       outlineVariant: borderColor,
       shadow: Colors.black,
       scrim: Colors.black,
@@ -709,63 +727,15 @@ class AppTheme {
         ),
       ),
       filledButtonTheme: FilledButtonThemeData(
-        style: FilledButton.styleFrom(
-          backgroundColor: primaryColor,
-          foregroundColor: Colors.white,
-          disabledBackgroundColor: const Color(0xFF27232D),
-          disabledForegroundColor: textMuted,
-          minimumSize: const Size.fromHeight(primaryButtonHeight),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(radiusMedium),
-          ),
-          textStyle: textTheme.labelLarge?.copyWith(
-            fontSize: 15,
-            fontWeight: FontWeight.w800,
-            letterSpacing: -0.1,
-          ),
-          elevation: 0,
-        ),
+        style: _filledButtonStyle(scheme, textTheme),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
-        style: OutlinedButton.styleFrom(
-          foregroundColor: textPrimary,
-          minimumSize: const Size.fromHeight(minTouchTarget),
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
-          side: const BorderSide(color: borderStrong),
-          backgroundColor: const Color(0xFF100E13),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(radiusMedium),
-          ),
-          textStyle: textTheme.labelLarge?.copyWith(
-            fontWeight: FontWeight.w700,
-          ),
-        ),
+        style: _outlinedButtonStyle(scheme, textTheme),
       ),
       textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(
-          minimumSize: const Size(minTouchTarget, minTouchTarget),
-          foregroundColor: secondaryColor,
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(radiusSmall),
-          ),
-          textStyle: textTheme.labelLarge?.copyWith(
-            fontWeight: FontWeight.w700,
-          ),
-        ),
+        style: _textButtonStyle(scheme, textTheme),
       ),
-      iconButtonTheme: IconButtonThemeData(
-        style: IconButton.styleFrom(
-          minimumSize: const Size(minTouchTarget, minTouchTarget),
-          iconSize: 22,
-          foregroundColor: textPrimary,
-          highlightColor: primaryColor.withValues(alpha: 0.12),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(radiusSmall),
-          ),
-        ),
-      ),
+      iconButtonTheme: IconButtonThemeData(style: _iconButtonStyle()),
       cardTheme: CardThemeData(
         elevation: 0,
         color: surfaceColor,
@@ -833,7 +803,7 @@ class AppTheme {
       ),
       floatingActionButtonTheme: const FloatingActionButtonThemeData(
         backgroundColor: primaryColor,
-        foregroundColor: Colors.white,
+        foregroundColor: Color(0xFF110818),
         elevation: 4,
         focusElevation: 5,
         hoverElevation: 6,
