@@ -492,7 +492,7 @@ class _UploadDamageImageScreenState extends State<UploadDamageImageScreen> {
                 const SizedBox(height: 26),
 
                 PrimaryButton(
-                  label: hasImage ? 'AI Analizini Başlat' : 'Fotoğraf Seç',
+                  label: hasImage ? 'Analizi Başlat' : 'Fotoğraf Seç',
                   icon: hasImage
                       ? Icons.auto_awesome_rounded
                       : Icons.add_a_photo_outlined,

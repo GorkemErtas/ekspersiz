@@ -1,4 +1,5 @@
 import 'package:mobile/core/localization/app_text.dart';
+import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../../core/network/api_exception.dart';
@@ -19,10 +20,12 @@ class AnalyzingScreen extends StatefulWidget {
     super.key,
     required this.inspection,
     required this.vehicleRegion,
+    this.inspectionService = const InspectionService(),
   });
 
   final DamageInspection inspection;
   final String vehicleRegion;
+  final InspectionService inspectionService;
 
   @override
   State<AnalyzingScreen> createState() => _AnalyzingScreenState();
@@ -30,7 +33,17 @@ class AnalyzingScreen extends StatefulWidget {
 
 class _AnalyzingScreenState extends State<AnalyzingScreen>
     with SingleTickerProviderStateMixin {
-  final InspectionService _inspectionService = const InspectionService();
+  InspectionService get _inspectionService => widget.inspectionService;
+  Timer? _pollTimer;
+  Timer? _deadlineTimer;
+  DamageInspection? _progress;
+  bool _busy = false;
+  bool _requestInFlight = false;
+  bool _checkingStatus = false;
+  bool _needsStatusCheck = false;
+  bool _statusUncertain = false;
+  bool _legacyReportStarted = false;
+  int _run = 0;
 
   late final AnimationController _pulseController;
   late final Animation<double> _pulseAnimation;
@@ -68,70 +81,207 @@ class _AnalyzingScreenState extends State<AnalyzingScreen>
 
   @override
   void dispose() {
+    _stopWaiting();
     _pulseController.dispose();
     super.dispose();
   }
 
   Future<void> _analyze() async {
+    if (_busy) return;
+    _busy = true;
+    _requestInFlight = false;
+    final run = ++_run;
     setState(() {
       _hasError = false;
       _creditRequired = false;
       _errorMessage = null;
+      _statusUncertain = false;
     });
 
     if (!AppMotion.reduceMotion(context) && !_pulseController.isAnimating) {
       _pulseController.repeat(reverse: true);
     }
 
+    _pollTimer = Timer.periodic(
+      const Duration(seconds: 2),
+      (_) => _pollStatus(run),
+    );
+    _deadlineTimer = Timer(const Duration(minutes: 3), () {
+      if (!_isCurrent(run)) return;
+      final progress = _progress;
+      if (progress != null && progress.isCompleted) {
+        _showResult(run, progress);
+      } else {
+        _fail(
+          run,
+          const ApiException(
+            message:
+                'İşlem sunucuda devam ediyor olabilir. Analizi yeniden başlatmadan sonucunu kontrol edin.',
+          ),
+          uncertain: true,
+        );
+      }
+    });
+
     try {
-      final analyzedInspection = await _inspectionService.analyzeInspection(
+      // After a lost response, read the existing operation before considering
+      // another POST. A report failure is never a reason to run ML again.
+      if (_needsStatusCheck) {
+        final current = await _inspectionService.getInspectionById(
+          widget.inspection.id,
+        );
+        if (!_isCurrent(run)) return;
+        if (current.isCompleted || current.isProcessing) {
+          _acceptStatus(run, current);
+          return;
+        }
+      }
+      _requestInFlight = true;
+      final analyzed = await _inspectionService.analyzeInspection(
         widget.inspection.id,
         vehicleRegion: widget.vehicleRegion,
       );
+      if (!_isCurrent(run)) return;
+      _requestInFlight = false;
+      _acceptStatus(run, analyzed, allowLegacyReport: true);
+    } catch (exception) {
+      if (!_isCurrent(run)) return;
+      _requestInFlight = false;
+      await _recover(run, exception);
+    }
+  }
 
-      if (!mounted) {
+  bool _isCurrent(int run) => mounted && _busy && run == _run;
+
+  void _stopWaiting() {
+    _pollTimer?.cancel();
+    _deadlineTimer?.cancel();
+  }
+
+  Future<void> _pollStatus(int run) async {
+    if (!_isCurrent(run) || _checkingStatus) return;
+    _checkingStatus = true;
+    try {
+      final current = await _inspectionService.getInspectionById(
+        widget.inspection.id,
+      );
+      if (_isCurrent(run)) _acceptStatus(run, current);
+    } catch (error) {
+      if (_isCurrent(run) &&
+          error is ApiException &&
+          (error.statusCode == 401 ||
+              error.statusCode == 403 ||
+              error.statusCode == 404)) {
+        _fail(run, error);
+      }
+      // Transient read failures do not trigger another paid operation.
+    } finally {
+      _checkingStatus = false;
+    }
+  }
+
+  void _acceptStatus(
+    int run,
+    DamageInspection current, {
+    bool allowLegacyReport = false,
+  }) {
+    if (!_isCurrent(run)) return;
+    setState(() => _progress = current);
+    if (current.isCompleted) {
+      if (current.isReportProcessing ||
+          (_requestInFlight &&
+              current.report == null &&
+              !current.isReportFailed)) {
         return;
       }
-
-      if (analyzedInspection.isFailed) {
-        _pulseController.stop();
-
-        setState(() {
-          _hasError = true;
-
-          _errorMessage =
-              analyzedInspection.analysisMessage ??
-              'Hasar analizi tamamlanamadı. '
-                  'Lütfen tekrar deneyin.';
-        });
-
+      if (allowLegacyReport &&
+          current.report == null &&
+          !current.isReportFailed &&
+          !_legacyReportStarted) {
+        // Compatibility for older servers that return ML + PENDING instead
+        // of automatically generating the report inside /analyze.
+        _legacyReportStarted = true;
+        _requestInFlight = true;
+        _finishLegacyReport(run);
         return;
       }
-
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute<void>(
-          builder: (_) =>
-              InspectionResultScreen(inspection: analyzedInspection),
+      _showResult(run, current);
+    } else if (current.isFailed && !_requestInFlight) {
+      _fail(
+        run,
+        ApiException(
+          message: current.analysisMessage ?? 'Hasar analizi tamamlanamadı.',
         ),
       );
-    } catch (exception) {
-      if (!mounted) {
+    }
+  }
+
+  Future<void> _finishLegacyReport(int run) async {
+    try {
+      final result = await _inspectionService.regenerateReport(
+        widget.inspection.id,
+      );
+      if (!_isCurrent(run)) return;
+      _requestInFlight = false;
+      _acceptStatus(run, result);
+    } catch (error) {
+      if (!_isCurrent(run)) return;
+      _requestInFlight = false;
+      await _recover(run, error);
+    }
+  }
+
+  Future<void> _recover(int run, Object error) async {
+    _needsStatusCheck = true;
+    try {
+      final current = await _inspectionService.getInspectionById(
+        widget.inspection.id,
+      );
+      if (!_isCurrent(run)) return;
+      if (current.isCompleted || current.isProcessing) {
+        _acceptStatus(run, current);
         return;
       }
-
-      _pulseController.stop();
-
-      final message = exception is ApiException
-          ? exception.message
-          : 'Hasar analizi tamamlanamadı.';
-
-      setState(() {
-        _hasError = true;
-        _errorMessage = message;
-        _creditRequired =
-            exception is ApiException && exception.statusCode == 402;
-      });
+      _fail(run, error);
+    } catch (_) {
+      if (!_isCurrent(run)) return;
+      // Even when status cannot be fetched, already received ML is useful.
+      if (_progress?.isCompleted == true) {
+        _showResult(run, _progress!);
+      } else {
+        _fail(run, error, uncertain: true);
+      }
     }
+  }
+
+  void _fail(int run, Object error, {bool uncertain = false}) {
+    if (!_isCurrent(run)) return;
+    _stopWaiting();
+    _busy = false;
+    _needsStatusCheck = true;
+    _pulseController.stop();
+    setState(() {
+      _hasError = true;
+      _statusUncertain = uncertain;
+      _errorMessage = error is ApiException
+          ? error.message
+          : 'Hasar analizi tamamlanamadı.';
+      _creditRequired = error is ApiException && error.statusCode == 402;
+    });
+  }
+
+  void _showResult(int run, DamageInspection result) {
+    if (!_isCurrent(run)) return;
+    _busy = false;
+    _stopWaiting();
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute<void>(
+        builder: (_) => InspectionResultScreen(
+          inspection: result,
+          inspectionService: _inspectionService,
+        ),
+      ),
+    );
   }
 
   @override
@@ -151,6 +301,8 @@ class _AnalyzingScreenState extends State<AnalyzingScreen>
                       message: _errorMessage ?? 'Beklenmeyen bir hata oluştu.',
                       actionLabel: _creditRequired
                           ? 'Analiz kredisi al'
+                          : _statusUncertain
+                          ? 'Sonucu Kontrol Et'
                           : 'Analizi Tekrar Dene',
                       actionIcon: Icons.refresh_rounded,
                       onActionPressed: _creditRequired
@@ -172,6 +324,7 @@ class _AnalyzingScreenState extends State<AnalyzingScreen>
                       child: _AnalyzingContent(
                         inspection: widget.inspection,
                         pulseAnimation: _pulseAnimation,
+                        preparingReport: _progress?.isCompleted == true,
                       ),
                     ),
             ),
@@ -186,10 +339,12 @@ class _AnalyzingContent extends StatelessWidget {
   const _AnalyzingContent({
     required this.inspection,
     required this.pulseAnimation,
+    required this.preparingReport,
   });
 
   final DamageInspection inspection;
   final Animation<double> pulseAnimation;
+  final bool preparingReport;
 
   @override
   Widget build(BuildContext context) {
@@ -267,7 +422,9 @@ class _AnalyzingContent extends StatelessWidget {
 
               Flexible(
                 child: AppText(
-                  'AI ANALİZİ DEVAM EDİYOR',
+                  preparingReport
+                      ? '2 / 2 · AI RAPORU HAZIRLANIYOR'
+                      : '1 / 2 · HASAR TESPİT EDİLİYOR',
                   style: textTheme.labelSmall?.copyWith(
                     color: colorScheme.primary,
                     fontWeight: FontWeight.w900,
@@ -282,7 +439,9 @@ class _AnalyzingContent extends StatelessWidget {
         const SizedBox(height: 18),
 
         AppText(
-          'Aracınız analiz ediliyor',
+          preparingReport
+              ? 'AI raporunuz hazırlanıyor'
+              : 'Aracınız analiz ediliyor',
           textAlign: TextAlign.center,
           style: textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900),
         ),
@@ -290,8 +449,9 @@ class _AnalyzingContent extends StatelessWidget {
         const SizedBox(height: 10),
 
         AppText(
-          'Yapay zekâ görüntüyü inceliyor, '
-          'hasarlı bölgeleri ve etkilenen parçaları belirliyor.',
+          preparingReport
+              ? 'Hasar tespiti tamamlandı. Onarım önerileri, detaylı rapor ve tahmini maliyetler hazırlanıyor.'
+              : 'Fotoğrafınız inceleniyor; hasarlar, etkilenen parçalar ve hasar seviyesi belirleniyor.',
           textAlign: TextAlign.center,
           style: textTheme.bodyLarge?.copyWith(
             color: colorScheme.onSurfaceVariant,
@@ -368,32 +528,26 @@ class _AnalyzingContent extends StatelessWidget {
               const AppSectionHeader(
                 icon: Icons.analytics_outlined,
                 title: 'Analiz süreci',
-                subtitle: 'AI modeli görüntüyü birkaç aşamada değerlendiriyor.',
+                subtitle:
+                    'Hasar tespiti ve detaylı rapor tek işlemde hazırlanır.',
               ),
 
               const SizedBox(height: 20),
 
-              const _AnalysisStep(
-                icon: Icons.image_search_outlined,
-                title: 'Görüntü inceleniyor',
-                description:
-                    'Araç ve hasarlı bölgeler görüntü üzerinde değerlendiriliyor.',
-                showLine: true,
-              ),
-
-              const _AnalysisStep(
+              _AnalysisStep(
                 icon: Icons.car_crash_outlined,
                 title: 'Hasar tespiti',
                 description:
                     'Hasar türleri ve etkilenen araç parçaları belirleniyor.',
                 showLine: true,
+                completed: preparingReport,
               ),
 
               const _AnalysisStep(
                 icon: Icons.description_outlined,
-                title: 'Sonuç hazırlanıyor',
+                title: 'Detaylı AI raporu ve maliyetler',
                 description:
-                    'Hasar seviyesi ve onarım önerileri oluşturuluyor.',
+                    'ML sonuçlarından rapor, onarım önerileri ve fiyat tahmini otomatik hazırlanır.',
                 showLine: false,
               ),
             ],
@@ -449,12 +603,14 @@ class _AnalysisStep extends StatelessWidget {
     required this.title,
     required this.description,
     required this.showLine,
+    this.completed = false,
   });
 
   final IconData icon;
   final String title;
   final String description;
   final bool showLine;
+  final bool completed;
 
   @override
   Widget build(BuildContext context) {
@@ -472,7 +628,13 @@ class _AnalysisStep extends StatelessWidget {
             child: Column(
               children: [
                 AppIconBox(
-                  icon: icon,
+                  icon: completed ? Icons.check_rounded : icon,
+                  iconColor: completed
+                      ? AppTheme.successColorFor(context)
+                      : null,
+                  backgroundColor: completed
+                      ? AppTheme.successSoftFor(context)
+                      : null,
                   size: 38,
                   iconSize: 19,
                   borderRadius: 19,

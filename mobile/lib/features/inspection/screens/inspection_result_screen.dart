@@ -1,5 +1,6 @@
 import 'package:mobile/core/localization/app_text.dart';
 import 'dart:typed_data';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 
@@ -37,6 +38,10 @@ class _InspectionResultScreenState extends State<InspectionResultScreen>
   Object _imageLifetime = Object();
 
   bool _isRegeneratingReport = false;
+  Timer? _reportRefreshTimer;
+  Timer? _reportRefreshDeadline;
+  bool _checkingReport = false;
+  bool _reportRefreshStopped = false;
 
   @override
   void initState() {
@@ -46,6 +51,7 @@ class _InspectionResultScreenState extends State<InspectionResultScreen>
     _inspectionService.images.addListener(_clearInspectionImage);
     WidgetsBinding.instance.addObserver(this);
     _loadInspectionImage();
+    _scheduleReportRefresh();
   }
 
   void _clearInspectionImage() {
@@ -70,11 +76,14 @@ class _InspectionResultScreenState extends State<InspectionResultScreen>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed && mounted) {
       setState(_loadInspectionImage);
+      if (_inspection.isReportProcessing) _refreshReportStatus(restart: true);
     }
   }
 
   @override
   void dispose() {
+    _reportRefreshTimer?.cancel();
+    _reportRefreshDeadline?.cancel();
     _inspectionService.images.removeListener(_clearInspectionImage);
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
@@ -92,6 +101,8 @@ class _InspectionResultScreenState extends State<InspectionResultScreen>
       _inspection = widget.inspection;
       _imageLifetime = Object();
       _loadInspectionImage();
+      _resetReportRefresh();
+      _scheduleReportRefresh();
     }
   }
 
@@ -119,7 +130,7 @@ class _InspectionResultScreenState extends State<InspectionResultScreen>
     });
   }
 
-  Future<void> _regenerateReport() async {
+  Future<void> _regenerateReport({bool recoverStalled = false}) async {
     if (_isRegeneratingReport) {
       return;
     }
@@ -131,6 +142,18 @@ class _InspectionResultScreenState extends State<InspectionResultScreen>
     try {
       DamageInspection updated;
       try {
+        // A previous report POST can finish after its HTTP response is lost.
+        // Always read its state before starting another Gemini request.
+        final current = await _inspectionService.getInspectionById(
+          _inspection.id,
+        );
+        if (!mounted) return;
+        setState(() => _applyInspection(current));
+        if ((current.isReportProcessing && !recoverStalled) ||
+            (current.report != null && current.isReportCompleted)) {
+          _scheduleReportRefresh();
+          return;
+        }
         updated = await _inspectionService.regenerateReport(_inspection.id);
       } on ApiException catch (exception) {
         if (exception.statusCode != 402) {
@@ -153,16 +176,27 @@ class _InspectionResultScreenState extends State<InspectionResultScreen>
       }
 
       setState(() {
-        final imageChanged = _inspection.imagePath != updated.imagePath;
-        _inspection = updated;
-        if (imageChanged) {
-          _imageLifetime = Object();
-          _loadInspectionImage();
-        }
+        _applyInspection(updated);
       });
+      _resetReportRefresh();
+      _scheduleReportRefresh();
     } catch (exception) {
       if (!mounted) {
         return;
+      }
+
+      // Recover a completed/in-flight report without repeating ML or billing.
+      try {
+        final current = await _inspectionService.getInspectionById(
+          _inspection.id,
+        );
+        if (!mounted) return;
+        setState(() => _applyInspection(current));
+        _resetReportRefresh();
+        _scheduleReportRefresh();
+        if (current.isReportProcessing || current.report != null) return;
+      } catch (_) {
+        if (!mounted) return;
       }
 
       final message = exception is ApiException
@@ -178,6 +212,58 @@ class _InspectionResultScreenState extends State<InspectionResultScreen>
           _isRegeneratingReport = false;
         });
       }
+    }
+  }
+
+  void _applyInspection(DamageInspection updated) {
+    final imageChanged = _inspection.imagePath != updated.imagePath;
+    _inspection = updated;
+    if (imageChanged) {
+      _imageLifetime = Object();
+      _loadInspectionImage();
+    }
+  }
+
+  void _scheduleReportRefresh() {
+    _reportRefreshTimer?.cancel();
+    if (!_inspection.isReportProcessing) {
+      _resetReportRefresh();
+      return;
+    }
+    if (_reportRefreshStopped) return;
+    _reportRefreshDeadline ??= Timer(const Duration(minutes: 3), () {
+      _reportRefreshTimer?.cancel();
+      if (mounted) setState(() => _reportRefreshStopped = true);
+    });
+    _reportRefreshTimer = Timer(
+      const Duration(seconds: 2),
+      _refreshReportStatus,
+    );
+  }
+
+  void _resetReportRefresh() {
+    _reportRefreshTimer?.cancel();
+    _reportRefreshDeadline?.cancel();
+    _reportRefreshDeadline = null;
+    _reportRefreshStopped = false;
+  }
+
+  Future<void> _refreshReportStatus({bool restart = false}) async {
+    if (!mounted || _checkingReport) return;
+    if (restart) {
+      setState(_resetReportRefresh);
+    }
+    _checkingReport = true;
+    try {
+      final current = await _inspectionService.getInspectionById(
+        _inspection.id,
+      );
+      if (mounted) setState(() => _applyInspection(current));
+    } catch (_) {
+      // Preserve the visible ML findings during a transient connection failure.
+    } finally {
+      _checkingReport = false;
+      if (mounted) _scheduleReportRefresh();
     }
   }
 
@@ -329,7 +415,8 @@ class _InspectionResultScreenState extends State<InspectionResultScreen>
       return _inspection.reportMessage ?? 'AI raporu oluşturulamadı.';
     }
 
-    return _inspection.reportMessage ?? 'AI raporu henüz oluşturulmadı.';
+    return 'Hasar tespitleriniz kaydedildi. Detaylı rapor tamamlanamadı; '
+        'ML analizini tekrarlamadan yalnızca raporu tekrar deneyebilirsiniz.';
   }
 
   String _formatPrice(double value) {
@@ -580,6 +667,9 @@ class _InspectionResultScreenState extends State<InspectionResultScreen>
                     message: _reportStatusMessage(),
                     isLoading: _isRegeneratingReport,
                     onRegenerate: _regenerateReport,
+                    onRefresh: _reportRefreshStopped
+                        ? () => _regenerateReport(recoverStalled: true)
+                        : null,
                   ),
                 ],
 
@@ -1576,6 +1666,7 @@ class _ReportStatusCard extends StatelessWidget {
     required this.message,
     required this.isLoading,
     required this.onRegenerate,
+    this.onRefresh,
   });
 
   final DamageInspection inspection;
@@ -1585,6 +1676,7 @@ class _ReportStatusCard extends StatelessWidget {
   final bool isLoading;
 
   final VoidCallback onRegenerate;
+  final VoidCallback? onRefresh;
 
   @override
   Widget build(BuildContext context) {
@@ -1606,7 +1698,7 @@ class _ReportStatusCard extends StatelessWidget {
             height: 66,
 
             decoration: BoxDecoration(
-              color: isFailed
+              color: isFailed && !isProcessing
                   ? colorScheme.errorContainer
                   : colorScheme.primaryContainer,
 
@@ -1633,9 +1725,11 @@ class _ReportStatusCard extends StatelessWidget {
           const SizedBox(height: 18),
 
           AppText(
-            isFailed
+            isProcessing
+                ? 'Detaylı AI raporu hazırlanıyor'
+                : isFailed
                 ? 'Detaylı AI raporu oluşturulamadı'
-                : 'Detaylı AI raporu hazır',
+                : 'Hasar tespitleriniz hazır',
             textAlign: TextAlign.center,
             style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
           ),
@@ -1663,6 +1757,14 @@ class _ReportStatusCard extends StatelessWidget {
             ),
           ],
 
+          if (onRefresh != null) ...[
+            const SizedBox(height: 16),
+            OutlinedButton.icon(
+              onPressed: isLoading ? null : onRefresh,
+              icon: const Icon(Icons.refresh_rounded),
+              label: const AppText('AI Raporunu Tekrar Dene'),
+            ),
+          ],
           if (inspection.isCompleted && !inspection.isReportProcessing) ...[
             const SizedBox(height: 22),
 
@@ -1680,11 +1782,7 @@ class _ReportStatusCard extends StatelessWidget {
                       )
                     : const Icon(Icons.refresh_rounded),
 
-                label: AppText(
-                  inspection.report == null
-                      ? 'Detaylı AI Raporu Oluştur'
-                      : 'AI Raporunu Tekrar Oluştur',
-                ),
+                label: AppText('AI Raporunu Tekrar Dene'),
               ),
             ),
           ],
