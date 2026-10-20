@@ -344,9 +344,11 @@ class _NearbyServicesScreenState extends State<NearbyServicesScreen> {
                 left: 16,
                 right: 16,
                 top: 16,
-                child: _ErrorCard(
-                  message: _errorMessage!,
-                  onRetry: _loadServices,
+                child: _MapPanel(
+                  child: _ErrorCard(
+                    message: _errorMessage!,
+                    onRetry: _loadServices,
+                  ),
                 ),
               ),
             if (!_isLoading && _errorMessage == null && _services.isEmpty)
@@ -354,7 +356,7 @@ class _NearbyServicesScreenState extends State<NearbyServicesScreen> {
                 left: 16,
                 right: 16,
                 bottom: 24,
-                child: _EmptyServicesCard(),
+                child: _MapPanel(child: _EmptyServicesCard()),
               ),
             if (!_isLoading && _errorMessage == null && selectedService != null)
               Positioned(
@@ -469,19 +471,23 @@ class _ServiceCard extends StatelessWidget {
               style: theme.textTheme.bodySmall,
             ),
             const SizedBox(height: 12),
-            Row(
+            Wrap(
+              spacing: 16,
+              runSpacing: 8,
               children: [
-                Icon(
-                  Icons.location_on_outlined,
-                  size: 18,
-                  color: theme.colorScheme.primary,
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.location_on_outlined,
+                      size: 18,
+                      color: theme.colorScheme.primary,
+                    ),
+                    const SizedBox(width: 4),
+                    Flexible(child: AppText(distance)),
+                  ],
                 ),
-                const SizedBox(width: 4),
-                AppText(distance),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: AppText(rating, overflow: TextOverflow.ellipsis),
-                ),
+                AppText(rating),
               ],
             ),
             const SizedBox(height: 12),
@@ -527,20 +533,33 @@ class _ErrorCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(16),
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(
-              Icons.error_outline,
-              color: theme.colorScheme.onErrorContainer,
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  Icons.error_outline,
+                  color: theme.colorScheme.onErrorContainer,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: AppText(
+                    message,
+                    style: TextStyle(color: theme.colorScheme.onErrorContainer),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: AppText(
-                message,
-                style: TextStyle(color: theme.colorScheme.onErrorContainer),
+            const SizedBox(height: 8),
+            TextButton(
+              onPressed: onRetry,
+              style: TextButton.styleFrom(
+                foregroundColor: theme.colorScheme.onErrorContainer,
               ),
+              child: const AppText('Tekrar Dene'),
             ),
-            TextButton(onPressed: onRetry, child: const AppText('Tekrar Dene')),
           ],
         ),
       ),

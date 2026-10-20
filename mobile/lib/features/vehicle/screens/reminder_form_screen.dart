@@ -2,6 +2,7 @@ import 'package:mobile/core/localization/app_text.dart';
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_content.dart';
+import '../../../core/widgets/primary_button.dart';
 import '../../../core/widgets/app_page_header.dart';
 
 import '../../../core/network/api_exception.dart';
@@ -222,16 +223,11 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
                 decoration: InputDecoration(labelText: 'Not (isteğe bağlı)'.tr),
               ),
               const SizedBox(height: AppTheme.spacingL),
-              FilledButton.icon(
+              PrimaryButton(
                 onPressed: _saving ? null : _save,
-                icon: _saving
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.save_outlined),
-                label: const AppText('Kaydet'),
+                isLoading: _saving,
+                icon: Icons.save_outlined,
+                label: 'Kaydet',
               ),
             ],
           ),

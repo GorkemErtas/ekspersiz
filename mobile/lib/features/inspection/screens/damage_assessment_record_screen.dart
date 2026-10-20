@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/widgets/primary_button.dart';
 
 import '../../../core/localization/app_text.dart';
 import '../../../core/network/api_exception.dart';
@@ -46,8 +47,7 @@ class _DamageAssessmentRecordScreenState
   void initState() {
     super.initState();
     _city = TextEditingController(text: widget.inspection.locationCity);
-    _incidentDateTime =
-        widget.inspection.completedAt ?? DateTime.now();
+    _incidentDateTime = widget.inspection.completedAt ?? DateTime.now();
     _load();
   }
 
@@ -101,7 +101,11 @@ class _DamageAssessmentRecordScreenState
     if (time == null) return;
     setState(() {
       _incidentDateTime = DateTime(
-        date.year, date.month, date.day, time.hour, time.minute,
+        date.year,
+        date.month,
+        date.day,
+        time.hour,
+        time.minute,
       );
     });
   }
@@ -191,8 +195,9 @@ class _DamageAssessmentRecordScreenState
     setState(() => _sharing = true);
     try {
       final box = context.findRenderObject() as RenderBox?;
-      final origin =
-          box == null ? null : box.localToGlobal(Offset.zero) & box.size;
+      final origin = box == null
+          ? null
+          : box.localToGlobal(Offset.zero) & box.size;
       await _pdfService.createAndShare(
         inspection: widget.inspection,
         record: record,
@@ -206,8 +211,7 @@ class _DamageAssessmentRecordScreenState
   }
 
   void _showError(Object exception, String fallback) {
-    final message =
-        exception is ApiException ? exception.message : fallback;
+    final message = exception is ApiException ? exception.message : fallback;
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(content: AppText(message)));
@@ -314,36 +318,20 @@ class _DamageAssessmentRecordScreenState
                             label: const AppText('Taslağı Kaydet'),
                           ),
                           const SizedBox(height: 10),
-                          FilledButton.icon(
+                          PrimaryButton(
                             onPressed: _saving ? null : _finalize,
-                            icon: _saving
-                                ? const SizedBox(
-                                    width: 18,
-                                    height: 18,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                : const Icon(Icons.verified_outlined),
-                            label: const AppText('Tutanağı Kesinleştir'),
+                            isLoading: _saving,
+                            icon: Icons.verified_outlined,
+                            label: 'Tutanağı Kesinleştir',
                           ),
                         ] else ...[
-                          FilledButton.icon(
+                          PrimaryButton(
                             onPressed: _sharing ? null : _sharePdf,
-                            icon: _sharing
-                                ? const SizedBox(
-                                    width: 18,
-                                    height: 18,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                : const Icon(Icons.picture_as_pdf_outlined),
-                            label: AppText(
-                              _sharing
-                                  ? 'PDF hazırlanıyor...'
-                                  : 'Tutanağı PDF Olarak Paylaş',
-                            ),
+                            isLoading: _sharing,
+                            icon: Icons.picture_as_pdf_outlined,
+                            label: _sharing
+                                ? 'PDF hazırlanıyor...'
+                                : 'Tutanağı PDF Olarak Paylaş',
                           ),
                         ],
                       ],
