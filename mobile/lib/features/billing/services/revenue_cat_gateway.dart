@@ -49,7 +49,20 @@ class RevenueCatGateway {
     final offering = offerings.all['credits_v1'] ?? offerings.current;
     final packages = offering?.availablePackages ?? const <Package>[];
 
-    return {for (final package in packages) package.identifier: package};
+    return indexPackages(packages);
+  }
+
+  /// Index both the RevenueCat package alias and its real store SKU.
+  /// Business subscriptions use package aliases; consumables use store SKUs.
+  static Map<String, Package> indexPackages(List<Package> packages) {
+    final result = <String, Package>{
+      for (final package in packages) package.identifier: package,
+    };
+    // The real store SKU wins if an unrelated alias happens to collide.
+    for (final package in packages) {
+      result[package.storeProduct.identifier] = package;
+    }
+    return result;
   }
 
   Future<void> purchase(
