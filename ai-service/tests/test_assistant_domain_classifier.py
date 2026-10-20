@@ -176,6 +176,7 @@ class SemanticDomainClassifierTest(unittest.TestCase):
             "intent": "DAMAGE_HISTORY", "use_rag": False,
             "knowledge_source": "PUBLIC_WEB", "tool_name": "getDamageHistory",
             "reason": "inconsistent route",
+            "clarification_needed": False,
         })
         with self.assertRaisesRegex(RuntimeError, "invalid PUBLIC_WEB route"):
             self.classifier().route("Son analizimi göster")
@@ -187,6 +188,7 @@ class SemanticDomainClassifierTest(unittest.TestCase):
             "intent": "APP_HELP", "use_rag": True,
             "knowledge_source": "APP_KNOWLEDGE", "tool_name": "getMyVehicles",
             "reason": "inconsistent route",
+            "clarification_needed": False,
         })
         with self.assertRaisesRegex(RuntimeError, "invalid APP_KNOWLEDGE route"):
             self.classifier().route("EksperSiz nasıl çalışır?")
