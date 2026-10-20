@@ -49,13 +49,16 @@ class RevenueCatGateway {
     final offering = offerings.all['credits_v1'] ?? offerings.current;
     final packages = offering?.availablePackages ?? const <Package>[];
 
-    // RevenueCat package identifiers are configurable and may differ from the
-    // Google Play product IDs used by our server-side credit catalog. Match
-    // by the actual store product, while preserving the package for purchase.
-    return {
-      for (final package in packages)
-        package.storeProduct.identifier: package,
+    // Subscriptions can use RevenueCat package IDs (e.g. business_monthly),
+    // while consumable credits use exact Google Play product IDs. Index both.
+    // The store product ID wins if an unrelated package alias collides with it.
+    final result = <String, Package>{
+      for (final package in packages) package.identifier: package,
     };
+    for (final package in packages) {
+      result[package.storeProduct.identifier] = package;
+    }
+    return result;
   }
 
   Future<void> purchase(
