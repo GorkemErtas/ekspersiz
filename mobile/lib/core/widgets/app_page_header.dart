@@ -28,16 +28,19 @@ class AppPageHeader extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final isWide = constraints.maxWidth >= 720;
+        final textScale = MediaQuery.textScalerOf(context).scale(14) / 14;
+        final isWide =
+            constraints.maxWidth >= 720 ||
+            (constraints.maxWidth >= 340 && textScale <= 1.3);
 
         final iconWidget = AppIconBox(
           icon: icon,
 
-          size: isWide ? 58 : 52,
+          size: 48,
 
-          iconSize: isWide ? 28 : 26,
+          iconSize: 24,
 
-          borderRadius: isWide ? 20 : 18,
+          borderRadius: AppTheme.radiusMedium,
 
           iconColor: iconGradient ? Colors.white : colorScheme.primary,
 
@@ -94,7 +97,7 @@ class AppPageHeader extends StatelessWidget {
                 title,
 
                 style: textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w900,
+                  fontWeight: FontWeight.w800,
                 ),
               ),
             ),
@@ -104,7 +107,7 @@ class AppPageHeader extends StatelessWidget {
             AppText(
               subtitle,
 
-              style: textTheme.bodyLarge?.copyWith(
+              style: textTheme.bodyMedium?.copyWith(
                 color: colorScheme.onSurfaceVariant,
 
                 height: 1.5,
@@ -120,7 +123,7 @@ class AppPageHeader extends StatelessWidget {
             children: [
               iconWidget,
 
-              const SizedBox(width: 18),
+              const SizedBox(width: 14),
 
               Expanded(child: content),
             ],

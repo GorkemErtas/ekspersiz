@@ -4,11 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:mobile/core/widgets/app_navigation_bar.dart';
 import 'package:mobile/features/ai_assistant/screens/ai_assistant_screen.dart';
 import 'package:mobile/features/home/screens/main_shell.dart';
 import 'package:mobile/features/vehicle/models/vehicle.dart';
 import 'package:mobile/features/vehicle/screens/vehicle_detail_screen.dart';
+import 'package:mobile/features/vehicle/screens/vehicle_list_screen.dart';
 
 import '../support/ui_mock_api.dart';
 import '../support/ui_test_app.dart';
@@ -22,6 +24,53 @@ void main() {
   );
 
   for (final brightness in Brightness.values) {
+    testWidgets(
+      'long vehicle details and menu remain usable at 320px, $brightness',
+      (tester) async {
+        await setUiSize(tester, const Size(320, 640));
+        await http.runWithClient(
+          () async {
+            await tester.pumpWidget(
+              uiTestApp(
+                brightness: brightness,
+                textScale: 2,
+                reduceMotion: true,
+                home: const VehicleListScreen(),
+              ),
+            );
+            await tester.pumpAndSettle();
+            await tester.scrollUntilVisible(
+              find.text('1.234.567 km'),
+              160,
+              scrollable: find.byType(Scrollable).first,
+            );
+            expect(tester.takeException(), isNull);
+            await tester.ensureVisible(find.byTooltip('Araç işlemleri'));
+            await tester.pumpAndSettle();
+            await tester.tap(find.byTooltip('Araç işlemleri'));
+            await tester.pumpAndSettle();
+            expect(find.text('Düzenle'), findsOneWidget);
+            expect(find.text('Garajdan Kaldır'), findsOneWidget);
+            expect(tester.takeException(), isNull);
+            await tester.pumpWidget(const SizedBox());
+          },
+          () => MockClient((request) async {
+            if (request.url.path.endsWith('/vehicles')) {
+              return uiJsonResponse([
+                {
+                  ...uiVehicleJson,
+                  'brand': 'Mercedes-Benz',
+                  'model': 'GLC 300 4MATIC AMG',
+                  'mileage': 1234567,
+                },
+              ]);
+            }
+            return uiJsonResponse({});
+          }),
+        );
+      },
+    );
+
     testWidgets(
       'dashboard, vehicle tab and notification navigation at large text, $brightness',
       (tester) async {

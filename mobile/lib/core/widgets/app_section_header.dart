@@ -42,7 +42,7 @@ class AppSectionHeader extends StatelessWidget {
                   title,
 
                   style: textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w900,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
               ),
@@ -68,8 +68,9 @@ class AppSectionHeader extends StatelessWidget {
     if (trailing == null) return heading;
     return LayoutBuilder(
       builder: (context, constraints) {
-        if (constraints.maxWidth < 400 ||
-            MediaQuery.textScalerOf(context).scale(14) > 20) {
+        if (trailing is! IconButton &&
+            (constraints.maxWidth < 400 ||
+                MediaQuery.textScalerOf(context).scale(14) > 20)) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [heading, const SizedBox(height: 12), trailing!],

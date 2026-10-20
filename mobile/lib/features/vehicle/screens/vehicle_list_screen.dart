@@ -498,92 +498,68 @@ class _VehicleCard extends StatelessWidget {
 
     return AppCard(
       onTap: onTap,
-      padding: const EdgeInsets.all(18),
-
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const AppIconBox(
-            icon: Icons.directions_car_filled_rounded,
-            size: 60,
-            iconSize: 30,
-            borderRadius: 20,
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const AppIconBox(
+                icon: Icons.directions_car_filled_rounded,
+                size: 48,
+                iconSize: 24,
+                borderRadius: AppTheme.radiusMedium,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: AppText(
+                  vehicle.displayName,
+                  style: textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 4),
+              _VehicleActionsMenu(onEdit: onEdit, onDelete: onDelete),
+            ],
           ),
-
-          const SizedBox(width: 16),
-
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: AppText(
-                        vehicle.displayName,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(width: 8),
-
-                    _VehicleActionsMenu(onEdit: onEdit, onDelete: onDelete),
-                  ],
+          const SizedBox(height: AppTheme.spacingM),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _InfoBadge(icon: Icons.badge_outlined, label: vehicle.plate),
+              _InfoBadge(
+                icon: Icons.calendar_today_outlined,
+                label: '${vehicle.modelYear}',
+              ),
+              if (vehicle.primaryVehicle)
+                const _InfoBadge(
+                  icon: Icons.star_rounded,
+                  label: 'Ana araç',
+                  emphasized: true,
                 ),
-
-                const SizedBox(height: 10),
-
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    _InfoBadge(
-                      icon: Icons.badge_outlined,
-                      label: vehicle.plate,
-                    ),
-
-                    _InfoBadge(
-                      icon: Icons.calendar_today_outlined,
-                      label: '${vehicle.modelYear}',
-                    ),
-
-                    if (vehicle.primaryVehicle)
-                      _InfoBadge(
-                        icon: Icons.star_rounded,
-                        label: 'Ana araç',
-                        emphasized: true,
-                      ),
-                  ],
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Icon(
+                Icons.speed_rounded,
+                size: 17,
+                color: colorScheme.onSurfaceVariant,
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: AppText(
+                  '$mileage km',
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-
-                const SizedBox(height: 12),
-
-                Row(
-                  children: [
-                    Icon(
-                      Icons.speed_rounded,
-                      size: 17,
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-
-                    const SizedBox(width: 6),
-
-                    AppText(
-                      '$mileage km',
-                      style: textTheme.bodyMedium?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ],
       ),

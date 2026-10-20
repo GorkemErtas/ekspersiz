@@ -89,9 +89,9 @@ class AppStateView extends StatelessWidget {
           physics: const AlwaysScrollableScrollPhysics(),
 
           padding: EdgeInsets.fromLTRB(
-            AppTheme.spacingXL,
-            AppTheme.spacingXL,
-            AppTheme.spacingXL,
+            AppTheme.spacingL,
+            AppTheme.spacingL,
+            AppTheme.spacingL,
             bottomPadding,
           ),
 
@@ -115,19 +115,21 @@ class AppStateView extends StatelessWidget {
                     },
 
                     child: Container(
-                      width: 84,
+                      width: 72,
 
-                      height: 84,
+                      height: 72,
 
                       decoration: BoxDecoration(
                         color: backgroundColor,
 
-                        borderRadius: BorderRadius.circular(28),
+                        borderRadius: BorderRadius.circular(
+                          AppTheme.radiusLarge,
+                        ),
                       ),
 
                       child: isLoading
                           ? Padding(
-                              padding: const EdgeInsets.all(26),
+                              padding: const EdgeInsets.all(22),
 
                               child: CircularProgressIndicator(
                                 strokeWidth: 3,
@@ -135,7 +137,7 @@ class AppStateView extends StatelessWidget {
                                 color: foregroundColor,
                               ),
                             )
-                          : Icon(icon, size: 40, color: foregroundColor),
+                          : Icon(icon, size: 32, color: foregroundColor),
                     ),
                   ),
 
@@ -146,8 +148,8 @@ class AppStateView extends StatelessWidget {
 
                     textAlign: TextAlign.center,
 
-                    style: textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w900,
+                    style: textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
 
@@ -158,7 +160,7 @@ class AppStateView extends StatelessWidget {
 
                     textAlign: TextAlign.center,
 
-                    style: textTheme.bodyLarge?.copyWith(
+                    style: textTheme.bodyMedium?.copyWith(
                       color: colorScheme.onSurfaceVariant,
 
                       height: 1.5,
