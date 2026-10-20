@@ -297,6 +297,10 @@ void main() {
                 )
               : uiJsonResponse(_complete);
         }
+        if (request.method == 'GET' &&
+            request.url.path.endsWith('/inspections/4')) {
+          return uiJsonResponse({..._pending, 'status': 'FAILED'});
+        }
         throw StateError('Unexpected call: ${request.url}');
       }),
     );
@@ -362,43 +366,57 @@ void main() {
     );
   });
 
-  testWidgets('history can reopen an authorized result without another photo GET', (
-    tester,
-  ) async {
-    final photo = await _photoBytes();
-    final result = {..._complete, 'imagePath': 'history-photo.png'};
-    var downloads = 0;
-    var authorizations = 0;
-    await http.runWithClient(() async {
-      await tester.runAsync(() => const InspectionService().getInspectionImage(4));
-      await tester.pumpWidget(uiTestApp(
-        home: const InspectionHistoryScreen(), reduceMotion: true,
-      ));
-      await tester.pumpAndSettle();
-      for (var open = 0; open < 2; open++) {
-        await tester.tap(find.text('34 ABC 123'));
-        await tester.pumpAndSettle();
-        expect(find.byType(InspectionResultScreen), findsOneWidget);
-        expect(find.byKey(const Key('inspection-analysis-image')), findsOneWidget);
-        expect(downloads, 1);
-        await tester.tap(find.byTooltip('Kapat'));
-        await tester.pumpAndSettle();
-        expect(find.byType(InspectionHistoryScreen), findsOneWidget);
-      }
-      expect(authorizations, 4); // Cold prefetch twice; each reopen once.
-    }, () => MockClient((request) async {
-      if (request.url.path.endsWith('/inspections')) return uiJsonResponse([result]);
-      if (request.url.path.endsWith('/inspections/4/image')) {
-        downloads++;
-        return http.Response.bytes(photo, 200);
-      }
-      if (request.url.path.endsWith('/inspections/4')) {
-        authorizations++;
-        return uiJsonResponse(result);
-      }
-      throw StateError('Unexpected history request: ${request.url}');
-    }));
-  });
+  testWidgets(
+    'history can reopen an authorized result without another photo GET',
+    (tester) async {
+      final photo = await _photoBytes();
+      final result = {..._complete, 'imagePath': 'history-photo.png'};
+      var downloads = 0;
+      var authorizations = 0;
+      await http.runWithClient(
+        () async {
+          await tester.runAsync(
+            () => const InspectionService().getInspectionImage(4),
+          );
+          await tester.pumpWidget(
+            uiTestApp(
+              home: const InspectionHistoryScreen(),
+              reduceMotion: true,
+            ),
+          );
+          await tester.pumpAndSettle();
+          for (var open = 0; open < 2; open++) {
+            await tester.tap(find.text('34 ABC 123'));
+            await tester.pumpAndSettle();
+            expect(find.byType(InspectionResultScreen), findsOneWidget);
+            expect(
+              find.byKey(const Key('inspection-analysis-image')),
+              findsOneWidget,
+            );
+            expect(downloads, 1);
+            await tester.tap(find.byTooltip('Kapat'));
+            await tester.pumpAndSettle();
+            expect(find.byType(InspectionHistoryScreen), findsOneWidget);
+          }
+          expect(authorizations, 4); // Cold prefetch twice; each reopen once.
+        },
+        () => MockClient((request) async {
+          if (request.url.path.endsWith('/inspections')) {
+            return uiJsonResponse([result]);
+          }
+          if (request.url.path.endsWith('/inspections/4/image')) {
+            downloads++;
+            return http.Response.bytes(photo, 200);
+          }
+          if (request.url.path.endsWith('/inspections/4')) {
+            authorizations++;
+            return uiJsonResponse(result);
+          }
+          throw StateError('Unexpected history request: ${request.url}');
+        }),
+      );
+    },
+  );
 }
 
 Future<Uint8List> _photoBytes() async {
