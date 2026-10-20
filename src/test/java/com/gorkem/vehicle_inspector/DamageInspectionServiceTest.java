@@ -386,6 +386,55 @@ class DamageInspectionServiceTest {
     }
 
     @Test
+    void automaticReportExposesProcessingAndRejectsAConcurrentReportRequest() {
+        when(ai.analyzeSingleImage(any(), any())).thenReturn(minorAnalysisResponse());
+        when(reports.generateReport(any())).thenAnswer(call -> {
+            assertEquals(InspectionStatus.COMPLETED, inspection.getStatus());
+            assertEquals(ReportStatus.PROCESSING, inspection.getReportStatus());
+            assertNotNull(inspection.getReportAttempt());
+            assertEquals(NOW, inspection.getReportStartedAt());
+            assertThrows(IllegalStateException.class,
+                    () -> service.regenerateReport(30L, actor.getEmail()));
+            return report();
+        });
+        var result = service.analyzeInspection(30L, actor.getEmail());
+        assertEquals(ReportStatus.COMPLETED, result.getReportStatus());
+        verify(ai).analyzeSingleImage(any(), any());
+        verify(reports).generateReport(any());
+    }
+
+    @Test
+    void staleAutomaticReportCannotCompleteOrFailANewerAttempt() {
+        when(ai.analyzeSingleImage(any(), any())).thenReturn(minorAnalysisResponse());
+        when(reports.generateReport(any())).thenAnswer(call -> {
+            inspection.beginReport(NOW.plusMinutes(11));
+            return report();
+        });
+        var result = service.analyzeInspection(30L, actor.getEmail());
+        assertEquals(InspectionStatus.COMPLETED, result.getStatus());
+        assertEquals(DamageSeverity.MINOR, result.getDamageSeverity());
+        assertEquals(ReportStatus.PROCESSING, result.getReportStatus());
+        assertNull(result.getReport());
+        assertEquals(NOW.plusMinutes(11), inspection.getReportStartedAt());
+    }
+
+    @Test
+    void reportPreparationFailureKeepsPersistedMlResults() {
+        when(ai.analyzeSingleImage(any(), any())).thenReturn(minorAnalysisResponse());
+        try (var mapper = mockStatic(com.gorkem.vehicle_inspector.mapper.InspectionLlmMapper.class)) {
+            mapper.when(() -> com.gorkem.vehicle_inspector.mapper.InspectionLlmMapper.toRequest(inspection))
+                    .thenThrow(new IllegalStateException("Report context unavailable"));
+            var result = service.analyzeInspection(30L, actor.getEmail());
+            assertEquals(InspectionStatus.COMPLETED, result.getStatus());
+            assertEquals(DamageSeverity.MINOR, result.getDamageSeverity());
+            assertEquals(List.of(DamageType.SCRATCH), result.getDamageTypes());
+            assertEquals(ReportStatus.FAILED, result.getReportStatus());
+            assertNotNull(result.getCompletedAt());
+            verifyNoInteractions(reports);
+        }
+    }
+
+    @Test
     void noVisibleDamageCompletesWithCanonicalResultConsumesQuotaAndSkipsGemini() {
         when(storage.resolveStoredFile("image.jpg")).thenReturn(Path.of("image.jpg"));
         AiAnalysisResponse response = new AiAnalysisResponse();
@@ -585,6 +634,54 @@ class DamageInspectionServiceTest {
     }
 
     @Test
+    void paidDamageAnalysisIncludesReportAndReplayDoesNotCallEitherModelOrChargeAgain() {
+        var wallet = mock(CreditWalletService.class);
+        var token = java.util.UUID.randomUUID();
+        ReflectionTestUtils.setField(service, "creditWallets", wallet);
+        when(wallet.reserve(eq(actor), eq(true), eq("ANALYSIS"), anyString(), anyString()))
+                .thenReturn(new CreditWalletService.Reservation(token, false));
+        when(ai.analyzeSingleImage(any(), any())).thenReturn(minorAnalysisResponse());
+        when(reports.generateReport(any())).thenReturn(report());
+
+        var first = service.analyzeInspection(30L, actor.getEmail(), false, "FRONT");
+        var replay = service.analyzeInspection(30L, actor.getEmail(), false, "FRONT");
+        assertEquals(ReportStatus.COMPLETED, first.getReportStatus());
+        assertEquals(first.getReport(), replay.getReport());
+        verify(ai).analyzeSingleImage(Path.of("image.jpg"), "FRONT");
+        verify(reports).generateReport(any());
+        verify(wallet).reserve(eq(actor), eq(true), eq("ANALYSIS"), anyString(), anyString());
+        verify(wallet).complete(actor, token);
+        verify(wallet, never()).release(any(), any());
+    }
+
+    @Test
+    void expiredCreditDuringAutomaticReportLeavesMlAndCanRetryOnlyTheReport() {
+        var wallet = mock(CreditWalletService.class);
+        var expired = java.util.UUID.randomUUID();
+        var retry = java.util.UUID.randomUUID();
+        ReflectionTestUtils.setField(service, "creditWallets", wallet);
+        when(wallet.reserve(eq(actor), eq(true), eq("ANALYSIS"), anyString(), anyString()))
+                .thenReturn(new CreditWalletService.Reservation(expired, false),
+                        new CreditWalletService.Reservation(retry, false));
+        doThrow(new IllegalStateException("Reservation expired")).when(wallet).complete(actor, expired);
+        when(ai.analyzeSingleImage(any(), any())).thenReturn(minorAnalysisResponse());
+        when(reports.generateReport(any())).thenReturn(report());
+
+        var partial = service.analyzeInspection(30L, actor.getEmail());
+        assertEquals(InspectionStatus.COMPLETED, partial.getStatus());
+        assertEquals(ReportStatus.FAILED, partial.getReportStatus());
+        assertEquals(DamageSeverity.MINOR, partial.getDamageSeverity());
+        assertFalse(inspection.isReportAccessGranted());
+        verify(wallet).release(actor, expired);
+
+        var recovered = service.regenerateReport(30L, actor.getEmail());
+        assertEquals(ReportStatus.COMPLETED, recovered.getReportStatus());
+        verify(wallet).complete(actor, retry);
+        verify(ai).analyzeSingleImage(any(), any());
+        verify(reports, times(2)).generateReport(any());
+    }
+
+    @Test
     void failedLegacyReportReleasesReservedCredit() {
         var wallet=mock(CreditWalletService.class);var token=java.util.UUID.randomUUID();
         ReflectionTestUtils.setField(service,"creditWallets",wallet);
@@ -610,7 +707,6 @@ class DamageInspectionServiceTest {
         ReflectionTestUtils.setField(service,"creditWallets",wallet);
         when(wallet.reserve(eq(actor),eq(true),eq("ANALYSIS"),anyString(),anyString()))
                 .thenReturn(new CreditWalletService.Reservation(token,false));
-        when(wallet.reservationActive(actor,token)).thenReturn(true);
         when(storage.resolveStoredFile("image.jpg")).thenReturn(Path.of("image.jpg"));
         when(ai.analyzeSingleImage(any(),any())).thenReturn(minorAnalysisResponse());
         when(reports.generateReport(any())).thenThrow(new IllegalStateException("provider unavailable"));

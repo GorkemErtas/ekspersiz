@@ -921,7 +921,9 @@ public class DamageInspectionService {
             AnalysisContext context,
             AiAnalysisResponse aiResponse
     ) {
-        transactionTemplate.executeWithoutResult(
+        boolean automaticReport = creditWallets != null || analysisCreditService == null
+                || aiResponse.getDamageSeverity() == DamageSeverity.NONE;
+        java.util.UUID reportAttempt = transactionTemplate.execute(
                 status -> {
 
                     DamageInspection inspection =
@@ -967,24 +969,26 @@ public class DamageInspectionService {
                     );
 
                     inspection.setReportStatus(
-                            ReportStatus.PENDING
+                            automaticReport ? ReportStatus.PROCESSING : ReportStatus.PENDING
                     );
 
                     inspection.setReportMessage(
-                            creditWallets != null ? "Hasar tespiti tamamlandı. Detaylı rapor hazırlanıyor."
+                            automaticReport ? "Hasar tespiti tamamlandı. Detaylı rapor hazırlanıyor."
                                     : "Temel hasar tespiti tamamlandı. Detaylı AI raporunu istediğinizde oluşturabilirsiniz."
                     );
 
+                    java.util.UUID attempt = automaticReport
+                            ? inspection.beginReport(LocalDateTime.now(clock)) : null;
                     inspectionRepository.save(
                             inspection
                     );
+                    return attempt;
                 }
         );
 
 
-        if (creditWallets != null || analysisCreditService == null
-                || aiResponse.getDamageSeverity() == DamageSeverity.NONE) {
-            generateReportOutsideTransaction(context);
+        if (automaticReport) {
+            generateReportOutsideTransaction(context, reportAttempt);
         }
 
         DamageInspectionResponse response =
@@ -1013,36 +1017,34 @@ public class DamageInspectionService {
     }
 
     private void generateReportOutsideTransaction(
-            AnalysisContext context
+            AnalysisContext context,
+            java.util.UUID reportAttempt
     ) {
-        InspectionLlmRequest request =
-                transactionTemplate.execute(
-                        status -> {
+        try {
+            InspectionLlmRequest request =
+                    transactionTemplate.execute(
+                            status -> {
 
-                            DamageInspection inspection =
-                                    inspectionAccessService.requireInspection(
-                                            context.inspectionId(),
-                                            context.user()
-                                    );
+                                DamageInspection inspection =
+                                        inspectionAccessService.requireInspection(
+                                                context.inspectionId(),
+                                                context.user()
+                                        );
 
-                            return InspectionLlmMapper
-                                    .toRequest(
-                                            inspection
-                                    );
-                        }
+                                return InspectionLlmMapper.toRequest(inspection);
+                            }
+                    );
+
+            if (request == null) {
+
+                markReportAsFailed(
+                        context.inspectionId(),
+                        context.user(), reportAttempt, context.creditToken()
                 );
 
-        if (request == null) {
+                return;
+            }
 
-            markReportAsFailed(
-                    context.inspectionId(),
-                    context.user(), null, context.creditToken()
-            );
-
-            return;
-        }
-
-        try {
             LlmInspectionReportResult result =
                     request.damageSeverity() == DamageSeverity.NONE
                             ? buildNoVisibleDamageReport()
@@ -1053,7 +1055,7 @@ public class DamageInspectionService {
                     context.user(),
                     result,
                     context.creditToken(),
-                    null
+                    reportAttempt
             );
 
         } catch (RuntimeException exception) {
@@ -1066,7 +1068,7 @@ public class DamageInspectionService {
 
             markReportAsFailed(
                     context.inspectionId(),
-                    context.user(), null, context.creditToken()
+                    context.user(), reportAttempt, context.creditToken()
             );
         }
     }
@@ -1189,7 +1191,10 @@ public class DamageInspectionService {
                             );
 
                     if (attempt!=null && !attempt.equals(inspection.getReportAttempt())) return;
-                    if (creditToken!=null && !creditWallets.reservationActive(user,creditToken)) return;
+                    // The attempt guard owns this report even if its credit
+                    // lease expired; do not leave it stuck in PROCESSING.
+                    if (creditToken!=null && attempt==null
+                            && !creditWallets.reservationActive(user,creditToken)) return;
                     inspection.setReportStatus(
                             ReportStatus.FAILED
                     );
@@ -1229,6 +1234,10 @@ public class DamageInspectionService {
                                             context.user()
                                     );
 
+                            // A response/report failure after ML was committed must not
+                            // erase successful detections or invite another ML run.
+                            if (inspection.getStatus() == InspectionStatus.COMPLETED)
+                                return buildResponse(inspection);
                             if (context.creditToken()!=null && !creditWallets.reservationActive(context.user(),context.creditToken()))
                                 return buildResponse(inspection);
                             inspection.setStatus(
@@ -1301,6 +1310,8 @@ public class DamageInspectionService {
         if (initial.isReportAccessGranted()) return regenerateReservedReport(inspectionId,authenticatedEmail,null);
         boolean company=initial.getVehicle().getBusinessAccount()!=null;
         var reservation=creditWallets.reserve(user,company,"ANALYSIS","inspection:"+inspectionId,"inspection:"+inspectionId);
+        if (reservation.completed()) return transactionTemplate.execute(status ->
+                buildResponse(inspectionAccessService.requireInspection(inspectionId, user)));
         boolean completed=reservation.completed();
         try {
             var response=regenerateReservedReport(inspectionId,authenticatedEmail,reservation.token());
