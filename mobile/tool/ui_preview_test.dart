@@ -11,6 +11,7 @@ import 'package:mobile/features/billing/screens/subscription_screen.dart';
 import 'package:mobile/features/inspection/screens/upload_damage_image_screen.dart';
 import 'package:mobile/features/profile/screens/profile_screen.dart';
 import 'package:mobile/features/vehicle/screens/reminder_form_screen.dart';
+import 'package:mobile/features/vehicle/screens/vehicle_list_screen.dart';
 import 'package:mobile/features/vehicle/models/vehicle.dart';
 
 import '../test/features/billing/screens/subscription_screen_test.dart'
@@ -34,6 +35,7 @@ void main() {
       'photo',
       'plans',
       'reminder',
+      'vehicles',
       'dashboard',
       'dashboard-tablet',
     ]) {
@@ -52,6 +54,7 @@ void main() {
               subscriptionPlan: 'PLUS',
             ),
             'login' => const LoginScreen(),
+            'vehicles' => const VehicleListScreen(),
             'profile' => const ProfileScreen(
               fullName: 'Deniz Yılmaz',
               email: 'deniz@example.com',
