@@ -61,8 +61,8 @@ class _SplashScreenState extends State<SplashScreen> {
             FilledButton(
               onPressed: () async {
                 if (updateStatus.immediateUpdateAllowed) {
-                  final completed =
-                      await _appUpdateService.performImmediateUpdate();
+                  final completed = await _appUpdateService
+                      .performImmediateUpdate();
 
                   if (completed && dialogContext.mounted) {
                     Navigator.of(dialogContext).pop();
@@ -218,8 +218,8 @@ class _SplashScreenState extends State<SplashScreen> {
     return Scaffold(
       body: SafeArea(
         child: Center(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 460),
               child: Column(

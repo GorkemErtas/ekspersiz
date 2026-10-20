@@ -6,6 +6,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/app_content.dart';
 import '../../../core/widgets/app_state_view.dart';
+import '../../../core/widgets/app_section_header.dart';
 import '../../../core/widgets/theme_toggle_button.dart';
 import '../../auth/models/business_account.dart';
 import '../../inspection/screens/create_inspection_screen.dart';
@@ -401,30 +402,17 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
     String subtitle,
     IconData icon,
     VoidCallback? add,
-  ) => Row(
-    children: [
-      Icon(icon, color: Theme.of(context).colorScheme.primary),
-      const SizedBox(width: 9),
-      Expanded(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            AppText(
-              title,
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
-            ),
-            AppText(subtitle, style: Theme.of(context).textTheme.bodySmall),
-          ],
-        ),
-      ),
-      if (add != null)
-        IconButton(
-          onPressed: add,
-          icon: const Icon(Icons.add_circle_outline_rounded),
-        ),
-    ],
+  ) => AppSectionHeader(
+    icon: icon,
+    title: title,
+    subtitle: subtitle,
+    trailing: add == null
+        ? null
+        : IconButton.outlined(
+            tooltip: '$title: yeni kayıt',
+            onPressed: add,
+            icon: const Icon(Icons.add_rounded),
+          ),
   );
   Widget _empty(String text) => AppCard(
     showShadow: false,

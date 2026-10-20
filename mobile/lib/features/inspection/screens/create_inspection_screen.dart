@@ -517,10 +517,10 @@ class _CreateInspectionScreenState extends State<CreateInspectionScreen> {
                                         )
                                       else if (_detectedCity != null)
                                         AppText(
-                                          '$_detectedCity\n',
+                                          _detectedCity!,
                                           style: textTheme.bodyMedium?.copyWith(
                                             color: colorScheme.onSurfaceVariant,
-                                            height: 0.80,
+                                            height: 1.5,
                                           ),
                                         )
                                       else

@@ -12,8 +12,7 @@ class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
 
   @override
-  State<ForgotPasswordScreen> createState() =>
-      _ForgotPasswordScreenState();
+  State<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
 }
 
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
@@ -53,9 +52,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     });
 
     try {
-      await _authService.forgotPassword(
-        email: _emailController.text,
-      );
+      await _authService.forgotPassword(email: _emailController.text);
 
       if (!mounted) {
         return;
@@ -67,16 +64,14 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
       _showMessage(
         'Bu e-posta ile kayıtlı bir hesap varsa '
-            'şifre sıfırlama kodu gönderildi.',
+        'şifre sıfırlama kodu gönderildi.',
       );
     } catch (exception) {
       if (!mounted) {
         return;
       }
 
-      _showMessage(
-        exception.toString().replaceFirst('Exception: ', ''),
-      );
+      _showMessage(exception.toString().replaceFirst('Exception: ', ''));
     } finally {
       if (mounted) {
         setState(() {
@@ -93,8 +88,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       return;
     }
 
-    if (_newPasswordController.text !=
-        _confirmPasswordController.text) {
+    if (_newPasswordController.text != _confirmPasswordController.text) {
       _showMessage('Yeni şifreler eşleşmiyor.');
       return;
     }
@@ -125,9 +119,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         return;
       }
 
-      _showMessage(
-        exception.toString().replaceFirst('Exception: ', ''),
-      );
+      _showMessage(exception.toString().replaceFirst('Exception: ', ''));
     } finally {
       if (mounted) {
         setState(() {
@@ -140,11 +132,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   void _showMessage(String message) {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: AppText(message),
-        ),
-      );
+      ..showSnackBar(SnackBar(content: AppText(message)));
   }
 
   String? _validateEmail(String? value) {
@@ -154,8 +142,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       return 'E-posta adresinizi girin.';
     }
 
-    final emailRegex =
-    RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+    final emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
 
     if (!emailRegex.hasMatch(email)) {
       return 'Geçerli bir e-posta adresi girin.';
@@ -298,6 +285,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       labelText: 'Yeni Şifre',
                       prefixIcon: const Icon(Icons.lock_outline_rounded),
                       suffixIcon: IconButton(
+                        tooltip: _obscureNewPassword
+                            ? 'Şifreyi göster'
+                            : 'Şifreyi gizle',
                         onPressed: _isLoading
                             ? null
                             : () {
@@ -323,6 +313,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       labelText: 'Yeni Şifre Tekrar',
                       prefixIcon: const Icon(Icons.lock_outline_rounded),
                       suffixIcon: IconButton(
+                        tooltip: _obscureConfirmPassword
+                            ? 'Şifreyi göster'
+                            : 'Şifreyi gizle',
                         onPressed: _isLoading
                             ? null
                             : () {
