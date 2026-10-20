@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:mobile/features/home/screens/main_shell.dart';
 import 'package:mobile/features/auth/screens/login_screen.dart';
+import 'package:mobile/features/ai_assistant/screens/ai_assistant_screen.dart';
 import 'package:mobile/features/billing/screens/subscription_screen.dart';
 import 'package:mobile/features/inspection/screens/upload_damage_image_screen.dart';
 import 'package:mobile/features/profile/screens/profile_screen.dart';
@@ -36,89 +37,119 @@ void main() {
       'plans',
       'reminder',
       'vehicles',
+      'assistant',
       'dashboard',
       'dashboard-tablet',
     ]) {
       testWidgets('capture $name ${brightness.name}', (tester) async {
-        await http.runWithClient(() async {
-          await setUiSize(
-            tester,
-            name == 'dashboard-tablet'
-                ? const Size(1024, 768)
-                : const Size(390, 844),
-          );
-          final Widget screen = switch (name) {
-            'dashboard' || 'dashboard-tablet' => const MainShell(
-              fullName: 'Deniz Yılmaz',
-              email: 'deniz@example.com',
-              subscriptionPlan: 'PLUS',
-            ),
-            'login' => const LoginScreen(),
-            'vehicles' => const VehicleListScreen(),
-            'profile' => const ProfileScreen(
-              fullName: 'Deniz Yılmaz',
-              email: 'deniz@example.com',
-              subscriptionPlan: 'PLUS',
-            ),
-            'photo' => UploadDamageImageScreen(
-              inspection: inspection.minorResult(),
-            ),
-            'plans' => SubscriptionScreen(
-              billingService: billing.FakeBillingService(configured: false),
-            ),
-            _ => const ReminderFormScreen(
-              vehicle: Vehicle(
-                id: 1,
-                plate: '34 ABC 123',
-                brand: 'Honda',
-                model: 'Civic',
-                modelYear: 2024,
-                mileage: 50000,
-                primaryVehicle: true,
+        await http.runWithClient(
+          () async {
+            await setUiSize(
+              tester,
+              name == 'dashboard-tablet'
+                  ? const Size(1024, 768)
+                  : const Size(390, 844),
+            );
+            final Widget screen = switch (name) {
+              'dashboard' || 'dashboard-tablet' => const MainShell(
+                fullName: 'Deniz Yılmaz',
+                email: 'deniz@example.com',
+                subscriptionPlan: 'PLUS',
               ),
-            ),
-          };
-          final boundaryKey = GlobalKey();
-          await tester.pumpWidget(
-            RepaintBoundary(
-              key: boundaryKey,
-              child: uiTestApp(
-                home: screen,
-                brightness: brightness,
-                reduceMotion: true,
+              'login' => const LoginScreen(),
+              'vehicles' => const VehicleListScreen(),
+              'assistant' => const AiAssistantScreen(),
+              'profile' => const ProfileScreen(
+                fullName: 'Deniz Yılmaz',
+                email: 'deniz@example.com',
+                subscriptionPlan: 'PLUS',
               ),
-            ),
-          );
-          await tester.pumpAndSettle();
-          if (name == 'login') {
-            await tester.runAsync(
-              () => precacheImage(
-                const AssetImage('assets/images/ekspersiz_logo.png'),
-                boundaryKey.currentContext!,
+              'photo' => UploadDamageImageScreen(
+                inspection: inspection.minorResult(),
+              ),
+              'plans' => SubscriptionScreen(
+                billingService: billing.FakeBillingService(configured: false),
+              ),
+              _ => const ReminderFormScreen(
+                vehicle: Vehicle(
+                  id: 1,
+                  plate: '34 ABC 123',
+                  brand: 'Honda',
+                  model: 'Civic',
+                  modelYear: 2024,
+                  mileage: 50000,
+                  primaryVehicle: true,
+                ),
+              ),
+            };
+            final boundaryKey = GlobalKey();
+            await tester.pumpWidget(
+              RepaintBoundary(
+                key: boundaryKey,
+                child: uiTestApp(
+                  home: screen,
+                  brightness: brightness,
+                  reduceMotion: true,
+                ),
               ),
             );
             await tester.pumpAndSettle();
-          }
-          expect(tester.takeException(), isNull);
-          await tester.runAsync(() async {
-            final boundary =
-                boundaryKey.currentContext!.findRenderObject()!
-                    as RenderRepaintBoundary;
-            final image = await boundary.toImage();
-            try {
-              final bytes = await image.toByteData(
-                format: ui.ImageByteFormat.png,
+            if (name == 'assistant') {
+              await tester.enterText(
+                find.byType(TextField),
+                'Lastikleri nasıl kontrol etmeliyim?',
               );
-              final directory = Directory('build/ui-previews')
-                ..createSync(recursive: true);
-              File(
-                '${directory.path}/$name-${brightness.name}.png',
-              ).writeAsBytesSync(bytes!.buffer.asUint8List());
-            } finally {
-              image.dispose();
+              await tester.tap(find.byTooltip('Gönder'));
+              await tester.pumpAndSettle();
             }
-          });
-        }, uiMockClient);
+            if (name == 'login') {
+              await tester.runAsync(
+                () => precacheImage(
+                  const AssetImage('assets/images/ekspersiz_logo.png'),
+                  boundaryKey.currentContext!,
+                ),
+              );
+              await tester.pumpAndSettle();
+            }
+            expect(tester.takeException(), isNull);
+            await tester.runAsync(() async {
+              final boundary =
+                  boundaryKey.currentContext!.findRenderObject()!
+                      as RenderRepaintBoundary;
+              final image = await boundary.toImage();
+              try {
+                final bytes = await image.toByteData(
+                  format: ui.ImageByteFormat.png,
+                );
+                final directory = Directory('build/ui-previews')
+                  ..createSync(recursive: true);
+                File(
+                  '${directory.path}/$name-${brightness.name}.png',
+                ).writeAsBytesSync(bytes!.buffer.asUint8List());
+              } finally {
+                image.dispose();
+              }
+            });
+          },
+          () => uiMockClient(
+            onChat: (_) async => uiJsonResponse({
+              'intent': 'MAINTENANCE',
+              'answer':
+                  '## Lastik kontrolü\n\n'
+                  '**Basıncı lastikler soğukken ölçün.**\n\n'
+                  '- Kapı etiketindeki değeri kullanın.\n'
+                  '- Diş derinliğini ve yanakları kontrol edin.\n\n'
+                  'Görünür hasar varsa **sürüşe devam etmeyin**. '
+                  '[Üretici kılavuzuna](https://example.com/manual) bakın.',
+              'quotaConsumed': true,
+              'remainingToday': 9,
+              'toolsUsed': [],
+              'sources': [
+                {'name': 'Araç kullanım kılavuzu'},
+              ],
+            }),
+          ),
+        );
       });
     }
   }

@@ -20,11 +20,16 @@ class AiAssistantService {
     int? vehicleId,
     List<AiChatMessage> history = const [],
   }) async {
-    final payload = jsonEncode([
-      question,
-      vehicleId,
-      history.map((m) => [m.isUser, m.text]).toList(),
-    ]);
+    final requestHistory = history
+        .takeLast(6)
+        .map(
+          (message) => {
+            'role': message.isUser ? 'user' : 'assistant',
+            'content': _historyContent(message.text),
+          },
+        )
+        .toList(growable: false);
+    final payload = jsonEncode([question, vehicleId, requestHistory]);
     if (_pendingPayload != payload) {
       _pendingPayload = payload;
       final bytes = List<int>.generate(16, (_) => Random.secure().nextInt(256));
@@ -40,15 +45,7 @@ class AiAssistantService {
         'question': question,
         'requestId': _pendingId,
         'vehicleId': ?vehicleId,
-        'history': history
-            .takeLast(6)
-            .map(
-              (message) => {
-                'role': message.isUser ? 'user' : 'assistant',
-                'content': message.text,
-              },
-            )
-            .toList(growable: false),
+        'history': requestHistory,
       },
       timeout: const Duration(seconds: 75),
     );
@@ -56,6 +53,19 @@ class AiAssistantService {
     _pendingPayload = null;
     _pendingId = null;
     return reply;
+  }
+
+  // Keep the displayed answer intact while honoring the API's 2000-character
+  // history limit. Retain both the opening and ending of detailed old replies.
+  String _historyContent(String text) {
+    if (text.length <= 2000) return text;
+    const gap = '\n[… önceki mesajın orta bölümü çıkarıldı …]\n';
+    var headEnd = 2000 - gap.length - 400;
+    var tailStart = text.length - 400;
+    // Do not split UTF-16 surrogate pairs (e.g. emoji) at either boundary.
+    if ((text.codeUnitAt(headEnd - 1) & 0xFC00) == 0xD800) headEnd--;
+    if ((text.codeUnitAt(tailStart) & 0xFC00) == 0xDC00) tailStart++;
+    return '${text.substring(0, headEnd)}$gap${text.substring(tailStart)}';
   }
 }
 

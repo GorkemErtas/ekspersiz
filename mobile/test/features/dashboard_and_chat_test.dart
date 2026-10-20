@@ -187,7 +187,7 @@ void main() {
               uiJsonResponse({
                 'intent': 'GENERAL',
                 'answer':
-                    'Lastik basıncını ve diş derinliğini düzenli olarak kontrol edin.',
+                    '**Lastik basıncını** ve diş derinliğini düzenli olarak kontrol edin.',
                 'quotaConsumed': true,
                 'remainingToday': 9,
                 'toolsUsed': [],
@@ -203,6 +203,7 @@ void main() {
               scrollable: find.byType(Scrollable).at(1),
             );
             expect(find.textContaining('Lastik basıncını'), findsOneWidget);
+            expect(find.text('Araç kullanım kılavuzu'), findsOneWidget);
             await tester.scrollUntilVisible(
               find.text('Lastiklerimi ne zaman kontrol etmeliyim?'),
               -120,
