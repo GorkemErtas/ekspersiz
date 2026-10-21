@@ -38,6 +38,9 @@ public class BillingService {
     @Autowired
     private CreditWalletService creditWallets;
 
+    @org.springframework.beans.factory.annotation.Value("${application.billing.allow-sandbox:false}")
+    private boolean allowSandbox;
+
     private final UserRepository userRepository;
     private final BillingSubscriptionRepository subscriptionRepository;
     private final BillingWebhookEventRepository webhookEventRepository;
@@ -118,6 +121,13 @@ public class BillingService {
         String eventType = requiredText(event, "type");
         String appUserId = textOrNull(event.path("app_user_id"));
 
+        if (!allowSandbox && "SANDBOX".equalsIgnoreCase(textOrNull(event.path("environment")))) {
+            // Acknowledge authenticated test events without granting or refunding
+            // production balances. Do not persist the ID: a later real event must
+            // not be suppressed by a test-store transaction identifier collision.
+            return;
+        }
+
         String creditProduct = textOrNull(event.path("product_id"));
         boolean consumable = com.gorkem.vehicle_inspector.service.billing.CreditCatalog.find(creditProduct) != null
                 || (creditProduct != null && Set.of("analysis_1", "analysis_3", "analysis_10").contains(creditProduct));
@@ -174,6 +184,7 @@ public class BillingService {
 
         Optional<SelectedSubscription> selected = customer.subscriptions()
                 .stream()
+                .filter(subscription -> allowSandbox || !subscription.sandbox())
                 .map(subscription -> BillingProduct
                         .fromProductId(subscription.productId())
                         .map(product -> new SelectedSubscription(
@@ -209,6 +220,7 @@ public class BillingService {
         subscriptionRepository.save(billingSubscription);
         if (creditWallets != null) {
             for (RevenueCatPurchase purchase : customer.purchases()) {
+                if (!allowSandbox && purchase.sandbox()) continue;
                 creditWallets.purchase(user,purchase.productId(),purchase.transactionId(),
                         toLocalDateTime(purchase.purchasedAt()),purchase.refunded());
             }

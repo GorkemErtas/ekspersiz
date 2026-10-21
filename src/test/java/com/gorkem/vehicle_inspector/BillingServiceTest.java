@@ -289,6 +289,47 @@ class BillingServiceTest {
         verify(credits).purchase(isNull(),eq("eksper_analysis_5"),eq("store-order"),isNull(),eq(true));
     }
 
+    @Test
+    void sandboxWebhookCannotGrantOrRefundProductionCredits() {
+        var credits = mock(com.gorkem.vehicle_inspector.service.CreditWalletService.class);
+        ReflectionTestUtils.setField(service, "creditWallets", credits);
+        for (String type : List.of("NON_RENEWING_PURCHASE", "CANCELLATION")) {
+            service.processRevenueCatWebhook("secret", null, """
+                    {"event":{"id":"test-event","type":"%s","environment":"SANDBOX",
+                    "app_user_id":"%s","product_id":"eksper_analysis_5","transaction_id":"test-order"}}
+                    """.formatted(type, user.getBillingCustomerId()));
+        }
+        verifyNoInteractions(credits, revenueCatClient);
+        verify(webhookEvents, never()).save(any());
+    }
+
+    @Test
+    void sandboxSubscriptionCannotUpgradeProductionButExplicitTestEnvironmentWorks() {
+        var testSubscription = new RevenueCatSubscription("eksper_business_monthly", CLOCK.instant(),
+                CLOCK.instant().plusSeconds(3600), null, true, false, false, true, "play_store");
+        when(revenueCatClient.getCustomer(user.getBillingCustomerId())).thenReturn(customer(testSubscription));
+        service.sync(user.getEmail());
+        assertEquals(SubscriptionPlan.FREE, user.getSubscriptionPlan());
+        ReflectionTestUtils.setField(service, "allowSandbox", true);
+        service.sync(user.getEmail());
+        assertEquals(SubscriptionPlan.BUSINESS, user.getSubscriptionPlan());
+    }
+
+    @Test
+    void syncSkipsSandboxConsumablesAndPreservesRealPurchaseProcessing() {
+        var credits = mock(com.gorkem.vehicle_inspector.service.CreditWalletService.class);
+        ReflectionTestUtils.setField(service, "creditWallets", credits);
+        var testPurchase = new com.gorkem.vehicle_inspector.client.RevenueCatPurchase(
+                "eksper_analysis_5", "test-order", CLOCK.instant(), true, "play_store", false);
+        var realPurchase = new com.gorkem.vehicle_inspector.client.RevenueCatPurchase(
+                "eksper_analysis_5", "real-order", CLOCK.instant(), false, "play_store", false);
+        when(revenueCatClient.getCustomer(user.getBillingCustomerId())).thenReturn(
+                new RevenueCatCustomer(List.of(), List.of(testPurchase, realPurchase), null));
+        service.sync(user.getEmail());
+        verify(credits).purchase(eq(user), eq("eksper_analysis_5"), eq("real-order"), any(), eq(false));
+        verifyNoMoreInteractions(credits);
+    }
+
     private RevenueCatSubscription subscription(
             String productId,
             boolean autoRenewing,
@@ -304,7 +345,7 @@ class BillingServiceTest {
                 autoRenewing,
                 billingIssue,
                 refunded,
-                true,
+                false,
                 "app_store"
         );
     }
