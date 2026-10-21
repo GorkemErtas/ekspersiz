@@ -11,6 +11,9 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 COPY requirements-runtime.txt .
 
+# Package-index URL validation fixes apply to build tooling too.
+RUN python -m pip install --no-cache-dir pip==26.2.2
+
 RUN pip install --no-cache-dir \
     torch==2.13.0+cpu \
     torchvision==0.28.0+cpu \

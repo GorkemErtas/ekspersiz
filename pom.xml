@@ -28,6 +28,17 @@
 	</scm>
 	<properties>
 		<java.version>21</java.version>
+		<!-- Security patches within the existing dependency release lines.
+		     See docs/security/AUDIT_2026-10-21.md for advisory coverage. -->
+		<spring-framework.version>7.0.9</spring-framework.version>
+		<tomcat.version>11.0.25</tomcat.version>
+		<jackson-2-bom.version>2.21.7</jackson-2-bom.version>
+		<jackson-bom.version>3.1.7</jackson-bom.version>
+		<netty.version>4.2.17.Final</netty.version>
+		<httpclient5.version>5.6.3</httpclient5.version>
+		<httpcore5.version>5.4.3</httpcore5.version>
+		<log4j2.version>2.25.5</log4j2.version>
+		<postgresql.version>42.7.12</postgresql.version>
 	</properties>
 	<dependencies>
 		<!-- REST API ve Spring MVC -->
