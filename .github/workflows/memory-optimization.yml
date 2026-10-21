@@ -1,5 +1,8 @@
 name: Memory optimization checks
 
+permissions:
+  contents: read
+
 on:
   pull_request:
     paths:

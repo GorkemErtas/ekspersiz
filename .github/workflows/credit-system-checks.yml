@@ -1,15 +1,13 @@
 name: Credit system pre-merge checks
 
+permissions:
+  contents: read
+
 on:
   pull_request:
     paths:
       - "src/main/resources/db/migration/**"
-      - "src/main/java/com/gorkem/vehicle_inspector/service/CreditWalletService.java"
-      - "src/main/java/com/gorkem/vehicle_inspector/service/WelcomeCreditService.java"
-      - "src/main/java/com/gorkem/vehicle_inspector/service/BillingService.java"
-      - "src/main/java/com/gorkem/vehicle_inspector/service/billing/**"
-      - "src/main/java/com/gorkem/vehicle_inspector/controller/CreditController.java"
-      - "src/main/java/com/gorkem/vehicle_inspector/controller/WelcomeCreditController.java"
+      - "src/main/java/com/gorkem/vehicle_inspector/**"
       - "src/test/java/com/gorkem/vehicle_inspector/**"
       - "pom.xml"
       - ".github/workflows/credit-system-checks.yml"
@@ -43,7 +41,17 @@ jobs:
           distribution: temurin
           java-version: "21"
           cache: maven
-      - name: Run backend unit tests and opt-in isolated PostgreSQL wallet tests
+      - name: Create disposable persistence test databases
+        env:
+          PGHOST: 127.0.0.1
+          PGUSER: credit_test
+        run: |
+          createdb vehicle_inspector_test
+          createdb security_audit_test
+      - name: Run backend, security and isolated PostgreSQL persistence tests
         run: |
           chmod +x ./mvnw
-          ./mvnw -B -Dcredit.test.jdbc-url=jdbc:postgresql://127.0.0.1:5432/credit_system_test -Dcredit.test.username=credit_test test
+          ./mvnw -B '-Dtest=*Test,*IT' \
+            -Dcredit.test.jdbc-url=jdbc:postgresql://127.0.0.1:5432/credit_system_test -Dcredit.test.username=credit_test \
+            -Dinspection.test.jdbc-url=jdbc:postgresql://127.0.0.1:5432/vehicle_inspector_test -Dinspection.test.username=credit_test \
+            -Dsecurity.test.jdbc-url=jdbc:postgresql://127.0.0.1:5432/security_audit_test -Dsecurity.test.username=credit_test test

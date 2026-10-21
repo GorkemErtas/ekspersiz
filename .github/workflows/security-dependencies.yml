@@ -1,0 +1,41 @@
+name: Security dependency advisory checks
+
+on:
+  pull_request:
+    paths:
+      - "pom.xml"
+      - "ai-service/requirements*.txt"
+      - "mobile/pubspec.lock"
+      - "ops/security/**"
+      - ".github/workflows/security-dependencies.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  advisories:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Resolve Java runtime inventory
+        run: |
+          chmod +x ./mvnw
+          ./mvnw -B dependency:list -DincludeScope=runtime -DoutputFile=target/security-java-dependencies.txt
+      - name: Query OSV for Java runtime, Python pins and Flutter lockfile
+        run: python ops/security/audit_dependencies.py --fail-on-findings
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dependency-advisory-report
+          path: target/security-dependency-audit.json
+          retention-days: 14

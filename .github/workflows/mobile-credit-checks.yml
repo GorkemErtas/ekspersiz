@@ -1,5 +1,8 @@
 name: Flutter credit release checks
 
+permissions:
+  contents: read
+
 on:
   pull_request:
     paths:

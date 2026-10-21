@@ -1,9 +1,15 @@
 name: Backend JVM memory smoke
 
+permissions:
+  contents: read
+
 on:
   pull_request:
     paths:
       - "Dockerfile"
+      - "pom.xml"
+      - "src/main/java/**"
+      - "src/main/resources/db/migration/**"
       - "src/main/resources/application.properties"
       - ".github/workflows/backend-startup-smoke.yml"
   workflow_dispatch:

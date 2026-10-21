@@ -40,7 +40,8 @@ import static org.mockito.Mockito.*;
 class AiAssistantServiceConcurrencyIT {
     @Container
     static final PostgreSQLContainer<?> postgres =
-            new PostgreSQLContainer<>("pgvector/pgvector:pg16");
+            new PostgreSQLContainer<>(org.testcontainers.utility.DockerImageName
+                    .parse("pgvector/pgvector:pg16").asCompatibleSubstituteFor("postgres"));
 
     @DynamicPropertySource
     static void database(DynamicPropertyRegistry registry) {
@@ -62,6 +63,9 @@ class AiAssistantServiceConcurrencyIT {
     @Autowired AiAssistantQuotaReservationRepository reservations;
     @MockitoBean BusinessContextService businessContext;
     @MockitoBean SubscriptionService subscriptions;
+    // reserveQuestion exercises the retained quota path; the wallet bean is
+    // required by the current service and has separate real-SQL tests.
+    @MockitoBean CreditWalletService creditWallets;
 
     @Test
     void realServiceAllowsOnlyTenReservationsAcrossTwentyWorkers() throws Exception {
