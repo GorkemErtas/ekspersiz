@@ -30,6 +30,9 @@ private static final long[] RETRY_DELAYS_MS = {
     private final RestTemplate restTemplate;
     private final String aiServiceBaseUrl;
 
+    @Value("${application.ai-service.api-key:}")
+    private String serviceApiKey = "";
+
     public AiAnalysisClient(
             RestTemplate restTemplate,
             @Value("${application.ai-service.base-url}")
@@ -179,6 +182,7 @@ private static final long[] RETRY_DELAYS_MS = {
             Class<T> responseType
     ) {
         HttpHeaders requestHeaders = new HttpHeaders();
+        addServiceAuthentication(requestHeaders);
         requestHeaders.setContentType(MediaType.MULTIPART_FORM_DATA);
         requestHeaders.setAccept(
                 java.util.List.of(MediaType.APPLICATION_JSON)
@@ -280,6 +284,7 @@ private static final long[] RETRY_DELAYS_MS = {
 
         HttpHeaders requestHeaders =
                 new HttpHeaders();
+        addServiceAuthentication(requestHeaders);
 
         requestHeaders.setContentType(
                 MediaType.MULTIPART_FORM_DATA
@@ -389,6 +394,10 @@ private static final long[] RETRY_DELAYS_MS = {
                 );
         }
         }
+
+    private void addServiceAuthentication(HttpHeaders headers) {
+        if (!serviceApiKey.isBlank()) headers.set("X-AI-Service-Key", serviceApiKey);
+    }
 
     private static String normalizeBaseUrl(
             String baseUrl

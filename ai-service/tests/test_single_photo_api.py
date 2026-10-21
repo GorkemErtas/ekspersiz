@@ -1,5 +1,6 @@
 """Exercise real ASGI multipart routing without adding an HTTP client dependency."""
 import json
+import os
 from io import BytesIO
 from types import SimpleNamespace
 import unittest
@@ -40,11 +41,15 @@ async def post_multipart(fields=None, files=None):
     async def send(message):
         messages.append(message)
 
-    await main.app({
+    # Exercise the actual protected ASGI stack with backend credentials.
+    main.app.middleware_stack = None
+    with patch.dict(os.environ, {"AI_SERVICE_API_KEY": "test-service-key-at-least-32-characters"}):
+        secured_app = main.app.build_middleware_stack()
+    await secured_app({
         "type": "http", "asgi": {"version": "3.0", "spec_version": "2.3"},
         "method": "POST", "path": "/api/v1/analyze", "raw_path": b"/api/v1/analyze",
         "root_path": "", "query_string": b"", "scheme": "http", "http_version": "1.1",
-        "headers": [(b"content-type", f"multipart/form-data; boundary={boundary}".encode()), (b"content-length", str(len(body)).encode())],
+        "headers": [(b"x-ai-service-key", b"test-service-key-at-least-32-characters"), (b"content-type", f"multipart/form-data; boundary={boundary}".encode()), (b"content-length", str(len(body)).encode())],
         "client": ("127.0.0.1", 1234), "server": ("test", 80),
     }, receive, send)
     status = next(message["status"] for message in messages if message["type"] == "http.response.start")

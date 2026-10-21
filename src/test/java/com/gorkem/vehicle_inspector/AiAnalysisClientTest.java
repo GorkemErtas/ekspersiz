@@ -38,7 +38,9 @@ class AiAnalysisClientTest {
 
     @Test
     void singlePhotoMultipartContainsRegionAndNoContextImage() {
+        org.springframework.test.util.ReflectionTestUtils.setField(client, "serviceApiKey", "service-test-key");
         server.expect(requestTo("https://ai.test/api/v1/analyze"))
+                .andExpect(header("X-AI-Service-Key", "service-test-key"))
                 .andExpect(method(HttpMethod.POST))
                 .andExpect(content().string(allOf(
                         containsString("name=\"image\""),

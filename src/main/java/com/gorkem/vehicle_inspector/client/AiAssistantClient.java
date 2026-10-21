@@ -15,6 +15,9 @@ public class AiAssistantClient {
     private final RestTemplate restTemplate;
     private final String baseUrl;
 
+    @Value("${application.ai-service.api-key:}")
+    private String serviceApiKey = "";
+
     public AiAssistantClient(RestTemplate restTemplate, @Value("${application.ai-service.base-url}") String baseUrl) {
         this.restTemplate = restTemplate;
         this.baseUrl = baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;
@@ -24,6 +27,7 @@ public class AiAssistantClient {
                                         Map<String, Object> vehicleContext) {
         try {
             var headers = new HttpHeaders();
+            if (!serviceApiKey.isBlank()) headers.set("X-AI-Service-Key", serviceApiKey);
             headers.setContentType(MediaType.APPLICATION_JSON);
             var body = new java.util.LinkedHashMap<String, Object>();
             body.put("question", question);

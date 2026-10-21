@@ -124,7 +124,7 @@ public class FileStorageService {
         }
 
         if (!Files.isRegularFile(
-                resolvedPath
+                resolvedPath, java.nio.file.LinkOption.NOFOLLOW_LINKS
         )) {
             throw new FileStorageException(
                     "Fotoğraf dosyası bulunamadı."

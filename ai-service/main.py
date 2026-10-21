@@ -13,6 +13,7 @@ from fastapi import (
 )
 
 from app.schemas import DamageAnalysisResponse, ImageQualityResponse
+from app.service_security import ServiceSecurityMiddleware
 from app.assistant.api_schemas import AssistantPlanRequest, AssistantPlanResponse, RetrievedContext
 from app.assistant.domain_classifier import SemanticDomainClassifier
 from app.assistant.embeddings import LocalMultilingualEmbedder
@@ -28,7 +29,11 @@ logger = logging.getLogger(__name__)
 app = FastAPI(
     title="Vehicle Damage Analysis API",
     version="1.4.0",
+    docs_url=None,
+    redoc_url=None,
+    openapi_url=None,
 )
+app.add_middleware(ServiceSecurityMiddleware)
 
 # Keep assistant-only requests (and health checks) free of PyTorch/YOLO.
 # Models are initialized once on the first image endpoint request.

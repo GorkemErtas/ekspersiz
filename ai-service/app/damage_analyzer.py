@@ -1153,6 +1153,11 @@ class DamageAnalyzer:
             with decoder(
                     BytesIO(file_content)
             ) as image:
+                # Compressed byte limits do not bound decoded buffers. Preserve
+                # common 12/48/64 MP photos but reject extreme dimensions before
+                # verify(), RGB conversion, OpenCV or model allocation.
+                if image.width * image.height > 64_000_000:
+                    raise ValueError("Image resolution exceeds the 64 megapixel limit.")
                 # Image.open normally applies Pillow's existing pixel safety
                 # policy; direct codecs must retain it before verify/convert.
                 Image._decompression_bomb_check(image.size)
