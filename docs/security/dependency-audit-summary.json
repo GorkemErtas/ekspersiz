@@ -1,0 +1,781 @@
+{
+  "audit_date": "2026-10-21",
+  "baseline_commit": "c0659c2",
+  "source": "https://api.osv.dev/v1/query",
+  "before": {
+    "queried_at": "2026-10-21T09:01:12.188945+00:00",
+    "records": 415,
+    "affected": [
+      {
+        "ecosystem": "Maven",
+        "name": "com.fasterxml.jackson.core:jackson-core",
+        "version": "2.21.4",
+        "advisories": [
+          {
+            "id": "GHSA-7hhh-6rmp-j9qf",
+            "summary": "jackson-core: UTF8DataInputJsonParser._reportInvalidToken() missing maxErrorTokenLength limit -> unbounded StringBuilder growth (DoS)"
+          },
+          {
+            "id": "GHSA-p6pp-m3f8-5c89",
+            "summary": " jackson-core: ReDoS: quadratic backtracking in NumberInput.PATTERN_FLOAT via looksLikeValidNumber()"
+          }
+        ]
+      },
+      {
+        "ecosystem": "Maven",
+        "name": "com.fasterxml.jackson.core:jackson-databind",
+        "version": "2.21.4",
+        "advisories": [
+          {
+            "id": "GHSA-5gvw-p9qm-jgwh",
+            "summary": "jackson-databind: @JsonView bypassed for @JsonUnwrapped container properties on deserialization"
+          },
+          {
+            "id": "GHSA-5jmj-h7xm-6q6v",
+            "summary": "jackson-databind has case-insensitive deserialization bypasses per-property @JsonIgnoreProperties"
+          },
+          {
+            "id": "GHSA-cxp5-3px4-pw24",
+            "summary": "jackson-databind quadratic forward-reference completion "
+          },
+          {
+            "id": "GHSA-gx83-3vf8-gh7j",
+            "summary": "jackson-databind: Comparable missing from DefaultBaseTypeLimitingValidator's unsafe base types (incomplete PolymorphicTypeValidator denylist)"
+          },
+          {
+            "id": "GHSA-mhm7-754m-9p8w",
+            "summary": "jackson-databind: `@JsonView` bypass for creator properties with `@JsonTypeInfo(include=As.EXTERNAL_PROPERTY)`"
+          },
+          {
+            "id": "GHSA-q4xh-88c3-wmh7",
+            "summary": "jackson-databind: Duration XMLGregorianCalendar Unbounded Number Parse DoS"
+          },
+          {
+            "id": "GHSA-vvgp-rfg2-7rr6",
+            "summary": "jackson-databind: Incomplete fix for CVE-2026-54514: eager DNS resolution (SSRF) still present in InetAddress deserialization"
+          },
+          {
+            "id": "GHSA-wjgm-6hv5-3cvf",
+            "summary": "jackson-databind: Path Deserialization Missing Scheme Allowlist for FileSystemProvider Resolution"
+          },
+          {
+            "id": "GHSA-wv8q-qhhj-9h54",
+            "summary": "jackson-databind retains every unknown raw type ID "
+          }
+        ]
+      },
+      {
+        "ecosystem": "Maven",
+        "name": "io.netty:netty-codec-compression",
+        "version": "4.2.15.Final",
+        "advisories": [
+          {
+            "id": "GHSA-558v-64gr-wgg4",
+            "summary": "Netty: [Bzip2Decoder] Infinite Loop in RLE State Machine Leads to Event-Loop Thread Hang"
+          }
+        ]
+      },
+      {
+        "ecosystem": "Maven",
+        "name": "io.netty:netty-codec-http",
+        "version": "4.2.15.Final",
+        "advisories": [
+          {
+            "id": "GHSA-4mp9-239f-g9hg",
+            "summary": "Netty: WebSockets V07/V08 handshaker missing Connection/Upgrade validation"
+          },
+          {
+            "id": "GHSA-6cqp-g7gg-8hr5",
+            "summary": "Netty: Security Control Bypass via CORS Short-Circuit Failure"
+          },
+          {
+            "id": "GHSA-6jqx-86gh-f27w",
+            "summary": "Netty SPDY SETTINGS frame count materializes unbounded settings map"
+          },
+          {
+            "id": "GHSA-8c42-7qj2-3j46",
+            "summary": "Netty Vulnerable to Cache Poisoning and Information Disclosure via CORS Vary Header Overwrite"
+          },
+          {
+            "id": "GHSA-gcjf-9mgh-3p7g",
+            "summary": "Netty: CRLF Injection via Multipart Filename in Netty HttpPostRequestEncoder"
+          },
+          {
+            "id": "GHSA-jppx-w49h-x2qq",
+            "summary": "Netty: [SpdyHttpDecoder] ByteBuf Reference Leak on RST_STREAM Leads to Native Memory Exhaustion"
+          },
+          {
+            "id": "GHSA-mvh2-crg5-v77c",
+            "summary": "Netty SPDY zlib header block continues decoded expansion after maxHeaderSize truncation"
+          },
+          {
+            "id": "GHSA-q4f6-jm68-57ww",
+            "summary": "Netty: [HttpContentEncoder] Unbounded Per-Connection Queue Growth via HTTP/1.1 Pipelining Leads to Denial of Service"
+          }
+        ]
+      },
+      {
+        "ecosystem": "Maven",
+        "name": "io.netty:netty-handler",
+        "version": "4.2.15.Final",
+        "advisories": [
+          {
+            "id": "GHSA-c4c3-7fpv-j4q5",
+            "summary": "Netty: SNI Routing Bypass via Fragmented TLS ClientHello Causing Fallback to Default SslContext"
+          },
+          {
+            "id": "GHSA-fccg-mwvh-qqg4",
+            "summary": "Netty: Fragmented ClientHello records trigger quadratic pre-handshake reassembly in default SNI parsing"
+          }
+        ]
+      },
+      {
+        "ecosystem": "Maven",
+        "name": "org.apache.httpcomponents.client5:httpclient5",
+        "version": "5.6.1",
+        "advisories": [
+          {
+            "id": "GHSA-hjcp-jmpx-g3qm",
+            "summary": "Apache HttpComponents Client: Connection Leak on Content-Encoding Decode Error Leads to Pool Exhaustion DoS"
+          }
+        ]
+      },
+      {
+        "ecosystem": "Maven",
+        "name": "org.apache.httpcomponents.core5:httpcore5",
+        "version": "5.4.2",
+        "advisories": [
+          {
+            "id": "GHSA-hf6x-8p5f-cgmf",
+            "summary": "Apache HttpComponents Core HTTP/1 header parsing can cause memory-exhaustion denial of service"
+          }
+        ]
+      },
+      {
+        "ecosystem": "Maven",
+        "name": "org.apache.httpcomponents.core5:httpcore5-h2",
+        "version": "5.4.2",
+        "advisories": [
+          {
+            "id": "GHSA-v3jc-474w-2wm6",
+            "summary": "Apache HttpComponents Core: HPackDecoder Unlimited Header List Size Before SETTINGS ACK"
+          }
+        ]
+      },
+      {
+        "ecosystem": "Maven",
+        "name": "org.apache.logging.log4j:log4j-api",
+        "version": "2.25.4",
+        "advisories": [
+          {
+            "id": "GHSA-qv9r-c865-cp47",
+            "summary": "Apache Log4j API: Improper encoding of non-finite floating-point values during MapMessage JSON serialization"
+          }
+        ]
+      },
+      {
+        "ecosystem": "Maven",
+        "name": "org.apache.tomcat.embed:tomcat-embed-core",
+        "version": "11.0.22",
+        "advisories": [
+          {
+            "id": "GHSA-9xv2-5v5q-p794",
+            "summary": "Apache Tomcat's DIGEST authenticator has an Authentication Bypass by Capture-replay vulnerability"
+          },
+          {
+            "id": "GHSA-gcx9-497g-6cp6",
+            "summary": "Apache Tomcat has an Improper Access Control, Incorrect Authorization vulnerability"
+          },
+          {
+            "id": "GHSA-h3x4-894j-xpx5",
+            "summary": "Apache Tomcat's FORM authentication process has an Incorrect Authorization vulnerability"
+          }
+        ]
+      },
+      {
+        "ecosystem": "Maven",
+        "name": "org.postgresql:postgresql",
+        "version": "42.7.11",
+        "advisories": [
+          {
+            "id": "GHSA-j92g-9f8w-j867",
+            "summary": "PostgreSQL JDBC Driver: Silent channel-binding authentication downgrade via unsupported certificate algorithms"
+          }
+        ]
+      },
+      {
+        "ecosystem": "Maven",
+        "name": "org.springframework:spring-webmvc",
+        "version": "7.0.8",
+        "advisories": [
+          {
+            "id": "GHSA-j9f9-w8pj-32f8",
+            "summary": "Spring Framework Server Sent Event stream corruption while rendering fragments"
+          },
+          {
+            "id": "GHSA-pc63-qcmh-9cmg",
+            "summary": "Spring Framework Improper Path Limitation in XsltView"
+          }
+        ]
+      },
+      {
+        "ecosystem": "Maven",
+        "name": "tools.jackson.core:jackson-core",
+        "version": "3.1.4",
+        "advisories": [
+          {
+            "id": "GHSA-7hhh-6rmp-j9qf",
+            "summary": "jackson-core: UTF8DataInputJsonParser._reportInvalidToken() missing maxErrorTokenLength limit -> unbounded StringBuilder growth (DoS)"
+          },
+          {
+            "id": "GHSA-p6pp-m3f8-5c89",
+            "summary": " jackson-core: ReDoS: quadratic backtracking in NumberInput.PATTERN_FLOAT via looksLikeValidNumber()"
+          }
+        ]
+      },
+      {
+        "ecosystem": "Maven",
+        "name": "tools.jackson.core:jackson-databind",
+        "version": "3.1.4",
+        "advisories": [
+          {
+            "id": "GHSA-5gvw-p9qm-jgwh",
+            "summary": "jackson-databind: @JsonView bypassed for @JsonUnwrapped container properties on deserialization"
+          },
+          {
+            "id": "GHSA-cxp5-3px4-pw24",
+            "summary": "jackson-databind quadratic forward-reference completion "
+          },
+          {
+            "id": "GHSA-gx83-3vf8-gh7j",
+            "summary": "jackson-databind: Comparable missing from DefaultBaseTypeLimitingValidator's unsafe base types (incomplete PolymorphicTypeValidator denylist)"
+          },
+          {
+            "id": "GHSA-q4xh-88c3-wmh7",
+            "summary": "jackson-databind: Duration XMLGregorianCalendar Unbounded Number Parse DoS"
+          },
+          {
+            "id": "GHSA-vvgp-rfg2-7rr6",
+            "summary": "jackson-databind: Incomplete fix for CVE-2026-54514: eager DNS resolution (SSRF) still present in InetAddress deserialization"
+          },
+          {
+            "id": "GHSA-wjgm-6hv5-3cvf",
+            "summary": "jackson-databind: Path Deserialization Missing Scheme Allowlist for FileSystemProvider Resolution"
+          },
+          {
+            "id": "GHSA-wv8q-qhhj-9h54",
+            "summary": "jackson-databind retains every unknown raw type ID "
+          }
+        ]
+      },
+      {
+        "ecosystem": "PyPI",
+        "name": "certifi",
+        "version": "2026.7.22",
+        "advisories": [
+          {
+            "id": "GHSA-6q48-6c7w-9gw2",
+            "summary": "certifi bundles emSign root CAs with compromised intermediate CA keys"
+          },
+          {
+            "id": "PYSEC-2026-4320",
+            "summary": "certifi bundles emSign root CAs with compromised intermediate CA keys"
+          }
+        ]
+      },
+      {
+        "ecosystem": "PyPI",
+        "name": "pillow",
+        "version": "12.3.0",
+        "advisories": [
+          {
+            "id": "GHSA-462x-pgg6-55fp",
+            "summary": "Pillow tiled-TIFF decoder reads past tile buffer in copy4 (Unpack.c:1290)"
+          },
+          {
+            "id": "GHSA-58r4-6rv3-gfh8",
+            "summary": "Pillow: Out-of-bounds access in _imagingmorph on a zero-width image"
+          },
+          {
+            "id": "GHSA-65qm-jvmh-6pqg",
+            "summary": "Pillow: GIF seek keeps rejected size after DecompressionBombError, allowing DoS"
+          },
+          {
+            "id": "GHSA-8g5g-8vmr-9782",
+            "summary": "Pillow: Heap buffer overflow in ImagingJpegDecode"
+          },
+          {
+            "id": "GHSA-c6hw-5grf-ff96",
+            "summary": "Pillow: OOB read in TiffDecode.c tile and RGBA paths leaks heap memory into pixels"
+          },
+          {
+            "id": "GHSA-p4wg-p73j-c528",
+            "summary": "Pillow: Unbounded recursion parsing a PDF page tree or trailer chain (incomplete fix for CVE-2026-42310)"
+          },
+          {
+            "id": "GHSA-pchr-8j38-3x4p",
+            "summary": "Pillow: TIFF encoder ColorMap plane-size mismatch causes a heap out-of-bounds read"
+          },
+          {
+            "id": "GHSA-q45j-58j2-45rg",
+            "summary": "Pillow: TiffDecode returns uninitialized memory as pixels for short JPEG strips"
+          },
+          {
+            "id": "GHSA-vx6w-vv9f-6gvg",
+            "summary": "Pillow: EPS load(scale) lets Ghostscript render past the decompression bomb limit"
+          }
+        ]
+      },
+      {
+        "ecosystem": "PyPI",
+        "name": "pypdf",
+        "version": "6.1.1",
+        "advisories": [
+          {
+            "id": "GHSA-23w6-3w8w-8484",
+            "summary": "pypdf: Possible long runtimes/large memory usage when retrieving outlines"
+          },
+          {
+            "id": "GHSA-248m-82v9-q6g6",
+            "summary": "pypdf: Possible long runtimes for zero-only width values in cross-reference streamsuntimes for zero-only width values in cross-reference streams"
+          },
+          {
+            "id": "GHSA-2q4j-m29v-hq73",
+            "summary": "pypdf has possible Infinite Loop when processing outlines/bookmarks"
+          },
+          {
+            "id": "GHSA-2rw7-x74f-jg35",
+            "summary": "pypdf has a possible infinite loop when loading circular /Prev entries in cross-reference streams"
+          },
+          {
+            "id": "GHSA-3crg-w4f6-42mx",
+            "summary": "pypdf: Manipulated XMP metadata entity declarations can exhaust RAM"
+          },
+          {
+            "id": "GHSA-4f6g-68pf-7vhv",
+            "summary": "pypdf has possible long runtimes for malformed startxref"
+          },
+          {
+            "id": "GHSA-4pxv-j86v-mhcw",
+            "summary": "pypdf: Possible long runtimes for wrong size values in incremental mode"
+          },
+          {
+            "id": "GHSA-4xc4-762w-m6cg",
+            "summary": "pypdf has possible long runtimes for missing /Root object with large /Size values"
+          },
+          {
+            "id": "GHSA-52x6-gq3r-vpf4",
+            "summary": "pypdf: Possible infinite loop when retrieving fonts for layout-mode text extraction"
+          },
+          {
+            "id": "GHSA-55h5-xmcq-c37v",
+            "summary": "pypdf: Possible long runtimes for repeated malformed cross-reference entries "
+          },
+          {
+            "id": "GHSA-5hgr-hg42-57jg",
+            "summary": "pypdf: Inefficient decoding of FlateDecode PNG predictor streams"
+          },
+          {
+            "id": "GHSA-5jq2-8x83-x246",
+            "summary": "pypdf: Possible long runtimes/large memory usage when parsing indirect objects"
+          },
+          {
+            "id": "GHSA-5qjq-93h5-hrgp",
+            "summary": "pypdf: Possible large memory usage for wrong image dimensions"
+          },
+          {
+            "id": "GHSA-5xf7-4p34-54qr",
+            "summary": "pypdf: Possible infinite loop for not terminated inline images"
+          },
+          {
+            "id": "GHSA-763m-79hh-57f2",
+            "summary": "pypdf: Possible long runtimes/large memory usage when extracting XForm objects"
+          },
+          {
+            "id": "GHSA-7gw9-cf7v-778f",
+            "summary": "pypdf: Manipulated FlateDecode predictor parameters can exhaust RAM"
+          },
+          {
+            "id": "GHSA-87mj-5ggw-8qc3",
+            "summary": "pypdf: Possible infinite loop during recovery attempts in DictionaryObject.read_from_stream"
+          },
+          {
+            "id": "GHSA-996q-pr4m-cvgq",
+            "summary": "pypdf has a possible infinite loop when processing TreeObject"
+          },
+          {
+            "id": "GHSA-9m86-7pmv-2852",
+            "summary": "pypdf vulnerable to inefficient decoding of ASCIIHexDecode streams"
+          },
+          {
+            "id": "GHSA-9mvc-8737-8j8h",
+            "summary": "pypdf possibly has long runtimes for malformed FlateDecode streams"
+          },
+          {
+            "id": "GHSA-cj93-chg6-vgv8",
+            "summary": "pypdf: Possible large memory usage for large offsets for layout mode text"
+          },
+          {
+            "id": "GHSA-f2v5-7jq9-h8cg",
+            "summary": "pypdf: Manipulated RunLengthDecode streams can exhaust RAM"
+          },
+          {
+            "id": "GHSA-fc8x-2rww-xw9m",
+            "summary": "pypdf: Inefficient handling of non-whitespace inputs in read_until_whitespace"
+          },
+          {
+            "id": "GHSA-fp3f-mc75-235c",
+            "summary": "pypdf: Possible large memory usage for large /ToUnicode streams"
+          },
+          {
+            "id": "GHSA-fp3h-c4fm-7vvf",
+            "summary": "pypdf: Possible large memory usage for large /ToUnicode streams (Follow-up 2)"
+          },
+          {
+            "id": "GHSA-fwg2-594c-jp42",
+            "summary": "pypdf: Possible long runtimes/large memory usage for large CID font width ranges"
+          },
+          {
+            "id": "GHSA-g867-7843-wf8q",
+            "summary": "pypdf: Possible infinite loop for not terminated inline images (ASCII85 and ASCIIHex filter)"
+          },
+          {
+            "id": "GHSA-g9cg-prrw-2r8q",
+            "summary": "pypdf: Possible large memory usage when parsing font data"
+          },
+          {
+            "id": "GHSA-g9xf-7f8q-9mcj",
+            "summary": "pypdf: Possible infinite loop when processing threads/articles in writer"
+          },
+          {
+            "id": "GHSA-hqmh-ppp3-xvm7",
+            "summary": "pypdf: manipulated stream length values can exhaust RAM"
+          },
+          {
+            "id": "GHSA-j543-4vmf-qm7v",
+            "summary": "pypdf: Possible large memory usage for form XObjects during text extraction"
+          },
+          {
+            "id": "GHSA-jfx9-29x2-rv3j",
+            "summary": "pypdf can exhaust RAM via manipulated LZWDecode streams"
+          },
+          {
+            "id": "GHSA-jj6c-8h6c-hppx",
+            "summary": "pypdf has long runtimes for wrong size values in cross-reference and object streams"
+          },
+          {
+            "id": "GHSA-jm82-fx9c-mx94",
+            "summary": "pypdf: Missing stream length values ignore defined limits"
+          },
+          {
+            "id": "GHSA-jp53-mhqp-8xcg",
+            "summary": "pypdf: Possible infinite loop for TreeObject.insert_child"
+          },
+          {
+            "id": "GHSA-jw7q-gvrg-4vj3",
+            "summary": "pypdf: Possible long runtimes for partially malformed FlateDecode streams (Follow-up)"
+          },
+          {
+            "id": "GHSA-m2v9-299j-rv96",
+            "summary": "pypdf: Possible infinite loop when processing outlines/bookmarks in writer"
+          },
+          {
+            "id": "GHSA-m449-cwjh-6pw7",
+            "summary": "pypdf's LZWDecode streams be manipulated to exhaust RAM"
+          },
+          {
+            "id": "GHSA-php9-fj8v-98fj",
+            "summary": "pypdf: Possible long runtimes when generating appearance streams"
+          },
+          {
+            "id": "GHSA-qpxp-75px-xjcp",
+            "summary": "pypdf has inefficient decoding of array-based streams"
+          },
+          {
+            "id": "GHSA-qv6h-rv94-w285",
+            "summary": "pypdf: Possible large memory usage when retrieving Roman page labels"
+          },
+          {
+            "id": "GHSA-v247-6f48-mgcj",
+            "summary": "pypdf: Possible long runtimes with large amount of embedded files"
+          },
+          {
+            "id": "GHSA-vr63-x8vc-m265",
+            "summary": "pypdf possibly loops infinitely when reading DCT inline images without EOF marker"
+          },
+          {
+            "id": "GHSA-w23x-9jrw-r45c",
+            "summary": "pypdf: Possible large memory usage when retrieving alphabetical page labels"
+          },
+          {
+            "id": "GHSA-wgvp-vg3v-2xq3",
+            "summary": "pypdf has possible long runtimes/large memory usage for large /ToUnicode streams"
+          },
+          {
+            "id": "GHSA-wjqc-6w8f-h24c",
+            "summary": "pypdf: Manipulated XMP metadata streams can exhaust RAM"
+          },
+          {
+            "id": "GHSA-x284-j5p8-9c5p",
+            "summary": "pypdf: Manipulated FlateDecode image dimensions can exhaust RAM"
+          },
+          {
+            "id": "GHSA-x7hp-r3qg-r3cj",
+            "summary": "pypdf: Manipulated FlateDecode XFA streams can exhaust RAM"
+          },
+          {
+            "id": "PYSEC-2026-1827",
+            "summary": "pypdf has possible Infinite Loop when processing outlines/bookmarks"
+          },
+          {
+            "id": "PYSEC-2026-1828",
+            "summary": "pypdf has possible long runtimes for malformed startxref"
+          },
+          {
+            "id": "PYSEC-2026-1829",
+            "summary": "pypdf has possible long runtimes for missing /Root object with large /Size values"
+          },
+          {
+            "id": "PYSEC-2026-1831",
+            "summary": "pypdf can exhaust RAM via manipulated LZWDecode streams"
+          },
+          {
+            "id": "PYSEC-2026-1832",
+            "summary": "pypdf's LZWDecode streams be manipulated to exhaust RAM"
+          },
+          {
+            "id": "PYSEC-2026-1833",
+            "summary": "pypdf possibly loops infinitely when reading DCT inline images without EOF marker"
+          },
+          {
+            "id": "PYSEC-2026-3004",
+            "summary": "pypdf: Possible long runtimes for zero-only width values in cross-reference streamsuntimes for zero-only width values in cross-reference streams"
+          },
+          {
+            "id": "PYSEC-2026-3005",
+            "summary": "pypdf has a possible infinite loop when loading circular /Prev entries in cross-reference streams"
+          },
+          {
+            "id": "PYSEC-2026-3006",
+            "summary": "pypdf: Manipulated XMP metadata entity declarations can exhaust RAM"
+          },
+          {
+            "id": "PYSEC-2026-3007",
+            "summary": "pypdf: Possible long runtimes for wrong size values in incremental mode"
+          },
+          {
+            "id": "PYSEC-2026-3009",
+            "summary": "pypdf: Possible infinite loop when retrieving fonts for layout-mode text extraction"
+          },
+          {
+            "id": "PYSEC-2026-3010",
+            "summary": "pypdf: Inefficient decoding of FlateDecode PNG predictor streams"
+          },
+          {
+            "id": "PYSEC-2026-3011",
+            "summary": "pypdf: Manipulated FlateDecode predictor parameters can exhaust RAM"
+          },
+          {
+            "id": "PYSEC-2026-3012",
+            "summary": "pypdf: Possible infinite loop during recovery attempts in DictionaryObject.read_from_stream"
+          },
+          {
+            "id": "PYSEC-2026-3013",
+            "summary": "pypdf has a possible infinite loop when processing TreeObject"
+          },
+          {
+            "id": "PYSEC-2026-3014",
+            "summary": "pypdf vulnerable to inefficient decoding of ASCIIHexDecode streams"
+          },
+          {
+            "id": "PYSEC-2026-3015",
+            "summary": "pypdf possibly has long runtimes for malformed FlateDecode streams"
+          },
+          {
+            "id": "PYSEC-2026-3016",
+            "summary": "pypdf: Possible large memory usage for large offsets for layout mode text"
+          },
+          {
+            "id": "PYSEC-2026-3017",
+            "summary": "pypdf: Manipulated RunLengthDecode streams can exhaust RAM"
+          },
+          {
+            "id": "PYSEC-2026-3018",
+            "summary": "pypdf: Possible infinite loop when processing threads/articles in writer"
+          },
+          {
+            "id": "PYSEC-2026-3019",
+            "summary": "pypdf: manipulated stream length values can exhaust RAM"
+          },
+          {
+            "id": "PYSEC-2026-3020",
+            "summary": "pypdf: Possible large memory usage for form XObjects during text extraction"
+          },
+          {
+            "id": "PYSEC-2026-3021",
+            "summary": "pypdf has long runtimes for wrong size values in cross-reference and object streams"
+          },
+          {
+            "id": "PYSEC-2026-3022",
+            "summary": "pypdf: Possible infinite loop when processing outlines/bookmarks in writer"
+          },
+          {
+            "id": "PYSEC-2026-3023",
+            "summary": "pypdf has inefficient decoding of array-based streams"
+          },
+          {
+            "id": "PYSEC-2026-3024",
+            "summary": "pypdf has possible long runtimes/large memory usage for large /ToUnicode streams"
+          },
+          {
+            "id": "PYSEC-2026-3025",
+            "summary": "pypdf: Manipulated XMP metadata streams can exhaust RAM"
+          },
+          {
+            "id": "PYSEC-2026-3026",
+            "summary": "pypdf: Manipulated FlateDecode image dimensions can exhaust RAM"
+          },
+          {
+            "id": "PYSEC-2026-3027",
+            "summary": "pypdf: Manipulated FlateDecode XFA streams can exhaust RAM"
+          },
+          {
+            "id": "PYSEC-2026-3610",
+            "summary": "pypdf: Possible long runtimes for repeated malformed cross-reference entries "
+          },
+          {
+            "id": "PYSEC-2026-3611",
+            "summary": "pypdf: Possible large memory usage for wrong image dimensions"
+          },
+          {
+            "id": "PYSEC-2026-3612",
+            "summary": "pypdf: Possible infinite loop for not terminated inline images"
+          },
+          {
+            "id": "PYSEC-2026-3613",
+            "summary": "pypdf: Possible infinite loop for not terminated inline images (ASCII85 and ASCIIHex filter)"
+          },
+          {
+            "id": "PYSEC-2026-3655",
+            "summary": "pypdf: Possible large memory usage for large /ToUnicode streams"
+          },
+          {
+            "id": "PYSEC-2026-3656",
+            "summary": "pypdf: Possible long runtimes/large memory usage for large CID font width ranges"
+          },
+          {
+            "id": "PYSEC-2026-3910",
+            "summary": "pypdf: Possible long runtimes/large memory usage when retrieving outlines"
+          },
+          {
+            "id": "PYSEC-2026-3911",
+            "summary": "pypdf: Possible long runtimes/large memory usage when extracting XForm objects"
+          },
+          {
+            "id": "PYSEC-2026-3912",
+            "summary": "pypdf: Inefficient handling of non-whitespace inputs in read_until_whitespace"
+          },
+          {
+            "id": "PYSEC-2026-3913",
+            "summary": "pypdf: Possible infinite loop for TreeObject.insert_child"
+          },
+          {
+            "id": "PYSEC-2026-4153",
+            "summary": "pypdf: Possible long runtimes/large memory usage when parsing indirect objects"
+          },
+          {
+            "id": "PYSEC-2026-4154",
+            "summary": "pypdf: Possible large memory usage for large /ToUnicode streams (Follow-up 2)"
+          },
+          {
+            "id": "PYSEC-2026-4155",
+            "summary": "pypdf: Possible large memory usage when parsing font data"
+          },
+          {
+            "id": "PYSEC-2026-4156",
+            "summary": "pypdf: Possible long runtimes for partially malformed FlateDecode streams (Follow-up)"
+          },
+          {
+            "id": "PYSEC-2026-4157",
+            "summary": "pypdf: Possible long runtimes when generating appearance streams"
+          },
+          {
+            "id": "PYSEC-2026-4158",
+            "summary": "pypdf: Possible large memory usage when retrieving Roman page labels"
+          },
+          {
+            "id": "PYSEC-2026-4159",
+            "summary": "pypdf: Possible long runtimes with large amount of embedded files"
+          },
+          {
+            "id": "PYSEC-2026-4160",
+            "summary": "pypdf: Possible large memory usage when retrieving alphabetical page labels"
+          }
+        ]
+      },
+      {
+        "ecosystem": "PyPI",
+        "name": "sentence-transformers",
+        "version": "5.1.1",
+        "advisories": [
+          {
+            "id": "GHSA-jhr6-gm9c-rqjv",
+            "summary": "sentence-transformers local model loading bypasses trust_remote_code and executes custom Python"
+          },
+          {
+            "id": "PYSEC-2026-4164",
+            "summary": "sentence-transformers local model loading bypasses trust_remote_code and executes custom Python"
+          }
+        ]
+      },
+      {
+        "ecosystem": "PyPI",
+        "name": "urllib3",
+        "version": "2.7.0",
+        "advisories": [
+          {
+            "id": "GHSA-8988-9cw3-xx77",
+            "summary": "urllib3: HTTPS proxy TLS configuration may be ignored or overridden"
+          },
+          {
+            "id": "GHSA-gh4c-6fx4-qh6g",
+            "summary": "urllib3: Chunked Deflate streaming can enter an infinite loop"
+          },
+          {
+            "id": "GHSA-vxq7-64xx-v4gw",
+            "summary": "urllib3: HTTPResponse.stream()/read_chunked() buffers an unbounded chunk-size line into memory"
+          },
+          {
+            "id": "PYSEC-2026-4175",
+            "summary": "urllib3: HTTPS proxy TLS configuration may be ignored or overridden"
+          },
+          {
+            "id": "PYSEC-2026-4176",
+            "summary": "urllib3: Chunked Deflate streaming can enter an infinite loop"
+          },
+          {
+            "id": "PYSEC-2026-4177",
+            "summary": "urllib3: HTTPResponse.stream()/read_chunked() buffers an unbounded chunk-size line into memory"
+          }
+        ]
+      }
+    ]
+  },
+  "after": {
+    "queried_at": "2026-10-21T14:15:29.921384+00:00",
+    "records": 441,
+    "by_ecosystem": {
+      "Maven": 210,
+      "Pub": 150,
+      "PyPI": 81
+    },
+    "query_errors": 0,
+    "affected_records": 0
+  },
+  "limitations": [
+    "Version advisory matches do not prove reachability or exploitation.",
+    "OS/base-image/native Android/iOS components are outside this inventory.",
+    "After includes installed Windows Python dependencies; Docker resolves on Linux.",
+    "GHSA and PYSEC aliases can refer to the same vulnerability."
+  ]
+}
