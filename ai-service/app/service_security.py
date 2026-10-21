@@ -31,7 +31,7 @@ class ServiceSecurityMiddleware:
         # Preserve legacy two-photo analysis (2 x 10 MB + multipart overhead).
         limit = 22 * 1024 * 1024 if scope["path"] in {
             "/api/v1/analyze", "/api/v1/validate-image"
-        } else 64 * 1024
+        } else 256 * 1024 if scope["path"] == "/api/v1/assistant/plan" else 64 * 1024
         for name, value in scope["headers"]:
             if name == b"content-length":
                 try:

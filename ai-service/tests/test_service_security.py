@@ -1,4 +1,5 @@
 import os
+import json
 import unittest
 from unittest.mock import patch
 
@@ -61,11 +62,20 @@ class ServiceSecurityTest(unittest.IsolatedAsyncioTestCase):
 
     async def test_content_length_limit_rejects_before_body(self):
         status, reads = await request(self.app(), headers=(
-            (b"x-ai-service-key", KEY), (b"content-length", b"65537")))
+            (b"x-ai-service-key", KEY), (b"content-length", b"262145")))
         self.assertEqual((413, 0), (status, reads))
 
     async def test_chunked_body_cannot_bypass_limit(self):
         status, _ = await request(self.app(), headers=((b"x-ai-service-key", KEY),),
-                                  chunks=(b"x" * 40000, b"x" * 40000))
+                                  chunks=(b"x" * 140000, b"x" * 140000))
         self.assertEqual(413, status)
         self.assertEqual(0, self.operations)
+
+    async def test_existing_unicode_history_budget_remains_supported(self):
+        payload = json.dumps({"question": "ç" * 2000, "history": [
+            {"role": "user", "content": "ç" * 2000} for _ in range(6)
+        ]}, ensure_ascii=True).encode()
+        status, _ = await request(self.app(), headers=((b"x-ai-service-key", KEY),),
+                                  chunks=(payload,))
+        self.assertEqual(200, status)
+        self.assertEqual(1, self.operations)

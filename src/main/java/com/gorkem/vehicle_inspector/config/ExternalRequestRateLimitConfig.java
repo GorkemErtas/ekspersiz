@@ -31,6 +31,8 @@ public class ExternalRequestRateLimitConfig implements WebMvcConfigurer {
                 if (method.equals("POST")) {
                     if (path.equals("/api/v1/ai-assistant/chat")) action = AI_CHAT;
                     else if (path.equals("/api/v1/billing/sync")) action = BILLING_SYNC;
+                    else if (path.equals("/api/v1/inspections/{inspectionId}/analyze")
+                            || path.equals("/api/v1/inspections/{inspectionId}/report")) action = INSPECTION_AI;
                     else if (path.equals("/api/v1/inspections/{inspectionId}/image-quality")
                             || path.equals("/api/v1/inspections/{inspectionId}/context-image-quality")) action = IMAGE_QUALITY;
                     else if (path.equals("/api/v1/inspections/{inspectionId}/image")

@@ -20,7 +20,7 @@ public class RequestRateLimiter {
         LOGIN(20), VERIFICATION_SEND(3), VERIFICATION_CHECK(5),
         RESET_SEND(3), RESET_CHECK(5), PASSWORD_CHANGE(10),
         INVITATION_SEND(10), INVITATION_CHECK(5),
-        AI_CHAT(60), IMAGE_QUALITY(30), NEARBY_SEARCH(20), BILLING_SYNC(30), PHOTO_UPLOAD(30);
+        AI_CHAT(60), IMAGE_QUALITY(30), INSPECTION_AI(30), NEARBY_SEARCH(20), BILLING_SYNC(30), PHOTO_UPLOAD(30);
 
         private final int limit;
         Action(int limit) { this.limit = limit; }

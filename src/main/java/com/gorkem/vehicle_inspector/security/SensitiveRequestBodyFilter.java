@@ -24,7 +24,10 @@ public class SensitiveRequestBodyFilter extends OncePerRequestFilter {
 
     @Override protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
                                               FilterChain chain) throws ServletException, IOException {
-        int limit = request.getServletPath().endsWith("/webhook") ? 256 * 1024 : 64 * 1024;
+        // Six 2,000-character history messages can exceed 64 KiB when JSON
+        // escapes Unicode. Keep the full existing DTO contract usable.
+        int limit = request.getServletPath().endsWith("/webhook")
+                || request.getServletPath().equals("/api/v1/ai-assistant/chat") ? 256 * 1024 : 64 * 1024;
         if (request.getContentLengthLong() > limit) { tooLarge(response); return; }
         byte[] body = request.getInputStream().readNBytes(limit + 1);
         if (body.length > limit) { tooLarge(response); return; }
