@@ -38,7 +38,7 @@ class CreditWalletPersistenceTest {
         ds=new DriverManagerDataSource(url+"?currentSchema=credit_wallet_test,public",System.getProperty("credit.test.username","credit_test"),"");
         jdbc=new JdbcTemplate(ds);tx=new TransactionTemplate(new DataSourceTransactionManager(ds));
         // V1 is a pg_dump with explicit public names. Rewrite ONLY the isolated test schema.
-        for (int n=1;n<=14;n++) {
+        for (int n=1;n<=15;n++) {
             final int version=n;
             Path file;
             try(var paths=Files.list(Path.of("src/main/resources/db/migration"))) {

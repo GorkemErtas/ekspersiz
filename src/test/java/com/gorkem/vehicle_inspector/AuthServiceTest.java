@@ -125,6 +125,24 @@ class AuthServiceTest {
         assertNull(response.getBusinessAccount());
     }
 
+    @Test
+    void googleVerificationCannotKeepPasswordFromLegacyUnverifiedRegistration() {
+        User legacy = new User("Legacy", "legacy@example.com", "attacker-hash");
+        var payload = new com.google.api.client.googleapis.auth.oauth2.GoogleIdToken.Payload();
+        payload.setEmail(legacy.getEmail()); payload.setEmailVerified(true);
+        when(googleAuthService.verifyIdToken("verified-token")).thenReturn(payload);
+        when(userRepository.findByEmailForUpdate(legacy.getEmail())).thenReturn(Optional.of(legacy));
+        when(userRepository.save(legacy)).thenReturn(legacy);
+        when(passwordEncoder.encode(any())).thenReturn("random-unusable-password-hash");
+        when(businessContextService.findMembership(legacy)).thenReturn(Optional.empty());
+        var request = new com.gorkem.vehicle_inspector.dto.request.GoogleLoginRequest();
+        request.setIdToken("verified-token");
+        authService.googleLogin(request);
+        assertTrue(legacy.isEmailVerified());
+        assertEquals("random-unusable-password-hash", legacy.getPassword());
+        assertEquals(1, legacy.getAuthVersion());
+    }
+
     private User mockUser(Long id, SubscriptionPlan plan) {
         User user = org.mockito.Mockito.mock(User.class);
         when(user.getId()).thenReturn(id);

@@ -125,7 +125,8 @@ public class AccountDeletionService {
                             );
 
             inspections.stream()
-                    .map(DamageInspection::getImagePath)
+                    .flatMap(inspection -> java.util.stream.Stream.of(
+                            inspection.getImagePath(), inspection.getContextImagePath()))
                     .filter(path ->
                             path != null && !path.isBlank()
                     )

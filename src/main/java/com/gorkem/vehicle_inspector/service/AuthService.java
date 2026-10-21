@@ -94,6 +94,7 @@ public class AuthService {
         );
     }
 
+    @org.springframework.transaction.annotation.Transactional
     public AuthResponse googleLogin(GoogleLoginRequest request) {
         GoogleIdToken.Payload payload =
                 googleAuthService.verifyIdToken(request.getIdToken());
@@ -101,7 +102,7 @@ public class AuthService {
         String normalizedEmail =
                 normalizeEmail(payload.getEmail());
 
-        User user = userRepository.findByEmail(normalizedEmail)
+        User user = userRepository.findByEmailForUpdate(normalizedEmail)
                 .orElseGet(() -> {
                     String fullName =
                             (String) payload.get("name");
@@ -124,6 +125,9 @@ public class AuthService {
                 });
 
         if (!user.isEmailVerified()) {
+            // A legacy unverified registration may contain an attacker's password.
+            // Google proves mailbox ownership, not ownership of that password.
+            user.setPassword(passwordEncoder.encode(UUID.randomUUID().toString()));
             user.markEmailVerified();
             user = userRepository.save(user);
         }
@@ -152,13 +156,14 @@ public class AuthService {
         registrationService.resend(request);
     }
 
-    public void changePassword(
+    @org.springframework.transaction.annotation.Transactional
+    public String changePassword(
             String email,
             ChangePasswordRequest request
     ) {
         String normalizedEmail = normalizeEmail(email);
 
-        User user = userRepository.findByEmail(normalizedEmail)
+        User user = userRepository.findByEmailForUpdate(normalizedEmail)
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
                                 "Kullanıcı bulunamadı."
@@ -196,6 +201,7 @@ public class AuthService {
         );
 
         userRepository.save(user);
+        return jwtService.generateToken(user);
     }
 
     public UserResponse getCurrentUser(String email) {
@@ -226,6 +232,6 @@ public class AuthService {
     }
 
     private String normalizeEmail(String email) {
-        return email.trim().toLowerCase();
+        return email.trim().toLowerCase(java.util.Locale.ROOT);
     }
 }

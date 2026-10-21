@@ -122,7 +122,7 @@ class InspectionPersistenceTest {
         reset(ai, reports, storage, subscriptions, passwordEncoder,
                 verificationCodes, emailService,
                 app.getBean(GeminiNearbyServiceSearchService.class), app.getBean(GooglePlacesClient.class));
-        lenient().when(ai.validateImage(any())).thenReturn(
+        when(ai.validateImage(any(), anyString())).thenReturn(
                 new ImageQualityResponse(true, "SUITABLE", "Fotoğraf analiz için uygun."));
         jdbc.execute("TRUNCATE TABLE pending_registrations, users, business_accounts RESTART IDENTITY CASCADE");
         tx.executeWithoutResult(status -> {
@@ -204,12 +204,13 @@ class InspectionPersistenceTest {
                     )
             );
 
-            saveInspection(
+            DamageInspection inspection = saveInspection(
                     vehicle,
                     personal,
                     NOW,
                     InspectionStatus.COMPLETED
             );
+            inspection.setContextImagePath("legacy-context.jpg");
 
             return vehicle.getId();
         });
@@ -243,6 +244,7 @@ class InspectionPersistenceTest {
         );
 
         verify(storage).deleteStoredFile("test.jpg");
+        verify(storage).deleteStoredFile("legacy-context.jpg");
     }
 
     @Test
@@ -515,6 +517,55 @@ class InspectionPersistenceTest {
     }
 
     @Test
+    void concurrentResetRequestsConsumeTheCodeOnce() throws Exception {
+        var resets = app.getBean(PasswordResetService.class);
+        var codeRepository = app.getBean(PasswordResetCodeRepository.class);
+        tx.executeWithoutResult(status -> codeRepository.save(new PasswordResetCode(
+                personal, "code-hash", NOW.plusMinutes(5), NOW)));
+        var request = new com.gorkem.vehicle_inspector.dto.request.ResetPasswordRequest();
+        request.setEmail(personal.getEmail()); request.setCode("123456");
+        request.setNewPassword("new-password"); request.setConfirmNewPassword("new-password");
+        ExecutorService pool = Executors.newFixedThreadPool(2);
+        try {
+            Callable<Boolean> action = () -> {
+                try { resets.resetPassword(request); return true; }
+                catch (IllegalArgumentException alreadyConsumed) { return false; }
+            };
+            int successes = 0;
+            for (var result : pool.invokeAll(List.of(action, action))) if (result.get(10, TimeUnit.SECONDS)) successes++;
+            assertEquals(1, successes);
+            assertEquals(1, users.findById(personal.getId()).orElseThrow().getAuthVersion());
+            assertTrue(codeRepository.findByUserId(personal.getId()).isEmpty());
+        } finally { pool.shutdownNow(); }
+    }
+
+    @Test
+    void concurrentSubscriptionUpdateCannotRestoreOldCredentialGeneration() throws Exception {
+        CountDownLatch loaded = new CountDownLatch(1);
+        CountDownLatch resetDone = new CountDownLatch(1);
+        ExecutorService pool = Executors.newSingleThreadExecutor();
+        try {
+            Future<?> billing = pool.submit(() -> tx.executeWithoutResult(status -> {
+                User staleUser = users.findById(personal.getId()).orElseThrow();
+                loaded.countDown();
+                try { assertTrue(resetDone.await(10, TimeUnit.SECONDS)); }
+                catch (InterruptedException exception) { throw new RuntimeException(exception); }
+                staleUser.setSubscriptionPlan(SubscriptionPlan.PRO);
+                users.save(staleUser);
+            }));
+            assertTrue(loaded.await(10, TimeUnit.SECONDS));
+            tx.executeWithoutResult(status -> {
+                User fresh = users.findByEmailForUpdate(personal.getEmail()).orElseThrow();
+                fresh.setPassword("reset-hash"); users.save(fresh);
+            });
+            resetDone.countDown(); billing.get(10, TimeUnit.SECONDS);
+            User result = users.findById(personal.getId()).orElseThrow();
+            assertEquals(1, result.getAuthVersion()); assertEquals("reset-hash", result.getPassword());
+            assertEquals(SubscriptionPlan.PRO, result.getSubscriptionPlan());
+        } finally { resetDone.countDown(); pool.shutdownNow(); }
+    }
+
+    @Test
     void employeeQueryExcludesOwnerAndMembershipCanBeRemovedSafely() {
         List<BusinessMember> employees =
                 members.findAllByBusinessAccountIdAndRoleOrderByUserFullNameAsc(
@@ -662,9 +713,28 @@ class InspectionPersistenceTest {
             DamageInspectionService.class,
             NearbyServiceService.class,
             RegistrationService.class,
+            PasswordResetService.class,
             AccountDeletionService.class
     })
     static class PersistenceConfig {
+        // These existing fixtures deliberately exercise the legacy monthly-quota
+        // compatibility path. Production requires CreditWalletService; the real
+        // wallet SQL/concurrency is covered by CreditWalletPersistenceTest.
+        @Bean CreditWalletService creditWalletService() { return mock(CreditWalletService.class); }
+        @Bean AnalysisCreditService analysisCreditService() { return mock(AnalysisCreditService.class); }
+        @Bean static org.springframework.beans.factory.config.BeanPostProcessor legacyQuotaFixture() {
+            return new org.springframework.beans.factory.config.BeanPostProcessor() {
+                @Override public Object postProcessBeforeInitialization(Object bean, String name) {
+                    if (bean instanceof SubscriptionService || bean instanceof DamageInspectionService) {
+                        org.springframework.test.util.ReflectionTestUtils.setField(bean, "creditWallets", null);
+                    }
+                    if (bean instanceof DamageInspectionService) {
+                        org.springframework.test.util.ReflectionTestUtils.setField(bean, "analysisCreditService", null);
+                    }
+                    return bean;
+                }
+            };
+        }
         @Bean
         static PropertySourcesPlaceholderConfigurer properties() {
             PropertySourcesPlaceholderConfigurer configurer =

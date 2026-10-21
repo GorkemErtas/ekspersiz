@@ -47,7 +47,7 @@ public class PasswordResetService {
         String email = normalizeEmail(request.getEmail());
 
         Optional<User> optionalUser =
-                userRepository.findByEmail(email);
+                userRepository.findByEmailForUpdate(email);
 
         if (optionalUser.isEmpty()) {
             return;
@@ -63,6 +63,7 @@ public class PasswordResetService {
                 now.plusMinutes(RESET_CODE_EXPIRATION_MINUTES);
 
         passwordResetCodeRepository.deleteByUserId(user.getId());
+        passwordResetCodeRepository.flush();
 
         PasswordResetCode resetCode =
                 new PasswordResetCode(
@@ -81,7 +82,9 @@ public class PasswordResetService {
     public void resetPassword(ResetPasswordRequest request) {
         String email = normalizeEmail(request.getEmail());
 
-        User user = userRepository.findByEmail(email)
+        // Serializes issuance and consumption, so the same code cannot reset
+        // credentials twice when requests arrive concurrently.
+        User user = userRepository.findByEmailForUpdate(email)
                 .orElseThrow(() ->
                         new IllegalArgumentException(
                                 "Şifre sıfırlama bilgileri geçersiz."
@@ -170,6 +173,6 @@ public class PasswordResetService {
     }
 
     private String normalizeEmail(String email) {
-        return email.trim().toLowerCase();
+        return email.trim().toLowerCase(java.util.Locale.ROOT);
     }
 }

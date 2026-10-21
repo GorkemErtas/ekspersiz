@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
+@org.hibernate.annotations.DynamicUpdate
 @Table(
         name = "users",
         uniqueConstraints = {
@@ -39,6 +40,9 @@ public class User {
             length = 100
     )
     private String password;
+
+    @Column(name = "auth_version", nullable = false)
+    private long authVersion;
 
     @Enumerated(EnumType.STRING)
     @Column(
@@ -115,6 +119,10 @@ public class User {
         return password;
     }
 
+    public long getAuthVersion() {
+        return authVersion;
+    }
+
     public SubscriptionPlan getSubscriptionPlan() {
         return subscriptionPlan;
     }
@@ -167,6 +175,7 @@ public class User {
             String password
     ) {
         this.password = password;
+        this.authVersion++;
     }
 
     public void setSubscriptionPlan(

@@ -48,6 +48,9 @@ public class JwtService {
 
         this.verifier = JWT.require(algorithm)
                 .withIssuer(ISSUER)
+                .withClaimPresence("exp")
+                .withClaimPresence("iat")
+                .withClaimPresence("userId")
                 .build();
     }
 
@@ -59,6 +62,7 @@ public class JwtService {
                 .withIssuer(ISSUER)
                 .withSubject(user.getEmail())
                 .withClaim("userId", user.getId())
+                .withClaim("authVersion", user.getAuthVersion())
                 .withIssuedAt(now)
                 .withExpiresAt(expiresAt)
                 .sign(algorithm);
@@ -72,12 +76,18 @@ public class JwtService {
         }
     }
 
-    public boolean isTokenValid(String token, String email) {
+    public boolean isTokenValid(String token, AuthenticatedUser user) {
         try {
-            String tokenEmail = verifier.verify(token).getSubject();
-
-            return tokenEmail != null
-                    && tokenEmail.equalsIgnoreCase(email);
+            var jwt = verifier.verify(token);
+            Long version = jwt.getClaim("authVersion").asLong();
+            // Tokens issued before V15 had no generation. Keep them only for
+            // accounts whose credentials have not changed since the migration.
+            if (jwt.getClaim("authVersion").isMissing()) version = 0L;
+            return user.isEnabled()
+                    && user.getUserId() != null
+                    && user.getUserId().equals(jwt.getClaim("userId").asLong())
+                    && user.getUsername().equals(jwt.getSubject())
+                    && version != null && version == user.getAuthVersion();
         } catch (JWTVerificationException exception) {
             return false;
         }

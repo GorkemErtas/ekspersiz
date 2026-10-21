@@ -18,6 +18,13 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(RateLimitExceededException.class)
+    public ResponseEntity<ApiErrorResponse> handleRateLimit(RateLimitExceededException exception) {
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .header("Retry-After", Long.toString(exception.getRetryAfterSeconds()))
+                .body(new ApiErrorResponse(LocalDateTime.now(), 429, exception.getMessage(), Map.of()));
+    }
+
     private static final Logger log =
             LoggerFactory.getLogger(
                     GlobalExceptionHandler.class

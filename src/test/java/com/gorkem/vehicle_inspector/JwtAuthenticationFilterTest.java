@@ -9,8 +9,30 @@ import org.springframework.mock.web.MockHttpServletResponse;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 class JwtAuthenticationFilterTest {
+
+    @Test
+    void deletedAccountTokenContinuesUnauthenticatedInsteadOfThrowing() throws Exception {
+        SecurityContextHolder.clearContext();
+        JwtService jwt = mock(JwtService.class);
+        CustomUserDetailsService users = mock(CustomUserDetailsService.class);
+        when(jwt.extractEmail("old-token")).thenReturn("deleted@example.com");
+        when(users.loadUserByUsername("deleted@example.com"))
+                .thenThrow(new UsernameNotFoundException("deleted"));
+        var request = new MockHttpServletRequest("GET", "/api/v1/auth/me");
+        request.addHeader("Authorization", "Bearer old-token");
+        AtomicBoolean continued = new AtomicBoolean();
+        new JwtAuthenticationFilter(jwt, users).doFilter(request, new MockHttpServletResponse(),
+                (req, res) -> continued.set(true));
+        assertTrue(continued.get());
+        assertNull(SecurityContextHolder.getContext().getAuthentication());
+    }
 
     @Test
     void revenueCatAuthorizationShouldBypassJwtParsing() throws Exception {

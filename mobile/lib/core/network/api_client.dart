@@ -76,6 +76,19 @@ class ApiClient {
           )
           .timeout(timeout ?? _requestTimeout);
 
+      // Password changes revoke every old token. The additive response header
+      // keeps this device signed in; older servers can still return plain 204.
+      if (path == '/auth/change-password' &&
+          response.statusCode >= 200 &&
+          response.statusCode < 300) {
+        final authorization = response.headers['authorization'];
+        if (authorization != null &&
+            authorization.startsWith('Bearer ') &&
+            authorization.substring(7).trim().isNotEmpty) {
+          await TokenStorage.saveAccessToken(authorization.substring(7));
+        }
+      }
+
       return await _handleResponse(
         response,
         clearTokenOnUnauthorized: clearTokenOnUnauthorized,
@@ -270,6 +283,7 @@ class ApiClient {
       409 => 'Bu kayıt zaten mevcut.',
       413 => 'Seçilen dosya çok büyük.',
       415 => 'Bu dosya türü desteklenmiyor.',
+      429 => 'Çok fazla deneme yapıldı. Lütfen bir süre sonra tekrar deneyin.',
       500 => 'Sunucuda beklenmeyen bir hata oluştu.',
       502 => 'AI analiz servisine şu anda ulaşılamıyor.',
       503 => 'Servis geçici olarak kullanılamıyor.',

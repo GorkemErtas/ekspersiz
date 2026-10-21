@@ -13,6 +13,8 @@ import com.gorkem.vehicle_inspector.dto.request.ResetPasswordRequest;
 import com.gorkem.vehicle_inspector.service.PasswordResetService;
 import com.gorkem.vehicle_inspector.dto.request.GoogleLoginRequest;
 import com.gorkem.vehicle_inspector.service.AccountDeletionService;
+import com.gorkem.vehicle_inspector.security.RequestRateLimiter;
+import static com.gorkem.vehicle_inspector.security.RequestRateLimiter.Action.*;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,21 +30,25 @@ public class AuthController {
     private final PasswordResetService passwordResetService;
 
     private final AccountDeletionService accountDeletionService;
+    private final RequestRateLimiter rateLimiter;
 
     public AuthController(
             AuthService authService,
             PasswordResetService passwordResetService,
-            AccountDeletionService accountDeletionService
+            AccountDeletionService accountDeletionService,
+            RequestRateLimiter rateLimiter
     ) {
         this.authService = authService;
         this.passwordResetService = passwordResetService;
         this.accountDeletionService = accountDeletionService;
+        this.rateLimiter = rateLimiter;
     }
 
     @PostMapping("/register")
     public ResponseEntity<Void> register(
             @Valid @RequestBody RegisterRequest request
     ) {
+        rateLimiter.check(VERIFICATION_SEND, request.getEmail());
         authService.register(request);
 
         return ResponseEntity
@@ -54,6 +60,7 @@ public class AuthController {
     public ResponseEntity<Void> verifyEmail(
             @Valid @RequestBody VerifyEmailRequest request
     ) {
+        rateLimiter.check(VERIFICATION_CHECK, request.getEmail());
         authService.verifyEmail(request);
 
         return ResponseEntity.noContent().build();
@@ -63,6 +70,7 @@ public class AuthController {
     public ResponseEntity<Void> resendVerification(
             @Valid @RequestBody ResendVerificationRequest request
     ) {
+        rateLimiter.check(VERIFICATION_SEND, request.getEmail());
         authService.resendVerificationCode(request);
 
         return ResponseEntity.noContent().build();
@@ -72,6 +80,7 @@ public class AuthController {
     public ResponseEntity<AuthResponse> login(
             @Valid @RequestBody LoginRequest request
     ) {
+        rateLimiter.check(LOGIN, request.getEmail());
         return ResponseEntity.ok(
                 authService.login(request)
         );
@@ -90,6 +99,7 @@ public class AuthController {
     public ResponseEntity<Void> forgotPassword(
             @Valid @RequestBody ForgotPasswordRequest request
     ) {
+        rateLimiter.check(RESET_SEND, request.getEmail());
         passwordResetService.requestReset(request);
 
         return ResponseEntity.accepted().build();
@@ -99,6 +109,7 @@ public class AuthController {
     public ResponseEntity<Void> resetPassword(
             @Valid @RequestBody ResetPasswordRequest request
     ) {
+        rateLimiter.check(RESET_CHECK, request.getEmail());
         passwordResetService.resetPassword(request);
 
         return ResponseEntity.noContent().build();
@@ -109,12 +120,13 @@ public class AuthController {
             @Valid @RequestBody ChangePasswordRequest request,
             Authentication authentication
     ) {
-        authService.changePassword(
+        rateLimiter.check(PASSWORD_CHANGE, authentication.getName());
+        String token = authService.changePassword(
                 authentication.getName(),
                 request
         );
 
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.noContent().header("Authorization", "Bearer " + token).build();
     }
 
     @GetMapping("/me")

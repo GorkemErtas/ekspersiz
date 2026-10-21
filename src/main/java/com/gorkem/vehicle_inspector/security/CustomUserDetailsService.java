@@ -20,7 +20,7 @@ public class CustomUserDetailsService implements UserDetailsService {
     public UserDetails loadUserByUsername(String email)
             throws UsernameNotFoundException {
 
-        String normalizedEmail = email.trim().toLowerCase();
+        String normalizedEmail = email.trim().toLowerCase(java.util.Locale.ROOT);
 
         User user = userRepository.findByEmail(normalizedEmail)
                 .orElseThrow(() ->
@@ -29,10 +29,6 @@ public class CustomUserDetailsService implements UserDetailsService {
                         )
                 );
 
-        return org.springframework.security.core.userdetails.User
-                .withUsername(user.getEmail())
-                .password(user.getPassword())
-                .authorities("APP_USER")
-                .build();
+        return new AuthenticatedUser(user);
     }
 }
