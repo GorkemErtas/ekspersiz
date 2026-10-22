@@ -10,6 +10,25 @@ import com.google.android.play.core.integrity.StandardIntegrityManager
 class MainActivity : FlutterActivity() {
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        // Installation preferences must survive logout and updates, but must
+        // never be restored onto a fresh install by Android Auto Backup.
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "ekspersiz/installation")
+            .setMethodCallHandler { call, result ->
+                if (call.method != "directory") {
+                    result.notImplemented()
+                } else {
+                    try {
+                        val directory = java.io.File(noBackupFilesDir, "installation")
+                        if (!directory.isDirectory && !directory.mkdirs()) {
+                            result.error("STORAGE_UNAVAILABLE", "Yerel tercih kaydedilemedi.", null)
+                        } else {
+                            result.success(directory.absolutePath)
+                        }
+                    } catch (_: Exception) {
+                        result.error("STORAGE_UNAVAILABLE", "Yerel tercih kaydedilemedi.", null)
+                    }
+                }
+            }
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "ekspersiz/integrity")
             .setMethodCallHandler { call, result ->
                 when (call.method) {
