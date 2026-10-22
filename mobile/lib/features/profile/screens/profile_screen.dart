@@ -17,6 +17,7 @@ import '../../business/screens/business_management_screen.dart';
 import '../../billing/screens/subscription_screen.dart';
 import '../../billing/services/billing_service.dart';
 import '../../billing/models/credit_catalog.dart';
+import '../../onboarding/screens/onboarding_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({
@@ -516,6 +517,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                         const Divider(height: 1, indent: 82),
                       ],
+                      _ActionProfileItem(
+                        icon: Icons.auto_stories_outlined,
+                        title: 'Uygulama Rehberi',
+                        subtitle: 'EksperSiz’i birkaç adımda yeniden keşfet.',
+                        onTap: () => Navigator.of(context).push<void>(
+                          MaterialPageRoute<void>(
+                            builder: (_) => const OnboardingScreen.replay(),
+                          ),
+                        ),
+                      ),
+                      const Divider(height: 1, indent: 82),
                       _ActionProfileItem(
                         icon: Icons.lock_reset_rounded,
                         title: 'Şifre Değiştir',
