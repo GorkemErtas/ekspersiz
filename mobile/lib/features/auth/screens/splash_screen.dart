@@ -10,17 +10,27 @@ import '../../../core/storage/token_storage.dart';
 import '../services/auth_service.dart';
 import 'login_screen.dart';
 import '../../home/screens/main_shell.dart';
+import '../../onboarding/data/onboarding_store.dart';
+import '../../onboarding/screens/onboarding_screen.dart';
 
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({super.key});
+  const SplashScreen({
+    super.key,
+    this.authService = const AuthService(),
+    this.appUpdateService = const AppUpdateService(),
+    this.onboardingStore = const OnboardingStore(),
+  });
+
+  final AuthService authService;
+  final AppUpdateService appUpdateService;
+  final OnboardingStore onboardingStore;
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
 class _SplashScreenState extends State<SplashScreen> {
-  final AuthService _authService = const AuthService();
-  final AppUpdateService _appUpdateService = const AppUpdateService();
+  bool _showOnboarding = false;
 
   @override
   void initState() {
@@ -32,7 +42,7 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _checkVersionAndRestoreSession() async {
-    final updateStatus = await _appUpdateService.checkForUpdate();
+    final updateStatus = await widget.appUpdateService.checkForUpdate();
 
     if (!mounted) {
       return;
@@ -43,7 +53,18 @@ class _SplashScreenState extends State<SplashScreen> {
       return;
     }
 
+    final completed = await widget.onboardingStore.hasCompleted();
+    if (!mounted) return;
+    if (!completed) {
+      setState(() => _showOnboarding = true);
+      return;
+    }
     await _restoreSession();
+  }
+
+  void _finishOnboarding() {
+    setState(() => _showOnboarding = false);
+    _restoreSession();
   }
 
   Future<void> _showForceUpdateDialog(AppUpdateStatus updateStatus) async {
@@ -61,7 +82,7 @@ class _SplashScreenState extends State<SplashScreen> {
             FilledButton(
               onPressed: () async {
                 if (updateStatus.immediateUpdateAllowed) {
-                  final completed = await _appUpdateService
+                  final completed = await widget.appUpdateService
                       .performImmediateUpdate();
 
                   if (completed && dialogContext.mounted) {
@@ -73,7 +94,7 @@ class _SplashScreenState extends State<SplashScreen> {
                   }
                 }
 
-                await _appUpdateService.openStore();
+                await widget.appUpdateService.openStore();
               },
               child: const AppText('Güncelle'),
             ),
@@ -103,7 +124,7 @@ class _SplashScreenState extends State<SplashScreen> {
     try {
       debugPrint('SPLASH: requesting current user');
 
-      final user = await _authService.getCurrentUser().timeout(
+      final user = await widget.authService.getCurrentUser().timeout(
         const Duration(seconds: 10),
       );
 
@@ -211,6 +232,12 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_showOnboarding) {
+      return OnboardingScreen(
+        store: widget.onboardingStore,
+        onFinished: _finishOnboarding,
+      );
+    }
     final colorScheme = Theme.of(context).colorScheme;
 
     final textTheme = Theme.of(context).textTheme;
