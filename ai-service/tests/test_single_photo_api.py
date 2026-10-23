@@ -2,6 +2,7 @@
 import json
 import os
 from io import BytesIO
+from pathlib import Path
 from types import SimpleNamespace
 import unittest
 from unittest.mock import AsyncMock, patch
@@ -58,6 +59,13 @@ async def post_multipart(fields=None, files=None):
 
 
 class SinglePhotoApiTest(unittest.IsolatedAsyncioTestCase):
+    async def test_shared_unknown_severity_contract_survives_protected_api_serialization(self):
+        fixture = json.loads((Path(__file__).resolve().parents[2] / 'contracts/car-analysis-v1.json').read_text(encoding='utf-8'))
+        with patch.object(main, 'run_damage_operation', return_value=fixture['visibleDamage']):
+            status, body = await post_multipart(files={'image': ('car.jpg', b'image', 'image/jpeg')})
+        self.assertEqual(200, status)
+        self.assertEqual(fixture['visibleDamage'], body)
+
     async def test_single_multipart_forwards_normalized_region_without_context(self):
         for region in (" front ", "rear"):
             with self.subTest(region=region), patch.object(main, "run_damage_operation", return_value=CLEAN_RESULT) as operation:

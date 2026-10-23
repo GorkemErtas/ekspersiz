@@ -4,10 +4,12 @@ import logging
 import re
 from typing import Any
 
-from PIL import Image, JpegImagePlugin, PngImagePlugin, WebPImagePlugin, UnidentifiedImageError
+from PIL import ImageOps, Image, JpegImagePlugin, PngImagePlugin, WebPImagePlugin, UnidentifiedImageError
 import cv2
 import numpy as np
 from ultralytics import YOLO
+
+from app.model_contract import DAMAGE_CLASSES, PART_CLASSES, verify_artifact, verify_names
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -67,11 +69,15 @@ class DamageAnalyzer:
     belirlemek için kullanılır.
     """
 
-    VEHICLE_LABELS = {
-        "car",
-        "truck",
-        "bus",
-        "motorcycle",
+    VEHICLE_LABELS = {"car"}
+    UNSUPPORTED_VEHICLE_LABELS = {"truck", "bus", "motorcycle", "bicycle", "train", "boat"}
+    # Policy thresholds, not calibrated probabilities of being an automobile.
+    PART_EVIDENCE_CONFIDENCE = 0.50
+    PART_MATCH_MARGIN = 0.10
+    PARTIAL_CAR_CONFIDENCE = 0.20
+    BODY_PARTS = {
+        "front-bumper", "back-bumper", "front-door", "back-door", "hood",
+        "fender", "quarter-panel", "rocker-panel", "roof", "trunk",
     }
 
     VEHICLE_PART_MAPPING = {
@@ -161,6 +167,11 @@ class DamageAnalyzer:
 
         self._validate_model_paths()
 
+        for path, role in ((self.vehicle_model_path, "vehicle"),
+                           (self.damage_model_path, "damage"),
+                           (self.vehicle_part_model_path, "part")):
+            verify_artifact(path, role)
+
         self.vehicle_model = YOLO(
             str(self.vehicle_model_path)
         )
@@ -169,6 +180,7 @@ class DamageAnalyzer:
             str(self.damage_model_path)
         )
 
+        verify_names(self.damage_model.names, DAMAGE_CLASSES)
         self.damage_class_mapping = (
             self._build_damage_class_mapping(
                 self.damage_model.names
@@ -178,6 +190,7 @@ class DamageAnalyzer:
         self.vehicle_part_model = YOLO(
             str(self.vehicle_part_model_path)
         )
+        verify_names(self.vehicle_part_model.names, PART_CLASSES)
 
     def validate_image_quality(
             self,
@@ -194,55 +207,49 @@ class DamageAnalyzer:
         if quality_issue is not None:
             return quality_issue
 
-        # The close damage photo is intentionally allowed to omit the full
-        # vehicle. Its job is to preserve fine damage detail; requiring a
-        # generic vehicle detector here rejects valid close-up photos.
-        if normalized_purpose == "damage":
-            return ImageQualityResponse(
-                suitable=True,
-                code="SUITABLE",
-                message="Hasar fotoğrafı analiz için uygun. Hasar ve çevresindeki parça net görünmeli.",
-            )
-
-        vehicle_results = self.vehicle_model.predict(
-            source=image,
-            conf=self.vehicle_confidence_threshold,
-            verbose=False,
+        issue, _, _ = self._automobile_evidence(
+            image, allow_partial=normalized_purpose == "damage"
         )
-        vehicle_detections = [
-            detection
-            for detection in self._extract_detections(vehicle_results)
-            if detection.label.lower() in self.VEHICLE_LABELS
-        ]
-
-        if not vehicle_detections:
-            return ImageQualityResponse(
-                suitable=False,
-                code="NO_VEHICLE",
-                message="Fotoğrafta tanınabilir bir araç görünmüyor.",
-            )
-
-        primary_vehicle = max(
-            vehicle_detections,
-            key=self._detection_area,
+        return issue or ImageQualityResponse(
+            suitable=True, code="SUITABLE",
+            message="Otomobil fotoğrafı görünür hasar analizi için uygun.",
         )
-        image_area = float(max(1, image.width * image.height))
-        vehicle_area_ratio = self._detection_area(primary_vehicle) / image_area
-        if vehicle_area_ratio < self.minimum_vehicle_area_ratio:
-            return ImageQualityResponse(
-                suitable=False,
-                code="VEHICLE_TOO_SMALL",
-                message="Araç fotoğrafta çok küçük görünüyor. Araca biraz daha yaklaşın.",
-            )
 
-        return ImageQualityResponse(
-            suitable=True,
-            code="SUITABLE",
-            message=(
-                "Geniş açı fotoğraf analiz için uygun. "
-                "Hasar ve çevresindeki araç parçaları görünür durumda olmalı."
-            ),
+    def _automobile_evidence(self, image: Image.Image, allow_partial: bool = True):
+        results = self.vehicle_model.predict(
+            source=image, conf=self.PARTIAL_CAR_CONFIDENCE, verbose=False,
         )
+        objects = self._extract_detections(results)
+        def issue(code, message):
+            return ImageQualityResponse(suitable=False, code=code, message=message), [], None
+
+        # Mixed vehicles are ambiguous too: do not silently choose the largest.
+        if any(d.label.lower() in self.UNSUPPORTED_VEHICLE_LABELS for d in objects):
+            return issue("UNSUPPORTED_VEHICLE",
+                         "Yalnızca otomobiller desteklenir. Diğer araçları içermeyen bir otomobil fotoğrafı çekin.")
+        cars = [d for d in objects if d.label.lower() == "car"]
+        if len(cars) > 1:
+            return issue("MULTIPLE_VEHICLES", "Fotoğrafta tek bir otomobil bulunmalı.")
+        if not cars:
+            return issue("NO_VEHICLE",
+                         "Otomobil olduğu doğrulanamıyor. Hasarı ve çevresindeki parçayı daha geniş açıyla çekin.")
+        car = cars[0]
+        if self._detection_area(car) / max(1, image.width * image.height) < self.minimum_vehicle_area_ratio:
+            return issue("VEHICLE_TOO_SMALL", "Otomobil fotoğrafta çok küçük. Otomobile biraz daha yaklaşın.")
+        if car.confidence >= self.vehicle_confidence_threshold:
+            return None, cars, None
+        if allow_partial:
+            parts = self._detect_vehicle_parts(image)
+            evidence_labels = {
+                p.label.lower() for p in parts
+                if p.label.lower() in self.VEHICLE_PART_MAPPING
+                and p.confidence >= self.PART_EVIDENCE_CONFIDENCE
+                and self._calculate_damage_overlap_ratio(p.boundingBox, car.boundingBox) >= 0.5
+            }
+            if len(evidence_labels) >= 2 and evidence_labels & self.BODY_PARTS:
+                return None, [], parts
+        return issue("UNCERTAIN_VEHICLE",
+                     "Otomobil kanıtı yetersiz. Hasarla birlikte otomobilin daha geniş bir bölümünü çekin.")
 
     @staticmethod
     def _detection_area(detection: DetectedObject) -> float:
@@ -303,37 +310,9 @@ class DamageAnalyzer:
         if quality_issue is not None:
             raise ValueError(quality_issue.message)
 
-        vehicle_results = self.vehicle_model.predict(
-            source=image,
-            conf=self.vehicle_confidence_threshold,
-            verbose=False,
-        )
-
-        vehicle_detections = self._extract_detections(
-            vehicle_results
-        )
-
-        vehicle_detections = [
-            detection
-            for detection in vehicle_detections
-            if detection.label.lower()
-               in self.VEHICLE_LABELS
-        ]
-
-        vehicle_part_detections = None
-        if not vehicle_detections:
-            # Generic object detectors miss partial vehicles. Require evidence
-            # from the existing part model, never a damage prediction alone.
-            # Keep the original pixels and the existing confidence threshold.
-            vehicle_part_detections = self._detect_vehicle_parts(image)
-            if not any(
-                part.label.strip().lower() in self.VEHICLE_PART_MAPPING
-                for part in vehicle_part_detections
-            ):
-                raise ValueError(
-                    "Fotoğrafta araç veya araç parçası seçilemiyor. "
-                    "Hasarı ve çevresindeki parçayı aynı karede, net ve yeterli ışıkta çekin."
-                )
+        scope_issue, vehicle_detections, vehicle_part_detections = self._automobile_evidence(image)
+        if scope_issue is not None:
+            raise ValueError(scope_issue.message)
 
         (
             analysis_image,
@@ -367,6 +346,14 @@ class DamageAnalyzer:
                 filename=safe_filename
             )
 
+
+        # Weak detections are inconclusive, not a clean bill of health.
+        damage_detections = [
+            d for d in damage_detections
+            if d.confidence >= self.damage_recommendation_confidence_threshold
+        ]
+        if not damage_detections:
+            raise ValueError("Görünür hasar güvenilir şekilde değerlendirilemedi. Daha net bir fotoğraf çekin.")
 
         if vehicle_part_detections is None:
             vehicle_part_detections = self._detect_vehicle_parts(analysis_image)
@@ -428,144 +415,12 @@ class DamageAnalyzer:
             filename: str,
             vehicle_region: str | None = None,
     ) -> DamageAnalysisResponse:
-        safe_filename = Path(filename or "vehicle.jpg").name.lower()
-        damage_image = self._load_image(damage_file_content)
-        context_image = self._load_image(context_file_content)
-
-        close_damage_results = self.damage_model.predict(
-            source=damage_image,
-            conf=self.damage_confidence_threshold,
-            iou=self.damage_iou_threshold,
-            max_det=20,
-            agnostic_nms=False,
-            verbose=False,
-        )
-        close_damage_detections = self._extract_detections(
-            close_damage_results,
-            class_name_mapping=self.damage_class_mapping,
-        )
-
-        if not close_damage_detections:
-            return self._build_no_damage_response(
-                filename=safe_filename
-            )
-
-        vehicle_results = self.vehicle_model.predict(
-            source=context_image,
-            conf=self.vehicle_confidence_threshold,
-            verbose=False,
-        )
-        vehicle_detections = [
-            detection
-            for detection in self._extract_detections(vehicle_results)
-            if detection.label.lower() in self.VEHICLE_LABELS
-        ]
-        if not vehicle_detections:
-            raise ValueError(
-                "Context image does not contain a recognizable vehicle."
-            )
-
-        (
-            context_analysis_image,
-            context_offset_x,
-            context_offset_y,
-        ) = self._crop_primary_vehicle(
-            image=context_image,
-            vehicle_detections=vehicle_detections,
-        )
-
-        context_damage_results = self.damage_model.predict(
-            source=context_analysis_image,
-            conf=self.damage_confidence_threshold,
-            iou=self.damage_iou_threshold,
-            max_det=20,
-            agnostic_nms=False,
-            verbose=False,
-        )
-        context_part_results = self.vehicle_part_model.predict(
-            source=context_analysis_image,
-            conf=self.vehicle_part_confidence_threshold,
-            iou=0.50,
-            max_det=50,
-            verbose=False,
-        )
-
-        context_damage_detections = self._translate_detections(
-            detections=self._extract_detections(
-                context_damage_results,
-                class_name_mapping=self.damage_class_mapping,
-            ),
-            offset_x=context_offset_x,
-            offset_y=context_offset_y,
-        )
-        context_part_detections = self._translate_detections(
-            detections=self._extract_detections(
-                context_part_results
-            ),
-            offset_x=context_offset_x,
-            offset_y=context_offset_y,
-        )
-
-        logger.info(
-            "Context vehicle-part detections: %s",
-            [
-                {
-                    "label": detection.label,
-                    "confidence": round(detection.confidence, 4),
-                }
-                for detection in context_part_detections
-            ],
-        )
-
-        matched_context_damages = self._assign_parts_to_damage_detections(
-            damage_detections=context_damage_detections,
-            vehicle_part_detections=context_part_detections,
-        )
-
-        self._transfer_context_parts(
-            close_damage_detections=close_damage_detections,
-            context_damage_detections=matched_context_damages,
-        )
-        self._apply_vehicle_region_constraint(
-            close_damage_detections,
-            vehicle_region,
-        )
-
-        primary_damage = max(
-            close_damage_detections,
-            key=lambda detection: detection.confidence,
-        )
-        affected_parts = self._extract_affected_parts(
-            close_damage_detections
-        )
-
-        return self._build_damage_response(
-            filename=safe_filename,
-            primary_damage=primary_damage,
-            damage_detections=close_damage_detections,
-            affected_parts=affected_parts,
-        )
-
-    @staticmethod
-    def _transfer_context_parts(
-            close_damage_detections: list[DetectedObject],
-            context_damage_detections: list[DetectedObject],
-    ) -> None:
-        for close_damage in close_damage_detections:
-            candidates = [
-                context_damage
-                for context_damage in context_damage_detections
-                if context_damage.label == close_damage.label
-                and context_damage.affectedPart != "UNKNOWN"
-            ]
-            if not candidates:
-                continue
-
-            best_match = max(
-                candidates,
-                key=lambda detection: detection.confidence,
-            )
-            close_damage.affectedPart = best_match.affectedPart
+        # A class name is not cross-image correspondence. Preserve the legacy
+        # API, but require independent evidence and never copy parts across photos.
+        context = self.validate_image_quality(context_file_content, purpose="context")
+        if not context.suitable:
+            raise ValueError(context.message)
+        return self.analyze(damage_file_content, filename, vehicle_region)
 
     @staticmethod
     def _apply_vehicle_region_constraint(
@@ -597,12 +452,14 @@ class DamageAnalyzer:
                 continue
 
             corrected_part = pair[0] if vehicle_region == "FRONT" else pair[1]
-            detection.affectedPart = VehiclePart(corrected_part)
+            detection.affectedPart = (
+                VehiclePart(part_value) if part_value == corrected_part else VehiclePart.UNKNOWN
+            )
             logger.info(
                 "Vehicle region constraint: region=%s original=%s corrected=%s",
                 vehicle_region,
                 part_value,
-                corrected_part,
+                detection.affectedPart.value,
             )
 
     def _extract_affected_parts(
@@ -716,22 +573,8 @@ class DamageAnalyzer:
         if damage_type == "NO_VISIBLE_DAMAGE":
             return "NONE"
 
-        if damage_type in {
-            "BROKEN_PART",
-            "BROKEN_GLASS",
-        }:
-            if affected_part_count >= 2:
-                return "SEVERE"
-
-            return "MODERATE"
-
-        if affected_part_count >= 3:
-            return "SEVERE"
-
-        if affected_part_count == 2:
-            return "MODERATE"
-
-        return "MINOR"
+        # The checkpoint has no severity labels. Part count is not severity.
+        return "UNKNOWN"
 
     def _validate_model_paths(
             self,
@@ -779,22 +622,7 @@ class DamageAnalyzer:
         )
 
         if not repair_recommendations:
-            repair_recommendations = [
-                DamageRecommendation(
-                    damageType=damage_type,
-                    recommendedAction=(
-                        self._determine_recommended_action(
-                            damage_type
-                        )
-                    ),
-                    partReplacementRequired=(
-                        self._determine_replacement_requirement(
-                            damage_type
-                        )
-                    ),
-                    affectedParts=affected_parts,
-                )
-            ]
+            raise ValueError("Görünür hasar güvenilir şekilde değerlendirilemedi. Daha net bir fotoğraf çekin.")
 
         damage_types = [
             recommendation.damageType
@@ -812,7 +640,7 @@ class DamageAnalyzer:
         )
 
         damage_type_text = (
-            ", ".join(damage_types)
+            ", ".join("Lamba kırığı belirtisi" if t == "BROKEN_PART" else t for t in damage_types)
             if damage_types
             else damage_type
         )
@@ -834,18 +662,13 @@ class DamageAnalyzer:
                 primary_damage.confidence
             ),
             analysisMessage=(
-                f"{filename} adlı görselde "
-                f"{len(damage_detections)} hasarlı "
-                f"bölge tespit edildi. "
-                f"Hasar türleri: "
-                f"{damage_type_text}. "
-                f"Hasar seviyesi: "
-                f"{damage_severity}. "
-                f"En yüksek güven skoru: "
-                f"{primary_damage.confidence:.2f}. "
-                f"Etkilenen parçalar: "
-                f"{affected_part_text}."
+                f"Görüntüde {len(damage_detections)} olası hasar bölgesi: {damage_type_text}. "
+                f"Etkilenen parçalar: {affected_part_text}. "
+                "Hasar şiddeti, onarım yöntemi ve parça değişimi fotoğraftan belirlenemedi; "
+                "fiziksel inceleme gerekir. Onarım gereksiz olduğu sonucu çıkarılamaz. "
+                "Model skoru doğruluk yüzdesi değildir."
             ),
+
             detections=damage_detections,
         )
 
@@ -881,7 +704,7 @@ class DamageAnalyzer:
             vehicle_part_detections: list[DetectedObject],
     ) -> list[DetectedObject]:
         for damage_detection in damage_detections:
-            damage_detection.affectedPart = (
+            damage_detection.affectedPart = VehiclePart(
                 self._match_damage_to_vehicle_part(
                     damage=damage_detection,
                     vehicle_parts=(
@@ -897,59 +720,28 @@ class DamageAnalyzer:
             damage: DetectedObject,
             vehicle_parts: list[DetectedObject],
     ) -> str:
-        best_vehicle_part = "UNKNOWN"
-        best_score = 0.0
-
-        for vehicle_part in vehicle_parts:
-            normalized_label = (
-                vehicle_part.label
-                .strip()
-                .lower()
-            )
-
-            mapped_vehicle_part = (
-                self.VEHICLE_PART_MAPPING.get(
-                    normalized_label
-                )
-            )
-
-            if mapped_vehicle_part is None:
+        candidates: dict[str, float] = {}
+        allowed_parts = {
+            "BROKEN_PART": {"HEADLIGHT", "TAIL_LIGHT"},
+            "BROKEN_GLASS": {"WINDSHIELD", "REAR_WINDSHIELD", "FRONT_WINDOW", "REAR_WINDOW"},
+            "DENT": {"FRONT_BUMPER", "REAR_BUMPER", "FRONT_DOOR", "REAR_DOOR",
+                     "FENDER", "QUARTER_PANEL", "ROCKER_PANEL", "HOOD", "ROOF", "TRUNK"},
+        }.get(damage.label.upper())
+        for part in vehicle_parts:
+            mapped = self.VEHICLE_PART_MAPPING.get(part.label.strip().lower())
+            if mapped is None or part.confidence < self.PART_EVIDENCE_CONFIDENCE:
                 continue
-
-            overlap_ratio = (
-                self._calculate_damage_overlap_ratio(
-                    damage.boundingBox,
-                    vehicle_part.boundingBox,
-                )
-            )
-
-            if (
-                    overlap_ratio
-                    < self.minimum_part_overlap_ratio
-            ):
+            if allowed_parts is not None and mapped not in allowed_parts:
                 continue
-
-            score = (
-                    overlap_ratio * 0.80
-                    + vehicle_part.confidence * 0.20
-            )
-
-            if score > best_score:
-                best_score = score
-                best_vehicle_part = (
-                    mapped_vehicle_part
-                )
-                logger.info(
-                    "Part match candidate selected: damage=%s part=%s "
-                    "part_confidence=%.4f overlap=%.4f match_score=%.4f",
-                    damage.label,
-                    mapped_vehicle_part,
-                    vehicle_part.confidence,
-                    overlap_ratio,
-                    score,
-                )
-
-        return best_vehicle_part
+            overlap = self._calculate_damage_overlap_ratio(damage.boundingBox, part.boundingBox)
+            if overlap < max(self.minimum_part_overlap_ratio, 0.50):
+                continue
+            score = overlap * .80 + part.confidence * .20
+            candidates[mapped] = max(score, candidates.get(mapped, 0.0))
+        ranked = sorted(candidates.items(), key=lambda item: item[1], reverse=True)
+        if not ranked or (len(ranked) > 1 and ranked[0][1] - ranked[1][1] < self.PART_MATCH_MARGIN):
+            return "UNKNOWN"
+        return ranked[0][0]
 
     @staticmethod
     def _calculate_damage_overlap_ratio(
@@ -1033,30 +825,12 @@ class DamageAnalyzer:
     def _determine_recommended_action(
             damage_type: str,
     ) -> str:
-        recommendations = {
-            "SCRATCH": "PAINT_TOUCH_UP",
-            "DENT": "DENT_REPAIR",
-            "CRACK": "PART_REPAIR",
-            "PAINT_DAMAGE": "FULL_PAINTING",
-            "BROKEN_PART": "PART_REPLACEMENT",
-            "BROKEN_GLASS": "GLASS_REPLACEMENT",
-        }
-
-        return recommendations.get(
-            damage_type,
-            "PART_REPAIR",
-        )
+        # No repair-action or replace/repair supervision exists in the model.
+        return "NO_ACTION"
 
     @staticmethod
-    def _determine_replacement_requirement(
-            damage_type: str,
-    ) -> bool:
-        return (
-                damage_type in {
-                    "BROKEN_PART",
-                    "BROKEN_GLASS",
-                }
-        )
+    def _determine_replacement_requirement(damage_type: str) -> bool:
+        return False
 
     @classmethod
     def _build_damage_class_mapping(
@@ -1167,6 +941,7 @@ class DamageAnalyzer:
                     BytesIO(file_content)
             ) as verified_image:
                 # convert() already owns a new RGB buffer; avoid duplicating it.
+                ImageOps.exif_transpose(verified_image, in_place=True)
                 return verified_image.convert("RGB")
 
         except (

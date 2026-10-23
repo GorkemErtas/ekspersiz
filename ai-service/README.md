@@ -7,20 +7,24 @@ The production service uses the reviewed CarDD five-class damage detector:
 ```text
 image
   -> existing brightness/blur and supported-file validation
-  -> yolo11n.pt vehicle detection and existing primary-vehicle crop
-     (if no vehicle: require a known vehicle part and keep the full input image)
+  -> yolo11n.pt automobile-only evidence gate and primary-car crop
+     (partial car candidate + corroborating parts: keep the full input image)
   -> models/candidates/damage_detection_v2_cardd_5class.pt damage detection
   -> models/vehicle_part_best.pt vehicle-part detection
-  -> bounding-box overlap matching
-  -> optional FRONT/REAR correction of ambiguous paired parts
-  -> deterministic severity and repair recommendation
+  -> overlap, part confidence, semantic compatibility and ambiguity checks
+  -> optional FRONT/REAR conflict clears the part to UNKNOWN
+  -> visible findings with UNKNOWN severity and no established repair action
   -> FastAPI response
 ```
 
-The detector's class IDs are resolved from its checkpoint names on first image request, not
-from a fixed numeric order. The active checkpoint supports `SCRATCH`, `DENT`,
-`CRACK`, `BROKEN_PART`, and `BROKEN_GLASS`. `NO_VISIBLE_DAMAGE` is a
+Checkpoint hashes and exact class names are checked against `app/model_contract.py`
+before serving analysis. The active checkpoint supports `SCRATCH`, `DENT`,
+`CRACK`, `BROKEN_PART` (CarDD lamp breakage only), and `BROKEN_GLASS`. `NO_VISIBLE_DAMAGE` is a
 deterministic domain result, never a learned damage class.
+
+See [the audited class mappings, acceptance rules and limitations](../docs/ml/CAR_ANALYSIS_RELIABILITY.md).
+Run `python scripts/audit_production_models.py` from `ai-service` to audit local
+artifacts and available dataset YAMLs without training or modifying weights.
 
 All three production weights are deployment artifacts ignored by Git and must
 be present at the paths above. The service has no runtime model override.

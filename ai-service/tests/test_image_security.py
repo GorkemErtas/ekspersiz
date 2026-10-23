@@ -9,6 +9,16 @@ from app.damage_analyzer import DamageAnalyzer
 
 
 class ImageSecurityTest(unittest.TestCase):
+    def test_exif_orientation_is_applied_once_before_coordinate_analysis(self):
+        stream = BytesIO()
+        photo = Image.new("RGB", (64, 48))
+        exif = Image.Exif()
+        exif[274] = 6
+        photo.save(stream, format="JPEG", exif=exif)
+        with DamageAnalyzer._load_image(stream.getvalue()) as decoded:
+            self.assertEqual((48, 64), decoded.size)
+            self.assertIsNone(decoded.getexif().get(274))
+
     def test_large_dimensions_rejected_before_decode_even_for_tiny_upload(self):
         stream = BytesIO()
         Image.new("RGB", (1, 1)).save(stream, format="PNG")

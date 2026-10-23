@@ -15,58 +15,29 @@ class DamageAnalyzerResultTest(unittest.TestCase):
     def setUp(self) -> None:
         self.analyzer = DamageAnalyzer.__new__(DamageAnalyzer)
         self.analyzer.damage_recommendation_confidence_threshold = 0.30
+        self.analyzer.minimum_vehicle_area_ratio = .12
         self.analyzer.minimum_brightness = 35.0
         self.analyzer.minimum_blur_score = 20.0
 
-    def test_context_part_is_transferred_only_for_same_damage_type(self) -> None:
-        close_scratch = DetectedObject(
-            label="SCRATCH",
-            confidence=0.91,
-            affectedPart="UNKNOWN",
-            boundingBox=BoundingBox(x1=1, y1=1, x2=10, y2=10),
-        )
-        context_scratch = DetectedObject(
-            label="SCRATCH",
-            confidence=0.72,
-            affectedPart="FRONT_BUMPER",
-            boundingBox=BoundingBox(x1=20, y1=20, x2=40, y2=40),
-        )
-        context_dent = DetectedObject(
-            label="DENT",
-            confidence=0.99,
-            affectedPart="REAR_BUMPER",
-            boundingBox=BoundingBox(x1=50, y1=50, x2=70, y2=70),
-        )
+    def test_pair_checks_context_before_single_analysis(self):
+        from app.schemas import ImageQualityResponse
+        self.analyzer.validate_image_quality = Mock(return_value=ImageQualityResponse(
+            suitable=False, code="UNSUPPORTED_VEHICLE", message="Otomobil gerekli"))
+        self.analyzer.analyze = Mock()
+        with self.assertRaisesRegex(ValueError, "Otomobil"):
+            self.analyzer.analyze_pair(b"close", b"context", "photo.jpg")
+        self.analyzer.analyze.assert_not_called()
 
-        self.analyzer._transfer_context_parts(
-            [close_scratch],
-            [context_scratch, context_dent],
-        )
+    def test_pair_never_transfers_parts_from_context(self):
+        from app.schemas import ImageQualityResponse
+        self.analyzer.validate_image_quality = Mock(return_value=ImageQualityResponse(
+            suitable=True, code="SUITABLE", message="OK"))
+        expected = self.analyzer._build_no_damage_response("car.jpg")
+        self.analyzer.analyze = Mock(return_value=expected)
+        self.assertIs(expected, self.analyzer.analyze_pair(b"close", b"context", "photo.jpg", "FRONT"))
+        self.analyzer.analyze.assert_called_once_with(b"close", "photo.jpg", "FRONT")
 
-        self.assertEqual("FRONT_BUMPER", close_scratch.affectedPart)
-
-    def test_context_part_remains_unknown_without_same_damage_type(self) -> None:
-        close_scratch = DetectedObject(
-            label="SCRATCH",
-            confidence=0.91,
-            affectedPart="UNKNOWN",
-            boundingBox=BoundingBox(x1=1, y1=1, x2=10, y2=10),
-        )
-        context_dent = DetectedObject(
-            label="DENT",
-            confidence=0.99,
-            affectedPart="REAR_BUMPER",
-            boundingBox=BoundingBox(x1=50, y1=50, x2=70, y2=70),
-        )
-
-        self.analyzer._transfer_context_parts(
-            [close_scratch],
-            [context_dent],
-        )
-
-        self.assertEqual("UNKNOWN", close_scratch.affectedPart)
-
-    def test_vehicle_region_corrects_only_ambiguous_part_pairs(self) -> None:
+    def test_vehicle_region_conflict_clears_part_without_inventing_another(self) -> None:
         bumper = DetectedObject(
             label="SCRATCH",
             confidence=0.91,
@@ -85,10 +56,10 @@ class DamageAnalyzerResultTest(unittest.TestCase):
             "FRONT",
         )
 
-        self.assertEqual("FRONT_BUMPER", bumper.affectedPart)
+        self.assertEqual("UNKNOWN", bumper.affectedPart)
         self.assertEqual("HEADLIGHT", headlight.affectedPart)
 
-    def test_vehicle_region_can_correct_front_pair_to_rear(self) -> None:
+    def test_vehicle_region_cannot_replace_front_evidence_with_rear(self) -> None:
         wheel = DetectedObject(
             label="DENT",
             confidence=0.84,
@@ -98,7 +69,7 @@ class DamageAnalyzerResultTest(unittest.TestCase):
 
         self.analyzer._apply_vehicle_region_constraint([wheel], "REAR")
 
-        self.assertEqual("REAR_WHEEL", wheel.affectedPart)
+        self.assertEqual("UNKNOWN", wheel.affectedPart)
 
     def test_no_damage_response_uses_canonical_domain_values(self) -> None:
         result = self.analyzer._build_no_damage_response("vehicle.jpg")
@@ -112,7 +83,7 @@ class DamageAnalyzerResultTest(unittest.TestCase):
         )
         self.assertIn("profesyonel ekspertiz garantisi değildir", result.analysisMessage)
 
-    def test_accepted_low_confidence_damage_remains_minor(self) -> None:
+    def test_low_confidence_damage_cannot_create_fallback_advice(self) -> None:
         detection = DetectedObject(
             label="scratch",
             confidence=0.28,
@@ -120,27 +91,19 @@ class DamageAnalyzerResultTest(unittest.TestCase):
             boundingBox=BoundingBox(x1=1, y1=1, x2=10, y2=10),
         )
 
-        result = self.analyzer._build_damage_response(
-            filename="vehicle.jpg",
-            primary_damage=detection,
-            damage_detections=[detection],
-            affected_parts=["FRONT_BUMPER"],
-        )
-
-        self.assertEqual("MINOR", result.damageSeverity.value)
-        self.assertEqual(["SCRATCH"], [item.value for item in result.damageTypes])
-        self.assertEqual(
-            "PAINT_TOUCH_UP",
-            result.repairRecommendations[0].recommendedAction.value,
-        )
+        with self.assertRaisesRegex(ValueError, "değerlendirilemedi"):
+            self.analyzer._build_damage_response(
+                filename="vehicle.jpg", primary_damage=detection,
+                damage_detections=[detection], affected_parts=["FRONT_BUMPER"],
+            )
 
     def test_supported_damage_types_flow_to_domain_results(self) -> None:
         cases = (
-            ("SCRATCH", "PAINT_TOUCH_UP", False, "MINOR"),
-            ("DENT", "DENT_REPAIR", False, "MINOR"),
-            ("CRACK", "PART_REPAIR", False, "MINOR"),
-            ("BROKEN_PART", "PART_REPLACEMENT", True, "MODERATE"),
-            ("BROKEN_GLASS", "GLASS_REPLACEMENT", True, "MODERATE"),
+            ("SCRATCH", "NO_ACTION", False, "UNKNOWN"),
+            ("DENT", "NO_ACTION", False, "UNKNOWN"),
+            ("CRACK", "NO_ACTION", False, "UNKNOWN"),
+            ("BROKEN_PART", "NO_ACTION", False, "UNKNOWN"),
+            ("BROKEN_GLASS", "NO_ACTION", False, "UNKNOWN"),
         )
 
         for damage_type, action, replacement_required, severity in cases:
@@ -330,7 +293,7 @@ class DamageAnalyzerResultTest(unittest.TestCase):
         self.analyzer.vehicle_part_model.predict.return_value = []
         self.analyzer.vehicle_part_confidence_threshold = 0.25
 
-        with self.assertRaisesRegex(ValueError, "araç veya araç parçası"):
+        with self.assertRaisesRegex(ValueError, "Otomobil olduğu doğrulanamıyor"):
             self.analyzer.analyze(image_bytes.getvalue(), "empty-road.jpg")
 
     def test_dark_image_is_rejected_before_vehicle_detection(self) -> None:
@@ -347,24 +310,15 @@ class DamageAnalyzerResultTest(unittest.TestCase):
         self.assertEqual("TOO_DARK", result.code)
         self.analyzer.vehicle_model.predict.assert_not_called()
 
-    def test_damage_photo_does_not_require_full_vehicle_detection(self) -> None:
+    def test_damage_photo_also_requires_automobile_evidence(self):
         image_bytes = BytesIO()
-        Image.effect_noise((200, 200), 80).convert("RGB").save(
-            image_bytes,
-            format="JPEG",
-        )
-        self.analyzer.minimum_brightness = 1.0
-        self.analyzer.minimum_blur_score = 1.0
+        Image.effect_noise((200, 200), 80).convert("RGB").save(image_bytes, "JPEG")
+        self.analyzer.vehicle_confidence_threshold = .40
         self.analyzer.vehicle_model = Mock()
-
-        result = self.analyzer.validate_image_quality(
-            image_bytes.getvalue(),
-            purpose="damage",
-        )
-
-        self.assertTrue(result.suitable)
-        self.assertEqual("SUITABLE", result.code)
-        self.analyzer.vehicle_model.predict.assert_not_called()
+        self.analyzer._extract_detections = Mock(return_value=[])
+        result = self.analyzer.validate_image_quality(image_bytes.getvalue(), purpose="damage")
+        self.assertFalse(result.suitable)
+        self.assertEqual("NO_VEHICLE", result.code)
 
     def test_context_photo_still_requires_vehicle_context(self) -> None:
         image_bytes = BytesIO()
