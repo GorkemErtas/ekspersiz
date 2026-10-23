@@ -1,0 +1,30 @@
+experiment: vehicle_damage_detection_v3_rf
+source_names:
+  - Broken part
+  - Cracked
+  - Dent
+  - Missing part
+  - Paint damage
+  - Scratch
+  - broken_lamp
+  - broken_mirror
+  - cracked_glass
+  - dent_hail
+  - tire_flat
+# Independent experimental IDs; these are NOT production/CarDD IDs.
+model_names:
+  - BROKEN_PART
+  - CRACK
+  - DENT
+  - MISSING_PART
+  - PAINT_DAMAGE
+  - SCRATCH
+  - BROKEN_LAMP
+  - BROKEN_MIRROR
+  - CRACKED_GLASS
+  - DENT_HAIL
+  - TIRE_FLAT
+class_policy: preserve_bijective
+invalid_annotation_policy: quarantine_entire_image
+# In particular, cracked glass is not assumed to be shattered/broken glass.
+production_mapping: null
