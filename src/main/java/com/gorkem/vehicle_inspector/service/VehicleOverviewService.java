@@ -56,7 +56,7 @@ public class VehicleOverviewService {
     private String damageSeverityLabel(DamageSeverity severity) {
         return switch (severity) {
             case UNKNOWN -> "Bilinmiyor";
-            case NONE -> "Hasar yok";
+            case NONE -> "Görünür hasar yok";
             case MINOR -> "Hafif";
             case MODERATE -> "Orta";
             case SEVERE -> "Ağır";

@@ -62,8 +62,8 @@ private static final long[] RETRY_DELAYS_MS = {
             if (exception.getCause() instanceof HttpStatusCodeException response
                     && response.getStatusCode().value() == 400) {
                 throw new AiServiceException(
-                        "Fotoğraf analiz için uygun değil. Hasarı ve çevresindeki araç parçasını "
-                                + "aynı karede, net ve yeterli ışıkta gösteren bir fotoğraf kullanın.",
+                        "Fotoğraf güvenilir şekilde değerlendirilemedi. Yalnızca otomobiller desteklenir. "
+                                + "Hasarı ve çevresindeki araç parçasını aynı karede, net ve yeterli ışıkta gösterin.",
                         exception
                 );
             }
@@ -198,6 +198,11 @@ private static final long[] RETRY_DELAYS_MS = {
                     responseType
             );
         } catch (HttpStatusCodeException exception) {
+            if (exception.getStatusCode().value() == 400) {
+                throw new AiServiceException(
+                        "Fotoğraf güvenilir şekilde değerlendirilemedi. Yalnızca otomobilin hasarını ve çevresini gösteren net bir fotoğrafla tekrar deneyin.",
+                        exception);
+            }
             throw new AiServiceException(
                     "AI analiz servisi hata döndürdü. HTTP "
                             + exception.getStatusCode().value(),

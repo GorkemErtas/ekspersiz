@@ -692,6 +692,32 @@ class InspectionPersistenceTest {
         verify(places).search("repair service", 38.4, 27.1, 10_000);
     }
 
+    @Test
+    void uncertainSeverityAndUnknownPriceSurvivePostgresAndReportRegeneration() throws Exception {
+        Long id = tx.execute(status -> saveInspection(firstVehicle, owner, null, InspectionStatus.PENDING).getId());
+        var mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+        var fixture = mapper.readTree(java.nio.file.Files.readString(Path.of("contracts/car-analysis-v1.json")));
+        when(ai.analyzeSingleImage(any(), any())).thenReturn(
+                mapper.treeToValue(fixture.get("visibleDamage"), AiAnalysisResponse.class));
+
+        var result = service.analyzeInspection(id, owner.getEmail());
+        assertEquals(InspectionStatus.COMPLETED, result.getStatus());
+        assertEquals(ReportStatus.COMPLETED, result.getReportStatus());
+        tx.executeWithoutResult(status -> {
+            var saved = inspections.findById(id).orElseThrow();
+            assertEquals(DamageSeverity.UNKNOWN, saved.getDamageSeverity());
+            assertEquals("BROKEN_PART", saved.getDetections().getFirst().getLabel());
+            assertEquals(VehiclePart.HEADLIGHT, saved.getDetections().getFirst().getAffectedPart());
+            assertNull(saved.getReport().getEstimatedMinimumPrice());
+            assertNull(saved.getReport().getEstimatedMaximumPrice());
+        });
+        var regenerated = service.regenerateReport(id, member.getEmail());
+        assertEquals(ReportStatus.COMPLETED, regenerated.getReportStatus());
+        assertNull(regenerated.getReport().estimatedMaximumPrice());
+        verifyNoInteractions(reports);
+        verify(ai).analyzeSingleImage(any(), any());
+    }
+
     private DamageInspection saveInspection(Vehicle vehicle, User creator, LocalDateTime started, InspectionStatus status) {
         DamageInspection inspection = new DamageInspection(vehicle, creator, status);
         inspection.setAnalysisStartedAt(started);

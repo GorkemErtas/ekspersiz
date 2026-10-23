@@ -1,0 +1,26 @@
+{
+  "visibleDamage": {
+    "damageSeverity": "UNKNOWN",
+    "affectedParts": ["HEADLIGHT"],
+    "damageTypes": ["BROKEN_PART"],
+    "repairRecommendations": [{
+      "damageType": "BROKEN_PART", "recommendedAction": "NO_ACTION",
+      "partReplacementRequired": false, "affectedParts": ["HEADLIGHT"]
+    }],
+    "confidenceScore": 0.91,
+    "analysisMessage": "Lamba kırığı belirtisi. Şiddet, onarım ve değişim gerekliliği belirlenemedi; fiziksel inceleme gerekir. Model skoru doğruluk yüzdesi değildir.",
+    "detections": [{
+      "label": "BROKEN_PART", "confidence": 0.91, "affectedPart": "HEADLIGHT",
+      "boundingBox": {"x1": 20.0, "y1": 20.0, "x2": 40.0, "y2": 40.0}
+    }]
+  },
+  "noVisibleDamage": {
+    "damageSeverity": "NONE", "affectedParts": [], "damageTypes": ["NO_VISIBLE_DAMAGE"],
+    "repairRecommendations": [{"damageType": "NO_VISIBLE_DAMAGE", "recommendedAction": "NO_ACTION", "partReplacementRequired": false, "affectedParts": []}],
+    "confidenceScore": 0.0, "analysisMessage": "Görünür hasar tespit edilmedi; ekspertiz garantisi değildir.", "detections": []
+  },
+  "uncertainImage": {
+    "suitable": false, "code": "UNCERTAIN_VEHICLE",
+    "message": "Otomobil kanıtı yetersiz. Hasarla birlikte otomobilin daha geniş bir bölümünü çekin."
+  }
+}

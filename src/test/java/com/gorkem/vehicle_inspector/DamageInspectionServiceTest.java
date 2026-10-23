@@ -720,6 +720,98 @@ class DamageInspectionServiceTest {
         verify(ai,times(1)).analyzeSingleImage(any(),any());
     }
 
+    @Test
+    void supportedVisibleDamageWithUnknownSeverityCompletesWithoutInventedPrice() throws Exception {
+        var response = uncertainAnalysisResponse();
+        when(ai.analyzeSingleImage(any(), any())).thenReturn(response);
+        var result = service.analyzeInspection(30L, actor.getEmail());
+        assertEquals(InspectionStatus.COMPLETED, result.getStatus());
+        assertEquals(DamageSeverity.UNKNOWN, result.getDamageSeverity());
+        assertEquals(List.of(DamageType.BROKEN_PART), result.getDamageTypes());
+        assertEquals(List.of(VehiclePart.HEADLIGHT), result.getAffectedParts());
+        assertEquals(ReportStatus.COMPLETED, result.getReportStatus());
+        assertNull(result.getReport().estimatedMinimumPrice());
+        assertNull(result.getReport().estimatedMaximumPrice());
+        assertTrue(result.getReport().damageDescription().contains("Lamba kırığı"));
+        verifyNoInteractions(reports);
+        verify(analysisUsageRepository).save(any(AnalysisUsage.class));
+    }
+
+    @Test
+    void unknownSeverityWithoutEvidenceIsNotAcceptedAsCleanOrCompleted() throws Exception {
+        var response = uncertainAnalysisResponse();
+        response.setDetections(List.of());
+        when(ai.analyzeSingleImage(any(), any())).thenReturn(response);
+        var result = service.analyzeInspection(30L, actor.getEmail());
+        assertEquals(InspectionStatus.FAILED, result.getStatus());
+        assertNull(result.getReport());
+        verifyNoInteractions(reports);
+    }
+
+    @Test
+    void uncertainSeverityCannotCarryDefinitiveReplacementAdvice() throws Exception {
+        var response = uncertainAnalysisResponse();
+        response.getRepairRecommendations().getFirst().setPartReplacementRequired(true);
+        when(ai.analyzeSingleImage(any(), any())).thenReturn(response);
+        assertEquals(InspectionStatus.FAILED, service.analyzeInspection(30L, actor.getEmail()).getStatus());
+        verifyNoInteractions(reports);
+    }
+
+    @Test
+    void unsupportedVehicleIsRejectedBeforeQuotaAndInference() {
+        when(ai.validateImage(any(), anyString())).thenReturn(new ImageQualityResponse(
+                false, "UNSUPPORTED_VEHICLE", "Yalnızca otomobiller desteklenir."));
+        assertThrows(UnsuitableInspectionImageException.class,
+                () -> service.analyzeInspection(30L, actor.getEmail()));
+        assertEquals(InspectionStatus.PENDING, inspection.getStatus());
+        verify(ai, never()).analyzeSingleImage(any(), any());
+        verifyNoInteractions(analysisUsageRepository, reports);
+    }
+
+    @Test
+    void uncertainSeverityPaidReportChargesOnceAndReplayKeepsUnknownPrice() throws Exception {
+        var wallet = mock(CreditWalletService.class);
+        var token = java.util.UUID.randomUUID();
+        ReflectionTestUtils.setField(service, "creditWallets", wallet);
+        when(wallet.reserve(eq(actor), eq(true), eq("ANALYSIS"), anyString(), anyString()))
+                .thenReturn(new CreditWalletService.Reservation(token, false));
+        when(ai.analyzeSingleImage(any(), any())).thenReturn(uncertainAnalysisResponse());
+        var first = service.analyzeInspection(30L, actor.getEmail());
+        var replay = service.analyzeInspection(30L, actor.getEmail());
+        assertEquals(ReportStatus.COMPLETED, replay.getReportStatus());
+        assertEquals(first.getReport(), replay.getReport());
+        assertNull(replay.getReport().estimatedMaximumPrice());
+        verify(wallet).complete(actor, token);
+        verify(wallet).reserve(eq(actor), eq(true), eq("ANALYSIS"), anyString(), anyString());
+        verify(wallet, never()).release(any(), any());
+        verify(ai).analyzeSingleImage(any(), any());
+        verifyNoInteractions(reports);
+    }
+
+    @Test
+    void inconclusiveInferenceReleasesPaidReservationWithoutCleanReport() {
+        var wallet = mock(CreditWalletService.class);
+        var token = java.util.UUID.randomUUID();
+        ReflectionTestUtils.setField(service, "creditWallets", wallet);
+        when(wallet.reserve(eq(actor), eq(true), eq("ANALYSIS"), anyString(), anyString()))
+                .thenReturn(new CreditWalletService.Reservation(token, false));
+        when(wallet.reservationActive(actor, token)).thenReturn(true);
+        when(ai.analyzeSingleImage(any(), any())).thenThrow(
+                new com.gorkem.vehicle_inspector.exception.AiServiceException("Fotoğraf güvenilir şekilde değerlendirilemedi."));
+        var result = service.analyzeInspection(30L, actor.getEmail());
+        assertEquals(InspectionStatus.FAILED, result.getStatus());
+        assertNull(result.getReport());
+        verify(wallet).release(actor, token);
+        verify(wallet, never()).complete(any(), any());
+        verifyNoInteractions(reports);
+    }
+
+    private static AiAnalysisResponse uncertainAnalysisResponse() throws Exception {
+        var mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+        var fixture = mapper.readTree(java.nio.file.Files.readString(Path.of("contracts/car-analysis-v1.json")));
+        return mapper.treeToValue(fixture.get("visibleDamage"), AiAnalysisResponse.class);
+    }
+
     private static AiAnalysisResponse minorAnalysisResponse() {
         RepairRecommendationResponse recommendation = new RepairRecommendationResponse();
         recommendation.setDamageType(DamageType.SCRATCH);

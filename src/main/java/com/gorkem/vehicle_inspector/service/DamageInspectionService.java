@@ -854,8 +854,7 @@ public class DamageInspectionService {
     private void normalizeAndValidateAnalysisResponse(
             AiAnalysisResponse response
     ) {
-        if (response == null || response.getDamageSeverity() == null
-                || response.getDamageSeverity() == DamageSeverity.UNKNOWN) {
+        if (response == null || response.getDamageSeverity() == null) {
             throw new AiServiceException(
                     "AI servisi geçerli bir hasar sonucu döndürmedi."
             );
@@ -901,6 +900,11 @@ public class DamageInspectionService {
             return;
         }
 
+        if (response.getDamageSeverity() == DamageSeverity.UNKNOWN) {
+            validateUncertainSeverity(response);
+            return;
+        }
+
         Double confidence = response.getConfidenceScore();
         if (confidence == null || !Double.isFinite(confidence)
                 || confidence < 0.0 || confidence > 1.0
@@ -915,6 +919,32 @@ public class DamageInspectionService {
                     "AI servisi eksik veya geçersiz analiz verisi döndürdü."
             );
         }
+    }
+
+    private void validateUncertainSeverity(AiAnalysisResponse response) {
+        var supported = java.util.Set.of(DamageType.SCRATCH, DamageType.DENT,
+                DamageType.CRACK, DamageType.BROKEN_PART, DamageType.BROKEN_GLASS);
+        Double score = response.getConfidenceScore();
+        var recommendations = response.getRepairRecommendations();
+        var detections = response.getDetections();
+        boolean valid = score != null && Double.isFinite(score) && score >= .30 && score <= 1
+                && recommendations != null && !recommendations.isEmpty()
+                && detections != null && !detections.isEmpty()
+                && recommendations.stream().allMatch(item -> item != null
+                    && item.getDamageType() != null && supported.contains(item.getDamageType())
+                    && item.getRecommendedAction() == RepairAction.NO_ACTION
+                    && Boolean.FALSE.equals(item.getPartReplacementRequired()))
+                && detections.stream().allMatch(item -> item != null
+                    && item.getConfidence() != null && Double.isFinite(item.getConfidence())
+                    && item.getConfidence() >= .30 && item.getConfidence() <= 1
+                    && recommendations.stream().anyMatch(rec -> rec.getDamageType().name().equals(item.getLabel())))
+                && recommendations.stream().allMatch(rec -> detections.stream()
+                    .anyMatch(item -> rec.getDamageType().name().equals(item.getLabel())));
+        if (!valid) {
+            throw new AiServiceException("AI servisi eksik veya geçersiz belirsizlik sonucu döndürdü.");
+        }
+        response.setDamageTypes(recommendations.stream()
+                .map(RepairRecommendationResponse::getDamageType).distinct().toList());
     }
 
     private DamageInspectionResponse persistAnalysisResult(
@@ -1048,7 +1078,9 @@ public class DamageInspectionService {
             LlmInspectionReportResult result =
                     request.damageSeverity() == DamageSeverity.NONE
                             ? buildNoVisibleDamageReport()
-                            : geminiInspectionReportService.generateReport(request);
+                            : request.damageSeverity() == DamageSeverity.UNKNOWN
+                                ? buildUncertainSeverityReport(request)
+                                : geminiInspectionReportService.generateReport(request);
 
             saveGeneratedReport(
                     context.inspectionId(),
@@ -1071,6 +1103,22 @@ public class DamageInspectionService {
                     context.user(), reportAttempt, context.creditToken()
             );
         }
+    }
+
+    private LlmInspectionReportResult buildUncertainSeverityReport(InspectionLlmRequest request) {
+        LlmInspectionReportResult result = new LlmInspectionReportResult();
+        result.title = "Görünür Hasar Bulguları — Fiziksel İnceleme Gerekli";
+        result.summary = "Olası görünür hasar bulundu; hasarın şiddeti fotoğraftan belirlenemedi.";
+        result.damageDescription = request.analysisMessage();
+        result.repairRecommendation = "Onarım yöntemi ve parça değişimi gerekliliği fiziksel inceleme ile belirlenmelidir.";
+        // Unknown cost must never become a zero-cost estimate.
+        result.estimatedMinimumPrice = null;
+        result.estimatedMaximumPrice = null;
+        result.currency = "TRY";
+        result.priceInformation = "Onarım yöntemi belirlenemediği için maliyet hesaplanmadı.";
+        result.priceSourceDescription = "Fiyat sorgusu yapılmadı; sonuç fotoğraftaki model bulgularına dayanır.";
+        result.disclaimer = "Model skoru doğruluk yüzdesi değildir. Bu rapor mekanik kontrol veya profesyonel ekspertiz yerine geçmez.";
+        return result;
     }
 
     private LlmInspectionReportResult buildNoVisibleDamageReport() {
@@ -1399,9 +1447,9 @@ public class DamageInspectionService {
             LlmInspectionReportResult result =
                     context.request().damageSeverity() == DamageSeverity.NONE
                             ? buildNoVisibleDamageReport()
-                            : geminiInspectionReportService.generateReport(
-                                    context.request()
-                            );
+                            : context.request().damageSeverity() == DamageSeverity.UNKNOWN
+                                ? buildUncertainSeverityReport(context.request())
+                                : geminiInspectionReportService.generateReport(context.request());
 
             saveGeneratedReport(
                     context.inspectionId(),
