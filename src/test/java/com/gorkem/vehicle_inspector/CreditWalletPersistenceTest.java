@@ -16,6 +16,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Supplier;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 /** Opt-in, isolated PostgreSQL schema; never runs against the application database. */
 @EnabledIfSystemProperty(named="credit.test.jdbc-url",matches="jdbc:postgresql://[^/]+/credit_system_test")
@@ -38,7 +39,7 @@ class CreditWalletPersistenceTest {
         ds=new DriverManagerDataSource(url+"?currentSchema=credit_wallet_test,public",System.getProperty("credit.test.username","credit_test"),"");
         jdbc=new JdbcTemplate(ds);tx=new TransactionTemplate(new DataSourceTransactionManager(ds));
         // V1 is a pg_dump with explicit public names. Rewrite ONLY the isolated test schema.
-        for (int n=1;n<=15;n++) {
+        for (int n=1;n<=16;n++) {
             final int version=n;
             Path file;
             try(var paths=Files.list(Path.of("src/main/resources/db/migration"))) {
@@ -62,6 +63,10 @@ class CreditWalletPersistenceTest {
                 assertEquals(1,jdbc.queryForObject("SELECT COUNT(*) FROM credit_purchases WHERE transaction_id='legacy-transaction'",Integer.class));
                 assertEquals(2,jdbc.queryForObject("SELECT COUNT(*) FROM credit_events WHERE reason='LEGACY_PERIOD'",Integer.class));
             }
+            if (version==16) {
+                assertEquals(5L,jdbc.queryForObject("SELECT permanent FROM credit_wallets WHERE account_id='user:8001' AND resource='ANALYSIS'",Long.class));
+                assertEquals("LEGACY",jdbc.queryForObject("SELECT environment FROM credit_purchases WHERE transaction_id='legacy-transaction'",String.class));
+            }
         }
         service=new CreditWalletService(jdbc,clock);
     }
@@ -69,6 +74,8 @@ class CreditWalletPersistenceTest {
         jdbc.execute("TRUNCATE credit_accounts,users,business_accounts CASCADE");
         clock.instant=Instant.parse("2026-10-19T10:00:00Z");
         user=createUser(9001);other=createUser(9002);
+        service=new CreditWalletService(jdbc,clock,
+                new com.gorkem.vehicle_inspector.service.billing.BillingSandboxPolicy(user.getBillingCustomerId()));
     }
     User createUser(long id) {
         User u=new User("Credit test","credit"+id+"@example.com","unused");
@@ -205,5 +212,135 @@ class CreditWalletPersistenceTest {
         assertFalse(service.purchaseConfirmed(other,"unattributed"));
         assertEquals(0,balance(other,"ANALYSIS"));
         buy(other,"eksper_analysis_1","valid");assertEquals(1,balance(other,"ANALYSIS"));
+    }
+
+    @Test void sandboxCreditsCanBeSpentAndRefundedExactlyOnceWithoutTouchingProductionCollision() {
+        buy(other,"eksper_analysis_5","same-id");
+        run(() -> service.preparePurchase(user,"eksper_analysis_5"));
+        run(() -> service.purchase(user,"eksper_analysis_5","same-id",now(),false,true));
+        run(() -> service.purchase(user,"eksper_analysis_5","same-id",now(),false,true));
+        assertEquals(5,balance(user,"ANALYSIS"));
+        assertTrue(service.purchaseConfirmed(user,"same-id"));
+        var r=reserve(user,"use-sandbox");run(() -> service.complete(user,r.token()));
+        assertEquals(4,balance(user,"ANALYSIS"));
+        // Revocation must not block a verified refund of an already delivered purchase.
+        service=new CreditWalletService(jdbc,clock);
+        run(() -> service.purchase(null,"eksper_analysis_5","same-id",now(),true,true));
+        run(() -> service.purchase(null,"eksper_analysis_5","same-id",now(),true,true));
+        assertEquals(0,balance(user,"ANALYSIS"));
+        assertEquals(1,inTx(() -> service.account(user,false).balances().get("ANALYSIS").debt()));
+        assertEquals(5,balance(other,"ANALYSIS"));
+        assertFalse(service.purchaseConfirmed(user,"same-id"));
+        assertTrue(service.purchaseConfirmed(other,"same-id"));
+        assertEquals(2,jdbc.queryForObject("SELECT count(*) FROM credit_purchases WHERE transaction_id='same-id'",Integer.class));
+        assertEquals(1,jdbc.queryForObject("SELECT count(*) FROM credit_events WHERE event_key='refund:SANDBOX:same-id'",Integer.class));
+    }
+
+    @Test void sandboxAuthorizationCannotBeBypassedAtWalletAndCannotFundCompany() {
+        company();
+        run(() -> service.preparePurchase(other,"eksper_analysis_5"));
+        run(() -> service.purchase(other,"eksper_analysis_5","unauthorized",now(),false,true));
+        run(() -> service.preparePurchase(user,"eksper_analysis_5_business"));
+        run(() -> service.purchase(user,"eksper_analysis_5_business","shared",now(),false,true));
+        assertEquals(0,balance(other,"ANALYSIS"));
+        assertEquals(100,inTx(() -> service.account(other,true).balances().get("ANALYSIS").available()));
+        assertEquals(0,jdbc.queryForObject("SELECT count(*) FROM credit_purchases",Integer.class));
+    }
+
+    @Test void sandboxRefundBeforePurchaseCannotPoisonProductionOrBeRegranted() {
+        run(() -> service.purchase(null,"eksper_analysis_5","early-refund",now(),true,true));
+        buy(user,"eksper_analysis_5","early-refund");
+        run(() -> service.purchase(user,"eksper_analysis_5","early-refund",now(),false,true));
+        assertEquals(5,balance(user,"ANALYSIS"));
+        assertEquals(2,jdbc.queryForObject("SELECT count(*) FROM credit_purchases WHERE transaction_id='early-refund'",Integer.class));
+    }
+
+    @Test void historicalUnclassifiedPurchaseIsNeverRegrantedOrRefundedBySandbox() {
+        buy(user,"eksper_analysis_5","historical");
+        jdbc.update("UPDATE credit_purchases SET environment='LEGACY' WHERE transaction_id='historical'");
+        run(() -> service.purchase(user,"eksper_analysis_5","historical",now(),false,true));
+        run(() -> service.purchase(user,"eksper_analysis_5","historical",now(),true,true));
+        buy(user,"eksper_analysis_5","historical");
+        assertEquals(5,balance(user,"ANALYSIS"));
+        run(() -> service.purchase(user,"eksper_analysis_5","historical",now(),true,false));
+        assertEquals(0,balance(user,"ANALYSIS"));
+        assertEquals(1,jdbc.queryForObject("SELECT count(*) FROM credit_purchases WHERE transaction_id='historical'",Integer.class));
+    }
+
+    @Test void concurrentSandboxReplayHasOneOwnerAndOneGrant() throws Exception {
+        var policy=new com.gorkem.vehicle_inspector.service.billing.BillingSandboxPolicy(user.getBillingCustomerId()+","+other.getBillingCustomerId());
+        service=new CreditWalletService(jdbc,clock,policy);
+        run(() -> service.preparePurchase(user,"eksper_analysis_5"));
+        run(() -> service.preparePurchase(other,"eksper_analysis_5"));
+        var pool=Executors.newFixedThreadPool(4);var gate=new CountDownLatch(1);
+        try {
+            List<Future<?>> results=new ArrayList<>();
+            for (User actor:List.of(user,other,user,other)) results.add(pool.submit(() -> {
+                gate.await();run(() -> service.purchase(actor,"eksper_analysis_5","race",now(),false,true));return null;
+            }));
+            gate.countDown();for(var result:results) result.get(10,TimeUnit.SECONDS);
+            assertEquals(5,balance(user,"ANALYSIS")+balance(other,"ANALYSIS"));
+            assertEquals(1,jdbc.queryForObject("SELECT count(*) FROM credit_purchases WHERE transaction_id='race'",Integer.class));
+        } finally {pool.shutdownNow();}
+    }
+
+    @Test void authenticatedWebhookAndRevenueCatReconciliationRecoverOldPurchaseWithoutDoubleGrant() {
+        var users=mock(com.gorkem.vehicle_inspector.repository.UserRepository.class);
+        when(users.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
+        when(users.findByBillingCustomerId(user.getBillingCustomerId())).thenReturn(Optional.of(user));
+        var subscriptions=mock(com.gorkem.vehicle_inspector.repository.BillingSubscriptionRepository.class);
+        var events=mock(com.gorkem.vehicle_inspector.repository.BillingWebhookEventRepository.class);
+        when(events.existsByProviderEventIdAndEnvironmentIn(anyString(),any())).thenAnswer(call -> {
+            Collection<String> environments=call.getArgument(1);
+            return jdbc.queryForObject("SELECT EXISTS(SELECT 1 FROM billing_webhook_events WHERE provider_event_id=? AND environment IN (?,?))",
+                    Boolean.class,call.getArgument(0),environments.toArray()[0],environments.toArray()[1]);
+        });
+        when(events.save(any())).thenAnswer(call -> {
+            Object event=call.getArgument(0);
+            jdbc.update("INSERT INTO billing_webhook_events(provider_event_id,event_type,app_user_id,processed_at,environment) VALUES (?,?,?,?,?)",
+                    ReflectionTestUtils.getField(event,"providerEventId"),ReflectionTestUtils.getField(event,"eventType"),
+                    ReflectionTestUtils.getField(event,"appUserId"),now(),ReflectionTestUtils.getField(event,"environment"));
+            return event;
+        });
+        var plans=mock(com.gorkem.vehicle_inspector.service.SubscriptionService.class);
+        when(plans.getEffectivePlan(user)).thenReturn(com.gorkem.vehicle_inspector.entity.SubscriptionPlan.FREE);
+        var http=mock(org.springframework.web.client.RestTemplate.class);
+        var response=new tools.jackson.databind.ObjectMapper().readTree("""
+                {"subscriber":{"non_subscriptions":{"eksper_analysis_5":[
+                {"id":"internal-rc-id","store_transaction_id":"recovered-order","is_sandbox":true,
+                "store":"play_store","purchase_date":"2026-10-19T10:00:00Z"}]}}}
+                """);
+        when(http.exchange(anyString(),eq(org.springframework.http.HttpMethod.GET),any(org.springframework.http.HttpEntity.class),
+                eq(tools.jackson.databind.JsonNode.class),eq(user.getBillingCustomerId())))
+                .thenReturn(org.springframework.http.ResponseEntity.ok(response));
+        var billing=new com.gorkem.vehicle_inspector.service.BillingService(users,subscriptions,events,plans,
+                new com.gorkem.vehicle_inspector.client.RevenueCatClient(http,"https://api.revenuecat.com/v1","server-secret"),
+                new com.gorkem.vehicle_inspector.service.billing.RevenueCatWebhookVerifier("webhook-secret","",clock),
+                new com.fasterxml.jackson.databind.ObjectMapper(),clock);
+        ReflectionTestUtils.setField(billing,"creditWallets",service);
+        run(() -> service.preparePurchase(user,"eksper_analysis_5"));
+        // Before authorization the provider purchase is real, but no credit is delivered.
+        run(() -> billing.sync(user.getEmail()));assertEquals(0,balance(user,"ANALYSIS"));
+        ReflectionTestUtils.setField(billing,"sandboxPolicy",
+                new com.gorkem.vehicle_inspector.service.billing.BillingSandboxPolicy(user.getBillingCustomerId()));
+        // A long-delayed sync uses the verified purchase time, not today's date or a new intent.
+        clock.instant=clock.instant.plus(Duration.ofDays(40));
+        run(() -> billing.sync(user.getEmail()));
+        run(() -> billing.sync(user.getEmail()));
+        assertEquals(5,balance(user,"ANALYSIS"));assertTrue(service.purchaseConfirmed(user,"recovered-order"));
+        String webhook="""
+                {"event":{"id":"recovered-event","environment":"SANDBOX","type":"NON_RENEWING_PURCHASE",
+                "app_user_id":"%s","product_id":"eksper_analysis_5","transaction_id":"recovered-order",
+                "purchased_at_ms":1792404000000}}
+                """.formatted(user.getBillingCustomerId());
+        assertThrows(com.gorkem.vehicle_inspector.exception.InvalidBillingWebhookException.class,
+                () -> run(() -> billing.processRevenueCatWebhook("forged",null,webhook)));
+        run(() -> billing.processRevenueCatWebhook("webhook-secret",null,webhook));
+        run(() -> billing.processRevenueCatWebhook("webhook-secret",null,webhook));
+        assertEquals(5,balance(user,"ANALYSIS"));
+        assertEquals(1,jdbc.queryForObject("SELECT count(*) FROM credit_events WHERE event_key='purchase:SANDBOX:recovered-order'",Integer.class));
+        assertEquals("SANDBOX",jdbc.queryForObject("SELECT environment FROM billing_webhook_events WHERE provider_event_id='recovered-event'",String.class));
+        // Identical provider IDs in different environments are distinct at the PostgreSQL boundary.
+        jdbc.update("INSERT INTO billing_webhook_events(provider_event_id,event_type,processed_at,environment) VALUES ('recovered-event','TEST',?,'PRODUCTION')",now());
     }
 }

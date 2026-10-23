@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
         name = "billing_webhook_events",
         uniqueConstraints = @UniqueConstraint(
                 name = "uk_billing_webhook_event_provider_id",
-                columnNames = "provider_event_id"
+                columnNames = {"provider_event_id", "environment"}
         )
 )
 public class BillingWebhookEvent {
@@ -20,6 +20,9 @@ public class BillingWebhookEvent {
 
     @Column(name = "provider_event_id", nullable = false, length = 100)
     private String providerEventId;
+
+    @Column(name = "environment", nullable = false, length = 16)
+    private String environment;
 
     @Column(name = "event_type", nullable = false, length = 50)
     private String eventType;
@@ -37,11 +40,13 @@ public class BillingWebhookEvent {
             String providerEventId,
             String eventType,
             String appUserId,
-            LocalDateTime processedAt
+            LocalDateTime processedAt,
+            String environment
     ) {
         this.providerEventId = providerEventId;
         this.eventType = eventType;
         this.appUserId = appUserId;
         this.processedAt = processedAt;
+        this.environment = environment;
     }
 }

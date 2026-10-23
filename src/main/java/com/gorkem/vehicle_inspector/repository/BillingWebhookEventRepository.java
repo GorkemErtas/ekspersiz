@@ -6,5 +6,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface BillingWebhookEventRepository
         extends JpaRepository<BillingWebhookEvent, Long> {
 
-    boolean existsByProviderEventId(String providerEventId);
+    boolean existsByProviderEventIdAndEnvironmentIn(String providerEventId, java.util.Collection<String> environments);
 }

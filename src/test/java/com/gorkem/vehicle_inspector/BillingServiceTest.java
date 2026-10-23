@@ -179,9 +179,9 @@ class BillingServiceTest {
     @Test
     void duplicateWebhookShouldBeAcknowledgedWithoutSecondSync() {
         String body = """
-                {"event":{"id":"event-1","type":"RENEWAL","app_user_id":"%s"}}
+                {"event":{"id":"event-1","type":"RENEWAL","environment":"PRODUCTION","app_user_id":"%s"}}
                 """.formatted(user.getBillingCustomerId());
-        when(webhookEvents.existsByProviderEventId("event-1"))
+        when(webhookEvents.existsByProviderEventIdAndEnvironmentIn(eq("event-1"), any()))
                 .thenReturn(false, true);
         when(users.findByBillingCustomerId(user.getBillingCustomerId()))
                 .thenReturn(Optional.of(user));
@@ -227,7 +227,7 @@ class BillingServiceTest {
                 destination.getBillingCustomerId()
         );
 
-        when(webhookEvents.existsByProviderEventId("transfer-1"))
+        when(webhookEvents.existsByProviderEventIdAndEnvironmentIn(eq("transfer-1"), any()))
                 .thenReturn(false);
         when(users.findByBillingCustomerId(user.getBillingCustomerId()))
                 .thenReturn(Optional.of(user));
@@ -266,14 +266,14 @@ class BillingServiceTest {
         var credits=mock(com.gorkem.vehicle_inspector.service.CreditWalletService.class);
         ReflectionTestUtils.setField(service,"creditWallets",credits);
         when(users.findByBillingCustomerId(user.getBillingCustomerId())).thenReturn(Optional.of(user));
-        when(webhookEvents.existsByProviderEventId("credit-event")).thenReturn(false,true);
+        when(webhookEvents.existsByProviderEventIdAndEnvironmentIn(eq("credit-event"), any())).thenReturn(false,true);
         String body="""
-            {"event":{"id":"credit-event","type":"NON_RENEWING_PURCHASE","app_user_id":"%s",
+            {"event":{"id":"credit-event","type":"NON_RENEWING_PURCHASE","environment":"PRODUCTION","app_user_id":"%s",
             "aliases":["foreign-customer"],"product_id":"eksper_analysis_5","transaction_id":"store-order","purchased_at_ms":1792400400000}}
             """.formatted(user.getBillingCustomerId());
         service.processRevenueCatWebhook("secret",null,body);
         service.processRevenueCatWebhook("secret",null,body);
-        verify(credits,times(1)).purchase(eq(user),eq("eksper_analysis_5"),eq("store-order"),any(),eq(false));
+        verify(credits,times(1)).purchase(eq(user),eq("eksper_analysis_5"),eq("store-order"),any(),eq(false),eq(false));
         verify(users,never()).findByBillingCustomerId("foreign-customer");
         verifyNoInteractions(revenueCatClient);
     }
@@ -283,10 +283,10 @@ class BillingServiceTest {
         var credits=mock(com.gorkem.vehicle_inspector.service.CreditWalletService.class);
         ReflectionTestUtils.setField(service,"creditWallets",credits);
         service.processRevenueCatWebhook("secret",null,"""
-            {"event":{"id":"refund-event","type":"CANCELLATION","app_user_id":"deleted-customer",
+            {"event":{"id":"refund-event","type":"CANCELLATION","environment":"PRODUCTION","app_user_id":"deleted-customer",
             "product_id":"eksper_analysis_5","transaction_id":"store-order"}}
             """);
-        verify(credits).purchase(isNull(),eq("eksper_analysis_5"),eq("store-order"),isNull(),eq(true));
+        verify(credits).purchase(isNull(),eq("eksper_analysis_5"),eq("store-order"),isNull(),eq(true),eq(false));
     }
 
     @Test
@@ -299,20 +299,21 @@ class BillingServiceTest {
                     "app_user_id":"%s","product_id":"eksper_analysis_5","transaction_id":"test-order"}}
                     """.formatted(type, user.getBillingCustomerId()));
         }
-        verifyNoInteractions(credits, revenueCatClient);
-        verify(webhookEvents, never()).save(any());
+        verify(credits).purchase(isNull(), eq("eksper_analysis_5"), eq("test-order"), isNull(), eq(true), eq(true));
+        verifyNoInteractions(revenueCatClient);
+        verify(webhookEvents).save(any());
     }
 
     @Test
-    void sandboxSubscriptionCannotUpgradeProductionButExplicitTestEnvironmentWorks() {
+    void sandboxSubscriptionCannotUpgradeEvenAnAuthorizedTester() {
         var testSubscription = new RevenueCatSubscription("eksper_business_monthly", CLOCK.instant(),
                 CLOCK.instant().plusSeconds(3600), null, true, false, false, true, "play_store");
         when(revenueCatClient.getCustomer(user.getBillingCustomerId())).thenReturn(customer(testSubscription));
         service.sync(user.getEmail());
         assertEquals(SubscriptionPlan.FREE, user.getSubscriptionPlan());
-        ReflectionTestUtils.setField(service, "allowSandbox", true);
+        ReflectionTestUtils.setField(service, "sandboxPolicy", new com.gorkem.vehicle_inspector.service.billing.BillingSandboxPolicy(user.getBillingCustomerId()));
         service.sync(user.getEmail());
-        assertEquals(SubscriptionPlan.BUSINESS, user.getSubscriptionPlan());
+        assertEquals(SubscriptionPlan.FREE, user.getSubscriptionPlan());
     }
 
     @Test
@@ -326,8 +327,67 @@ class BillingServiceTest {
         when(revenueCatClient.getCustomer(user.getBillingCustomerId())).thenReturn(
                 new RevenueCatCustomer(List.of(), List.of(testPurchase, realPurchase), null));
         service.sync(user.getEmail());
-        verify(credits).purchase(eq(user), eq("eksper_analysis_5"), eq("real-order"), any(), eq(false));
+        verify(credits).purchase(eq(user), eq("eksper_analysis_5"), eq("real-order"), any(), eq(false), eq(false));
         verifyNoMoreInteractions(credits);
+    }
+
+    @Test
+    void allowlistedSandboxPurchaseAndMissedWebhookSyncUseSameEnvironmentAndStoreId() {
+        var credits = mock(com.gorkem.vehicle_inspector.service.CreditWalletService.class);
+        ReflectionTestUtils.setField(service, "creditWallets", credits);
+        ReflectionTestUtils.setField(service, "sandboxPolicy",
+                new com.gorkem.vehicle_inspector.service.billing.BillingSandboxPolicy(user.getBillingCustomerId()));
+        when(users.findByBillingCustomerId(user.getBillingCustomerId())).thenReturn(Optional.of(user));
+        service.processRevenueCatWebhook("secret", null, """
+                {"event":{"id":"sandbox-event","type":"NON_RENEWING_PURCHASE","environment":"SANDBOX",
+                "app_user_id":"%s","aliases":["foreign"],"product_id":"eksper_analysis_5",
+                "transaction_id":"store-order","purchased_at_ms":1792400400000}}
+                """.formatted(user.getBillingCustomerId()));
+        when(revenueCatClient.getCustomer(user.getBillingCustomerId())).thenReturn(new RevenueCatCustomer(
+                List.of(), List.of(new com.gorkem.vehicle_inspector.client.RevenueCatPurchase(
+                "eksper_analysis_5", "store-order", CLOCK.instant(), true, "play_store")), null));
+        service.sync(user.getEmail());
+        verify(credits, times(2)).purchase(eq(user), eq("eksper_analysis_5"), eq("store-order"), any(), eq(false), eq(true));
+        verify(users, never()).findByBillingCustomerId("foreign");
+        verify(webhookEvents).existsByProviderEventIdAndEnvironmentIn("sandbox-event", List.of("SANDBOX", "LEGACY"));
+    }
+
+    @Test
+    void clientAttributesAndAuthorizedAliasCannotAuthorizeExactBuyer() {
+        ReflectionTestUtils.setField(service, "sandboxPolicy",
+                new com.gorkem.vehicle_inspector.service.billing.BillingSandboxPolicy(user.getBillingCustomerId()));
+        var credits = mock(com.gorkem.vehicle_inspector.service.CreditWalletService.class);
+        ReflectionTestUtils.setField(service, "creditWallets", credits);
+        service.processRevenueCatWebhook("secret", null, """
+                {"event":{"id":"foreign","type":"NON_RENEWING_PURCHASE","environment":"SANDBOX",
+                "app_user_id":"foreign","aliases":["%s"],"subscriber_attributes":{"is_test_user":{"value":"true"}},
+                "product_id":"eksper_analysis_5","transaction_id":"forged"}}
+                """.formatted(user.getBillingCustomerId()));
+        verifyNoInteractions(credits, revenueCatClient);
+        verify(webhookEvents, never()).save(any());
+    }
+
+    @Test
+    void missingOrUnknownWebhookEnvironmentCannotGrantCredits() {
+        var credits = mock(com.gorkem.vehicle_inspector.service.CreditWalletService.class);
+        ReflectionTestUtils.setField(service, "creditWallets", credits);
+        for (String environment : List.of("null", "\"OTHER\"", "true")) {
+            assertThrows(com.gorkem.vehicle_inspector.exception.InvalidBillingWebhookException.class,
+                    () -> service.processRevenueCatWebhook("secret", null, """
+                        {"event":{"id":"bad","type":"NON_RENEWING_PURCHASE","environment":%s,
+                        "app_user_id":"%s","product_id":"eksper_analysis_5","transaction_id":"forged"}}
+                        """.formatted(environment, user.getBillingCustomerId())));
+        }
+        verifyNoInteractions(credits, revenueCatClient);
+    }
+
+    @Test
+    void invalidWebhookAuthorizationStopsBeforeAnyLookupOrGrant() {
+        doThrow(new com.gorkem.vehicle_inspector.exception.InvalidBillingWebhookException("unauthorized"))
+                .when(webhookVerifier).verify(any(), any(), any());
+        assertThrows(com.gorkem.vehicle_inspector.exception.InvalidBillingWebhookException.class,
+                () -> service.processRevenueCatWebhook("bad", "bad", "{}"));
+        verifyNoInteractions(users, webhookEvents, revenueCatClient);
     }
 
     private RevenueCatSubscription subscription(

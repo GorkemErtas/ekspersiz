@@ -17,6 +17,7 @@ import com.gorkem.vehicle_inspector.repository.BillingSubscriptionRepository;
 import com.gorkem.vehicle_inspector.repository.BillingWebhookEventRepository;
 import com.gorkem.vehicle_inspector.repository.UserRepository;
 import com.gorkem.vehicle_inspector.service.billing.BillingProduct;
+import com.gorkem.vehicle_inspector.service.billing.BillingSandboxPolicy;
 import com.gorkem.vehicle_inspector.service.billing.RevenueCatWebhookVerifier;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,8 +39,8 @@ public class BillingService {
     @Autowired
     private CreditWalletService creditWallets;
 
-    @org.springframework.beans.factory.annotation.Value("${application.billing.allow-sandbox:false}")
-    private boolean allowSandbox;
+    @Autowired
+    private BillingSandboxPolicy sandboxPolicy = new BillingSandboxPolicy("");
 
     private final UserRepository userRepository;
     private final BillingSubscriptionRepository subscriptionRepository;
@@ -114,19 +115,15 @@ public class BillingService {
         JsonNode event = parseEvent(rawBody);
         String eventId = requiredText(event, "id");
 
-        if (webhookEventRepository.existsByProviderEventId(eventId)) {
-            return;
-        }
-
         String eventType = requiredText(event, "type");
         String appUserId = textOrNull(event.path("app_user_id"));
-
-        if (!allowSandbox && "SANDBOX".equalsIgnoreCase(textOrNull(event.path("environment")))) {
-            // Acknowledge authenticated test events without granting or refunding
-            // production balances. Do not persist the ID: a later real event must
-            // not be suppressed by a test-store transaction identifier collision.
-            return;
+        String environment = textOrNull(event.path("environment"));
+        if (!Set.of("PRODUCTION", "SANDBOX").contains(environment == null ? "" : environment)) {
+            if (Set.of("TEST", "TRANSFER").contains(eventType)) environment = "CONTROL";
+            else throw new InvalidBillingWebhookException("Ödeme ortamı eksik veya geçersiz.");
         }
+        boolean sandbox = "SANDBOX".equals(environment);
+        if (webhookEventRepository.existsByProviderEventIdAndEnvironmentIn(eventId, List.of(environment, "LEGACY"))) return;
 
         String creditProduct = textOrNull(event.path("product_id"));
         boolean consumable = com.gorkem.vehicle_inspector.service.billing.CreditCatalog.find(creditProduct) != null
@@ -134,15 +131,22 @@ public class BillingService {
         if (creditWallets != null && consumable && Set.of("NON_RENEWING_PURCHASE", "CANCELLATION").contains(eventType)) {
             // Only the exact authenticated provider customer may receive a consumable; never walk aliases.
             User buyer=userRepository.findByBillingCustomerId(appUserId).orElse(null);
+            boolean refund = "CANCELLATION".equals(eventType);
+            // Refunds must still reach sandbox tombstones after authorization removal/deletion.
+            // They can never address production or unclassified historical rows.
+            if (sandbox && !refund && !sandboxPolicy.allowsPurchase(buyer, creditProduct)) return;
             if (buyer==null && !"CANCELLATION".equals(eventType))
                 throw new InvalidBillingWebhookException("Satın alma müşterisi bulunamadı.");
             long purchasedMillis=event.path("purchased_at_ms").asLong(0);
             creditWallets.purchase(buyer,creditProduct,requiredText(event,"transaction_id"),
                     purchasedMillis>0?toLocalDateTime(Instant.ofEpochMilli(purchasedMillis)):null,
-                    "CANCELLATION".equals(eventType));
-            webhookEventRepository.save(new BillingWebhookEvent(eventId,eventType,appUserId,LocalDateTime.now(clock)));
+                    refund, sandbox);
+            webhookEventRepository.save(new BillingWebhookEvent(eventId,eventType,appUserId,LocalDateTime.now(clock),environment));
             return;
         }
+
+        // No sandbox subscriptions, shared company entitlements or legacy credit fallback.
+        if (sandbox) return;
 
         if (!"TEST".equals(eventType)) {
             List<User> users = findWebhookUsers(event);
@@ -171,7 +175,8 @@ public class BillingService {
                 eventId,
                 eventType,
                 appUserId,
-                LocalDateTime.now(clock)
+                LocalDateTime.now(clock),
+                environment
         ));
     }
 
@@ -184,7 +189,7 @@ public class BillingService {
 
         Optional<SelectedSubscription> selected = customer.subscriptions()
                 .stream()
-                .filter(subscription -> allowSandbox || !subscription.sandbox())
+                .filter(subscription -> !subscription.sandbox())
                 .map(subscription -> BillingProduct
                         .fromProductId(subscription.productId())
                         .map(product -> new SelectedSubscription(
@@ -220,9 +225,10 @@ public class BillingService {
         subscriptionRepository.save(billingSubscription);
         if (creditWallets != null) {
             for (RevenueCatPurchase purchase : customer.purchases()) {
-                if (!allowSandbox && purchase.sandbox()) continue;
+                if (purchase.sandbox() && !purchase.refunded()
+                        && !sandboxPolicy.allowsPurchase(user, purchase.productId())) continue;
                 creditWallets.purchase(user,purchase.productId(),purchase.transactionId(),
-                        toLocalDateTime(purchase.purchasedAt()),purchase.refunded());
+                        toLocalDateTime(purchase.purchasedAt()),purchase.refunded(),purchase.sandbox());
             }
         }
     }

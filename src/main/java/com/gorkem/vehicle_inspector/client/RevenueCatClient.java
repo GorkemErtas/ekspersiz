@@ -93,7 +93,7 @@ public class RevenueCatClient {
                                 || value.hasNonNull("auto_resume_date"),
                         value.hasNonNull("billing_issues_detected_at"),
                         value.hasNonNull("refunded_at"),
-                        value.path("is_sandbox").asBoolean(false),
+                        sandbox(value),
                         textOrNull(value.path("store"))
                 ));
             }
@@ -117,7 +117,7 @@ public class RevenueCatClient {
                             field.getKey(),
                             transactionId,
                             parseInstant(value.path("purchase_date")),
-                            value.path("is_sandbox").asBoolean(false),
+                            sandbox(value),
                             textOrNull(value.path("store")),
                             value.hasNonNull("refunded_at")
                     ));
@@ -130,6 +130,13 @@ public class RevenueCatClient {
                 List.copyOf(purchases),
                 textOrNull(subscriber.path("management_url"))
         );
+    }
+
+    private boolean sandbox(JsonNode value) {
+        if (!value.path("is_sandbox").isBoolean()) {
+            throw new BillingProviderException("Satın alma ortamı doğrulanamadı.", null);
+        }
+        return value.path("is_sandbox").asBoolean();
     }
 
     private Instant parseInstant(JsonNode node) {

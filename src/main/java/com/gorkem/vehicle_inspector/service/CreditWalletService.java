@@ -3,6 +3,8 @@ package com.gorkem.vehicle_inspector.service;
 import com.gorkem.vehicle_inspector.entity.User;
 import com.gorkem.vehicle_inspector.exception.InsufficientAnalysisCreditException;
 import com.gorkem.vehicle_inspector.service.billing.CreditCatalog;
+import com.gorkem.vehicle_inspector.service.billing.BillingSandboxPolicy;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,7 +19,12 @@ import java.util.*;
 public class CreditWalletService {
     private final JdbcTemplate jdbc;
     private final Clock clock;
-    public CreditWalletService(JdbcTemplate jdbc, Clock clock) { this.jdbc=jdbc; this.clock=clock; }
+    private final BillingSandboxPolicy sandboxPolicy;
+    public CreditWalletService(JdbcTemplate jdbc, Clock clock) { this(jdbc, clock, new BillingSandboxPolicy("")); }
+    @Autowired
+    public CreditWalletService(JdbcTemplate jdbc, Clock clock, BillingSandboxPolicy sandboxPolicy) {
+        this.jdbc=jdbc; this.clock=clock; this.sandboxPolicy=sandboxPolicy;
+    }
     public record Balance(long permanent, long periodic, long available, long debt, LocalDateTime periodEndsAt) {}
     public record Account(String id, boolean business, boolean canPurchase, boolean owner, Map<String,Balance> balances,
                           long usedSlots, long totalSlots) {}
@@ -242,6 +249,14 @@ public class CreditWalletService {
 
     @Transactional
     public void purchase(User user, String productId, String transactionId, LocalDateTime purchasedAt, boolean refund) {
+        purchase(user, productId, transactionId, purchasedAt, refund, false);
+    }
+
+    /** Environment comes exclusively from authenticated RevenueCat webhook/API data. */
+    @Transactional
+    public void purchase(User user, String productId, String transactionId, LocalDateTime purchasedAt, boolean refund, boolean sandbox) {
+        if (sandbox && !refund && !sandboxPolicy.allowsPurchase(user, productId)) return;
+        String environment = sandbox ? "SANDBOX" : "PRODUCTION";
         jdbc.execute("SET LOCAL lock_timeout='3s'");
         var product=CreditCatalog.find(productId);
         int legacy=switch(productId==null?"":productId) { case "analysis_1" -> 1; case "analysis_3" -> 3; case "analysis_10" -> 10; default -> 0; };
@@ -249,7 +264,12 @@ public class CreditWalletService {
         if (transactionId==null || transactionId.isBlank()) throw new IllegalArgumentException("Satın alma işlem kimliği eksik.");
         // PostgreSQL transaction lock makes global transaction ownership independent of the current account.
         jdbc.queryForObject("SELECT pg_advisory_xact_lock(hashtextextended(?, 0))",Object.class,"purchase:"+transactionId);
-        var existing=jdbc.queryForList("SELECT * FROM credit_purchases WHERE transaction_id=?",transactionId);
+        // Keep the raw-ID lock across environments to serialize legacy collision checks too.
+        var legacyRows=jdbc.queryForList("SELECT * FROM credit_purchases WHERE transaction_id=? AND environment='LEGACY'",transactionId);
+        if (sandbox && !legacyRows.isEmpty()) return;
+        var existing=legacyRows.isEmpty()
+                ? jdbc.queryForList("SELECT * FROM credit_purchases WHERE transaction_id=? AND environment=?",transactionId,environment)
+                : legacyRows;
         if (!existing.isEmpty()) {
             var old=existing.getFirst();
             if (!refund || Boolean.TRUE.equals(old.get("refunded"))) return;
@@ -260,13 +280,13 @@ public class CreditWalletService {
                 String resource=(String)old.get("resource"); long amount=number(old,"quantity");
                 // Refund debt cannot produce spendable negative balances or be evaded by consuming first.
                 jdbc.update("UPDATE credit_wallets SET debt=debt+GREATEST(0,?-permanent),permanent=GREATEST(0,permanent-?) WHERE account_id=? AND resource=?",amount,amount,account,resource);
-                event("refund:"+transactionId,account,resource,-amount,"REFUND");
+                event("refund:"+old.get("environment")+":"+transactionId,account,resource,-amount,"REFUND");
             }
-            jdbc.update("UPDATE credit_purchases SET refunded=TRUE WHERE transaction_id=?",transactionId);
+            jdbc.update("UPDATE credit_purchases SET refunded=TRUE WHERE transaction_id=? AND environment=?",transactionId,old.get("environment"));
             return;
         }
         if (refund) {
-            jdbc.update("INSERT INTO credit_purchases(transaction_id,product_id,refunded) VALUES (?,?,TRUE)",transactionId,productId);
+            jdbc.update("INSERT INTO credit_purchases(transaction_id,product_id,refunded,environment) VALUES (?,?,TRUE,?)",transactionId,productId,environment);
             return;
         }
         String account=personal(user);
@@ -280,9 +300,9 @@ public class CreditWalletService {
         }
         lock(account);
         String resource=product==null?"ANALYSIS":product.resource(); int amount=product==null?legacy:product.quantity();
-        jdbc.update("INSERT INTO credit_purchases(transaction_id,customer_id,account_id,product_id,resource,quantity) VALUES (?,?,?,?,?,?)",transactionId,user.ensureBillingCustomerId(),account,productId,resource,amount);
+        jdbc.update("INSERT INTO credit_purchases(transaction_id,customer_id,account_id,product_id,resource,quantity,environment) VALUES (?,?,?,?,?,?,?)",transactionId,user.ensureBillingCustomerId(),account,productId,resource,amount,environment);
         jdbc.update("UPDATE credit_wallets SET permanent=permanent+? WHERE account_id=? AND resource=?",amount,account,resource);
-        event("purchase:"+transactionId,account,resource,amount,"PURCHASE");
+        event("purchase:"+environment+":"+transactionId,account,resource,amount,"PURCHASE");
     }
 
     private void event(String key,String account,String resource,long amount,String reason) {
@@ -291,7 +311,7 @@ public class CreditWalletService {
 
     @Transactional(readOnly=true)
     public boolean purchaseConfirmed(User user,String transaction) {
-        return Boolean.TRUE.equals(jdbc.queryForObject("SELECT EXISTS(SELECT 1 FROM credit_purchases WHERE transaction_id=? AND customer_id=? AND NOT refunded AND account_id IS NOT NULL)",Boolean.class,transaction,user.ensureBillingCustomerId()));
+        return Boolean.TRUE.equals(jdbc.queryForObject("SELECT EXISTS(SELECT 1 FROM credit_purchases WHERE transaction_id=? AND customer_id=? AND NOT refunded AND account_id IS NOT NULL AND (environment<>'SANDBOX' OR ?))",Boolean.class,transaction,user.ensureBillingCustomerId(),sandboxPolicy.allows(user)));
     }
 
     @Transactional
