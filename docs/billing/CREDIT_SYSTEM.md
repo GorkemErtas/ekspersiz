@@ -75,11 +75,14 @@ timestamp davranışını lisans test hesabıyla doğrulayın.
 Sunucu ortamı: mevcut `REVENUECAT_SECRET_API_KEY`, `REVENUECAT_WEBHOOK_AUTHORIZATION`
 ve varsa webhook imza ayarı. Mobil derlemede `REVENUECAT_ANDROID_PUBLIC_KEY`.
 Secret anahtarları Flutter'a koymayın. Test ve üretim RevenueCat/Play ortamlarını
-ayırın; kod mevcut sandbox abonelik desteğini korur.
+ayırın. Üretim backend'inde yalnızca sunucu izin listesindeki kişisel sandbox kredi
+testleri desteklenir; sandbox abonelik ve şirket kredileri kapalıdır.
+Kurulum ve eski alımları uzlaştırma: [Sandbox kredi testleri](SANDBOX_CREDIT_PURCHASES.md).
 
 Webhook `NON_RENEWING_PURCHASE` ve `CANCELLATION` kayıtları doğrulanmış exact
 `app_user_id` için işlenir; alias listesindeki her hesaba kredi verilmez.
-Global store transaction ID tektir. Reconciliation `store_transaction_id`
+Store transaction ID her ortam içinde global tektir; V16 sandbox/production
+kayıtlarını ayırır, ortamı bilinmeyen eski kayıtları LEGACY olarak korur. Reconciliation `store_transaction_id`
 kullanır; RevenueCat'in dahili `id` alanını store transaction diye yorumlamaz.
 Restore yeni hak üretmez. Refund önce gelse de tombstone tutulur. Harcanmış
 kredinin iadesinde borç ayrı izlenir, kullanılabilir bakiye negatif gösterilmez.
