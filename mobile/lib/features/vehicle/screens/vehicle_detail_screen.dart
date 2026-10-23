@@ -192,7 +192,7 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
 
     // Hasar seviyeleri
     'UNKNOWN' => 'Bilinmiyor',
-    'NONE' => 'Hasar yok',
+    'NONE' => 'Görünür hasar yok',
     'MINOR' => 'Hafif',
     'MODERATE' => 'Orta',
     'SEVERE' => 'Ağır',

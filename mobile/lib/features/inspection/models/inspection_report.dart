@@ -18,8 +18,8 @@ class InspectionReport {
   final String damageDescription;
   final String repairRecommendation;
 
-  final double estimatedMinimumPrice;
-  final double estimatedMaximumPrice;
+  final double? estimatedMinimumPrice;
+  final double? estimatedMaximumPrice;
 
   final String currency;
 
@@ -35,10 +35,10 @@ class InspectionReport {
       summary: json['summary'] as String? ?? '',
       damageDescription: json['damageDescription'] as String? ?? '',
       repairRecommendation: json['repairRecommendation'] as String? ?? '',
-      estimatedMinimumPrice:
-          (json['estimatedMinimumPrice'] as num?)?.toDouble() ?? 0,
-      estimatedMaximumPrice:
-          (json['estimatedMaximumPrice'] as num?)?.toDouble() ?? 0,
+      estimatedMinimumPrice: (json['estimatedMinimumPrice'] as num?)
+          ?.toDouble(),
+      estimatedMaximumPrice: (json['estimatedMaximumPrice'] as num?)
+          ?.toDouble(),
       currency: json['currency'] as String? ?? 'TRY',
       priceInformation: json['priceInformation'] as String? ?? '',
       priceSourceDescription: json['priceSourceDescription'] as String? ?? '',

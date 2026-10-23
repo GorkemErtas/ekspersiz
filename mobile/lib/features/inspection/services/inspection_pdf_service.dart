@@ -134,7 +134,15 @@ class InspectionPdfService {
             pw.SizedBox(height: 18),
             _listSection(
               'Tespit Edilen Hasarlar'.tr,
-              inspection.damageTypes.map(_damageLabel).toList(),
+              inspection.damageTypes
+                  .map(
+                    (type) =>
+                        type == 'BROKEN_PART' &&
+                            inspection.damageSeverity == 'UNKNOWN'
+                        ? 'Lamba Kırığı Belirtisi'
+                        : _damageLabel(type),
+                  )
+                  .toList(),
             ),
           ],
           if (!noDamage && inspection.affectedParts.isNotEmpty) ...[
@@ -149,7 +157,11 @@ class InspectionPdfService {
             _listSection(
               'Onarım Önerileri'.tr,
               inspection.repairRecommendations
-                  .map((item) => _repairLabel(item.recommendedAction))
+                  .map(
+                    (item) => item.recommendedAction == 'NO_ACTION'
+                        ? 'Onarım yöntemi belirlenemedi; fiziksel inceleme gerekli.'
+                        : _repairLabel(item.recommendedAction),
+                  )
                   .toSet()
                   .toList(),
             ),
@@ -168,11 +180,13 @@ class InspectionPdfService {
           ],
           if (!noDamage &&
               report != null &&
-              report.estimatedMaximumPrice > 0) ...[
+              report.estimatedMinimumPrice != null &&
+              report.estimatedMaximumPrice != null &&
+              report.estimatedMaximumPrice! > 0) ...[
             pw.SizedBox(height: 14),
             _priceCard(
-              report.estimatedMinimumPrice,
-              report.estimatedMaximumPrice,
+              report.estimatedMinimumPrice!,
+              report.estimatedMaximumPrice!,
               report.currency,
             ),
           ],
@@ -183,7 +197,7 @@ class InspectionPdfService {
             report?.disclaimer.trim().isNotEmpty == true
                 ? report!.disclaimer
                 : 'Bu rapor yalnızca yüklenen fotoğraftaki görünür alanların yapay zekâ ile değerlendirilmesine dayanır. Mekanik kontrol veya profesyonel ekspertiz garantisi değildir.'
-                    .tr,
+                      .tr,
             accent: _warning,
           ),
         ],
@@ -304,7 +318,7 @@ class InspectionPdfService {
         pw.Text(
           noDamage
               ? 'Gönderilen görüntüde görünür hasar tespit edilmedi. Bu sonuç mekanik veya profesyonel ekspertiz garantisi değildir.'
-                  .tr
+                    .tr
               : (inspection.analysisMessage ?? 'Görsel analiz tamamlandı.').tr,
           style: const pw.TextStyle(fontSize: 10, lineSpacing: 3),
         ),

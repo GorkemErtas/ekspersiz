@@ -307,7 +307,7 @@ class _InspectionResultScreenState extends State<InspectionResultScreen>
 
   String _severityShortText(String? severity) {
     return switch (severity) {
-      'NONE' => 'Hasar Yok',
+      'NONE' => 'Görünür Hasar Yok',
       'MINOR' => 'Hafif',
       'MODERATE' => 'Orta',
       'SEVERE' => 'Ağır',
@@ -346,6 +346,9 @@ class _InspectionResultScreenState extends State<InspectionResultScreen>
   }
 
   String _damageTypeLabel(String type) {
+    if (type == 'BROKEN_PART' && _inspection.damageSeverity == 'UNKNOWN') {
+      return 'Lamba Kırığı Belirtisi';
+    }
     return switch (type) {
       'NO_VISIBLE_DAMAGE' => 'Görünür Hasar Yok',
       'SCRATCH' => 'Çizik',
@@ -388,6 +391,9 @@ class _InspectionResultScreenState extends State<InspectionResultScreen>
   }
 
   String _repairActionLabel(String action) {
+    if (action == 'NO_ACTION' && _inspection.damageSeverity != 'NONE') {
+      return 'Onarım yöntemi belirlenemedi — fiziksel inceleme gerekli';
+    }
     return switch (action) {
       'NO_ACTION' => 'İşlem Gerekmiyor',
       'POLISHING' => 'Pasta / Cila',
@@ -419,7 +425,8 @@ class _InspectionResultScreenState extends State<InspectionResultScreen>
         'ML analizini tekrarlamadan yalnızca raporu tekrar deneyebilirsiniz.';
   }
 
-  String _formatPrice(double value) {
+  String _formatPrice(double? value) {
+    if (value == null) return 'Belirlenemedi';
     final rounded = value.round();
 
     final source = rounded.toString();
@@ -1093,8 +1100,6 @@ class _ConfidenceCard extends StatelessWidget {
 
     final safeConfidence = confidence.clamp(0.0, 1.0).toDouble();
 
-    final percentage = safeConfidence * 100;
-
     return AppCard(
       showShadow: false,
       backgroundColor: colorScheme.surfaceContainerLow,
@@ -1104,10 +1109,11 @@ class _ConfidenceCard extends StatelessWidget {
         children: [
           AppSectionHeader(
             icon: Icons.analytics_outlined,
-            title: 'Model G\u00fcveni',
-            subtitle: 'G\u00f6r\u00fcnt\u00fc analizinin g\u00fcven skoru',
+            title: 'Model Skoru',
+            subtitle:
+                'En yüksek tespit skoru; analiz doğruluk yüzdesi değildir.',
             trailing: AppText(
-              '%${percentage.toStringAsFixed(1)}',
+              safeConfidence.toStringAsFixed(2),
               style: textTheme.titleLarge?.copyWith(
                 color: colorScheme.primary,
                 fontWeight: FontWeight.w900,

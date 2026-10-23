@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/core/network/api_client.dart';
@@ -13,6 +15,86 @@ import 'package:mobile/features/inspection/services/inspection_service.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   setUp(() => SessionManager.invalidateImages(allowImages: true));
+
+  test('unknown report cost stays null while legacy zero remains zero', () {
+    expect(InspectionReport.fromJson({}).estimatedMinimumPrice, isNull);
+    expect(
+      InspectionReport.fromJson({
+        'estimatedMinimumPrice': 0,
+      }).estimatedMinimumPrice,
+      0,
+    );
+    expect(
+      InspectionReport.fromJson({
+        'estimatedMaximumPrice': 2500,
+      }).estimatedMaximumPrice,
+      2500,
+    );
+  });
+
+  testWidgets(
+    'uncertain severity preserves lamp scope and does not claim accuracy or free repair',
+    (tester) async {
+      final fixture =
+          jsonDecode(
+                File('../contracts/car-analysis-v1.json').readAsStringSync(),
+              )
+              as Map<String, dynamic>;
+      final result = DamageInspection.fromJson({
+        ...fixture['visibleDamage'] as Map<String, dynamic>,
+        'id': 1,
+        'vehicleId': 2,
+        'imagePath': 'image.jpg',
+        'status': 'COMPLETED',
+        'reportStatus': 'COMPLETED',
+        'report': {
+          'title': 'Fiziksel İnceleme Gerekli',
+          'summary': 'Olası görünür hasar bulundu.',
+          'damageDescription': 'Lamba kırığı belirtisi.',
+          'repairRecommendation':
+              'Onarım ve değişim gerekliliği belirlenemedi.',
+          'estimatedMinimumPrice': null,
+          'estimatedMaximumPrice': null,
+          'priceInformation':
+              'Onarım yöntemi belirlenemediği için maliyet hesaplanmadı.',
+        },
+      });
+      expect(result.damageSeverity, 'UNKNOWN');
+      expect(result.detections.single.affectedPart, 'HEADLIGHT');
+      expect(result.report!.estimatedMinimumPrice, isNull);
+      await _pumpResultScreen(tester, result);
+      await tester.scrollUntilVisible(
+        find.text('Model Skoru'),
+        150,
+        scrollable: find.byType(Scrollable).first,
+      );
+      expect(find.text('0.91'), findsOneWidget);
+      expect(
+        find.textContaining('analiz doğruluk yüzdesi değildir'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('%91'), findsNothing);
+      await tester.scrollUntilVisible(
+        find.text('Lamba Kırığı Belirtisi'),
+        150,
+        scrollable: find.byType(Scrollable).first,
+      );
+      expect(find.text('Kırık Parça'), findsNothing);
+      await tester.scrollUntilVisible(
+        find.text('Onarım yöntemi belirlenemedi — fiziksel inceleme gerekli'),
+        150,
+        scrollable: find.byType(Scrollable).first,
+      );
+      expect(find.text('İşlem Gerekmiyor'), findsNothing);
+      await tester.scrollUntilVisible(
+        find.textContaining('maliyet hesaplanmadı'),
+        150,
+        scrollable: find.byType(Scrollable).first,
+      );
+      expect(find.textContaining('Belirlenemedi'), findsWidgets);
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets('no visible damage renders a completed success explanation', (
     tester,

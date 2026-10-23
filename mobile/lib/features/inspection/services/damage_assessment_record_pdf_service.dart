@@ -126,7 +126,7 @@ class DamageAssessmentRecordPdfService {
           _section('AI Teknik Değerlendirmesi', bold),
           pw.SizedBox(height: 7),
           _grid([
-            ['Hasar Seviyesi', _severity(_text(analysis['damageSeverity'])), 'Güven Skoru', _percent(analysis['confidenceScore'])],
+            ['Hasar Seviyesi', _severity(_text(analysis['damageSeverity'])), 'Model Skoru (doğruluk yüzdesi değil)', _score(analysis['confidenceScore'])],
             ['Analiz Tarihi', _formatIso(analysis['completedAt']), 'İnceleme No', _text(analysis['inspectionId'])],
           ], bold),
           if (_text(analysis['analysisMessage']).isNotEmpty) ...[
@@ -237,9 +237,9 @@ class DamageAssessmentRecordPdfService {
   static String _text(dynamic value) => value?.toString().trim() ?? '';
   static String _fallback(dynamic value) => _text(value).isEmpty ? '-' : _text(value);
   static double _number(dynamic value) => value is num ? value.toDouble() : double.tryParse(_text(value)) ?? 0;
-  static String _percent(dynamic value) {
+  static String _score(dynamic value) {
     final n = _number(value);
-    return n <= 0 ? '-' : '%${(n * 100).round()}';
+    return n <= 0 ? '-' : n.clamp(0, 1).toStringAsFixed(2);
   }
   static String _formatIso(dynamic value) {
     final date = DateTime.tryParse(_text(value));
@@ -253,6 +253,7 @@ class DamageAssessmentRecordPdfService {
   static String _money(double value) =>
       value.round().toString().replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (_) => '.');
   static String _severity(String value) => switch (value) {
+    'UNKNOWN' => 'Belirlenemedi',
     'NONE' => 'Görünür Hasar Tespit Edilmedi',
     'MINOR' => 'Hafif',
     'MODERATE' => 'Orta',

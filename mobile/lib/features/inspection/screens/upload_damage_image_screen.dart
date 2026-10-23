@@ -386,8 +386,8 @@ class _UploadDamageImageScreenState extends State<UploadDamageImageScreen> {
                   icon: Icons.image_search_rounded,
                   title: 'Hasarı ve çevresindeki parçayı gösterin',
                   subtitle:
-                      'Tek bir net fotoğraf yeterli. Hasarın ayrıntıları ve bulunduğu '
-                      'araç parçası aynı karede görünsün; çok yakından veya uzaktan çekmeyin.',
+                      'Yalnızca otomobiller desteklenir. Hasar ve çevresindeki otomobil '
+                      'parçaları aynı karede görünsün. Çok yakın çekimde otomobil doğrulanamazsa daha geniş fotoğraf istenir.',
                   badge: 'TEK FOTOĞRAF',
                 ),
 
