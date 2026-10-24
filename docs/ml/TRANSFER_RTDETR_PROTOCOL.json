@@ -1,0 +1,21 @@
+{
+  "stage": "Additional multiscale CNN alternative, declared after the RF-DETR comparison; exploratory historical-benchmark extension, not a new blind holdout",
+  "reason": "Compare a commercially licensed pretrained multiscale CNN detector for small damage detail and CPU efficiency",
+  "model": "PekingU/rtdetr_r18vd, publisher Apache-2.0 weights; Transformers native Apache-2.0 implementation",
+  "dataset": "Same frozen HITL canonical splits and same damage-only 709-row repeat-factor train view; no SYNDCAR training",
+  "input_size": 640,
+  "maximum_epochs": 30,
+  "early_stopping_patience": 10,
+  "batch_size": 4,
+  "gradient_accumulation": 2,
+  "learning_rate": 0.0001,
+  "backbone_learning_rate": 0.00005,
+  "weight_decay": 0.0001,
+  "scheduler": "One epoch warmup then cosine",
+  "augmentation": "Training-only horizontal flip and limited ColorJitter; boxes transformed with images",
+  "precision": "bf16 mixed precision on actual CUDA GPU",
+  "selection": "Validation-only common bbox mAP50:95, API cap 100. Test only after checkpoint selection; do not tune on the historical test",
+  "comparison": "Same test labels, common score 0.25 and COCO AP; two-thread isolated ONNX CPU where export succeeds",
+  "production_approved": false,
+  "no_deployment": true
+}

@@ -1,0 +1,66 @@
+{
+  "source_branch": "master",
+  "source_revision": "9b38355",
+  "date": "2026-10-24",
+  "dataset": "HITL CC0 canonical split, unchanged",
+  "split_sha256": {
+    "train": "b29dc306ac6d0d0823bef2e1b3992f0cbed452d5093a5a53df11fd5fa500f21b",
+    "val": "6012e1978ee102db0943edfb884a4dee9837c253d70bc1abcec3a301e5c6debe",
+    "test": "f24e7dbf4fc3cca15f5b5618141e2d6ca3fab99b9250af649123ce20fd738e69"
+  },
+  "test_policy": "Same frozen historical holdout for final comparisons only; never tune on it. Previously evaluated historical data is not a fresh production holdout.",
+  "training": "Damage-only task views, repeat-factor sampling threshold 0.2, no unannotated part-only images as negatives, publisher COCO-pretrained weights",
+  "planned_candidates": [
+    {
+      "variant": "RF-DETR Nano detection",
+      "resolution": 384,
+      "max_epochs": 30,
+      "lr": 0.0001,
+      "lr_encoder": 5e-05
+    },
+    {
+      "variant": "RF-DETR Nano detection",
+      "resolution": 512,
+      "max_epochs": 30,
+      "lr": 0.0003,
+      "lr_encoder": 0.00015
+    },
+    {
+      "variant": "RF-DETR Seg Nano instance segmentation",
+      "resolution": 384,
+      "max_epochs": 30,
+      "lr": 0.0001,
+      "lr_encoder": 5e-05,
+      "bbox_mask_aware_crop_augmentation": true
+    }
+  ],
+  "selection": "Best validation damage bbox mAP50:95; report precision/recall/FP at common threshold 0.25 and separately at validation-selected operating point. Evaluate selected checkpoint per candidate on the same test images after training.",
+  "segmentation_checkpoint_selection": "The framework tracks native mask AP. For the common bbox comparison evaluate its mask-selected best, final checkpoint and retained 5-epoch checkpoints on validation only, then select the best available bbox checkpoint. Report native mask metrics separately.",
+  "ablation_limit": "Resolution and LR both change in the 512 candidate; the segmentation candidate also enables the framework bbox/mask-aware crop augmentation to address small damage. These are practical tuning comparisons, not controlled attributions to one factor.",
+  "threshold_selection": "Validation only, thresholds 0.25 through 0.95 to preserve the existing API confidence floor: maximize F2 subject to precision >= 0.70 where feasible. If infeasible report that fact; do not invent a feasible operating point. Both tasks are capped at 100 detections per image as required by the API.",
+  "resource_comparison": "Fresh isolated ONNX CPU processes, 2 inference threads, same photo and repeat count; report session load, median/p95 photo pipeline latency and native process peak RSS. These are local measurements, not Railway deployment results.",
+  "local_cpu_selection_envelope": {
+    "maximum_photo_p95_ms": 2000,
+    "maximum_vision_process_mib": 768,
+    "scope": "Engineering comparison assumption across all three benchmark photos; not an asserted Railway quota and excludes assistant/JVM overhead."
+  },
+  "release_gate": {
+    "production_approved": false,
+    "minimum_damage_precision": 0.8,
+    "minimum_damage_recall": 0.8,
+    "minimum_damage_mAP50_95": 0.4,
+    "additional_requirements": [
+      "Fresh independent production-like holdout with verified clean and non-vehicle negatives",
+      "Per-class support and expert semantic label review",
+      "Verified damage-to-part instance associations",
+      "Actual Railway CPU/RAM limit load test",
+      "All dataset/framework/weight provenance and notices retained"
+    ]
+  },
+  "no_deployment": true,
+  "portable_split_sha256": {
+    "train": "aa3560a40e2b7cb798ce01026f50ef6f563d0d46a35e384334be56f749836af9",
+    "val": "bf84c66f882500b5f22dd694a57c3dff359dd37be3d79677942d21e436db5861",
+    "test": "7e6a7f1626a62ddd3ee067e49f093139428bf7ea52305c22c33993aabe167abc"
+  }
+}
