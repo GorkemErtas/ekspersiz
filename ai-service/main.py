@@ -2,17 +2,8 @@ import logging
 import os
 from threading import Lock
 
-from fastapi.concurrency import run_in_threadpool
-from fastapi import (
-    FastAPI,
-    File,
-    Form,
-    HTTPException,
-    Query,
-    UploadFile,
-)
+from fastapi import FastAPI, HTTPException
 
-from app.schemas import DamageAnalysisResponse, ImageQualityResponse
 from app.service_security import ServiceSecurityMiddleware
 from app.assistant.api_schemas import AssistantPlanRequest, AssistantPlanResponse, RetrievedContext
 from app.assistant.domain_classifier import SemanticDomainClassifier
@@ -27,72 +18,13 @@ logger = logging.getLogger(__name__)
 
 
 app = FastAPI(
-    title="Vehicle Damage Analysis API",
+    title="EksperSiz AI API",
     version="1.4.0",
     docs_url=None,
     redoc_url=None,
     openapi_url=None,
 )
 app.add_middleware(ServiceSecurityMiddleware)
-
-# Keep assistant-only requests (and health checks) free of PyTorch/YOLO.
-# Models are initialized once on the first image endpoint request.
-_damage_analyzer = None
-_damage_analyzer_lock = Lock()
-# YOLO predictors are shared mutable objects; serialize inference to avoid
-# parallel PyTorch allocations and reduce peak RSS on a small CPU instance.
-_damage_inference_lock = Lock()
-
-
-def get_damage_analyzer():
-    global _damage_analyzer
-    if _damage_analyzer is None:
-        with _damage_analyzer_lock:
-            if _damage_analyzer is None:
-                from app.damage_analyzer import DamageAnalyzer
-                _damage_analyzer = DamageAnalyzer()
-    return _damage_analyzer
-
-
-def run_damage_operation(operation: str, **kwargs):
-    """Run CPU-heavy inference in a thread without blocking FastAPI's event loop."""
-    with _damage_inference_lock:
-        analyzer = get_damage_analyzer()
-        # Call sites pass only these explicit internal operations.
-        if operation == "analyze":
-            return analyzer.analyze(**kwargs)
-        if operation == "analyze_pair":
-            return analyzer.analyze_pair(**kwargs)
-        if operation == "validate_image_quality":
-            return analyzer.validate_image_quality(**kwargs)
-        raise ValueError("Unsupported damage operation")
-
-
-ALLOWED_CONTENT_TYPES = {
-    "image/jpeg",
-    "image/png",
-    "image/webp",
-}
-
-MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024
-
-
-async def read_valid_image(image: UploadFile) -> bytes:
-    if image.content_type not in ALLOWED_CONTENT_TYPES:
-        raise HTTPException(
-            status_code=415,
-            detail="Only JPG, PNG and WEBP images are supported.",
-        )
-
-    file_content = await image.read(MAX_IMAGE_SIZE_BYTES + 1)
-    if not file_content:
-        raise HTTPException(status_code=400, detail="Uploaded image cannot be empty.")
-    if len(file_content) > MAX_IMAGE_SIZE_BYTES:
-        raise HTTPException(
-            status_code=413,
-            detail="Uploaded image cannot be larger than 10 MB.",
-        )
-    return file_content
 
 
 @app.get("/health")
@@ -101,111 +33,22 @@ def health_check():
         "status": "UP",
         "service": "vehicle-damage-ai",
         "version": app.version,
+        "damageAnalysis": "UNAVAILABLE",
     }
 
 
-@app.post(
-    "/api/v1/analyze",
-    response_model=DamageAnalysisResponse,
-)
-async def analyze_damage(
-        image: UploadFile = File(...),
-        context_image: UploadFile | None = File(default=None),
-        vehicle_region: str | None = Form(default=None),
-) -> DamageAnalysisResponse:
-    try:
-        file_content = await read_valid_image(image)
-
-        normalized_region = (
-            vehicle_region.strip().upper()
-            if vehicle_region is not None
-            else None
-        )
-        if normalized_region not in {None, "FRONT", "REAR"}:
-            raise HTTPException(
-                status_code=400,
-                detail="vehicle_region must be FRONT or REAR.",
-            )
-
-        if context_image is None:
-            return await run_in_threadpool(
-                run_damage_operation,
-                "analyze",
-                file_content=file_content,
-                filename=image.filename or "vehicle.jpg",
-                vehicle_region=normalized_region,
-            )
-
-        # Compatibility only: old clients explicitly upload both images.
-        context_file_content = await read_valid_image(context_image)
-
-        return await run_in_threadpool(
-            run_damage_operation,
-            "analyze_pair",
-            damage_file_content=file_content,
-            context_file_content=context_file_content,
-            filename=image.filename or "vehicle.jpg",
-            vehicle_region=normalized_region,
-        )
-
-    except HTTPException:
-        raise
-
-    except ValueError as exc:
-        raise HTTPException(
-            status_code=400,
-            detail=str(exc),
-        ) from exc
-
-    except Exception as exc:
-        logger.exception(
-            "Unexpected error during AI analysis."
-        )
-
-        raise HTTPException(
-            status_code=500,
-            detail=(
-                "AI analysis could not be completed."
-            ),
-        ) from exc
-
-    finally:
-        await image.close()
-        if context_image is not None:
-            await context_image.close()
-
-
-@app.post(
-    "/api/v1/validate-image",
-    response_model=ImageQualityResponse,
-)
-async def validate_image_quality(
-        image: UploadFile = File(...),
-        purpose: str = Query(
-            default="context",
-            pattern="^(damage|context)$",
-        ),
-) -> ImageQualityResponse:
-    try:
-        file_content = await read_valid_image(image)
-        return await run_in_threadpool(
-            run_damage_operation,
-            "validate_image_quality",
-            file_content=file_content,
-            purpose=purpose,
-        )
-    except HTTPException:
-        raise
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-    except Exception as exc:
-        logger.exception("Unexpected error during image quality validation.")
-        raise HTTPException(
-            status_code=500,
-            detail="Image quality could not be validated.",
-        ) from exc
-    finally:
-        await image.close()
+# Retain explicit responses for older clients while no damage provider exists.
+# No image is decoded, no inference is run and no healthy result is fabricated.
+@app.post("/api/v1/analyze")
+@app.post("/api/v1/validate-image")
+def damage_analysis_unavailable():
+    raise HTTPException(
+        status_code=503,
+        detail={
+            "code": "DAMAGE_ANALYSIS_UNAVAILABLE",
+            "message": "Hasar analizi geçici olarak kullanılamıyor. Mevcut analiz ve raporlarınıza erişebilirsiniz.",
+        },
+    )
 
 
 assistant_router = SemanticDomainClassifier()

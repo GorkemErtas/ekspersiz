@@ -4,7 +4,6 @@ WORKDIR /app
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    YOLO_CONFIG_DIR=/tmp/Ultralytics \
     HF_HOME=/app/.cache/huggingface \
     ASSISTANT_EMBEDDING_MODEL=intfloat/multilingual-e5-small \
     ASSISTANT_EMBEDDING_LOCAL_ONLY=true
@@ -16,15 +15,9 @@ RUN python -m pip install --no-cache-dir pip==26.2.2
 
 RUN pip install --no-cache-dir \
     torch==2.13.0+cpu \
-    torchvision==0.28.0+cpu \
     --index-url https://download.pytorch.org/whl/cpu
 
 RUN pip install --no-cache-dir -r requirements-runtime.txt
-
-# Reinstall rather than relying on an already-present headless wheel:
-# uninstalling opencv-python can remove shared cv2 files.
-RUN pip uninstall -y opencv-python && \
-    pip install --no-cache-dir --force-reinstall --no-deps opencv-python-headless==4.13.0.92
 
 # Bake the pinned embedding model into the image. Production never depends on
 # a Hugging Face download during startup or the first assistant request.
@@ -35,14 +28,9 @@ COPY knowledge ./knowledge
 COPY scripts ./scripts
 COPY main.py .
 
-COPY yolo11n.pt ./yolo11n.pt
-COPY models/vehicle_part_best.pt ./models/vehicle_part_best.pt
-COPY models/candidates/damage_detection_v2_cardd_5class.pt ./models/candidates/damage_detection_v2_cardd_5class.pt
-
 RUN groupadd --system ekspersiz && \
     useradd --system --gid ekspersiz --home-dir /app --no-create-home ekspersiz && \
-    mkdir -p /tmp/Ultralytics && \
-    chown -R ekspersiz:ekspersiz /app /tmp/Ultralytics
+    chown -R ekspersiz:ekspersiz /app
 
 USER ekspersiz
 

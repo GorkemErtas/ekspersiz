@@ -45,48 +45,19 @@ ai-service/venv/
 ai-service/__pycache__/
 *.py[cod]
 
-### YOLO ###
-ai-service/models/*.pt
-ai-service/training-runs/
-ai-service/prediction-runs/
-ai-service/evaluation-runs/
-ai-service/error-analysis-runs/
-ai-service/yolo11n.pt
-
-### Dataset ###
-ai-service/datasets/**
-!ai-service/datasets/vehicle_damage_detection_v2/
-!ai-service/datasets/vehicle_damage_detection_v2/data.yaml
-!ai-service/datasets/vehicle_damage_detection_v2/README.md
-!ai-service/datasets/vehicle_damage_detection_v2/images/
-!ai-service/datasets/vehicle_damage_detection_v2/images/train/
-!ai-service/datasets/vehicle_damage_detection_v2/images/val/
-!ai-service/datasets/vehicle_damage_detection_v2/images/test/
-!ai-service/datasets/vehicle_damage_detection_v2/images/**/.gitkeep
-!ai-service/datasets/vehicle_damage_detection_v2/labels/
-!ai-service/datasets/vehicle_damage_detection_v2/labels/train/
-!ai-service/datasets/vehicle_damage_detection_v2/labels/val/
-!ai-service/datasets/vehicle_damage_detection_v2/labels/test/
-!ai-service/datasets/vehicle_damage_detection_v2/labels/**/.gitkeep
-### Manual ML Evaluation Images ###
-ai-service/evaluation-images/*
-!ai-service/evaluation-images/.gitkeep
-!ai-service/evaluation-images/README.md
-!ai-service/evaluation-images/review_manifest.csv
-
-### Candidate Model Weights ###
-ai-service/models/candidates/*.pt
-
-### Test Images ###
+### Local ML artifacts ###
+ai-service/models/
+ai-service/datasets/
+ai-service/*-runs/
+ai-service/evaluation-images/
 ai-service/test-images/
+ai-service/target/
+ai-service/*.pt
 
 ### Firebase / Secrets ###
 firebase-admin.json
 **/firebase-admin.json
 *-firebase-adminsdk-*.json
-
-### YOLO Weights ###
-ai-service/*.pt
 
 ### Environment / Secrets ###
 .env

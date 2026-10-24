@@ -28,7 +28,8 @@ class ServiceSecurityMiddleware:
                 {"detail": "Invalid service credentials."}, status_code=401
             )(scope, receive, send)
 
-        # Preserve legacy two-photo analysis (2 x 10 MB + multipart overhead).
+        # Allow older image payload sizes to receive the explicit 503 response;
+        # retired image routes do not read or buffer their request bodies.
         limit = 22 * 1024 * 1024 if scope["path"] in {
             "/api/v1/analyze", "/api/v1/validate-image"
         } else 256 * 1024 if scope["path"] == "/api/v1/assistant/plan" else 64 * 1024

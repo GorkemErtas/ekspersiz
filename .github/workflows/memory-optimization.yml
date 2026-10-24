@@ -36,13 +36,13 @@ jobs:
       - name: Install lightweight API test dependencies
         run: |
           python -m pip install "pip==26.2.2"
-          python -m pip install "fastapi==0.139.2" "pydantic==2.13.4" "python-multipart==0.0.32"
+          python -m pip install "fastapi==0.139.2" "pydantic==2.13.4" "pypdf==6.19.0"
       - name: Compile Python modules
         run: python -m compileall -q ai-service/app ai-service/main.py ai-service/tests
-      - name: Run focused memory lifecycle tests
+      - name: Run AI service and assistant regression tests
         env:
           PYTHONPATH: ai-service
-        run: python -m unittest discover -s ai-service/tests -p "test_resource_lifecycle.py" -v
+        run: python -m unittest discover -s ai-service/tests -v
 
   backend-tests:
     runs-on: ubuntu-latest
@@ -55,38 +55,3 @@ jobs:
           cache: maven
       - name: Run backend tests
         run: chmod +x ./mvnw && ./mvnw -B test
-
-  real-inference-smoke:
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - name: Install CPU runtime dependencies
-        run: |
-          python -m pip install "pip==26.2.2"
-          python -m pip install "torch==2.13.0+cpu" "torchvision==0.28.0+cpu" --index-url https://download.pytorch.org/whl/cpu
-          python -m pip install "fastapi==0.139.2" "pydantic==2.13.4" "python-multipart==0.0.32" "numpy==2.5.1" "pillow==13.0.0" "ultralytics==8.4.106" "opencv-python-headless==4.13.0.92"
-          python -m pip uninstall -y opencv-python || true
-          python -m pip install --force-reinstall --no-deps "opencv-python-headless==4.13.0.92"
-      - name: Exercise YOLO checkpoints with synthetic image (single smoke)
-        env:
-          PYTHONPATH: ai-service
-          YOLO_CONFIG_DIR: /tmp/ultralytics
-          OMP_NUM_THREADS: "2"
-          MKL_NUM_THREADS: "2"
-          OPENBLAS_NUM_THREADS: "2"
-        run: python ai-service/scripts/measure_runtime_memory.py
-      - name: Install remaining AI runtime dependencies for full test suite
-        run: |
-          python -m pip install --disable-pip-version-check \
-            "psycopg[binary]==3.2.10" "pypdf==6.19.0" "sentence-transformers==5.6.0" "urllib3==2.8.0" "certifi==2026.10.19"
-      - name: Compare all Python tests against unchanged production master
-        env:
-          YOLO_CONFIG_DIR: /tmp/ultralytics
-        run: |
-          git fetch --depth=1 origin master
-          git worktree add --detach /tmp/ekspersiz-master FETCH_HEAD
-          python ai-service/scripts/compare_python_regression_suite.py --baseline-root /tmp/ekspersiz-master
