@@ -5,6 +5,7 @@ import os
 
 from starlette.exceptions import HTTPException
 from starlette.responses import JSONResponse
+from starlette.concurrency import run_in_threadpool
 
 
 class ServiceSecurityMiddleware:
@@ -27,6 +28,14 @@ class ServiceSecurityMiddleware:
             return await JSONResponse(
                 {"detail": "Invalid service credentials."}, status_code=401
             )(scope, receive, send)
+
+        if scope['path'] in {'/api/v1/analyze','/api/v1/validate-image'}:
+            from app.vision.runtime import VisionUnavailable
+            from app.vision.api import runtime
+            try:
+                await run_in_threadpool(runtime.require_available)
+            except VisionUnavailable as exc:
+                return await JSONResponse({'detail': {'code': 'DAMAGE_ANALYSIS_UNAVAILABLE', 'message': str(exc)}}, status_code=503)(scope, receive, send)
 
         # Allow older image payload sizes to receive the explicit 503 response;
         # retired image routes do not read or buffer their request bodies.

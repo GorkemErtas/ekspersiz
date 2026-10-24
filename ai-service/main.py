@@ -5,6 +5,7 @@ from threading import Lock
 from fastapi import FastAPI, HTTPException
 
 from app.service_security import ServiceSecurityMiddleware
+from app.vision.api import router as vision_router, runtime as vision_runtime
 from app.assistant.api_schemas import AssistantPlanRequest, AssistantPlanResponse, RetrievedContext
 from app.assistant.domain_classifier import SemanticDomainClassifier
 from app.assistant.embeddings import LocalMultilingualEmbedder
@@ -33,22 +34,11 @@ def health_check():
         "status": "UP",
         "service": "vehicle-damage-ai",
         "version": app.version,
-        "damageAnalysis": "UNAVAILABLE",
+        "damageAnalysis": vision_runtime.status(),
     }
 
 
-# Retain explicit responses for older clients while no damage provider exists.
-# No image is decoded, no inference is run and no healthy result is fabricated.
-@app.post("/api/v1/analyze")
-@app.post("/api/v1/validate-image")
-def damage_analysis_unavailable():
-    raise HTTPException(
-        status_code=503,
-        detail={
-            "code": "DAMAGE_ANALYSIS_UNAVAILABLE",
-            "message": "Hasar analizi geçici olarak kullanılamıyor. Mevcut analiz ve raporlarınıza erişebilirsiniz.",
-        },
-    )
+app.include_router(vision_router)
 
 
 assistant_router = SemanticDomainClassifier()

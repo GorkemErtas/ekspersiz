@@ -1,0 +1,237 @@
+{
+  "schema_version": "hitl-v1",
+  "categories": [
+    {
+      "id": 1,
+      "name": "Broken part",
+      "task": "damage",
+      "task_index": 0,
+      "code": "BROKEN_PART",
+      "display_tr": "Kırık parça"
+    },
+    {
+      "id": 2,
+      "name": "Corrosion",
+      "task": "damage",
+      "task_index": 1,
+      "code": "CORROSION",
+      "display_tr": "Korozyon"
+    },
+    {
+      "id": 3,
+      "name": "Cracked",
+      "task": "damage",
+      "task_index": 2,
+      "code": "CRACKED",
+      "display_tr": "Çatlak"
+    },
+    {
+      "id": 4,
+      "name": "Dent",
+      "task": "damage",
+      "task_index": 3,
+      "code": "DENT",
+      "display_tr": "Göçük"
+    },
+    {
+      "id": 5,
+      "name": "Flaking",
+      "task": "damage",
+      "task_index": 4,
+      "code": "FLAKING",
+      "display_tr": "Boya soyulması"
+    },
+    {
+      "id": 6,
+      "name": "Missing part",
+      "task": "damage",
+      "task_index": 5,
+      "code": "MISSING_PART",
+      "display_tr": "Eksik parça"
+    },
+    {
+      "id": 7,
+      "name": "Paint chip",
+      "task": "damage",
+      "task_index": 6,
+      "code": "PAINT_CHIP",
+      "display_tr": "Boya kopması"
+    },
+    {
+      "id": 8,
+      "name": "Scratch",
+      "task": "damage",
+      "task_index": 7,
+      "code": "SCRATCH",
+      "display_tr": "Çizik"
+    },
+    {
+      "id": 9,
+      "name": "Back-bumper",
+      "task": "part",
+      "task_index": 0,
+      "code": "BACK_BUMPER",
+      "display_tr": "Arka tampon"
+    },
+    {
+      "id": 10,
+      "name": "Back-door",
+      "task": "part",
+      "task_index": 1,
+      "code": "BACK_DOOR",
+      "display_tr": "Arka kapı"
+    },
+    {
+      "id": 11,
+      "name": "Back-wheel",
+      "task": "part",
+      "task_index": 2,
+      "code": "BACK_WHEEL",
+      "display_tr": "Arka tekerlek"
+    },
+    {
+      "id": 12,
+      "name": "Back-window",
+      "task": "part",
+      "task_index": 3,
+      "code": "BACK_WINDOW",
+      "display_tr": "Arka kapı camı"
+    },
+    {
+      "id": 13,
+      "name": "Back-windshield",
+      "task": "part",
+      "task_index": 4,
+      "code": "BACK_WINDSHIELD",
+      "display_tr": "Arka cam"
+    },
+    {
+      "id": 14,
+      "name": "Fender",
+      "task": "part",
+      "task_index": 5,
+      "code": "FENDER",
+      "display_tr": "Çamurluk"
+    },
+    {
+      "id": 15,
+      "name": "Front-bumper",
+      "task": "part",
+      "task_index": 6,
+      "code": "FRONT_BUMPER",
+      "display_tr": "Ön tampon"
+    },
+    {
+      "id": 16,
+      "name": "Front-door",
+      "task": "part",
+      "task_index": 7,
+      "code": "FRONT_DOOR",
+      "display_tr": "Ön kapı"
+    },
+    {
+      "id": 17,
+      "name": "Front-wheel",
+      "task": "part",
+      "task_index": 8,
+      "code": "FRONT_WHEEL",
+      "display_tr": "Ön tekerlek"
+    },
+    {
+      "id": 18,
+      "name": "Front-window",
+      "task": "part",
+      "task_index": 9,
+      "code": "FRONT_WINDOW",
+      "display_tr": "Ön kapı camı"
+    },
+    {
+      "id": 19,
+      "name": "Grille",
+      "task": "part",
+      "task_index": 10,
+      "code": "GRILLE",
+      "display_tr": "Izgara"
+    },
+    {
+      "id": 20,
+      "name": "Headlight",
+      "task": "part",
+      "task_index": 11,
+      "code": "HEADLIGHT",
+      "display_tr": "Far"
+    },
+    {
+      "id": 21,
+      "name": "Hood",
+      "task": "part",
+      "task_index": 12,
+      "code": "HOOD",
+      "display_tr": "Kaput"
+    },
+    {
+      "id": 22,
+      "name": "License-plate",
+      "task": "part",
+      "task_index": 13,
+      "code": "LICENSE_PLATE",
+      "display_tr": "Plaka"
+    },
+    {
+      "id": 23,
+      "name": "Mirror",
+      "task": "part",
+      "task_index": 14,
+      "code": "MIRROR",
+      "display_tr": "Ayna"
+    },
+    {
+      "id": 24,
+      "name": "Quarter-panel",
+      "task": "part",
+      "task_index": 15,
+      "code": "QUARTER_PANEL",
+      "display_tr": "Arka yan panel"
+    },
+    {
+      "id": 25,
+      "name": "Rocker-panel",
+      "task": "part",
+      "task_index": 16,
+      "code": "ROCKER_PANEL",
+      "display_tr": "Marşpiyel"
+    },
+    {
+      "id": 26,
+      "name": "Roof",
+      "task": "part",
+      "task_index": 17,
+      "code": "ROOF",
+      "display_tr": "Tavan"
+    },
+    {
+      "id": 27,
+      "name": "Tail-light",
+      "task": "part",
+      "task_index": 18,
+      "code": "TAIL_LIGHT",
+      "display_tr": "Stop lambası"
+    },
+    {
+      "id": 28,
+      "name": "Trunk",
+      "task": "part",
+      "task_index": 19,
+      "code": "TRUNK",
+      "display_tr": "Bagaj kapağı"
+    },
+    {
+      "id": 29,
+      "name": "Windshield",
+      "task": "part",
+      "task_index": 20,
+      "code": "WINDSHIELD",
+      "display_tr": "Ön cam"
+    }
+  ]
+}

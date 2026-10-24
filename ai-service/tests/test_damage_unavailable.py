@@ -48,6 +48,6 @@ class DamageUnavailableTest(unittest.IsolatedAsyncioTestCase):
             self.assertEqual("DAMAGE_ANALYSIS_UNAVAILABLE", body["detail"]["code"])
 
     def test_assistant_routes_are_preserved(self):
-        paths = {route.path for route in main.app.routes}
+        paths = {getattr(route, 'path', None) for route in main.app.routes}
         self.assertIn("/api/v1/assistant/plan", paths)
         self.assertIn("/api/v1/assistant/readiness", paths)

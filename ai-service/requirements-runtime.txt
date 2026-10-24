@@ -11,3 +11,7 @@ pypdf==6.19.0
 # Pin security-sensitive transitive HTTP/TLS dependencies as well.
 urllib3==2.8.0
 certifi==2026.10.19
+
+# Vision runtime; training/export packages are kept out of production.
+onnxruntime==1.31.0
+python-multipart==0.0.32

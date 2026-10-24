@@ -19,3 +19,6 @@ test-images
 
 requirements.txt
 README.md
+ml
+models
+scripts/generate_vision_contract.py
