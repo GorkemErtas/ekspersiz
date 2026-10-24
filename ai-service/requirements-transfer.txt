@@ -1,0 +1,8 @@
+# Offline fine-tuning only; never install this file in the API image.
+-r requirements-training.txt
+rfdetr[train]==1.11.2
+# Install the CUDA wheel matching the existing PyTorch build before this file.
+torchvision==0.28.0
+scipy==1.18.1
+albumentations==2.0.8
+transformers==5.20.2

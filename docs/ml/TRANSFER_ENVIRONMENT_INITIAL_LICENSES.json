@@ -1,0 +1,3096 @@
+{
+  "python": "3.13.14 (tags/v3.13.14:fd17997, Jun 10 2026, 13:03:48) [MSC v.1944 64 bit (AMD64)]",
+  "environment": "isolated offline training environment; original API environment unchanged",
+  "packages": [
+    {
+      "name": "accelerate",
+      "version": "1.15.0",
+      "license_expression": null,
+      "license_metadata": "Apache",
+      "project_urls": [],
+      "license_classifiers": [
+        "License :: OSI Approved :: Apache Software License"
+      ],
+      "license_files": [
+        {
+          "path": "accelerate-1.15.0.dist-info/licenses/LICENSE",
+          "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+          "first_line": "Apache License"
+        }
+      ]
+    },
+    {
+      "name": "aiohappyeyeballs",
+      "version": "2.7.1",
+      "license_expression": null,
+      "license_metadata": "PSF-2.0",
+      "project_urls": [
+        "Bug Tracker, https://github.com/aio-libs/aiohappyeyeballs/issues",
+        "Changelog, https://github.com/aio-libs/aiohappyeyeballs/blob/main/CHANGELOG.md",
+        "Documentation, https://aiohappyeyeballs.readthedocs.io",
+        "Repository, https://github.com/aio-libs/aiohappyeyeballs"
+      ],
+      "license_classifiers": [
+        "License :: OSI Approved :: Python Software Foundation License"
+      ],
+      "license_files": [
+        {
+          "path": "aiohappyeyeballs-2.7.1.dist-info/licenses/LICENSE",
+          "sha256": "3b2f81fe21d181c499c59a256c8e1968455d6689d269aa85373bfb6af41da3bf",
+          "first_line": "A. HISTORY OF THE SOFTWARE"
+        }
+      ]
+    },
+    {
+      "name": "aiohttp",
+      "version": "3.14.5",
+      "license_expression": "Apache-2.0 AND MIT",
+      "license_metadata": "",
+      "project_urls": [
+        "Homepage, https://github.com/aio-libs/aiohttp",
+        "Chat: Matrix, https://matrix.to/#/#aio-libs:matrix.org",
+        "Chat: Matrix Space, https://matrix.to/#/#aio-libs-space:matrix.org",
+        "CI: GitHub Actions, https://github.com/aio-libs/aiohttp/actions?query=workflow%3ACI",
+        "Coverage: codecov, https://codecov.io/github/aio-libs/aiohttp",
+        "Docs: Changelog, https://docs.aiohttp.org/en/stable/changes.html",
+        "Docs: RTD, https://docs.aiohttp.org",
+        "GitHub: issues, https://github.com/aio-libs/aiohttp/issues",
+        "GitHub: repo, https://github.com/aio-libs/aiohttp"
+      ],
+      "license_classifiers": [],
+      "license_files": [
+        {
+          "path": "aiohttp-3.14.5.dist-info/licenses/LICENSE.txt",
+          "sha256": "2e4be5fc6c4c72a466fcb665d726e049a6891981fe536c4f04b6366749461d23",
+          "first_line": "Apache License"
+        },
+        {
+          "path": "aiohttp-3.14.5.dist-info/licenses/vendor/llhttp/LICENSE",
+          "sha256": "628168d68bb5a8a17e0bbefb3bd74e326e1edc20583d76f52f457c82c921867d",
+          "first_line": "MIT License"
+        }
+      ]
+    },
+    {
+      "name": "aiosignal",
+      "version": "1.4.0",
+      "license_expression": null,
+      "license_metadata": "Apache 2.0",
+      "project_urls": [
+        "Chat: Gitter, https://gitter.im/aio-libs/Lobby",
+        "CI: GitHub Actions, https://github.com/aio-libs/aiosignal/actions",
+        "Coverage: codecov, https://codecov.io/github/aio-libs/aiosignal",
+        "Docs: RTD, https://docs.aiosignal.org",
+        "GitHub: issues, https://github.com/aio-libs/aiosignal/issues",
+        "GitHub: repo, https://github.com/aio-libs/aiosignal"
+      ],
+      "license_classifiers": [
+        "License :: OSI Approved :: Apache Software License"
+      ],
+      "license_files": [
+        {
+          "path": "aiosignal-1.4.0.dist-info/licenses/LICENSE",
+          "sha256": "6fd5243e92dd7f98ec69c7ac377728e74905709ff527a5bf98d6d0263c04f5b6",
+          "first_line": "Apache License"
+        }
+      ]
+    },
+    {
+      "name": "albucore",
+      "version": "0.0.23",
+      "license_expression": null,
+      "license_metadata": "MIT License\n\nCopyright (c) 2024 Vladimir Iglovikov\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, includ",
+      "project_urls": [],
+      "license_classifiers": [
+        "License :: OSI Approved :: MIT License"
+      ],
+      "license_files": [
+        {
+          "path": "albucore-0.0.23.dist-info/LICENSE",
+          "sha256": "645b7bab67908fe69ff10077947e6459d3e03d3cb21939e08c95592d0e9e3516",
+          "first_line": "MIT License"
+        }
+      ]
+    },
+    {
+      "name": "albumentations",
+      "version": "1.4.24",
+      "license_expression": null,
+      "license_metadata": "MIT License\n\nCopyright (c) 2017 Vladimir Iglovikov, Alexander Buslaev, Alexander Parinov,\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin t",
+      "project_urls": [
+        "Homepage, https://albumentations.ai"
+      ],
+      "license_classifiers": [
+        "License :: OSI Approved :: MIT License"
+      ],
+      "license_files": [
+        {
+          "path": "albumentations-1.4.24.dist-info/LICENSE",
+          "sha256": "bea4dc8e93ae2784bccd45f1cdba53da97b99646bca390c7d725e17b72dc2180",
+          "first_line": "MIT License"
+        }
+      ]
+    },
+    {
+      "name": "annotated-doc",
+      "version": "0.0.4",
+      "license_expression": "MIT",
+      "license_metadata": "",
+      "project_urls": [
+        "Homepage, https://github.com/fastapi/annotated-doc",
+        "Documentation, https://github.com/fastapi/annotated-doc",
+        "Repository, https://github.com/fastapi/annotated-doc",
+        "Issues, https://github.com/fastapi/annotated-doc/issues",
+        "Changelog, https://github.com/fastapi/annotated-doc/release-notes.md"
+      ],
+      "license_classifiers": [],
+      "license_files": [
+        {
+          "path": "annotated_doc-0.0.4.dist-info/licenses/LICENSE",
+          "sha256": "fff170779a6acbf65abdb405c087f1cee1786691e4a96a4034517e4a504a0cdf",
+          "first_line": "The MIT License (MIT)"
+        }
+      ]
+    },
+    {
+      "name": "annotated-types",
+      "version": "0.7.0",
+      "license_expression": null,
+      "license_metadata": "",
+      "project_urls": [
+        "Homepage, https://github.com/annotated-types/annotated-types",
+        "Source, https://github.com/annotated-types/annotated-types",
+        "Changelog, https://github.com/annotated-types/annotated-types/releases"
+      ],
+      "license_classifiers": [
+        "License :: OSI Approved :: MIT License"
+      ],
+      "license_files": [
+        {
+          "path": "annotated_types-0.7.0.dist-info/licenses/LICENSE",
+          "sha256": "fe1049884b1a0d9342901e88e07f32925d24b3121d9972b6a6805fb9824b095d",
+          "first_line": "The MIT License (MIT)"
+        }
+      ]
+    },
+    {
+      "name": "anyio",
+      "version": "4.14.2",
+      "license_expression": "MIT",
+      "license_metadata": "",
+      "project_urls": [
+        "Documentation, https://anyio.readthedocs.io/en/latest/",
+        "Changelog, https://anyio.readthedocs.io/en/stable/versionhistory.html",
+        "Source code, https://github.com/agronholm/anyio",
+        "Issue tracker, https://github.com/agronholm/anyio/issues"
+      ],
+      "license_classifiers": [],
+      "license_files": [
+        {
+          "path": "anyio-4.14.2.dist-info/licenses/LICENSE",
+          "sha256": "5361ac9dc58f2ef5fd2e9b09c68297c17f04950909bbc8023bdb82eacf22c2b0",
+          "first_line": "The MIT License (MIT)"
+        }
+      ]
+    },
+    {
+      "name": "attrs",
+      "version": "26.1.0",
+      "license_expression": "MIT",
+      "license_metadata": "",
+      "project_urls": [
+        "Documentation, https://www.attrs.org/",
+        "Changelog, https://www.attrs.org/en/stable/changelog.html",
+        "GitHub, https://github.com/python-attrs/attrs",
+        "Funding, https://github.com/sponsors/hynek",
+        "Tidelift, https://tidelift.com/subscription/pkg/pypi-attrs?utm_source=pypi-attrs&utm_medium=pypi"
+      ],
+      "license_classifiers": [],
+      "license_files": [
+        {
+          "path": "attrs-26.1.0.dist-info/licenses/LICENSE",
+          "sha256": "882115c95dfc2af1eeb6714f8ec6d5cbcabf667caff8729f42420da63f714e9f",
+          "first_line": "The MIT License (MIT)"
+        }
+      ]
+    },
+    {
+      "name": "av",
+      "version": "19.0.2",
+      "license_expression": "BSD-3-Clause",
+      "license_metadata": "",
+      "project_urls": [
+        "Bug Tracker, https://github.com/PyAV-Org/PyAV/issues",
+        "Source Code, https://github.com/PyAV-Org/PyAV",
+        "homepage, https://pyav.basswood.io"
+      ],
+      "license_classifiers": [],
+      "license_files": [
+        {
+          "path": "av-19.0.2.dist-info/licenses/AUTHORS.py",
+          "sha256": "a69d8ff2559cf3da0e390c7d9f5f648d9db0333a00f9d4989a330a7180cca910",
+          "first_line": "\"\"\" Generate the AUTHORS.rst file from git commit history."
+        },
+        {
+          "path": "av-19.0.2.dist-info/licenses/AUTHORS.rst",
+          "sha256": "2abfebe175cefe78fcb14db260a3c8972d3b52156f50dedd0bc416ac4f884a96",
+          "first_line": "Contributors"
+        },
+        {
+          "path": "av-19.0.2.dist-info/licenses/LICENSE.txt",
+          "sha256": "f32ebcb6007dcc05eea369b3820e6391b0a7ef1ed763f30f1aca15dfdbacbe96",
+          "first_line": "Copyright retained by original committers. All rights reserved."
+        },
+        {
+          "path": "av-19.0.2.dist-info/licenses/__pycache__/AUTHORS.cpython-313.pyc",
+          "sha256": "dd72b005125112359ed14892bdf60bf9ddf462de83e5716590b4092a60708d5d",
+          "first_line": "�"
+        }
+      ]
+    },
+    {
+      "name": "certifi",
+      "version": "2026.7.22",
+      "license_expression": null,
+      "license_metadata": "MPL-2.0",
+      "project_urls": [
+        "Source, https://github.com/certifi/python-certifi"
+      ],
+      "license_classifiers": [
+        "License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)"
+      ],
+      "license_files": [
+        {
+          "path": "certifi-2026.7.22.dist-info/licenses/LICENSE",
+          "sha256": "e93716da6b9c0d5a4a1df60fe695b370f0695603d21f6f83f053e42cfc10caf7",
+          "first_line": "This package contains a modified version of ca-bundle.crt:"
+        }
+      ]
+    },
+    {
+      "name": "charset-normalizer",
+      "version": "3.4.9",
+      "license_expression": null,
+      "license_metadata": "MIT",
+      "project_urls": [
+        "Changelog, https://github.com/jawah/charset_normalizer/blob/master/CHANGELOG.md",
+        "Documentation, https://charset-normalizer.readthedocs.io/",
+        "Code, https://github.com/jawah/charset_normalizer",
+        "Issue tracker, https://github.com/jawah/charset_normalizer/issues"
+      ],
+      "license_classifiers": [],
+      "license_files": [
+        {
+          "path": "charset_normalizer-3.4.9.dist-info/licenses/LICENSE",
+          "sha256": "18577485d3704f1a479ded8e573c0976cfed315fd2fd17983fa988da4c2f70d1",
+          "first_line": "MIT License"
+        }
+      ]
+    },
+    {
+      "name": "click",
+      "version": "8.4.2",
+      "license_expression": "BSD-3-Clause",
+      "license_metadata": "",
+      "project_urls": [
+        "Changes, https://click.palletsprojects.com/page/changes/",
+        "Chat, https://discord.gg/pallets",
+        "Documentation, https://click.palletsprojects.com/",
+        "Donate, https://palletsprojects.com/donate",
+        "Source, https://github.com/pallets/click/"
+      ],
+      "license_classifiers": [],
+      "license_files": [
+        {
+          "path": "click-8.4.2.dist-info/licenses/LICENSE.txt",
+          "sha256": "9a8ad106a394e853bfe21f42f4e72d592819a22805d991b5f3275029292b658d",
+          "first_line": "Copyright 2014 Pallets"
+        }
+      ]
+    },
+    {
+      "name": "colorama",
+      "version": "0.4.6",
+      "license_expression": null,
+      "license_metadata": "",
+      "project_urls": [
+        "Homepage, https://github.com/tartley/colorama"
+      ],
+      "license_classifiers": [
+        "License :: OSI Approved :: BSD License"
+      ],
+      "license_files": [
+        {
+          "path": "colorama-0.4.6.dist-info/licenses/LICENSE.txt",
+          "sha256": "cac35c02686e5d04a5a7140bfb3b36e73aed496656e891102e428886d7930318",
+          "first_line": "Copyright (c) 2010 Jonathan Hartley"
+        }
+      ]
+    },
+    {
+      "name": "contourpy",
+      "version": "1.4.0",
+      "license_expression": "BSD-3-Clause",
+      "license_metadata": "",
+      "project_urls": [
+        "Homepage, https://github.com/contourpy/contourpy",
+        "Changelog, https://contourpy.readthedocs.io/en/latest/changelog.html",
+        "Documentation, https://contourpy.readthedocs.io",
+        "Repository, https://github.com/contourpy/contourpy"
+      ],
+      "license_classifiers": [],
+      "license_files": [
+        {
+          "path": "contourpy-1.4.0.dist-info/licenses/LICENSE",
+          "sha256": "0e55e86a8fbf3e9b482ae8dc9e111e1b0dc09a7d300e7f480dda68c1125ed614",
+          "first_line": "BSD 3-Clause License"
+        }
+      ]
+    },
+    {
+      "name": "cycler",
+      "version": "0.12.1",
+      "license_expression": null,
+      "license_metadata": "Copyright (c) 2015, matplotlib project\nAll rights reserved.\n\nRedistribution and use in source and binary forms, with or without\nmodification, are permitted provided that the following conditions are met:\n\n* Redistributions of source code must retain ",
+      "project_urls": [
+        "homepage, https://matplotlib.org/cycler/",
+        "repository, https://github.com/matplotlib/cycler"
+      ],
+      "license_classifiers": [
+        "License :: OSI Approved :: BSD License"
+      ],
+      "license_files": [
+        {
+          "path": "cycler-0.12.1.dist-info/LICENSE",
+          "sha256": "f1218143d766da3fea66f13396b7f15df46a83303f29bf96ba6e98eb4d42f408",
+          "first_line": "Copyright (c) 2015, matplotlib project"
+        }
+      ]
+    },
+    {
+      "name": "defusedxml",
+      "version": "0.7.1",
+      "license_expression": null,
+      "license_metadata": "PSFL",
+      "project_urls": [],
+      "license_classifiers": [
+        "License :: OSI Approved :: Python Software Foundation License"
+      ],
+      "license_files": [
+        {
+          "path": "defusedxml-0.7.1.dist-info/LICENSE",
+          "sha256": "b80ce9da8c42a1f91079627fbbe2bf27210ae108a0ffe5f077d5b08e076c24c8",
+          "first_line": "PYTHON SOFTWARE FOUNDATION LICENSE VERSION 2"
+        }
+      ]
+    },
+    {
+      "name": "fastapi",
+      "version": "0.139.2",
+      "license_expression": "MIT",
+      "license_metadata": "",
+      "project_urls": [
+        "Homepage, https://github.com/fastapi/fastapi",
+        "Documentation, https://fastapi.tiangolo.com/",
+        "Repository, https://github.com/fastapi/fastapi",
+        "Issues, https://github.com/fastapi/fastapi/issues",
+        "Changelog, https://fastapi.tiangolo.com/release-notes/"
+      ],
+      "license_classifiers": [],
+      "license_files": [
+        {
+          "path": "fastapi-0.139.2.dist-info/licenses/LICENSE",
+          "sha256": "4ec89ffc81485b97fec584b2d4a961032eeffe834453894fd9c1274906cc744e",
+          "first_line": "The MIT License (MIT)"
+        }
+      ]
+    },
+    {
+      "name": "faster-coco-eval",
+      "version": "1.8.0",
+      "license_expression": null,
+      "license_metadata": "",
+      "project_urls": [],
+      "license_classifiers": [],
+      "license_files": [
+        {
+          "path": "faster_coco_eval-1.8.0.dist-info/licenses/LICENSE",
+          "sha256": "1eb85fc97224598dad1852b5d6483bbcf0aa8608790dcc657a5a2a761ae9c8c6",
+          "first_line": "Apache License"
+        }
+      ]
+    },
+    {
+      "name": "filelock",
+      "version": "3.32.0",
+      "license_expression": "MIT",
+      "license_metadata": "",
+      "project_urls": [
+        "Documentation, https://py-filelock.readthedocs.io",
+        "Homepage, https://github.com/tox-dev/py-filelock",
+        "Source, https://github.com/tox-dev/py-filelock",
+        "Tracker, https://github.com/tox-dev/py-filelock/issues"
+      ],
+      "license_classifiers": [
+        "License :: OSI Approved :: MIT License"
+      ],
+      "license_files": [
+        {
+          "path": "filelock-3.32.0.dist-info/licenses/LICENSE",
+          "sha256": "608c89d5060ae9921adccf3236695bc654a9946e12323ef6c021dfa04e294d48",
+          "first_line": "MIT License"
+        }
+      ]
+    },
+    {
+      "name": "filetype",
+      "version": "1.2.0",
+      "license_expression": null,
+      "license_metadata": "MIT",
+      "project_urls": [],
+      "license_classifiers": [
+        "License :: OSI Approved :: MIT License"
+      ],
+      "license_files": [
+        {
+          "path": "filetype-1.2.0.dist-info/LICENSE",
+          "sha256": "8e44e2aa35b371bdcc856bcf0d2442a410dd55fde66b0dfc2fcdf076d97946ac",
+          "first_line": "The MIT License (MIT)"
+        }
+      ]
+    },
+    {
+      "name": "flatbuffers",
+      "version": "25.12.19",
+      "license_expression": null,
+      "license_metadata": "Apache 2.0",
+      "project_urls": [
+        "Documentation, https://google.github.io/flatbuffers/",
+        "Source, https://github.com/google/flatbuffers"
+      ],
+      "license_classifiers": [
+        "License :: OSI Approved :: Apache Software License"
+      ],
+      "license_files": []
+    },
+    {
+      "name": "fonttools",
+      "version": "4.67.0",
+      "license_expression": null,
+      "license_metadata": "MIT",
+      "project_urls": [],
+      "license_classifiers": [],
+      "license_files": [
+        {
+          "path": "fonttools-4.67.0.dist-info/licenses/LICENSE",
+          "sha256": "22bef80697ecfaa17f97e62b9a26dfa12820be05583e8dd12ad169b241274c99",
+          "first_line": "MIT License"
+        },
+        {
+          "path": "fonttools-4.67.0.dist-info/licenses/LICENSE.external",
+          "sha256": "b082a5f86775b2641f01bccb8b9c82908481de5f502bb254b1e13bfc2a9f303d",
+          "first_line": "FontTools includes the following font projects for testing purposes, which are"
+        }
+      ]
+    },
+    {
+      "name": "frozenlist",
+      "version": "1.8.0",
+      "license_expression": null,
+      "license_metadata": "Apache-2.0",
+      "project_urls": [
+        "Chat: Matrix, https://matrix.to/#/#aio-libs:matrix.org",
+        "Chat: Matrix Space, https://matrix.to/#/#aio-libs-space:matrix.org",
+        "CI: Github Actions, https://github.com/aio-libs/frozenlist/actions",
+        "Code of Conduct, https://github.com/aio-libs/.github/blob/master/CODE_OF_CONDUCT.md",
+        "Coverage: codecov, https://codecov.io/github/aio-libs/frozenlist",
+        "Docs: Changelog, https://github.com/aio-libs/frozenlist/blob/master/CHANGES.rst#changelog",
+        "Docs: RTD, https://frozenlist.aio-libs.org",
+        "GitHub: issues, https://github.com/aio-libs/frozenlist/issues",
+        "GitHub: repo, https://github.com/aio-libs/frozenlist"
+      ],
+      "license_classifiers": [],
+      "license_files": [
+        {
+          "path": "frozenlist-1.8.0.dist-info/licenses/LICENSE",
+          "sha256": "6fd5243e92dd7f98ec69c7ac377728e74905709ff527a5bf98d6d0263c04f5b6",
+          "first_line": "Apache License"
+        }
+      ]
+    },
+    {
+      "name": "fsspec",
+      "version": "2026.6.0",
+      "license_expression": "BSD-3-Clause",
+      "license_metadata": "",
+      "project_urls": [
+        "Changelog, https://filesystem-spec.readthedocs.io/en/latest/changelog.html",
+        "Documentation, https://filesystem-spec.readthedocs.io/en/latest/",
+        "Homepage, https://github.com/fsspec/filesystem_spec"
+      ],
+      "license_classifiers": [],
+      "license_files": [
+        {
+          "path": "fsspec-2026.6.0.dist-info/licenses/LICENSE",
+          "sha256": "2dc35496ce53a7307915c008a844aad53e772b49b34cdd00445067691407ec94",
+          "first_line": "BSD 3-Clause License"
+        }
+      ]
+    },
+    {
+      "name": "h11",
+      "version": "0.16.0",
+      "license_expression": null,
+      "license_metadata": "MIT",
+      "project_urls": [],
+      "license_classifiers": [
+        "License :: OSI Approved :: MIT License"
+      ],
+      "license_files": [
+        {
+          "path": "h11-0.16.0.dist-info/licenses/LICENSE.txt",
+          "sha256": "37db5bb85926db28a427a25867f10b1232003aea1be69ccb851138adb8e6f361",
+          "first_line": "The MIT License (MIT)"
+        }
+      ]
+    },
+    {
+      "name": "hf-xet",
+      "version": "1.7.0",
+      "license_expression": "Apache-2.0",
+      "license_metadata": "",
+      "project_urls": [
+        "Documentation, https://huggingface.co/docs/hub/xet/index",
+        "Homepage, https://github.com/huggingface/xet-core",
+        "Issues, https://github.com/huggingface/xet-core/issues",
+        "Repository, https://github.com/huggingface/xet-core.git"
+      ],
+      "license_classifiers": [
+        "License :: OSI Approved :: Apache Software License"
+      ],
+      "license_files": [
+        {
+          "path": "hf_xet-1.7.0.dist-info/licenses/LICENSE",
+          "sha256": "1eb85fc97224598dad1852b5d6483bbcf0aa8608790dcc657a5a2a761ae9c8c6",
+          "first_line": "Apache License"
+        }
+      ]
+    },
+    {
+      "name": "hotcoco",
+      "version": "1.0.1",
+      "license_expression": "MIT",
+      "license_metadata": "",
+      "project_urls": [
+        "Changelog, https://github.com/derekallman/hotcoco/releases",
+        "Documentation, https://derekallman.github.io/hotcoco/",
+        "Homepage, https://derekallman.github.io/hotcoco/",
+        "Repository, https://github.com/derekallman/hotcoco"
+      ],
+      "license_classifiers": [
+        "License :: OSI Approved :: MIT License"
+      ],
+      "license_files": [
+        {
+          "path": "hotcoco-1.0.1.dist-info/licenses/LICENSE",
+          "sha256": "069b8922f83c173417d513311fe32aa0f23c09af161e0d5e075d9db57ba4cd3d",
+          "first_line": "MIT License"
+        }
+      ]
+    },
+    {
+      "name": "httpcore2",
+      "version": "2.16.0",
+      "license_expression": "BSD-3-Clause",
+      "license_metadata": "",
+      "project_urls": [
+        "Changelog, https://github.com/pydantic/httpx2/blob/main/src/httpcore2/CHANGELOG.md",
+        "Homepage, https://github.com/pydantic/httpx2",
+        "Source, https://github.com/pydantic/httpx2/blob/main/src/httpcore2"
+      ],
+      "license_classifiers": [
+        "License :: OSI Approved :: BSD License"
+      ],
+      "license_files": [
+        {
+          "path": "httpcore2-2.16.0.dist-info/licenses/LICENSE.md",
+          "sha256": "c4df125c807b0613501e943a5c92496dd11d2c16604ce396097a8dde396304d9",
+          "first_line": "Copyright © 2026 to present Pydantic Services Inc. and individual contributors."
+        }
+      ]
+    },
+    {
+      "name": "httptools",
+      "version": "0.8.0",
+      "license_expression": "MIT",
+      "license_metadata": "",
+      "project_urls": [
+        "Homepage, https://github.com/MagicStack/httptools"
+      ],
+      "license_classifiers": [],
+      "license_files": [
+        {
+          "path": "httptools-0.8.0.dist-info/licenses/LICENSE",
+          "sha256": "1c028b059d7a58e14ccda38cabced698c591fe614ffbe4f721430446e86c8d69",
+          "first_line": "The MIT License"
+        },
+        {
+          "path": "httptools-0.8.0.dist-info/licenses/vendor/http-parser/LICENSE-MIT",
+          "sha256": "5cd1b682c0ccbac0cb31b86a9a1104c3e2e7b1377a282b8169d2694b400db7c2",
+          "first_line": "Copyright Joyent, Inc. and other Node contributors."
+        },
+        {
+          "path": "httptools-0.8.0.dist-info/licenses/vendor/llhttp/LICENSE",
+          "sha256": "279012e02a10acfd59a3f2d8f13a497332535d871c2b27c89988985b06a3a438",
+          "first_line": "MIT License"
+        }
+      ]
+    },
+    {
+      "name": "httpx2",
+      "version": "2.16.0",
+      "license_expression": "BSD-3-Clause",
+      "license_metadata": "",
+      "project_urls": [
+        "Changelog, https://github.com/pydantic/httpx2/blob/main/src/httpx2/CHANGELOG.md",
+        "Homepage, https://github.com/pydantic/httpx2",
+        "Source, https://github.com/pydantic/httpx2"
+      ],
+      "license_classifiers": [
+        "License :: OSI Approved :: BSD License"
+      ],
+      "license_files": [
+        {
+          "path": "httpx2-2.16.0.dist-info/licenses/LICENSE.md",
+          "sha256": "7e7d6dbaf7fe160d39fd6e84fd02c33cab96bcbea34d36998d545bceb4a19c30",
+          "first_line": "Copyright © 2026 to present Pydantic Services Inc. and individual contributors."
+        }
+      ]
+    },
+    {
+      "name": "huggingface_hub",
+      "version": "2.3.0",
+      "license_expression": null,
+      "license_metadata": "Apache-2.0",
+      "project_urls": [],
+      "license_classifiers": [
+        "License :: OSI Approved :: Apache Software License"
+      ],
+      "license_files": [
+        {
+          "path": "huggingface_hub-2.3.0.dist-info/licenses/LICENSE",
+          "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+          "first_line": "Apache License"
+        }
+      ]
+    },
+    {
+      "name": "idna",
+      "version": "3.18",
+      "license_expression": "BSD-3-Clause",
+      "license_metadata": "",
+      "project_urls": [
+        "Changelog, https://github.com/kjd/idna/blob/master/HISTORY.md",
+        "Issue tracker, https://github.com/kjd/idna/issues",
+        "Source, https://github.com/kjd/idna"
+      ],
+      "license_classifiers": [],
+      "license_files": [
+        {
+          "path": "idna-3.18.dist-info/licenses/LICENSE.md",
+          "sha256": "1a9a4f0e3d479a27240ddd59a9137a66ab4a0f9dfdc8ca6188cc0bfd85187f04",
+          "first_line": "BSD 3-Clause License"
+        }
+      ]
+    },
+    {
+      "name": "Jinja2",
+      "version": "3.1.6",
+      "license_expression": null,
+      "license_metadata": "",
+      "project_urls": [
+        "Changes, https://jinja.palletsprojects.com/changes/",
+        "Chat, https://discord.gg/pallets",
+        "Documentation, https://jinja.palletsprojects.com/",
+        "Donate, https://palletsprojects.com/donate",
+        "Source, https://github.com/pallets/jinja/"
+      ],
+      "license_classifiers": [
+        "License :: OSI Approved :: BSD License"
+      ],
+      "license_files": [
+        {
+          "path": "jinja2-3.1.6.dist-info/licenses/LICENSE.txt",
+          "sha256": "3b49dcee4105eb37bac10faf1be260408fe85d252b8e9df2e0979fc1e094437b",
+          "first_line": "Copyright 2007 Pallets"
+        }
+      ]
+    },
+    {
+      "name": "kiwisolver",
+      "version": "1.5.1",
+      "license_expression": null,
+      "license_metadata": "=========================\n The Kiwi licensing terms\n=========================\nKiwi is licensed under the terms of the Modified BSD License (also known as\nNew or Revised BSD), as follows:\n\nCopyright (c) 2013-2026, Nucleic Development Team\n\nAll rights ",
+      "project_urls": [
+        "homepage, https://github.com/nucleic/kiwi",
+        "documentation, https://kiwisolver.readthedocs.io/en/latest/",
+        "repository, https://github.com/nucleic/kiwi",
+        "changelog, https://github.com/nucleic/kiwi/blob/main/releasenotes.rst"
+      ],
+      "license_classifiers": [
+        "License :: OSI Approved :: BSD License"
+      ],
+      "license_files": [
+        {
+          "path": "kiwisolver-1.5.1.dist-info/licenses/LICENSE",
+          "sha256": "b24c2bf6185f31a124ad6bacccae3071bdc7ad7882de00b00110aa62abb76a15",
+          "first_line": "========================="
+        }
+      ]
+    },
+    {
+      "name": "lightning-utilities",
+      "version": "0.15.3",
+      "license_expression": null,
+      "license_metadata": "Apache-2.0",
+      "project_urls": [
+        "Bug Tracker, https://github.com/Lightning-AI/utilities/issues",
+        "Documentation, https://dev-toolbox.rtfd.io/en/latest/",
+        "Source Code, https://github.com/Lightning-AI/utilities"
+      ],
+      "license_classifiers": [],
+      "license_files": [
+        {
+          "path": "lightning_utilities-0.15.3.dist-info/licenses/LICENSE",
+          "sha256": "a41e2fae9915ae56028f8dbd0bf27995f1907613cbcd2d81a61b010ad34e9fe9",
+          "first_line": "Apache License"
+        }
+      ]
+    },
+    {
+      "name": "markdown-it-py",
+      "version": "4.2.0",
+      "license_expression": null,
+      "license_metadata": "",
+      "project_urls": [
+        "Documentation, https://markdown-it-py.readthedocs.io",
+        "Homepage, https://github.com/executablebooks/markdown-it-py"
+      ],
+      "license_classifiers": [
+        "License :: OSI Approved :: MIT License"
+      ],
+      "license_files": [
+        {
+          "path": "markdown_it_py-4.2.0.dist-info/licenses/LICENSE",
+          "sha256": "4a2260d6e2cd0f5a151a1e86dbfe7d3ed552b1e2beabf9941c1ba5c49cbce484",
+          "first_line": "MIT License"
+        },
+        {
+          "path": "markdown_it_py-4.2.0.dist-info/licenses/LICENSE.markdown-it",
+          "sha256": "792c48c5a849a15fdf9e37e8bcf9e6d1dd13b32b46c642a748a0a46a9919d473",
+          "first_line": "Copyright (c) 2014 Vitaly Puzrin, Alex Kocharin."
+        }
+      ]
+    },
+    {
+      "name": "MarkupSafe",
+      "version": "3.0.3",
+      "license_expression": "BSD-3-Clause",
+      "license_metadata": "",
+      "project_urls": [
+        "Donate, https://palletsprojects.com/donate",
+        "Documentation, https://markupsafe.palletsprojects.com/",
+        "Changes, https://markupsafe.palletsprojects.com/page/changes/",
+        "Source, https://github.com/pallets/markupsafe/",
+        "Chat, https://discord.gg/pallets"
+      ],
+      "license_classifiers": [],
+      "license_files": [
+        {
+          "path": "markupsafe-3.0.3.dist-info/licenses/LICENSE.txt",
+          "sha256": "4631ec0db5fd90a547e336817264c6798214338146f8ac94b4a57f96ee8c9ec4",
+          "first_line": "Copyright 2010 Pallets"
+        }
+      ]
+    },
+    {
+      "name": "matplotlib",
+      "version": "3.11.2",
+      "license_expression": null,
+      "license_metadata": "License agreement for matplotlib versions 1.3.0 and later\n =========================================================\n\n 1. This LICENSE AGREEMENT is between the Matplotlib Development Team\n (\"MDT\"), and the Individual or Organization (\"Licensee\") acce",
+      "project_urls": [
+        "Homepage, https://matplotlib.org",
+        "Download, https://matplotlib.org/stable/install/index.html",
+        "Documentation, https://matplotlib.org",
+        "Source Code, https://github.com/matplotlib/matplotlib",
+        "Bug Tracker, https://github.com/matplotlib/matplotlib/issues",
+        "Forum, https://discourse.matplotlib.org/",
+        "Donate, https://numfocus.org/donate-to-matplotlib"
+      ],
+      "license_classifiers": [
+        "License :: OSI Approved :: Python Software Foundation License"
+      ],
+      "license_files": [
+        {
+          "path": "matplotlib-3.11.2.dist-info/LICENSE",
+          "sha256": "822e8e528147569a41975592aee19c11992ab667ba50451cd929031d5fc74491",
+          "first_line": "License agreement for matplotlib versions 1.3.0 and later"
+        }
+      ]
+    },
+    {
+      "name": "mdurl",
+      "version": "0.1.2",
+      "license_expression": null,
+      "license_metadata": "",
+      "project_urls": [
+        "Homepage, https://github.com/executablebooks/mdurl"
+      ],
+      "license_classifiers": [
+        "License :: OSI Approved :: MIT License"
+      ],
+      "license_files": [
+        {
+          "path": "mdurl-0.1.2.dist-info/LICENSE",
+          "sha256": "7c605df6e28667a9603118e98274f64a49ce3eed0d26fccce9534a345e0ef955",
+          "first_line": "Copyright (c) 2015 Vitaly Puzrin, Alex Kocharin."
+        }
+      ]
+    },
+    {
+      "name": "ml_dtypes",
+      "version": "0.6.0",
+      "license_expression": "Apache-2.0",
+      "license_metadata": "",
+      "project_urls": [
+        "homepage, https://github.com/jax-ml/ml_dtypes",
+        "repository, https://github.com/jax-ml/ml_dtypes"
+      ],
+      "license_classifiers": [],
+      "license_files": [
+        {
+          "path": "ml_dtypes-0.6.0.dist-info/licenses/LICENSE",
+          "sha256": "3ddf9be5c28fe27dad143a5dc76eea25222ad1dd68934a047064e56ed2fa40c5",
+          "first_line": "Apache License"
+        },
+        {
+          "path": "ml_dtypes-0.6.0.dist-info/licenses/LICENSE.eigen",
+          "sha256": "9221c2f936159b8446d329249fb4c0f25be510f447383a0f13336ac7985668a3",
+          "first_line": "Mozilla Public License Version 2.0"
+        }
+      ]
+    },
+    {
+      "name": "mpmath",
+      "version": "1.3.0",
+      "license_expression": null,
+      "license_metadata": "BSD",
+      "project_urls": [
+        "Source, https://github.com/fredrik-johansson/mpmath",
+        "Tracker, https://github.com/fredrik-johansson/mpmath/issues",
+        "Documentation, http://mpmath.org/doc/current/"
+      ],
+      "license_classifiers": [
+        "License :: OSI Approved :: BSD License"
+      ],
+      "license_files": [
+        {
+          "path": "mpmath-1.3.0.dist-info/LICENSE",
+          "sha256": "c26cae81da4508e5e249985777a33821f183223ebb74d7f8cfbf90fe7eef2fb7",
+          "first_line": "Copyright (c) 2005-2021 Fredrik Johansson and mpmath contributors"
+        }
+      ]
+    },
+    {
+      "name": "multidict",
+      "version": "7.2.0",
+      "license_expression": "Apache-2.0",
+      "license_metadata": "",
+      "project_urls": [
+        "Homepage, https://github.com/aio-libs/multidict",
+        "Chat: Matrix, https://matrix.to/#/#aio-libs:matrix.org",
+        "Chat: Matrix Space, https://matrix.to/#/#aio-libs-space:matrix.org",
+        "CI: GitHub, https://github.com/aio-libs/multidict/actions",
+        "Code of Conduct, https://github.com/aio-libs/.github/blob/master/CODE_OF_CONDUCT.md",
+        "Coverage: codecov, https://codecov.io/github/aio-libs/multidict",
+        "Docs: Changelog, https://multidict.aio-libs.org/en/latest/changes/",
+        "Docs: RTD, https://multidict.aio-libs.org",
+        "GitHub: issues, https://github.com/aio-libs/multidict/issues",
+        "GitHub: repo, https://github.com/aio-libs/multidict"
+      ],
+      "license_classifiers": [],
+      "license_files": [
+        {
+          "path": "multidict-7.2.0.dist-info/licenses/LICENSE",
+          "sha256": "2e4be5fc6c4c72a466fcb665d726e049a6891981fe536c4f04b6366749461d23",
+          "first_line": "Apache License"
+        }
+      ]
+    },
+    {
+      "name": "networkx",
+      "version": "3.6.1",
+      "license_expression": "BSD-3-Clause",
+      "license_metadata": "",
+      "project_urls": [
+        "Homepage, https://networkx.org/",
+        "Bug Tracker, https://github.com/networkx/networkx/issues",
+        "Documentation, https://networkx.org/documentation/stable/",
+        "Source Code, https://github.com/networkx/networkx"
+      ],
+      "license_classifiers": [],
+      "license_files": [
+        {
+          "path": "networkx-3.6.1.dist-info/licenses/LICENSE.txt",
+          "sha256": "3cf7c3a179d817b23b8b8568211769fefdf93797d207d984b8b2fa24d0220b33",
+          "first_line": "NetworkX is distributed with the 3-clause BSD license."
+        }
+      ]
+    },
+    {
+      "name": "numpy",
+      "version": "2.5.1",
+      "license_expression": "BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0",
+      "license_metadata": "",
+      "project_urls": [
+        "homepage, https://numpy.org",
+        "documentation, https://numpy.org/doc/",
+        "source, https://github.com/numpy/numpy",
+        "download, https://pypi.org/project/numpy/#files",
+        "tracker, https://github.com/numpy/numpy/issues",
+        "release notes, https://numpy.org/doc/stable/release"
+      ],
+      "license_classifiers": [],
+      "license_files": [
+        {
+          "path": "numpy-2.5.1.dist-info/licenses/LICENSE.txt",
+          "sha256": "a804dff0ead9fadc5293456410bcbfc32bf024be9c4513459663fb7b442d2341",
+          "first_line": "Copyright (c) 2005-2025, NumPy Developers."
+        },
+        {
+          "path": "numpy-2.5.1.dist-info/licenses/numpy/_core/include/numpy/libdivide/LICENSE.txt",
+          "sha256": "d544761558b510866c21f7e8a2d5716fca76e0b98117e3b6b86314db7244d150",
+          "first_line": "zlib License"
+        },
+        {
+          "path": "numpy-2.5.1.dist-info/licenses/numpy/_core/src/common/pythoncapi-compat/COPYING",
+          "sha256": "aea41976c720f91bd19725c16916a1ace40eb1ea42620d340e587a5de4bbcea0",
+          "first_line": "BSD Zero Clause License"
+        },
+        {
+          "path": "numpy-2.5.1.dist-info/licenses/numpy/_core/src/highway/LICENSE",
+          "sha256": "d208152e2777ffd0126eacc1bd21c0320d69e4e6b622d21a2a12a47e8ef73763",
+          "first_line": "This project is primarily dual-licensed under your choice of either the Apache"
+        },
+        {
+          "path": "numpy-2.5.1.dist-info/licenses/numpy/_core/src/multiarray/dragon4_LICENSE.txt",
+          "sha256": "b0fd592d4ead563148e3977e7b589169d46a5ef2ff133c755a81af880a3fc919",
+          "first_line": "Copyright (c) 2014 Ryan Juckett"
+        },
+        {
+          "path": "numpy-2.5.1.dist-info/licenses/numpy/_core/src/npysort/x86-simd-sort/LICENSE.md",
+          "sha256": "a732977853530066790c42817087f4829b518dd98d340c916acbfd227e39d3cb",
+          "first_line": "BSD 3-Clause License"
+        },
+        {
+          "path": "numpy-2.5.1.dist-info/licenses/numpy/_core/src/umath/svml/LICENSE",
+          "sha256": "585483905b13d4b42f800c55ba99e89d6e2e33ccd5f503e201c07531d148ff41",
+          "first_line": "Copyright (c) 2005-2021, NumPy Developers."
+        },
+        {
+          "path": "numpy-2.5.1.dist-info/licenses/numpy/fft/pocketfft/LICENSE.md",
+          "sha256": "8db000e158c162e7249787852d8c69764706502ccee725c06641b31c1e95c8af",
+          "first_line": "Copyright (C) 2010-2018 Max-Planck-Society"
+        },
+        {
+          "path": "numpy-2.5.1.dist-info/licenses/numpy/linalg/lapack_lite/LICENSE.txt",
+          "sha256": "19060ef465e1797d682ee0fc3081bd25ab1395e995e43d25c9d13c95d9a3cd6b",
+          "first_line": "Copyright (c) 1992-2013 The University of Tennessee and The University"
+        },
+        {
+          "path": "numpy-2.5.1.dist-info/licenses/numpy/ma/LICENSE",
+          "sha256": "d78dbb208b80d92b4d333e41a4baae50d12444f46e53199fa7726a91de6e2da7",
+          "first_line": "* Copyright (c) 2006, University of Georgia and Pierre G.F. Gerard-Marchant"
+        },
+        {
+          "path": "numpy-2.5.1.dist-info/licenses/numpy/random/LICENSE.md",
+          "sha256": "b4bc2f4fa1c95778f1ed3dd8f14706bece399475b978f9f34b5d3cd72521b48a",
+          "first_line": "**This software is dual-licensed under the The University of Illinois/NCSA"
+        },
+        {
+          "path": "numpy-2.5.1.dist-info/licenses/numpy/random/src/distributions/LICENSE.md",
+          "sha256": "cf5619f25b112d5ce7c896efffc8e610bcb345dfadcc19f2c1460aa48fff2c9e",
+          "first_line": "## NumPy"
+        },
+        {
+          "path": "numpy-2.5.1.dist-info/licenses/numpy/random/src/mt19937/LICENSE.md",
+          "sha256": "92c10699884321f1c2947fe2a70ab23b0fbf1507f756d89dd08f38c61fc3d4fa",
+          "first_line": "# MT19937"
+        },
+        {
+          "path": "numpy-2.5.1.dist-info/licenses/numpy/random/src/pcg64/LICENSE.md",
+          "sha256": "41190663b77bee5302386495a07b7eabfbfa571aa0ae2f11da6764162062fc4f",
+          "first_line": "# PCG64"
+        },
+        {
+          "path": "numpy-2.5.1.dist-info/licenses/numpy/random/src/philox/LICENSE.md",
+          "sha256": "322ac46d870c8aeead6c53adcccc839296fb3c8e456eae155081297daf7f8013",
+          "first_line": "# PHILOX"
+        },
+        {
+          "path": "numpy-2.5.1.dist-info/licenses/numpy/random/src/sfc64/LICENSE.md",
+          "sha256": "28cad82ce1379dc529df30da78ec012d7d0d1d576b03ddcb93388aee53659f59",
+          "first_line": "# SFC64"
+        },
+        {
+          "path": "numpy-2.5.1.dist-info/licenses/numpy/random/src/splitmix64/LICENSE.md",
+          "sha256": "454ec7350e478e037061850b67395753b425b1cb0a34bbc26290b020bf89d763",
+          "first_line": "# SPLITMIX64"
+        },
+        {
+          "path": "numpy/ma/LICENSE",
+          "sha256": "d78dbb208b80d92b4d333e41a4baae50d12444f46e53199fa7726a91de6e2da7",
+          "first_line": "* Copyright (c) 2006, University of Georgia and Pierre G.F. Gerard-Marchant"
+        },
+        {
+          "path": "numpy/random/LICENSE.md",
+          "sha256": "b4bc2f4fa1c95778f1ed3dd8f14706bece399475b978f9f34b5d3cd72521b48a",
+          "first_line": "**This software is dual-licensed under the The University of Illinois/NCSA"
+        }
+      ]
+    },
+    {
+      "name": "onnx",
+      "version": "1.23.0",
+      "license_expression": "Apache-2.0",
+      "license_metadata": "",
+      "project_urls": [
+        "Homepage, https://onnx.ai/",
+        "Repository, https://github.com/onnx/onnx"
+      ],
+      "license_classifiers": [],
+      "license_files": [
+        {
+          "path": "onnx-1.23.0.dist-info/licenses/LICENSE",
+          "sha256": "3ddf9be5c28fe27dad143a5dc76eea25222ad1dd68934a047064e56ed2fa40c5",
+          "first_line": "Apache License"
+        },
+        {
+          "path": "onnx-1.23.0.dist-info/licenses/NOTICE",
+          "sha256": "d287b208598d34a4d18940f7a236b04c4e544ec29a9c8d83b5d057ba894c6d32",
+          "first_line": "ONNX is licensed under the Apache License, Version 2.0 (see LICENSE)."
+        }
+      ]
+    },
+    {
+      "name": "onnxruntime",
+      "version": "1.31.0",
+      "license_expression": null,
+      "license_metadata": "MIT License",
+      "project_urls": [],
+      "license_classifiers": [
+        "License :: OSI Approved :: MIT License"
+      ],
+      "license_files": [
+        {
+          "path": "onnxruntime/LICENSE",
+          "sha256": "c250d6278f0b47a6439fb7592b08b58a55eb9f535aa49a1db63211c3f982b674",
+          "first_line": "MIT License"
+        }
+      ]
+    },
+    {
+      "name": "opencv-python-headless",
+      "version": "5.0.0.93",
+      "license_expression": null,
+      "license_metadata": "Apache 2.0",
+      "project_urls": [],
+      "license_classifiers": [
+        "License :: OSI Approved :: Apache Software License"
+      ],
+      "license_files": [
+        {
+          "path": "cv2/LICENSE.txt",
+          "sha256": "edef0fac1eb08d29d34563f724742e078da2513e196133a12c6ad9ff01e26107",
+          "first_line": "MIT License"
+        },
+        {
+          "path": "opencv_python_headless-5.0.0.93.dist-info/LICENSE-3RD-PARTY.txt",
+          "sha256": "c1d60169b55cee56452b227c2fd2a7b9ddda3dd3741065f1c6201072be73fadb",
+          "first_line": "OpenCV library is redistributed within opencv-python package."
+        },
+        {
+          "path": "opencv_python_headless-5.0.0.93.dist-info/LICENSE.txt",
+          "sha256": "edef0fac1eb08d29d34563f724742e078da2513e196133a12c6ad9ff01e26107",
+          "first_line": "MIT License"
+        }
+      ]
+    },
+    {
+      "name": "packaging",
+      "version": "26.2",
+      "license_expression": "Apache-2.0 OR BSD-2-Clause",
+      "license_metadata": "",
+      "project_urls": [
+        "Documentation, https://packaging.pypa.io/",
+        "Source, https://github.com/pypa/packaging"
+      ],
+      "license_classifiers": [],
+      "license_files": [
+        {
+          "path": "packaging-26.2.dist-info/licenses/LICENSE",
+          "sha256": "cad1ef5bd340d73e074ba614d26f7deaca5c7940c3d8c34852e65c4909686c48",
+          "first_line": "This software is made available under the terms of *either* of the licenses"
+        },
+        {
+          "path": "packaging-26.2.dist-info/licenses/LICENSE.APACHE",
+          "sha256": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594",
+          "first_line": "Apache License"
+        },
+        {
+          "path": "packaging-26.2.dist-info/licenses/LICENSE.BSD",
+          "sha256": "b70e7e9b742f1cc6f948b34c16aa39ffece94196364bc88ff0d2180f0028fac5",
+          "first_line": "Copyright (c) Donald Stufft and individual contributors."
+        }
+      ]
+    },
+    {
+      "name": "peft",
+      "version": "0.21.2",
+      "license_expression": null,
+      "license_metadata": "Apache",
+      "project_urls": [],
+      "license_classifiers": [
+        "License :: OSI Approved :: Apache Software License"
+      ],
+      "license_files": [
+        {
+          "path": "peft-0.21.2.dist-info/licenses/LICENSE",
+          "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+          "first_line": "Apache License"
+        }
+      ]
+    },
+    {
+      "name": "pillow",
+      "version": "12.3.0",
+      "license_expression": "MIT-CMU",
+      "license_metadata": "",
+      "project_urls": [
+        "Release notes, https://pillow.readthedocs.io/en/stable/releasenotes/index.html",
+        "Changelog, https://github.com/python-pillow/Pillow/releases",
+        "Documentation, https://pillow.readthedocs.io",
+        "Funding, https://tidelift.com/subscription/pkg/pypi-pillow?utm_source=pypi-pillow&utm_medium=pypi",
+        "Homepage, https://python-pillow.github.io",
+        "Mastodon, https://fosstodon.org/@pillow",
+        "Source, https://github.com/python-pillow/Pillow"
+      ],
+      "license_classifiers": [],
+      "license_files": [
+        {
+          "path": "pillow-12.3.0.dist-info/licenses/LICENSE",
+          "sha256": "4f7866a74802c6326f81faff59a56546b6aec2b10b91973e0e9308de95e79857",
+          "first_line": "The Python Imaging Library (PIL) is"
+        }
+      ]
+    },
+    {
+      "name": "pillow-avif-plugin",
+      "version": "1.6.0",
+      "license_expression": null,
+      "license_metadata": "MIT License",
+      "project_urls": [],
+      "license_classifiers": [
+        "License :: OSI Approved :: MIT License"
+      ],
+      "license_files": [
+        {
+          "path": "pillow_avif_plugin-1.6.0.dist-info/licenses/LICENSE",
+          "sha256": "6c9379ccab14a2cb4e962c6fa6dc6e1efc9799a64b1e64f817692730d8c42f5d",
+          "first_line": "Copyright (c) 2021, Frankie Dintino. All rights reserved."
+        }
+      ]
+    },
+    {
+      "name": "pip",
+      "version": "26.1.2",
+      "license_expression": "MIT",
+      "license_metadata": "",
+      "project_urls": [
+        "Changelog, https://pip.pypa.io/en/stable/news/",
+        "Documentation, https://pip.pypa.io",
+        "Homepage, https://pip.pypa.io/",
+        "Source, https://github.com/pypa/pip"
+      ],
+      "license_classifiers": [],
+      "license_files": [
+        {
+          "path": "pip-26.1.2.dist-info/licenses/AUTHORS.txt",
+          "sha256": "5b73479bffada0916044cb29c47ab20360215e3c838ff2e7562ecdfcb11645bd",
+          "first_line": "@Switch01"
+        },
+        {
+          "path": "pip-26.1.2.dist-info/licenses/LICENSE.txt",
+          "sha256": "634300a669d49aeae65b12c6c48c924c51a4cdf3d1ff086dc3456dc8bcaa2104",
+          "first_line": "Copyright (c) 2008-present The pip developers (see AUTHORS.txt file)"
+        },
+        {
+          "path": "pip-26.1.2.dist-info/licenses/src/pip/_vendor/cachecontrol/LICENSE.txt",
+          "sha256": "86eeee87be2a43f3ff1f56496f451f69243926f025fedbb033666c304c4c161b",
+          "first_line": "Copyright 2012-2021  Eric Larson"
+        },
+        {
+          "path": "pip-26.1.2.dist-info/licenses/src/pip/_vendor/certifi/LICENSE",
+          "sha256": "e93716da6b9c0d5a4a1df60fe695b370f0695603d21f6f83f053e42cfc10caf7",
+          "first_line": "This package contains a modified version of ca-bundle.crt:"
+        },
+        {
+          "path": "pip-26.1.2.dist-info/licenses/src/pip/_vendor/distlib/LICENSE.txt",
+          "sha256": "808e10c8a6ab8deb149ff9b3fb19f447a808094606d712a9ca57fead3552599d",
+          "first_line": "A. HISTORY OF THE SOFTWARE"
+        },
+        {
+          "path": "pip-26.1.2.dist-info/licenses/src/pip/_vendor/distro/LICENSE",
+          "sha256": "cb5e8e7e5f4a3988e1063c142c60dc2df75605f4c46515e776e3aca6df976e14",
+          "first_line": "Apache License"
+        },
+        {
+          "path": "pip-26.1.2.dist-info/licenses/src/pip/_vendor/idna/LICENSE.md",
+          "sha256": "b7a336abf3b04e180ec065cdd16e705d079e1cc7a14f910aa6e9187f36b9cd87",
+          "first_line": "BSD 3-Clause License"
+        },
+        {
+          "path": "pip-26.1.2.dist-info/licenses/src/pip/_vendor/msgpack/COPYING",
+          "sha256": "492dedba85da5872f78e6091bcd1fea474d660d35acb4dee964b8aab3f007427",
+          "first_line": "Copyright (C) 2008-2011 INADA Naoki <songofacandy@gmail.com>"
+        },
+        {
+          "path": "pip-26.1.2.dist-info/licenses/src/pip/_vendor/packaging/LICENSE",
+          "sha256": "cad1ef5bd340d73e074ba614d26f7deaca5c7940c3d8c34852e65c4909686c48",
+          "first_line": "This software is made available under the terms of *either* of the licenses"
+        },
+        {
+          "path": "pip-26.1.2.dist-info/licenses/src/pip/_vendor/packaging/LICENSE.APACHE",
+          "sha256": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594",
+          "first_line": "Apache License"
+        },
+        {
+          "path": "pip-26.1.2.dist-info/licenses/src/pip/_vendor/packaging/LICENSE.BSD",
+          "sha256": "b70e7e9b742f1cc6f948b34c16aa39ffece94196364bc88ff0d2180f0028fac5",
+          "first_line": "Copyright (c) Donald Stufft and individual contributors."
+        },
+        {
+          "path": "pip-26.1.2.dist-info/licenses/src/pip/_vendor/pkg_resources/LICENSE",
+          "sha256": "86da0f01aeae46348a3c3d465195dc1ceccde79f79e87769a64b8da04b2a4741",
+          "first_line": "Permission is hereby granted, free of charge, to any person obtaining a copy"
+        },
+        {
+          "path": "pip-26.1.2.dist-info/licenses/src/pip/_vendor/platformdirs/LICENSE",
+          "sha256": "29e0fd62e929850e86eb28c3fdccf0cefdf4fa94879011cffb3d0d4bed6d4db6",
+          "first_line": "MIT License"
+        },
+        {
+          "path": "pip-26.1.2.dist-info/licenses/src/pip/_vendor/pygments/LICENSE",
+          "sha256": "a9d66f1d526df02e29dce73436d34e56e8632f46c275bbdffc70569e882f9f17",
+          "first_line": "Copyright (c) 2006-2022 by the respective authors (see AUTHORS file)."
+        },
+        {
+          "path": "pip-26.1.2.dist-info/licenses/src/pip/_vendor/pyproject_hooks/LICENSE",
+          "sha256": "1b22b049b5267d6dfc23a67bf4a84d8ec04b9fdfb1a51d360e42b4342c8b4154",
+          "first_line": "The MIT License (MIT)"
+        },
+        {
+          "path": "pip-26.1.2.dist-info/licenses/src/pip/_vendor/requests/LICENSE",
+          "sha256": "09e8a9bcec8067104652c168685ab0931e7868f9c8284b66f5ae6edae5f1130b",
+          "first_line": "Apache License"
+        },
+        {
+          "path": "pip-26.1.2.dist-info/licenses/src/pip/_vendor/resolvelib/LICENSE",
+          "sha256": "f388fd38cad13112c1dc0f669bbe80e7f84541edbafb72f3030d2ca7642c3c9d",
+          "first_line": "Copyright (c) 2018, Tzu-ping Chung <uranusjr@gmail.com>"
+        },
+        {
+          "path": "pip-26.1.2.dist-info/licenses/src/pip/_vendor/rich/LICENSE",
+          "sha256": "deed7c17a4318158190a3ea239cc879a5a50271cebb98ae7025f48fbe58dca15",
+          "first_line": "Copyright (c) 2020 Will McGugan"
+        },
+        {
+          "path": "pip-26.1.2.dist-info/licenses/src/pip/_vendor/tomli/LICENSE",
+          "sha256": "b80816b0d530b8accb4c2211783790984a6e3b61922c2b5ee92f3372ab2742fe",
+          "first_line": "MIT License"
+        },
+        {
+          "path": "pip-26.1.2.dist-info/licenses/src/pip/_vendor/tomli_w/LICENSE",
+          "sha256": "b80816b0d530b8accb4c2211783790984a6e3b61922c2b5ee92f3372ab2742fe",
+          "first_line": "MIT License"
+        },
+        {
+          "path": "pip-26.1.2.dist-info/licenses/src/pip/_vendor/truststore/LICENSE",
+          "sha256": "33be7b7e8fa4fd19b1760e1a8ed8a668bdab852c91b692dd41424bcb725a9fca",
+          "first_line": "The MIT License (MIT)"
+        },
+        {
+          "path": "pip-26.1.2.dist-info/licenses/src/pip/_vendor/urllib3/LICENSE.txt",
+          "sha256": "130e3a64d5fdd5d096a752694634a7d9df284469de86e5732100268041e3d686",
+          "first_line": "MIT License"
+        }
+      ]
+    },
+    {
+      "name": "pip",
+      "version": "26.1.2",
+      "license_expression": "MIT",
+      "license_metadata": "",
+      "project_urls": [
+        "Changelog, https://pip.pypa.io/en/stable/news/",
+        "Documentation, https://pip.pypa.io",
+        "Homepage, https://pip.pypa.io/",
+        "Source, https://github.com/pypa/pip"
+      ],
+      "license_classifiers": [],
+      "license_files": [
+        {
+          "path": "pip-26.1.2.dist-info/licenses/AUTHORS.txt",
+          "sha256": "5b73479bffada0916044cb29c47ab20360215e3c838ff2e7562ecdfcb11645bd",
+          "first_line": "@Switch01"
+        },
+        {
+          "path": "pip-26.1.2.dist-info/licenses/LICENSE.txt",
+          "sha256": "634300a669d49aeae65b12c6c48c924c51a4cdf3d1ff086dc3456dc8bcaa2104",
+          "first_line": "Copyright (c) 2008-present The pip developers (see AUTHORS.txt file)"
+        },
+        {
+          "path": "pip-26.1.2.dist-info/licenses/src/pip/_vendor/cachecontrol/LICENSE.txt",
+          "sha256": "86eeee87be2a43f3ff1f56496f451f69243926f025fedbb033666c304c4c161b",
+          "first_line": "Copyright 2012-2021  Eric Larson"
+        },
+        {
+          "path": "pip-26.1.2.dist-info/licenses/src/pip/_vendor/certifi/LICENSE",
+          "sha256": "e93716da6b9c0d5a4a1df60fe695b370f0695603d21f6f83f053e42cfc10caf7",
+          "first_line": "This package contains a modified version of ca-bundle.crt:"
+        },
+        {
+          "path": "pip-26.1.2.dist-info/licenses/src/pip/_vendor/distlib/LICENSE.txt",
+          "sha256": "808e10c8a6ab8deb149ff9b3fb19f447a808094606d712a9ca57fead3552599d",
+          "first_line": "A. HISTORY OF THE SOFTWARE"
+        },
+        {
+          "path": "pip-26.1.2.dist-info/licenses/src/pip/_vendor/distro/LICENSE",
+          "sha256": "cb5e8e7e5f4a3988e1063c142c60dc2df75605f4c46515e776e3aca6df976e14",
+          "first_line": "Apache License"
+        },
+        {
+          "path": "pip-26.1.2.dist-info/licenses/src/pip/_vendor/idna/LICENSE.md",
+          "sha256": "b7a336abf3b04e180ec065cdd16e705d079e1cc7a14f910aa6e9187f36b9cd87",
+          "first_line": "BSD 3-Clause License"
+        },
+        {
+          "path": "pip-26.1.2.dist-info/licenses/src/pip/_vendor/msgpack/COPYING",
+          "sha256": "492dedba85da5872f78e6091bcd1fea474d660d35acb4dee964b8aab3f007427",
+          "first_line": "Copyright (C) 2008-2011 INADA Naoki <songofacandy@gmail.com>"
+        },
+        {
+          "path": "pip-26.1.2.dist-info/licenses/src/pip/_vendor/packaging/LICENSE",
+          "sha256": "cad1ef5bd340d73e074ba614d26f7deaca5c7940c3d8c34852e65c4909686c48",
+          "first_line": "This software is made available under the terms of *either* of the licenses"
+        },
+        {
+          "path": "pip-26.1.2.dist-info/licenses/src/pip/_vendor/packaging/LICENSE.APACHE",
+          "sha256": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594",
+          "first_line": "Apache License"
+        },
+        {
+          "path": "pip-26.1.2.dist-info/licenses/src/pip/_vendor/packaging/LICENSE.BSD",
+          "sha256": "b70e7e9b742f1cc6f948b34c16aa39ffece94196364bc88ff0d2180f0028fac5",
+          "first_line": "Copyright (c) Donald Stufft and individual contributors."
+        },
+        {
+          "path": "pip-26.1.2.dist-info/licenses/src/pip/_vendor/pkg_resources/LICENSE",
+          "sha256": "86da0f01aeae46348a3c3d465195dc1ceccde79f79e87769a64b8da04b2a4741",
+          "first_line": "Permission is hereby granted, free of charge, to any person obtaining a copy"
+        },
+        {
+          "path": "pip-26.1.2.dist-info/licenses/src/pip/_vendor/platformdirs/LICENSE",
+          "sha256": "29e0fd62e929850e86eb28c3fdccf0cefdf4fa94879011cffb3d0d4bed6d4db6",
+          "first_line": "MIT License"
+        },
+        {
+          "path": "pip-26.1.2.dist-info/licenses/src/pip/_vendor/pygments/LICENSE",
+          "sha256": "a9d66f1d526df02e29dce73436d34e56e8632f46c275bbdffc70569e882f9f17",
+          "first_line": "Copyright (c) 2006-2022 by the respective authors (see AUTHORS file)."
+        },
+        {
+          "path": "pip-26.1.2.dist-info/licenses/src/pip/_vendor/pyproject_hooks/LICENSE",
+          "sha256": "1b22b049b5267d6dfc23a67bf4a84d8ec04b9fdfb1a51d360e42b4342c8b4154",
+          "first_line": "The MIT License (MIT)"
+        },
+        {
+          "path": "pip-26.1.2.dist-info/licenses/src/pip/_vendor/requests/LICENSE",
+          "sha256": "09e8a9bcec8067104652c168685ab0931e7868f9c8284b66f5ae6edae5f1130b",
+          "first_line": "Apache License"
+        },
+        {
+          "path": "pip-26.1.2.dist-info/licenses/src/pip/_vendor/resolvelib/LICENSE",
+          "sha256": "f388fd38cad13112c1dc0f669bbe80e7f84541edbafb72f3030d2ca7642c3c9d",
+          "first_line": "Copyright (c) 2018, Tzu-ping Chung <uranusjr@gmail.com>"
+        },
+        {
+          "path": "pip-26.1.2.dist-info/licenses/src/pip/_vendor/rich/LICENSE",
+          "sha256": "deed7c17a4318158190a3ea239cc879a5a50271cebb98ae7025f48fbe58dca15",
+          "first_line": "Copyright (c) 2020 Will McGugan"
+        },
+        {
+          "path": "pip-26.1.2.dist-info/licenses/src/pip/_vendor/tomli/LICENSE",
+          "sha256": "b80816b0d530b8accb4c2211783790984a6e3b61922c2b5ee92f3372ab2742fe",
+          "first_line": "MIT License"
+        },
+        {
+          "path": "pip-26.1.2.dist-info/licenses/src/pip/_vendor/tomli_w/LICENSE",
+          "sha256": "b80816b0d530b8accb4c2211783790984a6e3b61922c2b5ee92f3372ab2742fe",
+          "first_line": "MIT License"
+        },
+        {
+          "path": "pip-26.1.2.dist-info/licenses/src/pip/_vendor/truststore/LICENSE",
+          "sha256": "33be7b7e8fa4fd19b1760e1a8ed8a668bdab852c91b692dd41424bcb725a9fca",
+          "first_line": "The MIT License (MIT)"
+        },
+        {
+          "path": "pip-26.1.2.dist-info/licenses/src/pip/_vendor/urllib3/LICENSE.txt",
+          "sha256": "130e3a64d5fdd5d096a752694634a7d9df284469de86e5732100268041e3d686",
+          "first_line": "MIT License"
+        }
+      ]
+    },
+    {
+      "name": "propcache",
+      "version": "0.5.4",
+      "license_expression": null,
+      "license_metadata": "Apache-2.0",
+      "project_urls": [
+        "Chat: Matrix, https://matrix.to/#/#aio-libs:matrix.org",
+        "Chat: Matrix Space, https://matrix.to/#/#aio-libs-space:matrix.org",
+        "CI: GitHub Workflows, https://github.com/aio-libs/propcache/actions?query=branch:master",
+        "Code of Conduct, https://github.com/aio-libs/.github/blob/master/CODE_OF_CONDUCT.md",
+        "Coverage: codecov, https://codecov.io/github/aio-libs/propcache",
+        "Docs: Changelog, https://propcache.readthedocs.io/en/latest/changes/",
+        "Docs: RTD, https://propcache.readthedocs.io",
+        "GitHub: issues, https://github.com/aio-libs/propcache/issues",
+        "GitHub: repo, https://github.com/aio-libs/propcache"
+      ],
+      "license_classifiers": [],
+      "license_files": [
+        {
+          "path": "propcache-0.5.4.dist-info/licenses/LICENSE",
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+          "first_line": "Apache License"
+        },
+        {
+          "path": "propcache-0.5.4.dist-info/licenses/NOTICE",
+          "sha256": "56d6ac6c8105c0a51304c21db060e361af9a8ea0af9a75c239c28b5d13693838",
+          "first_line": "Copyright 2016-2021, Andrew Svetlov and aio-libs team"
+        }
+      ]
+    },
+    {
+      "name": "protobuf",
+      "version": "7.36.2",
+      "license_expression": null,
+      "license_metadata": "3-Clause BSD License",
+      "project_urls": [],
+      "license_classifiers": [],
+      "license_files": [
+        {
+          "path": "protobuf-7.36.2.dist-info/LICENSE",
+          "sha256": "6e5e117324afd944dcf67f36cf329843bc1a92229a8cd9bb573d7a83130fea7d",
+          "first_line": "Copyright 2008 Google Inc.  All rights reserved."
+        }
+      ]
+    },
+    {
+      "name": "psutil",
+      "version": "7.2.2",
+      "license_expression": null,
+      "license_metadata": "BSD-3-Clause",
+      "project_urls": [],
+      "license_classifiers": [],
+      "license_files": [
+        {
+          "path": "psutil-7.2.2.dist-info/LICENSE",
+          "sha256": "c7adc4d5d1337a548b967421f1fbe258b93033a0417708fd6f4e38f8ecbceb80",
+          "first_line": "BSD 3-Clause License"
+        }
+      ]
+    },
+    {
+      "name": "pyarrow",
+      "version": "26.0.0",
+      "license_expression": "Apache-2.0",
+      "license_metadata": "",
+      "project_urls": [
+        "Homepage, https://arrow.apache.org/",
+        "Documentation, https://arrow.apache.org/docs/python",
+        "Repository, https://github.com/apache/arrow",
+        "Issues, https://github.com/apache/arrow/issues"
+      ],
+      "license_classifiers": [],
+      "license_files": [
+        {
+          "path": "pyarrow-26.0.0.dist-info/licenses/LICENSE.txt",
+          "sha256": "2a255e0ef5946efdb2e01a4861460ce4a3333734666d256e75f9c1731a5097da",
+          "first_line": "Apache License"
+        },
+        {
+          "path": "pyarrow-26.0.0.dist-info/licenses/NOTICE.txt",
+          "sha256": "2ccca1e730e671f55b8028facf2261a6f74b561a4d96a2ccd743be19c5619236",
+          "first_line": "Apache Arrow"
+        }
+      ]
+    },
+    {
+      "name": "pycocotools",
+      "version": "2.0.11",
+      "license_expression": null,
+      "license_metadata": "FreeBSD",
+      "project_urls": [],
+      "license_classifiers": [],
+      "license_files": []
+    },
+    {
+      "name": "pydantic",
+      "version": "2.13.4",
+      "license_expression": "MIT",
+      "license_metadata": "",
+      "project_urls": [
+        "Homepage, https://github.com/pydantic/pydantic",
+        "Documentation, https://docs.pydantic.dev",
+        "Funding, https://github.com/sponsors/samuelcolvin",
+        "Source, https://github.com/pydantic/pydantic",
+        "Changelog, https://docs.pydantic.dev/latest/changelog/"
+      ],
+      "license_classifiers": [],
+      "license_files": [
+        {
+          "path": "pydantic-2.13.4.dist-info/licenses/LICENSE",
+          "sha256": "a9e186f3ca16b5eef84318e7a701721351a00cb7b8ae3a4394b67b49e3529ef3",
+          "first_line": "The MIT License (MIT)"
+        }
+      ]
+    },
+    {
+      "name": "pydantic_core",
+      "version": "2.46.4",
+      "license_expression": "MIT",
+      "license_metadata": "",
+      "project_urls": [
+        "Funding, https://github.com/sponsors/samuelcolvin",
+        "Homepage, https://github.com/pydantic",
+        "Source, https://github.com/pydantic/pydantic/tree/main/pydantic-core"
+      ],
+      "license_classifiers": [],
+      "license_files": [
+        {
+          "path": "pydantic_core-2.46.4.dist-info/licenses/LICENSE",
+          "sha256": "fbe7f615f18d135c07000e5a86325db27f42c7729699ef166ac1f7a3f4586bf4",
+          "first_line": "The MIT License (MIT)"
+        }
+      ]
+    },
+    {
+      "name": "pyDeprecate",
+      "version": "0.9.0",
+      "license_expression": null,
+      "license_metadata": "Apache-2.0",
+      "project_urls": [
+        "Documentation, https://borda.github.io/pyDeprecate/stable/",
+        "Source Code, https://github.com/Borda/pyDeprecate",
+        "Bug Tracker, https://github.com/Borda/pyDeprecate/issues",
+        "Changelog, https://github.com/Borda/pyDeprecate/blob/main/CHANGELOG.md",
+        "Agent Guide, https://borda.github.io/pyDeprecate/llms.txt"
+      ],
+      "license_classifiers": [],
+      "license_files": [
+        {
+          "path": "pydeprecate-0.9.0.dist-info/licenses/LICENSE",
+          "sha256": "570bae217206acfa510d4c686cef2aa995f4ce29ad97c314984f5bf913ebd442",
+          "first_line": "Apache License"
+        }
+      ]
+    },
+    {
+      "name": "Pygments",
+      "version": "2.21.0",
+      "license_expression": "BSD-2-Clause",
+      "license_metadata": "",
+      "project_urls": [
+        "Homepage, https://pygments.org",
+        "Documentation, https://pygments.org/docs",
+        "Source, https://github.com/pygments/pygments",
+        "Bug Tracker, https://github.com/pygments/pygments/issues",
+        "Changelog, https://github.com/pygments/pygments/blob/master/CHANGES"
+      ],
+      "license_classifiers": [],
+      "license_files": [
+        {
+          "path": "pygments-2.21.0.dist-info/licenses/AUTHORS",
+          "sha256": "71a83872ad82f57be692cf827e048e2cd51d45169cfa1ea3f28706d97a872c0f",
+          "first_line": "Pygments is written and maintained by Georg Brandl <georg@python.org>."
+        },
+        {
+          "path": "pygments-2.21.0.dist-info/licenses/LICENSE",
+          "sha256": "a9d66f1d526df02e29dce73436d34e56e8632f46c275bbdffc70569e882f9f17",
+          "first_line": "Copyright (c) 2006-2022 by the respective authors (see AUTHORS file)."
+        }
+      ]
+    },
+    {
+      "name": "pyparsing",
+      "version": "3.3.2",
+      "license_expression": "MIT",
+      "license_metadata": "",
+      "project_urls": [
+        "Documentation, https://pyparsing-docs.readthedocs.io/en/latest/",
+        "Homepage, https://github.com/pyparsing/pyparsing/",
+        "Source, https://github.com/pyparsing/pyparsing.git"
+      ],
+      "license_classifiers": [],
+      "license_files": [
+        {
+          "path": "pyparsing-3.3.2.dist-info/licenses/LICENSE",
+          "sha256": "a5425f9dc14ac74d4c5f0b679e941f2442e32cca7452a4418d5b1a49893ebe4e",
+          "first_line": "Copyright (c) 2003-2025  Paul McGuire"
+        }
+      ]
+    },
+    {
+      "name": "python-dateutil",
+      "version": "2.9.0.post0",
+      "license_expression": null,
+      "license_metadata": "Dual License",
+      "project_urls": [
+        "Documentation, https://dateutil.readthedocs.io/en/stable/",
+        "Source, https://github.com/dateutil/dateutil"
+      ],
+      "license_classifiers": [
+        "License :: OSI Approved :: BSD License",
+        "License :: OSI Approved :: Apache Software License"
+      ],
+      "license_files": [
+        {
+          "path": "python_dateutil-2.9.0.post0.dist-info/LICENSE",
+          "sha256": "ba00f51a0d92823b5a1cde27d8b5b9d2321e67ed8da9bc163eff96d5e17e577e",
+          "first_line": "Copyright 2017- Paul Ganssle <paul@ganssle.io>"
+        }
+      ]
+    },
+    {
+      "name": "python-dotenv",
+      "version": "1.2.2",
+      "license_expression": null,
+      "license_metadata": "BSD-3-Clause",
+      "project_urls": [
+        "Source, https://github.com/theskumar/python-dotenv"
+      ],
+      "license_classifiers": [],
+      "license_files": [
+        {
+          "path": "python_dotenv-1.2.2.dist-info/licenses/LICENSE",
+          "sha256": "80619b7049f08c81683ad0e01f08f257a840652dd71ee83146d36658c7d2c2b9",
+          "first_line": "Copyright (c) 2014, Saurabh Kumar (python-dotenv), 2013, Ted Tieken (django-dotenv-rw), 2013, Jacob Kaplan-Moss (django-dotenv)"
+        }
+      ]
+    },
+    {
+      "name": "python-multipart",
+      "version": "0.0.32",
+      "license_expression": "Apache-2.0",
+      "license_metadata": "",
+      "project_urls": [
+        "Homepage, https://github.com/Kludex/python-multipart",
+        "Documentation, https://kludex.github.io/python-multipart/",
+        "Changelog, https://github.com/Kludex/python-multipart/blob/master/CHANGELOG.md",
+        "Source, https://github.com/Kludex/python-multipart"
+      ],
+      "license_classifiers": [
+        "License :: OSI Approved :: Apache Software License"
+      ],
+      "license_files": [
+        {
+          "path": "python_multipart-0.0.32.dist-info/licenses/LICENSE.txt",
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+          "first_line": "Apache License"
+        }
+      ]
+    },
+    {
+      "name": "pytorch-lightning",
+      "version": "2.6.6",
+      "license_expression": null,
+      "license_metadata": "Apache-2.0",
+      "project_urls": [
+        "Bug Tracker, https://github.com/Lightning-AI/pytorch-lightning/issues",
+        "Documentation, https://pytorch-lightning.rtfd.io/en/latest/",
+        "Source Code, https://github.com/Lightning-AI/lightning"
+      ],
+      "license_classifiers": [
+        "License :: OSI Approved :: Apache Software License"
+      ],
+      "license_files": [
+        {
+          "path": "pytorch_lightning-2.6.6.dist-info/licenses/LICENSE",
+          "sha256": "a41e2fae9915ae56028f8dbd0bf27995f1907613cbcd2d81a61b010ad34e9fe9",
+          "first_line": "Apache License"
+        }
+      ]
+    },
+    {
+      "name": "PyYAML",
+      "version": "6.0.3",
+      "license_expression": null,
+      "license_metadata": "MIT",
+      "project_urls": [
+        "Bug Tracker, https://github.com/yaml/pyyaml/issues",
+        "CI, https://github.com/yaml/pyyaml/actions",
+        "Documentation, https://pyyaml.org/wiki/PyYAMLDocumentation",
+        "Mailing lists, http://lists.sourceforge.net/lists/listinfo/yaml-core",
+        "Source Code, https://github.com/yaml/pyyaml"
+      ],
+      "license_classifiers": [
+        "License :: OSI Approved :: MIT License"
+      ],
+      "license_files": [
+        {
+          "path": "pyyaml-6.0.3.dist-info/licenses/LICENSE",
+          "sha256": "8d3928f9dc4490fd635707cb88eb26bd764102a7282954307d3e5167a577e8a4",
+          "first_line": "Copyright (c) 2017-2021 Ingy döt Net"
+        }
+      ]
+    },
+    {
+      "name": "regex",
+      "version": "2026.9.29",
+      "license_expression": "Apache-2.0 AND CNRI-Python",
+      "license_metadata": "",
+      "project_urls": [
+        "Homepage, https://github.com/mrabarnett/mrab-regex"
+      ],
+      "license_classifiers": [],
+      "license_files": [
+        {
+          "path": "regex-2026.9.29.dist-info/licenses/LICENSE.txt",
+          "sha256": "3d220c06594b826bbabf110312f60f385f99e57e529fa4b9e536f79091f8b4c7",
+          "first_line": "This work was derived from the 're' module of CPython 2.6 and CPython 3.1,"
+        }
+      ]
+    },
+    {
+      "name": "requests",
+      "version": "2.34.2",
+      "license_expression": null,
+      "license_metadata": "Apache-2.0",
+      "project_urls": [
+        "Documentation, https://requests.readthedocs.io",
+        "Source, https://github.com/psf/requests"
+      ],
+      "license_classifiers": [
+        "License :: OSI Approved :: Apache Software License"
+      ],
+      "license_files": [
+        {
+          "path": "requests-2.34.2.dist-info/licenses/LICENSE",
+          "sha256": "09e8a9bcec8067104652c168685ab0931e7868f9c8284b66f5ae6edae5f1130b",
+          "first_line": "Apache License"
+        },
+        {
+          "path": "requests-2.34.2.dist-info/licenses/NOTICE",
+          "sha256": "f5110972dedad2b4e9d314518daf3b7d72d6e02e499acd802181de6f74571dcc",
+          "first_line": "Requests"
+        }
+      ]
+    },
+    {
+      "name": "requests-toolbelt",
+      "version": "1.0.0",
+      "license_expression": null,
+      "license_metadata": "Apache 2.0",
+      "project_urls": [
+        "Changelog, https://github.com/requests/toolbelt/blob/master/HISTORY.rst",
+        "Source, https://github.com/requests/toolbelt"
+      ],
+      "license_classifiers": [
+        "License :: OSI Approved :: Apache Software License"
+      ],
+      "license_files": [
+        {
+          "path": "requests_toolbelt-1.0.0.dist-info/LICENSE",
+          "sha256": "1f8cf8bdacd98ed6d36d0fec0c07f7765acebd6e81205962ab5146023b3c858d",
+          "first_line": "Copyright 2014 Ian Cordasco, Cory Benfield"
+        }
+      ]
+    },
+    {
+      "name": "rfdetr",
+      "version": "1.11.2",
+      "license_expression": null,
+      "license_metadata": "Apache License 2.0",
+      "project_urls": [
+        "Homepage, https://github.com/roboflow/rf-detr"
+      ],
+      "license_classifiers": [
+        "License :: OSI Approved :: Apache Software License"
+      ],
+      "license_files": [
+        {
+          "path": "rfdetr-1.11.2.dist-info/licenses/LICENSE",
+          "sha256": "8cabf52c61130fc97a7e5da5e3685ccf44841c0c53d6f881189369b136603cca",
+          "first_line": "Apache License"
+        }
+      ]
+    },
+    {
+      "name": "rich",
+      "version": "15.0.0",
+      "license_expression": null,
+      "license_metadata": "MIT",
+      "project_urls": [
+        "Documentation, https://rich.readthedocs.io/en/latest/",
+        "Homepage, https://github.com/Textualize/rich"
+      ],
+      "license_classifiers": [
+        "License :: OSI Approved :: MIT License"
+      ],
+      "license_files": [
+        {
+          "path": "rich-15.0.0.dist-info/licenses/LICENSE",
+          "sha256": "deed7c17a4318158190a3ea239cc879a5a50271cebb98ae7025f48fbe58dca15",
+          "first_line": "Copyright (c) 2020 Will McGugan"
+        }
+      ]
+    },
+    {
+      "name": "roboflow",
+      "version": "1.7.2",
+      "license_expression": null,
+      "license_metadata": "",
+      "project_urls": [],
+      "license_classifiers": [
+        "License :: OSI Approved :: Apache Software License"
+      ],
+      "license_files": [
+        {
+          "path": "roboflow-1.7.2.dist-info/licenses/LICENSE",
+          "sha256": "ba2efaa3c54d9ea0d16a64b24b76b83cd8f59989e15f1595d3432d6f51ee48d1",
+          "first_line": "Apache License"
+        }
+      ]
+    },
+    {
+      "name": "safetensors",
+      "version": "0.8.0",
+      "license_expression": null,
+      "license_metadata": "",
+      "project_urls": [
+        "Homepage, https://github.com/huggingface/safetensors",
+        "Source, https://github.com/huggingface/safetensors"
+      ],
+      "license_classifiers": [
+        "License :: OSI Approved :: Apache Software License"
+      ],
+      "license_files": [
+        {
+          "path": "safetensors-0.8.0.dist-info/licenses/LICENSE",
+          "sha256": "1eb85fc97224598dad1852b5d6483bbcf0aa8608790dcc657a5a2a761ae9c8c6",
+          "first_line": "Apache License"
+        }
+      ]
+    },
+    {
+      "name": "scipy",
+      "version": "1.18.1",
+      "license_expression": null,
+      "license_metadata": "Copyright (c) 2001-2002 Enthought, Inc. 2003, SciPy Developers.\n All rights reserved.\n\n Redistribution and use in source and binary forms, with or without\n modification, are permitted provided that the following conditions\n are met:\n\n 1. Redistributi",
+      "project_urls": [
+        "homepage, https://scipy.org/",
+        "documentation, https://docs.scipy.org/doc/scipy/",
+        "source, https://github.com/scipy/scipy",
+        "download, https://github.com/scipy/scipy/releases",
+        "tracker, https://github.com/scipy/scipy/issues"
+      ],
+      "license_classifiers": [
+        "License :: OSI Approved :: BSD License"
+      ],
+      "license_files": [
+        {
+          "path": "scipy-1.18.1.dist-info/LICENSE.txt",
+          "sha256": "f0f5c56b298ec9795df1199edc328a987242716d14a1bde6813112e22dc15f99",
+          "first_line": "Copyright (c) 2001-2002 Enthought, Inc. 2003, SciPy Developers."
+        }
+      ]
+    },
+    {
+      "name": "setuptools",
+      "version": "83.0.0",
+      "license_expression": "MIT",
+      "license_metadata": "",
+      "project_urls": [
+        "Source, https://github.com/pypa/setuptools",
+        "Documentation, https://setuptools.pypa.io/",
+        "Changelog, https://setuptools.pypa.io/en/stable/history.html"
+      ],
+      "license_classifiers": [],
+      "license_files": [
+        {
+          "path": "setuptools-83.0.0.dist-info/licenses/LICENSE",
+          "sha256": "86da0f01aeae46348a3c3d465195dc1ceccde79f79e87769a64b8da04b2a4741",
+          "first_line": "Permission is hereby granted, free of charge, to any person obtaining a copy"
+        },
+        {
+          "path": "setuptools/_vendor/autocommand-2.2.2.dist-info/LICENSE",
+          "sha256": "ade78d04982d69972d444a8e14a94f87a2334dd3855cc80348ea8e240aa0df2d",
+          "first_line": "GNU LESSER GENERAL PUBLIC LICENSE"
+        },
+        {
+          "path": "setuptools/_vendor/backports.tarfile-1.2.0.dist-info/LICENSE",
+          "sha256": "86da0f01aeae46348a3c3d465195dc1ceccde79f79e87769a64b8da04b2a4741",
+          "first_line": "Permission is hereby granted, free of charge, to any person obtaining a copy"
+        },
+        {
+          "path": "setuptools/_vendor/importlib_metadata-8.7.1.dist-info/licenses/LICENSE",
+          "sha256": "458502e12d97bbf64438606a20044aa85eb05fb0a8a807bb35dbec253fd1fc04",
+          "first_line": "Apache License"
+        },
+        {
+          "path": "setuptools/_vendor/jaraco.text-4.0.0.dist-info/LICENSE",
+          "sha256": "86da0f01aeae46348a3c3d465195dc1ceccde79f79e87769a64b8da04b2a4741",
+          "first_line": "Permission is hereby granted, free of charge, to any person obtaining a copy"
+        },
+        {
+          "path": "setuptools/_vendor/jaraco_context-6.1.0.dist-info/licenses/LICENSE",
+          "sha256": "9755a18519666e5f0f4cae3daad3d7012bcae48a600b31237d75e9fe134e6683",
+          "first_line": "MIT License"
+        },
+        {
+          "path": "setuptools/_vendor/jaraco_functools-4.4.0.dist-info/licenses/LICENSE",
+          "sha256": "5a57cb4db85e2a2dd88c290628908add57e3451449e0a9a71fdfb38776fd759d",
+          "first_line": "MIT License"
+        },
+        {
+          "path": "setuptools/_vendor/more_itertools-10.8.0.dist-info/licenses/LICENSE",
+          "sha256": "09f1c8c9e941af3e584d59641ea9b87d83c0cb0fd007eb5ef391a7e2643c1a46",
+          "first_line": "Copyright (c) 2012 Erik Rose"
+        },
+        {
+          "path": "setuptools/_vendor/packaging-26.0.dist-info/licenses/LICENSE",
+          "sha256": "cad1ef5bd340d73e074ba614d26f7deaca5c7940c3d8c34852e65c4909686c48",
+          "first_line": "This software is made available under the terms of *either* of the licenses"
+        },
+        {
+          "path": "setuptools/_vendor/packaging-26.0.dist-info/licenses/LICENSE.APACHE",
+          "sha256": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594",
+          "first_line": "Apache License"
+        },
+        {
+          "path": "setuptools/_vendor/packaging-26.0.dist-info/licenses/LICENSE.BSD",
+          "sha256": "b70e7e9b742f1cc6f948b34c16aa39ffece94196364bc88ff0d2180f0028fac5",
+          "first_line": "Copyright (c) Donald Stufft and individual contributors."
+        },
+        {
+          "path": "setuptools/_vendor/platformdirs-4.4.0.dist-info/licenses/LICENSE",
+          "sha256": "29e0fd62e929850e86eb28c3fdccf0cefdf4fa94879011cffb3d0d4bed6d4db6",
+          "first_line": "MIT License"
+        },
+        {
+          "path": "setuptools/_vendor/tomli-2.4.0.dist-info/licenses/LICENSE",
+          "sha256": "b80816b0d530b8accb4c2211783790984a6e3b61922c2b5ee92f3372ab2742fe",
+          "first_line": "MIT License"
+        },
+        {
+          "path": "setuptools/_vendor/wheel-0.46.3.dist-info/licenses/LICENSE.txt",
+          "sha256": "30c23618679108f3e8ea1d2a658c7ca417bdfc891c98ef1a89fa4ff0c9828654",
+          "first_line": "MIT License"
+        },
+        {
+          "path": "setuptools/_vendor/zipp-3.23.0.dist-info/licenses/LICENSE",
+          "sha256": "5a57cb4db85e2a2dd88c290628908add57e3451449e0a9a71fdfb38776fd759d",
+          "first_line": "MIT License"
+        },
+        {
+          "path": "setuptools/config/NOTICE",
+          "sha256": "2dddf08818297a3b89d43d95ff659d8da85741108c9136dfa3a4d856c0623bd8",
+          "first_line": "The following files include code from opensource projects"
+        }
+      ]
+    },
+    {
+      "name": "shellingham",
+      "version": "1.5.4",
+      "license_expression": null,
+      "license_metadata": "ISC License",
+      "project_urls": [],
+      "license_classifiers": [
+        "License :: OSI Approved :: ISC License (ISCL)"
+      ],
+      "license_files": [
+        {
+          "path": "shellingham-1.5.4.dist-info/LICENSE",
+          "sha256": "f388fd38cad13112c1dc0f669bbe80e7f84541edbafb72f3030d2ca7642c3c9d",
+          "first_line": "Copyright (c) 2018, Tzu-ping Chung <uranusjr@gmail.com>"
+        }
+      ]
+    },
+    {
+      "name": "simplejpeg",
+      "version": "1.9.0",
+      "license_expression": "MIT",
+      "license_metadata": "",
+      "project_urls": [
+        "Documentation, https://github.com/jfolz/simplejpeg/blob/master/README.rst",
+        "Source, https://github.com/jfolz/simplejpeg",
+        "Tracker, https://github.com/jfolz/simplejpeg/issues"
+      ],
+      "license_classifiers": [],
+      "license_files": [
+        {
+          "path": "simplejpeg-1.9.0.dist-info/licenses/LICENSE",
+          "sha256": "6b051d5e30b309beadbc6802596edb3cc720fd2645fba127e952b07a4fc3ac1a",
+          "first_line": "MIT License"
+        }
+      ]
+    },
+    {
+      "name": "simsimd",
+      "version": "6.5.16",
+      "license_expression": null,
+      "license_metadata": "Apache-2.0",
+      "project_urls": [],
+      "license_classifiers": [
+        "License :: OSI Approved :: Apache Software License"
+      ],
+      "license_files": [
+        {
+          "path": "simsimd-6.5.16.dist-info/licenses/LICENSE",
+          "sha256": "1eb85fc97224598dad1852b5d6483bbcf0aa8608790dcc657a5a2a761ae9c8c6",
+          "first_line": "Apache License"
+        }
+      ]
+    },
+    {
+      "name": "six",
+      "version": "1.17.0",
+      "license_expression": null,
+      "license_metadata": "MIT",
+      "project_urls": [],
+      "license_classifiers": [
+        "License :: OSI Approved :: MIT License"
+      ],
+      "license_files": [
+        {
+          "path": "six-1.17.0.dist-info/LICENSE",
+          "sha256": "4375ba20e2b9c6c4e7cad2940a628fd90e95cc3d50ee92aae755715d8ba1fbd0",
+          "first_line": "Copyright (c) 2010-2024 Benjamin Peterson"
+        }
+      ]
+    },
+    {
+      "name": "starlette",
+      "version": "1.3.1",
+      "license_expression": "BSD-3-Clause",
+      "license_metadata": "",
+      "project_urls": [
+        "Homepage, https://github.com/Kludex/starlette",
+        "Documentation, https://starlette.dev/",
+        "Changelog, https://starlette.dev/release-notes/",
+        "Funding, https://github.com/sponsors/Kludex",
+        "Source, https://github.com/Kludex/starlette"
+      ],
+      "license_classifiers": [],
+      "license_files": [
+        {
+          "path": "starlette-1.3.1.dist-info/licenses/LICENSE.md",
+          "sha256": "dcb95677a02240243187e964f941847d19b17821cf99e5afae684fab328c19bf",
+          "first_line": "Copyright © 2018, [Encode OSS Ltd](https://www.encode.io/)."
+        }
+      ]
+    },
+    {
+      "name": "stringzilla",
+      "version": "5.3.1",
+      "license_expression": null,
+      "license_metadata": "Apache-2.0",
+      "project_urls": [],
+      "license_classifiers": [],
+      "license_files": [
+        {
+          "path": "stringzilla-5.3.1.dist-info/licenses/LICENSE",
+          "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+          "first_line": "Apache License"
+        }
+      ]
+    },
+    {
+      "name": "supervision",
+      "version": "0.31.2",
+      "license_expression": "MIT",
+      "license_metadata": "",
+      "project_urls": [
+        "Documentation, https://supervision.roboflow.com/latest/",
+        "Homepage, https://github.com/roboflow/supervision",
+        "Repository, https://github.com/roboflow/supervision"
+      ],
+      "license_classifiers": [],
+      "license_files": [
+        {
+          "path": "supervision-0.31.2.dist-info/licenses/LICENSE.md",
+          "sha256": "72bb009f9633af978da6c49f3a927a83d04ddf8ed992492f6f2a62122de95227",
+          "first_line": "MIT License"
+        }
+      ]
+    },
+    {
+      "name": "sympy",
+      "version": "1.14.0",
+      "license_expression": null,
+      "license_metadata": "BSD",
+      "project_urls": [
+        "Source, https://github.com/sympy/sympy"
+      ],
+      "license_classifiers": [
+        "License :: OSI Approved :: BSD License"
+      ],
+      "license_files": [
+        {
+          "path": "sympy-1.14.0.dist-info/licenses/AUTHORS",
+          "sha256": "82b1038521b0696c63c90b31ed4a0a2c9c4c16871c648b157b07ca44b6f18f8d",
+          "first_line": "All people who contributed to SymPy by sending at least a patch or"
+        },
+        {
+          "path": "sympy-1.14.0.dist-info/licenses/LICENSE",
+          "sha256": "07a5e9819f727b4986ad2829c7a29a6320d42575f720eb24d71b7fef573a0286",
+          "first_line": "Copyright (c) 2006-2023 SymPy Development Team"
+        }
+      ]
+    },
+    {
+      "name": "tokenizers",
+      "version": "0.23.3",
+      "license_expression": null,
+      "license_metadata": "",
+      "project_urls": [
+        "Homepage, https://github.com/huggingface/tokenizers",
+        "Source, https://github.com/huggingface/tokenizers"
+      ],
+      "license_classifiers": [
+        "License :: OSI Approved :: Apache Software License"
+      ],
+      "license_files": []
+    },
+    {
+      "name": "torch",
+      "version": "2.13.0+cu130",
+      "license_expression": "Apache-2.0 AND Apache-2.0 WITH LLVM-exception AND BSD-2-Clause AND BSD-3-Clause AND BSL-1.0 AND MIT",
+      "license_metadata": "",
+      "project_urls": [
+        "Homepage, https://pytorch.org",
+        "Repository, https://github.com/pytorch/pytorch",
+        "Documentation, https://pytorch.org/docs",
+        "Issue Tracker, https://github.com/pytorch/pytorch/issues",
+        "Forum, https://discuss.pytorch.org"
+      ],
+      "license_classifiers": [],
+      "license_files": [
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/LICENSE",
+          "sha256": "0fc92425d130d9c87a5eb7427082e3afdbff6ef169bc678e15abba4c2d37c934",
+          "first_line": "From PyTorch:"
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/FP16/LICENSE",
+          "sha256": "68349589306bdfa3631ac7f84633956bf21b6a448ed5e43383ea75a8a5f54e4c",
+          "first_line": "The MIT License (MIT)"
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/FXdiv/LICENSE",
+          "sha256": "9e7b48284b1aef91999d1967d093711bab8f3bbbaf31e0670ab7a3af077c0a2b",
+          "first_line": "The MIT License (MIT)"
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/NNPACK/LICENSE",
+          "sha256": "a4dadeb3d59219de6cdf5cb6bf920760103eed9ae5af2e71b0e8462645397b66",
+          "first_line": "Copyright (c) 2017 Facebook Inc."
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/NVTX/LICENSE.txt",
+          "sha256": "c3b19baa37cf18bac07b65700824acadcfa617316f02af10d3852ed20f4f6ab8",
+          "first_line": "=============================================================================="
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/NVTX/docs/LICENSE.txt",
+          "sha256": "c3b19baa37cf18bac07b65700824acadcfa617316f02af10d3852ed20f4f6ab8",
+          "first_line": "=============================================================================="
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/NVTX/python/LICENSE.txt",
+          "sha256": "c3b19baa37cf18bac07b65700824acadcfa617316f02af10d3852ed20f4f6ab8",
+          "first_line": "=============================================================================="
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/NVTX/tools/docs/github-markdown-css/LICENSE",
+          "sha256": "fcf1a18be2e25ba82acf2c59821b030d8ee764e4e201db6ef3c51900d385515f",
+          "first_line": "MIT License"
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/VulkanMemoryAllocator/LICENSE.txt",
+          "sha256": "e5fc8b0b0357a75d63649c8f2552576aaa6941c361a013710bb53afc64d3a8aa",
+          "first_line": "Copyright (c) 2017-2025 Advanced Micro Devices, Inc. All rights reserved."
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/XNNPACK/LICENSE",
+          "sha256": "4805a18e3c617424da5b7f6d8b9fde3df2fb6a5e26a6b6663a6cdb66db664d8c",
+          "first_line": "BSD License"
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/aiter/3rdparty/composable_kernel/LICENSE",
+          "sha256": "99ec4452f4047b6c53016a502bf94451eb317eff5aab5f63cebc16f94020d64f",
+          "first_line": "Copyright (c) 2018-    , Advanced Micro Devices, Inc. (Chao Liu, Jing Zhang)"
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/aiter/3rdparty/composable_kernel/docs/LICENSE.rst",
+          "sha256": "81c3c62d810d7277f0583179df2a28a997b013f389f97778e9e7480114e0ca06",
+          "first_line": ".. meta::"
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/aiter/LICENSE",
+          "sha256": "844e3a38ca6f748e10eb63f07eb343ddca3b5a0a6bb40b0f621fcc54ea03deb3",
+          "first_line": "Copyright © Advanced Micro Devices, Inc. All rights reserved."
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/benchmark/LICENSE",
+          "sha256": "3ddf9be5c28fe27dad143a5dc76eea25222ad1dd68934a047064e56ed2fa40c5",
+          "first_line": "Apache License"
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/composable_kernel/LICENSE",
+          "sha256": "99ec4452f4047b6c53016a502bf94451eb317eff5aab5f63cebc16f94020d64f",
+          "first_line": "Copyright (c) 2018-    , Advanced Micro Devices, Inc. (Chao Liu, Jing Zhang)"
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/composable_kernel/docs/LICENSE.rst",
+          "sha256": "81c3c62d810d7277f0583179df2a28a997b013f389f97778e9e7480114e0ca06",
+          "first_line": ".. meta::"
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/cpp-httplib/LICENSE",
+          "sha256": "bb546eae5924d8ee842e0e567e6d533c5824bdebccf605f99a5b3429034e6697",
+          "first_line": "The MIT License (MIT)"
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/cpuinfo/LICENSE",
+          "sha256": "8477bdd6a4d9f5178e5dfda1e32239c7b09c9d6da3804ae3e5c1a80210c0dd21",
+          "first_line": "Copyright (c) 2019 Google LLC"
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/cpuinfo/deps/clog/LICENSE",
+          "sha256": "8c29231fd0034d4b1caaae8c0a63bce71f95cd8c4b0494c8588930b75c3d2155",
+          "first_line": "Copyright (C) 2018 Marat Dukhan"
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/cudnn_frontend/LICENSE.txt",
+          "sha256": "b6fe452605fe29245f0cbafa724b42df94a5e170bedb9d45bc9cfaa4883ad907",
+          "first_line": "/*"
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/cutlass/LICENSE.txt",
+          "sha256": "48eb34a9124af8fdd2ad1858a64be9827ebc42e5389c6dd4b5a93e411ac7e693",
+          "first_line": "Copyright (c) 2017 - 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved."
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/cutlass/python/LICENSE.txt",
+          "sha256": "932c16f6c4f0187eda3af18df07300f8807eda85ca974bf46c5ed11fd91e5c2f",
+          "first_line": "Copyright (c) 2017 - 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved."
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/fbgemm/LICENSE",
+          "sha256": "5d5d5b022ecf828c796a64ad7afcfd62971bf58a52b71668cd48137ca02824c5",
+          "first_line": "BSD License"
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/fbgemm/external/composable_kernel/LICENSE",
+          "sha256": "99ec4452f4047b6c53016a502bf94451eb317eff5aab5f63cebc16f94020d64f",
+          "first_line": "Copyright (c) 2018-    , Advanced Micro Devices, Inc. (Chao Liu, Jing Zhang)"
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/fbgemm/external/composable_kernel/docs/LICENSE.rst",
+          "sha256": "81c3c62d810d7277f0583179df2a28a997b013f389f97778e9e7480114e0ca06",
+          "first_line": ".. meta::"
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/fbgemm/external/cpuinfo/LICENSE",
+          "sha256": "8477bdd6a4d9f5178e5dfda1e32239c7b09c9d6da3804ae3e5c1a80210c0dd21",
+          "first_line": "Copyright (c) 2019 Google LLC"
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/fbgemm/external/cpuinfo/deps/clog/LICENSE",
+          "sha256": "8c29231fd0034d4b1caaae8c0a63bce71f95cd8c4b0494c8588930b75c3d2155",
+          "first_line": "Copyright (C) 2018 Marat Dukhan"
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/fbgemm/external/cutlass/LICENSE.txt",
+          "sha256": "3288ff56f62ade1ef032bd860b6d92482f83f1d3073ad5125b87228b9c11e0a8",
+          "first_line": "Copyright (c) 2017 - 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved."
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/fbgemm/external/cutlass/python/LICENSE.txt",
+          "sha256": "6b9e8b964c2a90f7743107a23bccec9ebc6f5a47d4a8fa3d986aa6f51f86da68",
+          "first_line": "Copyright (c) 2017 - 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved."
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/fbgemm/external/googletest/LICENSE",
+          "sha256": "46c35a3c9ac8ef63c16ca69b5cf0166df9fcdb789e318175c92a219de517b8e7",
+          "first_line": "Copyright 2008, Google Inc."
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/fbgemm/external/hipify_torch/LICENSE.txt",
+          "sha256": "e63d8a0f5ab5cc02d848c6ef51b7bea58644a07223aa0acdb905260a1031b2e6",
+          "first_line": "MIT License"
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/fbgemm/fbgemm_gpu/docs/src/general/LICENSE.rst",
+          "sha256": "4f8f489489bc1ac9608b13243e6dbeb28070cefd6da94de0784cc919afbf10f6",
+          "first_line": "License"
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/fbgemm/fbgemm_gpu/experimental/hstu/LICENSE",
+          "sha256": "f915822057ab8cea4648efaf58b1a1eab265d51b4b56fc976ff11cd9bacd319a",
+          "first_line": "BSD 3-Clause License"
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/fbgemm/fbgemm_gpu/src/quantize_ops/mx/LICENSE",
+          "sha256": "9906940f61b1f0b533fa7d99baf55178b2808fbe113ea51dfbfad8572ccd5f2b",
+          "first_line": "MIT License"
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/fbgemm/fbgemm_gpu/test/quantize/mx/LICENSE",
+          "sha256": "9906940f61b1f0b533fa7d99baf55178b2808fbe113ea51dfbfad8572ccd5f2b",
+          "first_line": "MIT License"
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/flash-attention/LICENSE",
+          "sha256": "c364d38c8ee8070159ad68f56a8bab4917b8d020548da33a01e036505c8e4add",
+          "first_line": "BSD 3-Clause License"
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/flash-attention/csrc/composable_kernel/LICENSE",
+          "sha256": "99ec4452f4047b6c53016a502bf94451eb317eff5aab5f63cebc16f94020d64f",
+          "first_line": "Copyright (c) 2018-    , Advanced Micro Devices, Inc. (Chao Liu, Jing Zhang)"
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/flash-attention/csrc/composable_kernel/docs/LICENSE.rst",
+          "sha256": "81c3c62d810d7277f0583179df2a28a997b013f389f97778e9e7480114e0ca06",
+          "first_line": ".. meta::"
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/flash-attention/csrc/cutlass/LICENSE.txt",
+          "sha256": "3288ff56f62ade1ef032bd860b6d92482f83f1d3073ad5125b87228b9c11e0a8",
+          "first_line": "Copyright (c) 2017 - 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved."
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/flash-attention/csrc/cutlass/python/LICENSE.txt",
+          "sha256": "6b9e8b964c2a90f7743107a23bccec9ebc6f5a47d4a8fa3d986aa6f51f86da68",
+          "first_line": "Copyright (c) 2017 - 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved."
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/flash-attention/flash_attn/cute/LICENSE",
+          "sha256": "c364d38c8ee8070159ad68f56a8bab4917b8d020548da33a01e036505c8e4add",
+          "first_line": "BSD 3-Clause License"
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/flash-attention/third_party/aiter/3rdparty/composable_kernel/LICENSE",
+          "sha256": "99ec4452f4047b6c53016a502bf94451eb317eff5aab5f63cebc16f94020d64f",
+          "first_line": "Copyright (c) 2018-    , Advanced Micro Devices, Inc. (Chao Liu, Jing Zhang)"
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/flash-attention/third_party/aiter/3rdparty/composable_kernel/docs/LICENSE.rst",
+          "sha256": "81c3c62d810d7277f0583179df2a28a997b013f389f97778e9e7480114e0ca06",
+          "first_line": ".. meta::"
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/flash-attention/third_party/aiter/LICENSE",
+          "sha256": "844e3a38ca6f748e10eb63f07eb343ddca3b5a0a6bb40b0f621fcc54ea03deb3",
+          "first_line": "Copyright © Advanced Micro Devices, Inc. All rights reserved."
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/flatbuffers/LICENSE",
+          "sha256": "3ddf9be5c28fe27dad143a5dc76eea25222ad1dd68934a047064e56ed2fa40c5",
+          "first_line": "Apache License"
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/flatbuffers/dart/LICENSE",
+          "sha256": "35cf0c0dca02767d12b9a8c12ae1b6a1c08045f220df4a52b0e01563a568fe6b",
+          "first_line": "Apache License"
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/flatbuffers/swift/LICENSE",
+          "sha256": "3ddf9be5c28fe27dad143a5dc76eea25222ad1dd68934a047064e56ed2fa40c5",
+          "first_line": "Apache License"
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/fmt/LICENSE",
+          "sha256": "25b5db04aa6070c12ac518b91cbd0a59725c050ecb091456e6ebc3d3eeb369cf",
+          "first_line": "Copyright (c) 2012 - present, Victor Zverovich and {fmt} contributors"
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/gemmlowp/gemmlowp/LICENSE",
+          "sha256": "3ddf9be5c28fe27dad143a5dc76eea25222ad1dd68934a047064e56ed2fa40c5",
+          "first_line": "Apache License"
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/gloo/LICENSE",
+          "sha256": "6247f690b423835966eba51cad47b4c7d6a72ca226733dd1c473e4624fe6bb23",
+          "first_line": "BSD License"
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/googletest/LICENSE",
+          "sha256": "46c35a3c9ac8ef63c16ca69b5cf0166df9fcdb789e318175c92a219de517b8e7",
+          "first_line": "Copyright 2008, Google Inc."
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/ideep/LICENSE",
+          "sha256": "e1b43a11adfb7a5bd52089243a273ab85f0a695d0437bb34a418969501392573",
+          "first_line": "Copyright (c) 2018 Intel Corporation."
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/ideep/mkl-dnn/LICENSE",
+          "sha256": "b1dd911e534a75dd4dfd8dbc11a3193bd177c8390e7fcf462f98d2c8c235e112",
+          "first_line": "Apache License"
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/ideep/mkl-dnn/third_party/gtest/LICENSE",
+          "sha256": "46c35a3c9ac8ef63c16ca69b5cf0166df9fcdb789e318175c92a219de517b8e7",
+          "first_line": "Copyright 2008, Google Inc."
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/ideep/mkl-dnn/third_party/opencl/LICENSE",
+          "sha256": "3ddf9be5c28fe27dad143a5dc76eea25222ad1dd68934a047064e56ed2fa40c5",
+          "first_line": "Apache License"
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/kineto/LICENSE",
+          "sha256": "97729794764240cc12e0e22fe31b0cea824741c601bd09bd91b832e285e1f8c5",
+          "first_line": "BSD License"
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/kineto/libkineto/third_party/dynolog/LICENSE",
+          "sha256": "f08a94bfb0bdc1d7f1cb59badaf0f8c551b10db871185622dbf1fd036affa9cb",
+          "first_line": "MIT License"
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/kineto/libkineto/third_party/dynolog/third_party/DCGM/LICENSE",
+          "sha256": "afdc94cf2ce0ee28688f28a4ac05c945e15772bdce245509e0f7a10f3f886351",
+          "first_line": "Copyright (c) 2022, NVIDIA CORPORATION.  All rights reserved."
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/kineto/libkineto/third_party/dynolog/third_party/DCGM/testing/python3/libs_3rdparty/colorama/LICENSE.txt",
+          "sha256": "9ad71830669f2e1c684236831d2450892178e7a0801bda03aa1eafe3a0fd87ed",
+          "first_line": "Copyright (c) 2010 Jonathan Hartley <tartley@tartley.com>"
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/kineto/libkineto/third_party/dynolog/third_party/cpr/LICENSE",
+          "sha256": "92bfc9664aff7685ef84abedd292d94d851a6c4502d1ddd45b7e833ba7952814",
+          "first_line": "This license applies to everything except the contents of the \"test\""
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/kineto/libkineto/third_party/dynolog/third_party/cpr/test/LICENSE",
+          "sha256": "a694e69af9d08c8fb14e728ad4864c8b585ae9583d7707344e4dad5a35edae92",
+          "first_line": "This license applies to everything inside this directory and all"
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/kineto/libkineto/third_party/dynolog/third_party/fmt/LICENSE.rst",
+          "sha256": "4e79fcc686dacf1a83eeddf1813ce28bbac5bd67a8b067d740c8fcd8c8405e1d",
+          "first_line": "Copyright (c) 2012 - present, Victor Zverovich"
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/kineto/libkineto/third_party/dynolog/third_party/googletest/LICENSE",
+          "sha256": "46c35a3c9ac8ef63c16ca69b5cf0166df9fcdb789e318175c92a219de517b8e7",
+          "first_line": "Copyright 2008, Google Inc."
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/kineto/libkineto/third_party/dynolog/third_party/json/test/thirdparty/doctest/LICENSE.txt",
+          "sha256": "33cc9304b7e84187407cdbd7677216bdf460eb51364d42328bdb812a521e30c4",
+          "first_line": "The MIT License (MIT)"
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/kineto/libkineto/third_party/dynolog/third_party/json/third_party/cpplint/LICENSE",
+          "sha256": "17a82fba896445d028046d97aac3a3d0f6ccdd811a1d48d0a454512d422591b7",
+          "first_line": "cpplint.py and its corresponding unit tests are Copyright (C) 2009 Google Inc."
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/kineto/libkineto/third_party/dynolog/third_party/pfs/LICENSE",
+          "sha256": "378270e2aff76eb93637baf4bdbb7313940c897d25d5086b80db27fada9d37b2",
+          "first_line": "Apache License"
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/kineto/libkineto/third_party/dynolog/third_party/prometheus-cpp/3rdparty/civetweb/examples/rest/cJSON/LICENSE",
+          "sha256": "a36dda207c36db5818729c54e7ad4e8b0c6fba847491ba64f372c1a2037b6d5c",
+          "first_line": "Copyright (c) 2009-2017 Dave Gamble and cJSON contributors"
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/kineto/libkineto/third_party/dynolog/third_party/prometheus-cpp/3rdparty/civetweb/src/third_party/duktape-1.5.2/LICENSE.txt",
+          "sha256": "f95a124945067d1143f1c6de9a990f2db2426456408ee0f0bfe6de2f568a899f",
+          "first_line": "==============="
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/kineto/libkineto/third_party/dynolog/third_party/prometheus-cpp/3rdparty/civetweb/src/third_party/duktape-1.8.0/LICENSE.txt",
+          "sha256": "5358498534dac625c89a69c10becf3dcc40f9af58e6b69ee358ebdf6934f49c6",
+          "first_line": "==============="
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/kineto/libkineto/third_party/dynolog/third_party/prometheus-cpp/3rdparty/googletest/LICENSE",
+          "sha256": "46c35a3c9ac8ef63c16ca69b5cf0166df9fcdb789e318175c92a219de517b8e7",
+          "first_line": "Copyright 2008, Google Inc."
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/kineto/libkineto/third_party/dynolog/third_party/prometheus-cpp/3rdparty/googletest/googlemock/scripts/generator/LICENSE",
+          "sha256": "e438ef741bf3660b5c54f4452d7c0b387c8557207cc3e9cda499e461a94df2b2",
+          "first_line": "Apache License"
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/kineto/libkineto/third_party/dynolog/third_party/prometheus-cpp/LICENSE",
+          "sha256": "6d7ce74f3baf30e712b96afdd88d9e3b6caff93a1281d220ba0f654f60fe1a90",
+          "first_line": "MIT License"
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/kineto/libkineto/third_party/fmt/LICENSE",
+          "sha256": "25b5db04aa6070c12ac518b91cbd0a59725c050ecb091456e6ebc3d3eeb369cf",
+          "first_line": "Copyright (c) 2012 - present, Victor Zverovich and {fmt} contributors"
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/kineto/libkineto/third_party/googletest/LICENSE",
+          "sha256": "46c35a3c9ac8ef63c16ca69b5cf0166df9fcdb789e318175c92a219de517b8e7",
+          "first_line": "Copyright 2008, Google Inc."
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/llvm-openmp/LICENSE.txt",
+          "sha256": "eb3eab74fe9245818659556acf23e81b8c8a24915a4a244a23804f3fcdf1fd9c",
+          "first_line": "macOS wheels comes bundled with libomp.dylib from LLVM project and uses"
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/mimalloc/LICENSE",
+          "sha256": "82ade5d7d9b029044b5fbbc326207fc47c2d44ee4dd71e8a559c36d728217de9",
+          "first_line": "MIT License"
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/miniz-3.0.2/LICENSE",
+          "sha256": "0115478d567121238cf6cc1c0c361926cf07a49d9e4c9e66da97fac6a01646b3",
+          "first_line": "Copyright 2013-2014 RAD Game Tools and Valve Software"
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/mslk/LICENSE",
+          "sha256": "322bba2f33f594948052de342fd7d5bd26892e2a92ba75fbb5a433eff0b229c7",
+          "first_line": "BSD License"
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/mslk/external/composable_kernel/LICENSE",
+          "sha256": "99ec4452f4047b6c53016a502bf94451eb317eff5aab5f63cebc16f94020d64f",
+          "first_line": "Copyright (c) 2018-    , Advanced Micro Devices, Inc. (Chao Liu, Jing Zhang)"
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/mslk/external/composable_kernel/docs/LICENSE.rst",
+          "sha256": "81c3c62d810d7277f0583179df2a28a997b013f389f97778e9e7480114e0ca06",
+          "first_line": ".. meta::"
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/mslk/external/cutlass/LICENSE.txt",
+          "sha256": "3288ff56f62ade1ef032bd860b6d92482f83f1d3073ad5125b87228b9c11e0a8",
+          "first_line": "Copyright (c) 2017 - 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved."
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/mslk/external/cutlass/python/LICENSE.txt",
+          "sha256": "6b9e8b964c2a90f7743107a23bccec9ebc6f5a47d4a8fa3d986aa6f51f86da68",
+          "first_line": "Copyright (c) 2017 - 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved."
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/mslk/external/googletest/LICENSE",
+          "sha256": "46c35a3c9ac8ef63c16ca69b5cf0166df9fcdb789e318175c92a219de517b8e7",
+          "first_line": "Copyright 2008, Google Inc."
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/mslk/external/hipify_torch/LICENSE.txt",
+          "sha256": "e63d8a0f5ab5cc02d848c6ef51b7bea58644a07223aa0acdb905260a1031b2e6",
+          "first_line": "MIT License"
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/mslk/mslk/attention/flash_attn/LICENSE",
+          "sha256": "c364d38c8ee8070159ad68f56a8bab4917b8d020548da33a01e036505c8e4add",
+          "first_line": "BSD 3-Clause License"
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/nccl/LICENSE.txt",
+          "sha256": "a1f74066591016d7415520fdf4f2974cb6b4ae48a6b15f6bab77eab00dff3adb",
+          "first_line": "Most of this project is licensed under the Apache-2 license (right below)."
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/nccl/bindings/nccl4py/LICENSE.txt",
+          "sha256": "1eb85fc97224598dad1852b5d6483bbcf0aa8608790dcc657a5a2a761ae9c8c6",
+          "first_line": "Apache License"
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/onnx/LICENSE",
+          "sha256": "3ddf9be5c28fe27dad143a5dc76eea25222ad1dd68934a047064e56ed2fa40c5",
+          "first_line": "Apache License"
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/onnx/third_party/pybind11/LICENSE",
+          "sha256": "5494773a5dcf654c0c3c844fbb11cfc4f898ea0ea44cf467f29e5c99097da6e7",
+          "first_line": "Copyright (c) 2016 Wenzel Jakob <wenzel.jakob@epfl.ch>, All rights reserved."
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/protobuf/LICENSE",
+          "sha256": "f4df8b2457697851385d9ebb93267832c1dfa24e0e61881952f6b0c452663dc9",
+          "first_line": "Copyright 2008 Google Inc.  All rights reserved."
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/protobuf/third_party/benchmark/LICENSE",
+          "sha256": "3ddf9be5c28fe27dad143a5dc76eea25222ad1dd68934a047064e56ed2fa40c5",
+          "first_line": "Apache License"
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/protobuf/third_party/googletest/LICENSE",
+          "sha256": "46c35a3c9ac8ef63c16ca69b5cf0166df9fcdb789e318175c92a219de517b8e7",
+          "first_line": "Copyright 2008, Google Inc."
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/protobuf/third_party/googletest/googlemock/LICENSE",
+          "sha256": "46c35a3c9ac8ef63c16ca69b5cf0166df9fcdb789e318175c92a219de517b8e7",
+          "first_line": "Copyright 2008, Google Inc."
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/protobuf/third_party/googletest/googlemock/scripts/generator/LICENSE",
+          "sha256": "e438ef741bf3660b5c54f4452d7c0b387c8557207cc3e9cda499e461a94df2b2",
+          "first_line": "Apache License"
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/protobuf/third_party/googletest/googletest/LICENSE",
+          "sha256": "46c35a3c9ac8ef63c16ca69b5cf0166df9fcdb789e318175c92a219de517b8e7",
+          "first_line": "Copyright 2008, Google Inc."
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/psimd/LICENSE",
+          "sha256": "6bc97741b2f00a1d0a2f8e9be4c8af7ff837f968fe8e494864caf57026cfdbcb",
+          "first_line": "The MIT License (MIT)"
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/pthreadpool/LICENSE",
+          "sha256": "2aae36e3c88f88b5e8afff5ca8d05480745ba7ad7e8d62867293c604efc0ce46",
+          "first_line": "Copyright 2019 Google LLC"
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/pybind11/LICENSE",
+          "sha256": "5494773a5dcf654c0c3c844fbb11cfc4f898ea0ea44cf467f29e5c99097da6e7",
+          "first_line": "Copyright (c) 2016 Wenzel Jakob <wenzel.jakob@epfl.ch>, All rights reserved."
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/python-peachpy/LICENSE.rst",
+          "sha256": "b74018ea5fe273c10868dec1c5b832865fa4cf5bc44715a004d172e0a49a3f23",
+          "first_line": "=============================="
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/sleef/LICENSE.txt",
+          "sha256": "beb8e42e9d6b4284e03304d05a81a0755200a965fc8d0a5e0aea1e84cf805d6e",
+          "first_line": "Boost Software License - Version 1.0 - August 17th, 2003"
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/tensorpipe/LICENSE.txt",
+          "sha256": "a51531fad20e44cae492c601bc0997d961c17a74f25f9473ff62eb70e108277d",
+          "first_line": "BSD License"
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/tensorpipe/third_party/googletest/LICENSE",
+          "sha256": "46c35a3c9ac8ef63c16ca69b5cf0166df9fcdb789e318175c92a219de517b8e7",
+          "first_line": "Copyright 2008, Google Inc."
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/tensorpipe/third_party/googletest/googlemock/LICENSE",
+          "sha256": "46c35a3c9ac8ef63c16ca69b5cf0166df9fcdb789e318175c92a219de517b8e7",
+          "first_line": "Copyright 2008, Google Inc."
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/tensorpipe/third_party/googletest/googlemock/scripts/generator/LICENSE",
+          "sha256": "e438ef741bf3660b5c54f4452d7c0b387c8557207cc3e9cda499e461a94df2b2",
+          "first_line": "Apache License"
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/tensorpipe/third_party/googletest/googletest/LICENSE",
+          "sha256": "46c35a3c9ac8ef63c16ca69b5cf0166df9fcdb789e318175c92a219de517b8e7",
+          "first_line": "Copyright 2008, Google Inc."
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/tensorpipe/third_party/libnop/LICENSE",
+          "sha256": "abd3ed80490d1d168f12f6ced5a558398640e6d375382c7b85d290689a222822",
+          "first_line": "Copyright 2017 The Native Object Protocols Authors"
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/tensorpipe/third_party/libuv/LICENSE",
+          "sha256": "7aab26dd7e0e6661accc1fd9fc19410e01b466aa0ac36ea668b2013152a8ca23",
+          "first_line": "Copyright (c) 2015-present libuv project contributors."
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/tensorpipe/third_party/pybind11/LICENSE",
+          "sha256": "15619fd6ee80e905a159b8139f7791f5ae1dce142d5101d099404cc5cf1007ba",
+          "first_line": "Copyright (c) 2016 Wenzel Jakob <wenzel.jakob@epfl.ch>, All rights reserved."
+        },
+        {
+          "path": "torch-2.13.0+cu130.dist-info/licenses/third_party/tensorpipe/third_party/pybind11/tools/clang/LICENSE.txt",
+          "sha256": "dcd8a8d43f2dc19ba6f879f3a7e96f59e66ecb195099f700dfdcfb50641c10c9",
+          "first_line": "=============================================================================="
+        }
+      ]
+    },
+    {
+      "name": "torch-hungarian",
+      "version": "0.1.0rc0",
+      "license_expression": null,
+      "license_metadata": "",
+      "project_urls": [],
+      "license_classifiers": [],
+      "license_files": [
+        {
+          "path": "torch_hungarian-0.1.0rc0.dist-info/licenses/LICENSE",
+          "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+          "first_line": "Apache License"
+        }
+      ]
+    },
+    {
+      "name": "torchaudio",
+      "version": "2.11.0+cu130",
+      "license_expression": null,
+      "license_metadata": "",
+      "project_urls": [],
+      "license_classifiers": [
+        "License :: OSI Approved :: BSD License"
+      ],
+      "license_files": [
+        {
+          "path": "torchaudio-2.11.0+cu130.dist-info/licenses/LICENSE",
+          "sha256": "32638e179931bfe551eabf67b0e67a13b483e166b58dd7263634ab7f89f396f5",
+          "first_line": "BSD 2-Clause License"
+        }
+      ]
+    },
+    {
+      "name": "torchmetrics",
+      "version": "1.8.2",
+      "license_expression": null,
+      "license_metadata": "Apache-2.0",
+      "project_urls": [
+        "Bug Tracker, https://github.com/Lightning-AI/torchmetrics/issues",
+        "Documentation, https://torchmetrics.rtfd.io/en/latest/",
+        "Source Code, https://github.com/Lightning-AI/torchmetrics"
+      ],
+      "license_classifiers": [
+        "License :: OSI Approved :: Apache Software License"
+      ],
+      "license_files": [
+        {
+          "path": "torchmetrics-1.8.2.dist-info/licenses/LICENSE",
+          "sha256": "fa31f433f5b4bc1fb730fb9c678f90182d93bf76b6d98ba4d00f40454ac8b832",
+          "first_line": "Apache License"
+        }
+      ]
+    },
+    {
+      "name": "torchvision",
+      "version": "0.28.0+cu130",
+      "license_expression": null,
+      "license_metadata": "BSD",
+      "project_urls": [],
+      "license_classifiers": [],
+      "license_files": [
+        {
+          "path": "torchvision-0.28.0+cu130.dist-info/LICENSE",
+          "sha256": "c06363f9d33627dc5173b13522444cc85fbb4739f63e16d4587d5c0a165b5b1e",
+          "first_line": "BSD 3-Clause License"
+        }
+      ]
+    },
+    {
+      "name": "tqdm",
+      "version": "4.70.1",
+      "license_expression": null,
+      "license_metadata": "MPL-2.0 AND MIT",
+      "project_urls": [
+        "homepage, https://tqdm.github.io",
+        "repository, https://github.com/tqdm/tqdm",
+        "changelog, https://tqdm.github.io/releases",
+        "wiki, https://github.com/tqdm/tqdm/wiki"
+      ],
+      "license_classifiers": [],
+      "license_files": [
+        {
+          "path": "tqdm-4.70.1.dist-info/licenses/LICENCE",
+          "sha256": "fcff87c3a47ce8028a8512aa182d4fcf0ad1c90544ee75cf9b343684cac194de",
+          "first_line": "`tqdm` is a product of collaborative work."
+        }
+      ]
+    },
+    {
+      "name": "transformers",
+      "version": "5.20.2",
+      "license_expression": null,
+      "license_metadata": "Apache 2.0 License",
+      "project_urls": [],
+      "license_classifiers": [],
+      "license_files": [
+        {
+          "path": "transformers-5.20.2.dist-info/licenses/LICENSE",
+          "sha256": "77fd4710def9ec3c0f6225800e0235f15a425abd4a8b03559127fcd782612049",
+          "first_line": "Copyright 2018- The Hugging Face team. All rights reserved."
+        }
+      ]
+    },
+    {
+      "name": "truststore",
+      "version": "0.10.5",
+      "license_expression": "MIT",
+      "license_metadata": "",
+      "project_urls": [
+        "Documentation, https://truststore.readthedocs.io",
+        "Source, https://github.com/sethmlarson/truststore"
+      ],
+      "license_classifiers": [],
+      "license_files": [
+        {
+          "path": "truststore-0.10.5.dist-info/licenses/LICENSE",
+          "sha256": "33be7b7e8fa4fd19b1760e1a8ed8a668bdab852c91b692dd41424bcb725a9fca",
+          "first_line": "The MIT License (MIT)"
+        }
+      ]
+    },
+    {
+      "name": "typer",
+      "version": "0.25.1",
+      "license_expression": "MIT",
+      "license_metadata": "",
+      "project_urls": [
+        "Homepage, https://github.com/fastapi/typer",
+        "Documentation, https://typer.tiangolo.com",
+        "Repository, https://github.com/fastapi/typer",
+        "Issues, https://github.com/fastapi/typer/issues",
+        "Changelog, https://typer.tiangolo.com/release-notes/"
+      ],
+      "license_classifiers": [],
+      "license_files": [
+        {
+          "path": "typer-0.25.1.dist-info/licenses/LICENSE",
+          "sha256": "58992cebcf8dfb6e40c4e2112ed12126c243666dca3912a3d78b7ecac4859d49",
+          "first_line": "The MIT License (MIT)"
+        }
+      ]
+    },
+    {
+      "name": "typing-inspection",
+      "version": "0.4.2",
+      "license_expression": "MIT",
+      "license_metadata": "",
+      "project_urls": [
+        "Homepage, https://github.com/pydantic/typing-inspection",
+        "Documentation, https://pydantic.github.io/typing-inspection/dev/",
+        "Source, https://github.com/pydantic/typing-inspection",
+        "Changelog, https://github.com/pydantic/typing-inspection/blob/main/HISTORY.md"
+      ],
+      "license_classifiers": [],
+      "license_files": [
+        {
+          "path": "typing_inspection-0.4.2.dist-info/licenses/LICENSE",
+          "sha256": "804b59b25f2c31bd278f9202a19ae49a3945aa2664387e2d0a128c7cacc61ec3",
+          "first_line": "MIT License"
+        }
+      ]
+    },
+    {
+      "name": "typing_extensions",
+      "version": "4.16.0",
+      "license_expression": "PSF-2.0",
+      "license_metadata": "",
+      "project_urls": [
+        "Bug Tracker, https://github.com/python/typing_extensions/issues",
+        "Changes, https://github.com/python/typing_extensions/blob/main/CHANGELOG.md",
+        "Documentation, https://typing-extensions.readthedocs.io/",
+        "Home, https://github.com/python/typing_extensions",
+        "Q & A, https://github.com/python/typing/discussions",
+        "Repository, https://github.com/python/typing_extensions"
+      ],
+      "license_classifiers": [],
+      "license_files": [
+        {
+          "path": "typing_extensions-4.16.0.dist-info/licenses/LICENSE",
+          "sha256": "3b2f81fe21d181c499c59a256c8e1968455d6689d269aa85373bfb6af41da3bf",
+          "first_line": "A. HISTORY OF THE SOFTWARE"
+        }
+      ]
+    },
+    {
+      "name": "ultrafast-pycocotools",
+      "version": "0.1.14",
+      "license_expression": null,
+      "license_metadata": "BSD-2-Clause",
+      "project_urls": [
+        "Homepage, https://github.com/developer0hye/ultrafast-pycocotools",
+        "Issues, https://github.com/developer0hye/ultrafast-pycocotools/issues"
+      ],
+      "license_classifiers": [
+        "License :: OSI Approved :: BSD License"
+      ],
+      "license_files": [
+        {
+          "path": "ultrafast_pycocotools-0.1.14.dist-info/licenses/LICENSE",
+          "sha256": "6c9ef62207524c3933f282e8ec5a0d2f7c06d5cb6f92937a798f3dbd254a8750",
+          "first_line": "BSD 2-Clause License"
+        }
+      ]
+    },
+    {
+      "name": "urllib3",
+      "version": "2.7.0",
+      "license_expression": "MIT",
+      "license_metadata": "",
+      "project_urls": [
+        "Changelog, https://github.com/urllib3/urllib3/blob/main/CHANGES.rst",
+        "Documentation, https://urllib3.readthedocs.io",
+        "Code, https://github.com/urllib3/urllib3",
+        "Issue tracker, https://github.com/urllib3/urllib3/issues"
+      ],
+      "license_classifiers": [],
+      "license_files": [
+        {
+          "path": "urllib3-2.7.0.dist-info/licenses/LICENSE.txt",
+          "sha256": "130e3a64d5fdd5d096a752694634a7d9df284469de86e5732100268041e3d686",
+          "first_line": "MIT License"
+        }
+      ]
+    },
+    {
+      "name": "uvicorn",
+      "version": "0.51.0",
+      "license_expression": "BSD-3-Clause",
+      "license_metadata": "",
+      "project_urls": [
+        "Changelog, https://uvicorn.dev/release-notes",
+        "Funding, https://github.com/sponsors/encode",
+        "Homepage, https://uvicorn.dev/",
+        "Source, https://github.com/Kludex/uvicorn"
+      ],
+      "license_classifiers": [],
+      "license_files": [
+        {
+          "path": "uvicorn-0.51.0.dist-info/licenses/LICENSE.md",
+          "sha256": "efe1acf3e62fb99c288b0ec73e5a773b7268ef4320fe757ea994214e4b63c371",
+          "first_line": "Copyright © 2017-present, [Encode OSS Ltd](https://www.encode.io/)."
+        }
+      ]
+    },
+    {
+      "name": "vernier",
+      "version": "0.5.4",
+      "license_expression": null,
+      "license_metadata": "MIT OR Apache-2.0",
+      "project_urls": [
+        "Documentation, https://github.com/NoeFontana/vernier#readme",
+        "Homepage, https://github.com/NoeFontana/vernier",
+        "Issues, https://github.com/NoeFontana/vernier/issues",
+        "Repository, https://github.com/NoeFontana/vernier"
+      ],
+      "license_classifiers": [
+        "License :: OSI Approved :: MIT License",
+        "License :: OSI Approved :: Apache Software License"
+      ],
+      "license_files": [
+        {
+          "path": "vernier-0.5.4.dist-info/licenses/LICENSE-APACHE",
+          "sha256": "d71301a728bf317b7d50bbce2429ebc4314f28dc5ab060b243579a5ec64e1a40",
+          "first_line": "Apache License"
+        },
+        {
+          "path": "vernier-0.5.4.dist-info/licenses/LICENSE-MIT",
+          "sha256": "8ef8dba7c6b7c2f6edc7e99993533bb84eef249282aa528c0b7e2a4bc1450e61",
+          "first_line": "MIT License"
+        }
+      ]
+    },
+    {
+      "name": "watchfiles",
+      "version": "1.2.0",
+      "license_expression": null,
+      "license_metadata": "MIT",
+      "project_urls": [
+        "Changelog, https://github.com/samuelcolvin/watchfiles/releases",
+        "Documentation, https://watchfiles.helpmanual.io",
+        "Funding, https://github.com/sponsors/samuelcolvin",
+        "Homepage, https://github.com/samuelcolvin/watchfiles",
+        "Source, https://github.com/samuelcolvin/watchfiles"
+      ],
+      "license_classifiers": [
+        "License :: OSI Approved :: MIT License"
+      ],
+      "license_files": [
+        {
+          "path": "watchfiles-1.2.0.dist-info/licenses/LICENSE",
+          "sha256": "2d40a03346bded8daa4bd22d23825a6f2568a0820fbef76ac05bae534421e189",
+          "first_line": "The MIT License (MIT)"
+        }
+      ]
+    },
+    {
+      "name": "websockets",
+      "version": "16.1.1",
+      "license_expression": "BSD-3-Clause",
+      "license_metadata": "",
+      "project_urls": [
+        "Homepage, https://github.com/python-websockets/websockets",
+        "Changelog, https://websockets.readthedocs.io/en/stable/project/changelog.html",
+        "Documentation, https://websockets.readthedocs.io/",
+        "Funding, https://tidelift.com/subscription/pkg/pypi-websockets?utm_source=pypi-websockets&utm_medium=referral&utm_campaign=readme",
+        "Tracker, https://github.com/python-websockets/websockets/issues"
+      ],
+      "license_classifiers": [],
+      "license_files": [
+        {
+          "path": "websockets-16.1.1.dist-info/licenses/LICENSE",
+          "sha256": "0f44514998aca209d3482d10204a8adf2aa4296ff157a36a5c0922f2280632d3",
+          "first_line": "Copyright (c) Aymeric Augustin and contributors"
+        }
+      ]
+    },
+    {
+      "name": "yarl",
+      "version": "1.25.1",
+      "license_expression": null,
+      "license_metadata": "Apache-2.0",
+      "project_urls": [
+        "Chat: Matrix, https://matrix.to/#/#aio-libs:matrix.org",
+        "Chat: Matrix Space, https://matrix.to/#/#aio-libs-space:matrix.org",
+        "CI: GitHub Workflows, https://github.com/aio-libs/yarl/actions?query=branch:master",
+        "Code of Conduct, https://github.com/aio-libs/.github/blob/master/CODE_OF_CONDUCT.md",
+        "Coverage: codecov, https://codecov.io/github/aio-libs/yarl",
+        "Docs: Changelog, https://yarl.aio-libs.org/en/latest/changes/",
+        "Docs: RTD, https://yarl.aio-libs.org",
+        "GitHub: issues, https://github.com/aio-libs/yarl/issues",
+        "GitHub: repo, https://github.com/aio-libs/yarl"
+      ],
+      "license_classifiers": [],
+      "license_files": [
+        {
+          "path": "yarl-1.25.1.dist-info/licenses/LICENSE",
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+          "first_line": "Apache License"
+        },
+        {
+          "path": "yarl-1.25.1.dist-info/licenses/NOTICE",
+          "sha256": "56d6ac6c8105c0a51304c21db060e361af9a8ea0af9a75c239c28b5d13693838",
+          "first_line": "Copyright 2016-2021, Andrew Svetlov and aio-libs team"
+        }
+      ]
+    }
+  ],
+  "prohibited_packages_present": false,
+  "note": "Package license metadata/file identity is recorded separately from pretrained-weight and dataset permissions."
+}
