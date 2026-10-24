@@ -542,6 +542,7 @@ public class DamageInspectionService {
             boolean requireContextImage,
             String vehicleRegion
     ) {
+        aiAnalysisClient.requireAvailable();
         if (creditWallets == null) return analyzeWithReservedCredit(inspectionId,authenticatedEmail,requireContextImage,vehicleRegion,null);
         User user=businessContextService.requireUser(authenticatedEmail);
         DamageInspection initial=inspectionAccessService.requireInspection(inspectionId,user);
@@ -763,6 +764,7 @@ public class DamageInspectionService {
     }
 
     private ImageQualityResponse validateWithCredit(Long inspectionId,String email,boolean contextImage) {
+        aiAnalysisClient.requireAvailable();
         if (creditWallets==null) return validateInspectionImageInternal(inspectionId,email,contextImage).quality();
         User user=businessContextService.requireUser(email);
         var inspection=inspectionAccessService.requireInspection(inspectionId,user);

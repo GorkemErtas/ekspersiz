@@ -104,6 +104,24 @@ class DamageInspectionServiceTest {
                 ));
     }
 
+    @Test
+    void unavailableAnalysisAndValidationDoNotReserveCreditsOrModifyHistory() {
+        var wallets = mock(CreditWalletService.class);
+        ReflectionTestUtils.setField(service, "creditWallets", wallets);
+        doThrow(new com.gorkem.vehicle_inspector.exception.DamageAnalysisUnavailableException())
+                .when(ai).requireAvailable();
+
+        assertThrows(com.gorkem.vehicle_inspector.exception.DamageAnalysisUnavailableException.class,
+                () -> service.analyzeInspection(30L, actor.getEmail()));
+        assertThrows(com.gorkem.vehicle_inspector.exception.DamageAnalysisUnavailableException.class,
+                () -> service.validateInspectionImage(30L, actor.getEmail()));
+        assertThrows(com.gorkem.vehicle_inspector.exception.DamageAnalysisUnavailableException.class,
+                () -> service.validateInspectionContextImage(30L, actor.getEmail()));
+        verifyNoInteractions(wallets, inspections, storage, reports, analysisUsageRepository);
+        assertEquals(InspectionStatus.PENDING, inspection.getStatus());
+        assertNull(inspection.getAnalysisStartedAt());
+    }
+
     @ParameterizedTest
     @EnumSource(SubscriptionPlan.class)
     void memberUsesSharedQuotaRegardlessOfPersonalPlanAndPreservesCreator(SubscriptionPlan plan) {
@@ -212,7 +230,9 @@ class DamageInspectionServiceTest {
         assertThrows(ResourceNotFoundException.class, () -> service.analyzeInspection(30L, actor.getEmail()));
         assertThrows(ResourceNotFoundException.class, () -> service.uploadInspectionImage(30L, image(), actor.getEmail()));
         assertThrows(ResourceNotFoundException.class, () -> service.regenerateReport(30L, actor.getEmail()));
-        verifyNoInteractions(ai, reports, storage, businesses);
+        verify(ai).requireAvailable();
+        verifyNoMoreInteractions(ai);
+        verifyNoInteractions(reports, storage, businesses);
         verifyNoInteractions(analysisUsageRepository);
     }
 
@@ -253,7 +273,9 @@ class DamageInspectionServiceTest {
     void missingImageDoesNotConsumeQuota() {
         inspection.setImagePath(null);
         assertThrows(IllegalStateException.class, () -> service.analyzeInspection(30L, actor.getEmail()));
-        verifyNoInteractions(businesses, ai);
+        verify(ai).requireAvailable();
+        verifyNoMoreInteractions(ai);
+        verifyNoInteractions(businesses);
         verifyNoInteractions(analysisUsageRepository);
     }
 
@@ -351,11 +373,13 @@ class DamageInspectionServiceTest {
         assertThrows(IllegalStateException.class, () -> service.analyzeInspection(30L, actor.getEmail()));
         assertThrows(IllegalStateException.class, () -> service.uploadInspectionImage(30L, image(), actor.getEmail()));
         assertThrows(IllegalStateException.class, () -> service.regenerateReport(30L, actor.getEmail()));
-        verifyNoInteractions(ai, reports, storage, businesses);
+        verify(ai).requireAvailable();
+        verifyNoMoreInteractions(ai);
+        verifyNoInteractions(reports, storage, businesses);
     }
 
     @Test
-    void completedCompanyInspectionCannotRerunYoloButCanRegenerateReport() {
+    void completedCompanyInspectionCannotRerunAnalysisButCanRegenerateReport() {
         inspection.setStatus(InspectionStatus.COMPLETED);
         inspection.setDamageSeverity(DamageSeverity.NONE);
         inspection.setAnalysisStartedAt(NOW);
@@ -367,8 +391,25 @@ class DamageInspectionServiceTest {
         assertEquals("Görünür Hasar Tespit Edilmedi", result.getReport().title());
         assertEquals(creator.getId(), result.getUserId());
         assertEquals(NOW, inspection.getAnalysisStartedAt());
-        verifyNoInteractions(ai, reports, businesses);
+        verify(ai).requireAvailable();
+        verifyNoMoreInteractions(ai);
+        verifyNoInteractions(reports, businesses);
         verifyNoInteractions(analysisUsageRepository);
+    }
+
+    @Test
+    void historicalReportCanBeRegeneratedWithTheUnavailableProvider() {
+        ReflectionTestUtils.setField(service, "aiAnalysisClient", new AiAnalysisClient());
+        inspection.setStatus(InspectionStatus.COMPLETED);
+        inspection.setDamageSeverity(DamageSeverity.NONE);
+        inspection.setAnalysisStartedAt(NOW);
+
+        var result = service.regenerateReport(30L, actor.getEmail());
+
+        assertEquals(InspectionStatus.COMPLETED, result.getStatus());
+        assertEquals(ReportStatus.COMPLETED, result.getReportStatus());
+        assertEquals(NOW, inspection.getAnalysisStartedAt());
+        verifyNoInteractions(ai, storage, analysisUsageRepository);
     }
 
     @Test
@@ -591,7 +632,9 @@ class DamageInspectionServiceTest {
     void invalidRegionIsRejectedBeforePhotoOrQuotaOperations() {
         assertThrows(IllegalArgumentException.class,
                 () -> service.analyzeInspection(30L, actor.getEmail(), false, "SIDE"));
-        verifyNoInteractions(ai, storage, analysisUsageRepository);
+        verify(ai).requireAvailable();
+        verifyNoMoreInteractions(ai);
+        verifyNoInteractions(storage, analysisUsageRepository);
     }
 
     @Test
@@ -602,7 +645,9 @@ class DamageInspectionServiceTest {
                 .thenThrow(new com.gorkem.vehicle_inspector.exception.InsufficientAnalysisCreditException("No credits"));
         assertThrows(com.gorkem.vehicle_inspector.exception.InsufficientAnalysisCreditException.class,
                 () -> service.analyzeInspection(30L,actor.getEmail()));
-        verifyNoInteractions(ai,reports);
+        verify(ai).requireAvailable();
+        verifyNoMoreInteractions(ai);
+        verifyNoInteractions(reports);
     }
 
     @Test

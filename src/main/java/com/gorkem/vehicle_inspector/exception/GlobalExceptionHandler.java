@@ -98,6 +98,12 @@ public class GlobalExceptionHandler {
         );
     }
 
+    @ExceptionHandler(DamageAnalysisUnavailableException.class)
+    public ResponseEntity<ApiErrorResponse> handleDamageAnalysisUnavailable(
+            DamageAnalysisUnavailableException exception) {
+        return buildResponse(HttpStatus.SERVICE_UNAVAILABLE, exception.getMessage());
+    }
+
     @ExceptionHandler(AiServiceException.class)
     public ResponseEntity<ApiErrorResponse>
     handleAiServiceException(
