@@ -34,25 +34,46 @@ class UnifiedVisionRuntime:
             raise VisionUnavailable('Hasar analizi geçici olarak kullanılamıyor.')
         bundle=Path(os.environ.get('DAMAGE_MODEL_BUNDLE','models/unified'))
         try:
+            manifest=json.loads((bundle/'manifest.json').read_text(encoding='utf-8'))
+            ensemble=manifest.get('format')=='ensemble-v1'
+            if manifest.get('format') not in (None, 'ensemble-v1'):
+                raise ValueError('Unsupported bundle format')
+            model_files=('damage.onnx','part.onnx') if ensemble else ('model.onnx',)
             signature=(str(bundle.resolve()),tuple((p.stat().st_size,p.stat().st_mtime_ns)
-                for p in (bundle/'manifest.json',bundle/'model.onnx',bundle/'classes.json')))
+                for p in (bundle/'manifest.json',bundle/'classes.json',*(bundle/f for f in model_files))))
             if self._loaded_signature is not None and signature != self._loaded_signature:
                 raise ValueError('Bundle changed; restart the service to load a new immutable bundle')
             if self._config_cache is not None and self._config_cache[0]==signature:
                 return self._config_cache[1:]
-            manifest=json.loads((bundle/'manifest.json').read_text(encoding='utf-8'))
             if manifest['schema_version']!='hitl-v1' or manifest.get('production_approved') is not True:
                 raise ValueError('Model has not passed the release gate')
-            if manifest['input_size'] not in (416,640) or manifest['outputs']!=['damage','part'] or manifest.get('input_color')!='BGR':
+            if manifest.get('export_smoke_only') is True:
+                raise ValueError('An export smoke fixture cannot be activated')
+            if ensemble:
+                if manifest['input_sizes'] not in ({'damage':384,'part':416}, {'damage':512,'part':416}, {'damage':640,'part':416}):
+                    raise ValueError('Unsupported ensemble sizes')
+                if manifest['outputs']!=['boxes','logits','part'] or manifest['num_queries'] not in (100,300) or manifest['num_select']!=manifest['num_queries']:
+                    raise ValueError('Unsupported ensemble outputs')
+                family=manifest.get('damage_family','rfdetr')
+                profiles={'rfdetr':('RGB-square-bilinear-no-antialias-ImageNet-v1','RGB-square-PIL-bilinear-ImageNet-v1'),
+                          'rtdetr':('RGB-square-PIL-bilinear-rescale01-v1',)}
+                if family not in profiles or manifest['damage_preprocessing'] not in profiles[family] or manifest['part_preprocessing']!='BGR-letterbox-114-v1':
+                    raise ValueError('Unsupported ensemble preprocessing')
+                if family=='rtdetr' and (manifest['input_sizes']['damage']!=640 or manifest['num_queries']!=300):
+                    raise ValueError('Unsupported RT-DETR signature')
+                if not .25 <= manifest['threshold'] <= 1 or not .25 <= manifest['part_threshold'] <= 1:
+                    raise ValueError('Invalid ensemble threshold')
+            elif manifest['input_size'] not in (416,640) or manifest['outputs']!=['damage','part'] or manifest.get('input_color')!='BGR':
                 raise ValueError('Unsupported model signature')
-            if not .25 <= manifest['threshold'] <= 1 or not 0 < manifest['nms_threshold'] < 1:
+            if not (ensemble or .25 <= manifest['threshold'] <= 1) or not 0 < manifest['nms_threshold'] < 1:
                 raise ValueError('Invalid confidence/NMS threshold')
-            for filename,key in (('model.onnx','model_sha256'),('classes.json','catalog_sha256')):
+            checks=(('damage.onnx','damage_sha256'),('part.onnx','part_sha256')) if ensemble else (('model.onnx','model_sha256'),)
+            for filename,key in (*checks,('classes.json','catalog_sha256')):
                 if hashlib.sha256((bundle/filename).read_bytes()).hexdigest()!=manifest[key]:
                     raise ValueError('Model/catalog checksum mismatch')
             self._config_cache=(signature,bundle,manifest)
             return bundle,manifest
-        except (OSError,ValueError,KeyError) as exc:
+        except (OSError,ValueError,KeyError,TypeError) as exc:
             raise VisionUnavailable('Doğrulanmış hasar modeli hazır değil.') from exc
 
     def require_available(self):
@@ -71,10 +92,6 @@ class UnifiedVisionRuntime:
             with self._lock:
                 if self._session is None:
                     bundle,self.manifest=self._configuration()
-                    import onnxruntime as ort
-                    options=ort.SessionOptions()
-                    options.intra_op_num_threads=2;options.inter_op_num_threads=1
-                    session=ort.InferenceSession(str(bundle/'model.onnx'),sess_options=options,providers=['CPUExecutionProvider'])
                     catalog=json.loads((bundle/'classes.json').read_text(encoding='utf-8'))
                     expected=json.loads(Path(__file__).with_name('classes.json').read_text(encoding='utf-8'))
                     if catalog != expected:
@@ -82,6 +99,19 @@ class UnifiedVisionRuntime:
                     self.categories={t:sorted([c for c in catalog['categories'] if c['task']==t],key=lambda c:c['task_index']) for t in ('damage','part')}
                     if tuple(map(len,(self.categories['damage'],self.categories['part'])))!=(8,21):
                         raise VisionUnavailable('Model sınıf sözleşmesi geçersiz.')
+                    if self.manifest.get('format')=='ensemble-v1':
+                        from .ensemble import EnsembleBackend
+                        try:
+                            session=EnsembleBackend(bundle,self.manifest,self.categories)
+                        except Exception as exc:
+                            raise VisionUnavailable('Model ensemble imzası geçersiz.') from exc
+                        self._session=session
+                        self._loaded_signature=self._config_cache[0]
+                        return session
+                    import onnxruntime as ort
+                    options=ort.SessionOptions()
+                    options.intra_op_num_threads=2;options.inter_op_num_threads=1
+                    session=ort.InferenceSession(str(bundle/'model.onnx'),sess_options=options,providers=['CPUExecutionProvider'])
                     if [o.name for o in session.get_outputs()]!=['damage','part']:
                         raise VisionUnavailable('Model çıktı sözleşmesi geçersiz.')
                     inputs=session.get_inputs()
@@ -104,10 +134,13 @@ class UnifiedVisionRuntime:
             raise ValueError('Daha net ve yeterli ışıkta bir fotoğraf kullanın.')
         with self._inference_lock:
             session=self._load()
-            pixels,ratio=preprocess(image,self.manifest['input_size'])
-            outputs=session.run(['damage','part'],{'images':pixels[None]})
-            damage,parts=(postprocess(p,c,ratio,image.width,image.height,self.manifest['threshold'],self.manifest['nms_threshold'])
-                          for p,c in zip(outputs,(self.categories['damage'],self.categories['part'])))
+            if self.manifest.get('format')=='ensemble-v1':
+                damage,parts=session.detect(image)
+            else:
+                pixels,ratio=preprocess(image,self.manifest['input_size'])
+                outputs=session.run(['damage','part'],{'images':pixels[None]})
+                damage,parts=(postprocess(p,c,ratio,image.width,image.height,self.manifest['threshold'],self.manifest['nms_threshold'])
+                              for p,c in zip(outputs,(self.categories['damage'],self.categories['part'])))
         recommendations=[]
         for detection in damage:
             matches=match_parts(detection,parts,vehicle_region)
