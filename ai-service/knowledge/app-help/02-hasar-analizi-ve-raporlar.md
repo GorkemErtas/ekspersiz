@@ -6,6 +6,8 @@ Yeni hasar analizi ve fotoğraf uygunluk kontrolü geçici olarak kullanılamıy
 ## Sonuçların anlamı
 Model sonuçları görüntüden elde edilen tahminlerdir. Fotoğraf açısı, ışık, netlik, kapanan bölgeler ve görünmeyen iç hasarlar doğruluğu etkileyebilir. Bir güven skoru kesinlik garantisi değildir. Analiz, aracın mekanik veya yapısal olarak güvenli olduğunu kanıtlamaz.
 
+Yeni fotoğraf analizi etkinleştirildiğinde çizik, göçük, çatlak, kırık parça, eksik parça, boya soyulması, boya kopması ve korozyon sınıflarını değerlendirebilir. Bir tespit bulunamaması aracın hasarsız olduğu anlamına gelmez. Belirsiz veya tamamlanmayan analiz ücretli başarılı işlem sayılmaz. Hasarın derinliği, şiddeti ve parça değişimi gereksinimi fotoğraf sınıfından kesin olarak çıkarılamaz; fiziksel inceleme gerekir. Yalnızca fiziksel inceleme önerilmişse gösterilen fiyat aralığı onarım bedeli değildir.
+
 ## Kayıt ve geçmiş
 Hasar analizi sonuçları uygulamada ilgili araçla ilişkilendirilebilir. Kullanıcının önceki analizleri AI Asistan'a yalnızca yetkili backend aracı üzerinden aktarılır; kişisel sonuçlar uygulama bilgi tabanına gömülmez.
 

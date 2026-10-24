@@ -1,0 +1,855 @@
+{
+  "sources": [
+    {
+      "directory": "Car damages dataset",
+      "task": "part",
+      "images": 998,
+      "annotations": 998,
+      "meta_sha256": "972a590d7d378a23acc0892613640ac029eda56b0525146af0b526985a1e18b2"
+    },
+    {
+      "directory": "Car parts dataset",
+      "task": "damage",
+      "images": 814,
+      "annotations": 814,
+      "meta_sha256": "62c39e8ccfdfa497c48c51f186dd3cc051bae0038530b49af1c9983aa6199ba2"
+    }
+  ],
+  "source_images": 1812,
+  "validated_source_images": 1811,
+  "images": 1370,
+  "annotations": 24819,
+  "errors": [
+    {
+      "file": "Car parts dataset/File1/ann/Car damages 992.jpg.json",
+      "error": "Degenerate bounding box"
+    }
+  ],
+  "quarantined_images": 1,
+  "seed": 2026,
+  "split_sizes": {
+    "train": 1095,
+    "val": 137,
+    "test": 138
+  },
+  "class_counts": {
+    "Broken part": {
+      "task": "damage",
+      "images": 663,
+      "annotations": 1497,
+      "splits": {
+        "train": {
+          "images": 529,
+          "annotations": 1204
+        },
+        "val": {
+          "images": 67,
+          "annotations": 137
+        },
+        "test": {
+          "images": 67,
+          "annotations": 156
+        }
+      }
+    },
+    "Corrosion": {
+      "task": "damage",
+      "images": 109,
+      "annotations": 277,
+      "splits": {
+        "train": {
+          "images": 87,
+          "annotations": 221
+        },
+        "val": {
+          "images": 11,
+          "annotations": 29
+        },
+        "test": {
+          "images": 11,
+          "annotations": 27
+        }
+      }
+    },
+    "Cracked": {
+      "task": "damage",
+      "images": 67,
+      "annotations": 76,
+      "splits": {
+        "train": {
+          "images": 53,
+          "annotations": 61
+        },
+        "val": {
+          "images": 7,
+          "annotations": 7
+        },
+        "test": {
+          "images": 7,
+          "annotations": 8
+        }
+      }
+    },
+    "Dent": {
+      "task": "damage",
+      "images": 628,
+      "annotations": 1662,
+      "splits": {
+        "train": {
+          "images": 502,
+          "annotations": 1334
+        },
+        "val": {
+          "images": 63,
+          "annotations": 155
+        },
+        "test": {
+          "images": 63,
+          "annotations": 173
+        }
+      }
+    },
+    "Flaking": {
+      "task": "damage",
+      "images": 108,
+      "annotations": 337,
+      "splits": {
+        "train": {
+          "images": 86,
+          "annotations": 283
+        },
+        "val": {
+          "images": 11,
+          "annotations": 31
+        },
+        "test": {
+          "images": 11,
+          "annotations": 23
+        }
+      }
+    },
+    "Missing part": {
+      "task": "damage",
+      "images": 433,
+      "annotations": 630,
+      "splits": {
+        "train": {
+          "images": 346,
+          "annotations": 510
+        },
+        "val": {
+          "images": 44,
+          "annotations": 63
+        },
+        "test": {
+          "images": 43,
+          "annotations": 57
+        }
+      }
+    },
+    "Paint chip": {
+      "task": "damage",
+      "images": 278,
+      "annotations": 1345,
+      "splits": {
+        "train": {
+          "images": 222,
+          "annotations": 1128
+        },
+        "val": {
+          "images": 28,
+          "annotations": 101
+        },
+        "test": {
+          "images": 28,
+          "annotations": 116
+        }
+      }
+    },
+    "Scratch": {
+      "task": "damage",
+      "images": 516,
+      "annotations": 3228,
+      "splits": {
+        "train": {
+          "images": 412,
+          "annotations": 2594
+        },
+        "val": {
+          "images": 52,
+          "annotations": 258
+        },
+        "test": {
+          "images": 52,
+          "annotations": 376
+        }
+      }
+    },
+    "Back-bumper": {
+      "task": "part",
+      "images": 441,
+      "annotations": 443,
+      "splits": {
+        "train": {
+          "images": 351,
+          "annotations": 353
+        },
+        "val": {
+          "images": 45,
+          "annotations": 45
+        },
+        "test": {
+          "images": 45,
+          "annotations": 45
+        }
+      }
+    },
+    "Back-door": {
+      "task": "part",
+      "images": 714,
+      "annotations": 721,
+      "splits": {
+        "train": {
+          "images": 570,
+          "annotations": 576
+        },
+        "val": {
+          "images": 72,
+          "annotations": 73
+        },
+        "test": {
+          "images": 72,
+          "annotations": 72
+        }
+      }
+    },
+    "Back-wheel": {
+      "task": "part",
+      "images": 856,
+      "annotations": 865,
+      "splits": {
+        "train": {
+          "images": 684,
+          "annotations": 691
+        },
+        "val": {
+          "images": 86,
+          "annotations": 86
+        },
+        "test": {
+          "images": 86,
+          "annotations": 88
+        }
+      }
+    },
+    "Back-window": {
+      "task": "part",
+      "images": 812,
+      "annotations": 1237,
+      "splits": {
+        "train": {
+          "images": 649,
+          "annotations": 992
+        },
+        "val": {
+          "images": 80,
+          "annotations": 121
+        },
+        "test": {
+          "images": 83,
+          "annotations": 124
+        }
+      }
+    },
+    "Back-windshield": {
+      "task": "part",
+      "images": 270,
+      "annotations": 271,
+      "splits": {
+        "train": {
+          "images": 215,
+          "annotations": 216
+        },
+        "val": {
+          "images": 27,
+          "annotations": 27
+        },
+        "test": {
+          "images": 28,
+          "annotations": 28
+        }
+      }
+    },
+    "Fender": {
+      "task": "part",
+      "images": 895,
+      "annotations": 935,
+      "splits": {
+        "train": {
+          "images": 714,
+          "annotations": 744
+        },
+        "val": {
+          "images": 90,
+          "annotations": 95
+        },
+        "test": {
+          "images": 91,
+          "annotations": 96
+        }
+      }
+    },
+    "Front-bumper": {
+      "task": "part",
+      "images": 693,
+      "annotations": 705,
+      "splits": {
+        "train": {
+          "images": 555,
+          "annotations": 566
+        },
+        "val": {
+          "images": 69,
+          "annotations": 70
+        },
+        "test": {
+          "images": 69,
+          "annotations": 69
+        }
+      }
+    },
+    "Front-door": {
+      "task": "part",
+      "images": 905,
+      "annotations": 917,
+      "splits": {
+        "train": {
+          "images": 723,
+          "annotations": 734
+        },
+        "val": {
+          "images": 91,
+          "annotations": 91
+        },
+        "test": {
+          "images": 91,
+          "annotations": 92
+        }
+      }
+    },
+    "Front-wheel": {
+      "task": "part",
+      "images": 879,
+      "annotations": 885,
+      "splits": {
+        "train": {
+          "images": 702,
+          "annotations": 707
+        },
+        "val": {
+          "images": 89,
+          "annotations": 89
+        },
+        "test": {
+          "images": 88,
+          "annotations": 89
+        }
+      }
+    },
+    "Front-window": {
+      "task": "part",
+      "images": 826,
+      "annotations": 951,
+      "splits": {
+        "train": {
+          "images": 659,
+          "annotations": 760
+        },
+        "val": {
+          "images": 83,
+          "annotations": 98
+        },
+        "test": {
+          "images": 84,
+          "annotations": 93
+        }
+      }
+    },
+    "Grille": {
+      "task": "part",
+      "images": 531,
+      "annotations": 577,
+      "splits": {
+        "train": {
+          "images": 426,
+          "annotations": 463
+        },
+        "val": {
+          "images": 53,
+          "annotations": 55
+        },
+        "test": {
+          "images": 52,
+          "annotations": 59
+        }
+      }
+    },
+    "Headlight": {
+      "task": "part",
+      "images": 658,
+      "annotations": 914,
+      "splits": {
+        "train": {
+          "images": 526,
+          "annotations": 732
+        },
+        "val": {
+          "images": 66,
+          "annotations": 92
+        },
+        "test": {
+          "images": 66,
+          "annotations": 90
+        }
+      }
+    },
+    "Hood": {
+      "task": "part",
+      "images": 712,
+      "annotations": 712,
+      "splits": {
+        "train": {
+          "images": 568,
+          "annotations": 568
+        },
+        "val": {
+          "images": 73,
+          "annotations": 73
+        },
+        "test": {
+          "images": 71,
+          "annotations": 71
+        }
+      }
+    },
+    "License-plate": {
+      "task": "part",
+      "images": 368,
+      "annotations": 370,
+      "splits": {
+        "train": {
+          "images": 293,
+          "annotations": 295
+        },
+        "val": {
+          "images": 37,
+          "annotations": 37
+        },
+        "test": {
+          "images": 38,
+          "annotations": 38
+        }
+      }
+    },
+    "Mirror": {
+      "task": "part",
+      "images": 839,
+      "annotations": 987,
+      "splits": {
+        "train": {
+          "images": 671,
+          "annotations": 787
+        },
+        "val": {
+          "images": 84,
+          "annotations": 97
+        },
+        "test": {
+          "images": 84,
+          "annotations": 103
+        }
+      }
+    },
+    "Quarter-panel": {
+      "task": "part",
+      "images": 838,
+      "annotations": 855,
+      "splits": {
+        "train": {
+          "images": 670,
+          "annotations": 681
+        },
+        "val": {
+          "images": 84,
+          "annotations": 86
+        },
+        "test": {
+          "images": 84,
+          "annotations": 88
+        }
+      }
+    },
+    "Rocker-panel": {
+      "task": "part",
+      "images": 858,
+      "annotations": 860,
+      "splits": {
+        "train": {
+          "images": 687,
+          "annotations": 689
+        },
+        "val": {
+          "images": 85,
+          "annotations": 85
+        },
+        "test": {
+          "images": 86,
+          "annotations": 86
+        }
+      }
+    },
+    "Roof": {
+      "task": "part",
+      "images": 790,
+      "annotations": 793,
+      "splits": {
+        "train": {
+          "images": 632,
+          "annotations": 632
+        },
+        "val": {
+          "images": 79,
+          "annotations": 81
+        },
+        "test": {
+          "images": 79,
+          "annotations": 80
+        }
+      }
+    },
+    "Tail-light": {
+      "task": "part",
+      "images": 470,
+      "annotations": 721,
+      "splits": {
+        "train": {
+          "images": 375,
+          "annotations": 577
+        },
+        "val": {
+          "images": 47,
+          "annotations": 70
+        },
+        "test": {
+          "images": 48,
+          "annotations": 74
+        }
+      }
+    },
+    "Trunk": {
+      "task": "part",
+      "images": 351,
+      "annotations": 416,
+      "splits": {
+        "train": {
+          "images": 280,
+          "annotations": 337
+        },
+        "val": {
+          "images": 36,
+          "annotations": 40
+        },
+        "test": {
+          "images": 35,
+          "annotations": 39
+        }
+      }
+    },
+    "Windshield": {
+      "task": "part",
+      "images": 631,
+      "annotations": 632,
+      "splits": {
+        "train": {
+          "images": 504,
+          "annotations": 505
+        },
+        "val": {
+          "images": 63,
+          "annotations": 63
+        },
+        "test": {
+          "images": 64,
+          "annotations": 64
+        }
+      }
+    }
+  },
+  "groups": 1369,
+  "largest_group": 2,
+  "merged_complementary_images": 441,
+  "task_coverage": {
+    "part": 998,
+    "damage": 813
+  },
+  "paired_task_images": 441,
+  "mask_policy": "Supervisely human-attributed polygons are authoritative. Human/machine mask directories are alternative raster exports, not independent labels; never used as extra training samples.",
+  "limitations": [
+    "No capture/vehicle identity metadata; perceptual grouping cannot prove all related vehicles are separated.",
+    "No clean-car/negative-damage ground truth; absence of detections cannot certify no visible damage.",
+    "Paired images provide both tasks, but explicit damage-instance/part-instance relationships are absent."
+  ],
+  "raw_class_counts": {
+    "Broken part": {
+      "task": "damage",
+      "images": 664,
+      "annotations": 1500,
+      "source_class_ids": [
+        11380052
+      ]
+    },
+    "Corrosion": {
+      "task": "damage",
+      "images": 109,
+      "annotations": 277,
+      "source_class_ids": [
+        11380058
+      ]
+    },
+    "Cracked": {
+      "task": "damage",
+      "images": 67,
+      "annotations": 76,
+      "source_class_ids": [
+        11380054
+      ]
+    },
+    "Dent": {
+      "task": "damage",
+      "images": 629,
+      "annotations": 1664,
+      "source_class_ids": [
+        11380055
+      ]
+    },
+    "Flaking": {
+      "task": "damage",
+      "images": 108,
+      "annotations": 337,
+      "source_class_ids": [
+        11380056
+      ]
+    },
+    "Missing part": {
+      "task": "damage",
+      "images": 434,
+      "annotations": 632,
+      "source_class_ids": [
+        11380051
+      ]
+    },
+    "Paint chip": {
+      "task": "damage",
+      "images": 279,
+      "annotations": 1356,
+      "source_class_ids": [
+        11380057
+      ]
+    },
+    "Scratch": {
+      "task": "damage",
+      "images": 517,
+      "annotations": 3242,
+      "source_class_ids": [
+        11380053
+      ]
+    },
+    "Back-bumper": {
+      "task": "part",
+      "images": 441,
+      "annotations": 443,
+      "source_class_ids": [
+        11380334
+      ]
+    },
+    "Back-door": {
+      "task": "part",
+      "images": 714,
+      "annotations": 721,
+      "source_class_ids": [
+        11380325
+      ]
+    },
+    "Back-wheel": {
+      "task": "part",
+      "images": 856,
+      "annotations": 865,
+      "source_class_ids": [
+        11380327
+      ]
+    },
+    "Back-window": {
+      "task": "part",
+      "images": 812,
+      "annotations": 1237,
+      "source_class_ids": [
+        11380318
+      ]
+    },
+    "Back-windshield": {
+      "task": "part",
+      "images": 270,
+      "annotations": 271,
+      "source_class_ids": [
+        11380328
+      ]
+    },
+    "Fender": {
+      "task": "part",
+      "images": 895,
+      "annotations": 935,
+      "source_class_ids": [
+        11380330
+      ]
+    },
+    "Front-bumper": {
+      "task": "part",
+      "images": 693,
+      "annotations": 705,
+      "source_class_ids": [
+        11380333
+      ]
+    },
+    "Front-door": {
+      "task": "part",
+      "images": 905,
+      "annotations": 917,
+      "source_class_ids": [
+        11380320
+      ]
+    },
+    "Front-wheel": {
+      "task": "part",
+      "images": 879,
+      "annotations": 885,
+      "source_class_ids": [
+        11380317
+      ]
+    },
+    "Front-window": {
+      "task": "part",
+      "images": 826,
+      "annotations": 951,
+      "source_class_ids": [
+        11380324
+      ]
+    },
+    "Grille": {
+      "task": "part",
+      "images": 531,
+      "annotations": 577,
+      "source_class_ids": [
+        11380322
+      ]
+    },
+    "Headlight": {
+      "task": "part",
+      "images": 658,
+      "annotations": 914,
+      "source_class_ids": [
+        11380326
+      ]
+    },
+    "Hood": {
+      "task": "part",
+      "images": 712,
+      "annotations": 712,
+      "source_class_ids": [
+        11380329
+      ]
+    },
+    "License-plate": {
+      "task": "part",
+      "images": 368,
+      "annotations": 370,
+      "source_class_ids": [
+        11380332
+      ]
+    },
+    "Mirror": {
+      "task": "part",
+      "images": 839,
+      "annotations": 987,
+      "source_class_ids": [
+        11380335
+      ]
+    },
+    "Quarter-panel": {
+      "task": "part",
+      "images": 838,
+      "annotations": 855,
+      "source_class_ids": [
+        11380316
+      ]
+    },
+    "Rocker-panel": {
+      "task": "part",
+      "images": 858,
+      "annotations": 860,
+      "source_class_ids": [
+        11380321
+      ]
+    },
+    "Roof": {
+      "task": "part",
+      "images": 790,
+      "annotations": 793,
+      "source_class_ids": [
+        11380336
+      ]
+    },
+    "Tail-light": {
+      "task": "part",
+      "images": 470,
+      "annotations": 721,
+      "source_class_ids": [
+        11380331
+      ]
+    },
+    "Trunk": {
+      "task": "part",
+      "images": 351,
+      "annotations": 416,
+      "source_class_ids": [
+        11380319
+      ]
+    },
+    "Windshield": {
+      "task": "part",
+      "images": 631,
+      "annotations": 632,
+      "source_class_ids": [
+        11380323
+      ]
+    }
+  },
+  "raw_annotations": 24851,
+  "geometry_types": {
+    "polygon": 24851
+  },
+  "mask_files_verified": {
+    "masks_human": 1812,
+    "masks_machine": 1812
+  },
+  "annotation_provenance": {
+    "human_attributed_objects": 24851,
+    "missing_labeler_objects": 0,
+    "note": "Publisher describes human annotation. Directory name masks_machine alone does not prove machine-generated annotations."
+  },
+  "raw_image_annotation_fingerprint": "141a118e4b635846c5eb69af8c443b64594f81ccdfad1aff27c029f93980d020",
+  "dataset_license": {
+    "spdx": "CC0-1.0",
+    "verified_date": "2026-10-24",
+    "source": "https://humansintheloop.org/resources/datasets/car-parts-and-car-damages-dataset/"
+  }
+}

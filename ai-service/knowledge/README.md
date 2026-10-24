@@ -10,7 +10,7 @@ Yeni kaynaklar sources.json ile sınırlandırılmıştır. PDF desteklenir; dü
 2. PostgreSQL DATABASE_URL ve model bağımlılıkları olan bir ortamda aşağıdaki komutu çalıştırın:
 
 ```bash
-python scripts/ingest_assistant_knowledge.py --source-version app-only-v2-analysis-unavailable
+python scripts/ingest_assistant_knowledge.py --source-version app-only-v3-hitl-vision
 ```
 
 Başarılı ingest tamamlandığında manifest dışında kalan eski aktif belgeler SUPERSEDED olur; geçmiş sürümler denetim amacıyla saklanır. Bu komut geçmiş veritabanı satırlarını fiziksel olarak silmez. Üretim veritabanında yeniden embedding işlemi henüz otomatik çalıştırılmaz.

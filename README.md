@@ -44,9 +44,11 @@ flowchart TB
 
 ## AI/ML tasarımı
 
-### Hasar analizi geçiş dönemi
+### Birleşik hasar analizi
 
-Önceki görüntü modelleri, ağırlıkları, veri setleri ve eğitim/değerlendirme araçları kaldırılmıştır. Yeni analiz/doğrulama istekleri HTTP 503 ile yanıtlanır; kredi ayrılmaz ve mevcut analizler değiştirilmez. Mobil yeni analiz ekranı geçici kullanılamama mesajı gösterir. Başarılı geçmiş analizlerden rapor yeniden üretimi, PDF ve geçmiş erişimi korunur. [AI servis sözleşmesi](ai-service/README.md).
+HITL veri setinin gerçek 8 hasar ve 21 parça sınıfını kullanan, paylaşılan YOLOX-Tiny omurgası ve iki detection head'den oluşan tek model altyapısı bulunur. Kısmi etiketli görüntüler yalnızca etiketli görev için eğitilir; aynı piksel görüntülerinin iki görevdeki etiketleri birleştirilir. Tek ONNX grafiği, tek fotoğraf ve tek forward kullanılır. Sınıflar Python, Java ve Flutter arasında sürümlü katalogla tutarlıdır; geçmiş değerler ayrıca korunur.
+
+50 epoch sıfırdan eğitim tamamlanmıştır; bağımsız testte hasar başarısı üretim için yetersizdir. Bu nedenle analiz/doğrulama **varsayılan kapalıdır**, HTTP 503 döner ve kredi ayrılmaz. Model bundle onayı ve açık release ayarları olmadan etkinleşmez. [Veri, mimari ve komutlar](docs/ml/UNIFIED_YOLOX_TINY.md), [gerçek sonuçlar](docs/ml/HITL_RESULTS.json).
 
 ### Kaynağa göre yönlendirilen AI Asistan
 
@@ -100,7 +102,7 @@ Fiyat hesaplaması yalnızca ML'in tespit ettiği hasar, önerilen işlem, araç
 | --- | --- |
 | Mobil | Flutter, Dart, Google Sign-In, Firebase Messaging, Google Maps, RevenueCat |
 | Backend | Java 21, Spring Boot 4.1, Spring Security, JPA, Flyway |
-| AI/ML | Python, FastAPI, Google Gemini, SentenceTransformers |
+| AI/ML | Python, FastAPI, YOLOX-Tiny eğitim, ONNX Runtime, Google Gemini, SentenceTransformers |
 | Veri | PostgreSQL, pgvector |
 | Dağıtım ve entegrasyon | Docker, Railway, Google Play, Google Places, Brevo |
 

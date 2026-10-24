@@ -16,7 +16,7 @@
 5. Bilgi tabanını **uygulama başlangıcında değil**, ayrı yönetim/dağıtım adımı olarak işle:
    ```bash
    cd ai-service
-   python scripts/ingest_assistant_knowledge.py --source-version app-only-v2-analysis-unavailable
+   python scripts/ingest_assistant_knowledge.py --source-version app-only-v3-hitl-vision
    ```
 6. `GET /health` ile AI servisinin temel sağlığını doğrula.
 7. `GET /api/v1/assistant/readiness` ile pgvector, aktif belge/parça ve **384 boyutlu embedding** hazırlığını doğrula.

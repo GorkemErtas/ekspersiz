@@ -1,0 +1,51 @@
+{
+  "date": "2026-10-24",
+  "python": {"passed": 66, "failed": 0, "skipped": 0, "log": "target/hitl-python-tests.log"},
+  "java": {
+    "passed": 294,
+    "failed": 0,
+    "skipped": 0,
+    "postgresql_persistence_tests": 35,
+    "scope": "Full Maven suite with disposable PostgreSQL, plus the final focused client/validator/service regression suite",
+    "logs": ["target/hitl-java-full-with-persistence.log", "target/hitl-java-focused-final.log"],
+    "package_passed": true
+  },
+  "flutter": {
+    "full_suite_passed": 223,
+    "final_focused_passed": 3,
+    "distinct_tests_passed": 224,
+    "failed": 0,
+    "analyze": "No issues found",
+    "logs": ["target/hitl-flutter-tests.log", "target/hitl-flutter-final-focused.log", "target/hitl-dart-final-analyze.log"]
+  },
+  "training": {"completed_epochs": 50, "selected_epoch_one_based": 30, "pretrained_weights_used": false},
+  "onnx": {
+    "raw_output_parity_416": true,
+    "raw_output_parity_640": true,
+    "independent_test_accuracy_parity": true,
+    "isolated_vision_process_imports_torch": false,
+    "report": "docs/ml/HITL_ONNX_ACCURACY.json"
+  },
+  "compatibility": {
+    "legacy_enum_values_retained": true,
+    "existing_migrations_modified": false,
+    "new_migration": "V17__unified_hitl_analysis.sql",
+    "inconclusive_analysis_credit_released": true,
+    "unknown_replacement_preserved_as_null": true,
+    "assistant_import_and_pip_check": "passed",
+    "dataset_raw_fingerprint_before_after": "141a118e4b635846c5eb69af8c443b64594f81ccdfad1aff27c029f93980d020",
+    "test_postgresql_stopped_after_verification": true
+  },
+  "not_exercised": [
+    "Docker build/run: local Docker daemon unavailable",
+    "Docker/Testcontainers-specific integration tests",
+    "Live Railway or production activation",
+    "Paid Gemini/Places and store purchase end-to-end calls",
+    "Actual pgvector/E5 retrieval against a live knowledge database",
+    "Physical Android/iOS device end-to-end flows",
+    "Human-annotated damage-instance to part-instance matching accuracy",
+    "Separate full 640-resolution training"
+  ],
+  "production_approved": false,
+  "release_reason": "Independent-test damage recall and mAP are inadequate; no production activation was performed."
+}

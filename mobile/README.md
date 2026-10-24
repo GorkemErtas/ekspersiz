@@ -31,3 +31,5 @@ Android sürüm/build numarası `pubspec.yaml` içindeki `version` alanındadır
 Ana proje ve backend bilgileri için [kök README](../README.md) dosyasına bakın.
 
 Yeni hasar analizi ekranı geçici kullanılamama mesajı gösterir. Backend analiz/doğrulama taleplerini kredi ayırmadan HTTP 503 ile reddeder; mevcut raporlar ve AI Asistan kullanılabilir.
+
+HITL sınıfları `VisionClassCatalog` üzerinden Türkçe gösterilir; orijinal sınıf kimliği ve eski kayıtlar korunur. Yeni modelde şiddet ve parça değişimi belirsiz kalabilir. `PROFESSIONAL_INSPECTION` önerisi kesin onarım kararı değildir; fiyat/PDF başlığı fiziksel inceleme aralığını belirtir. `DAMAGE_ANALYSIS_ENABLED` derleme bayrağı varsayılan kapalıdır; yalnızca incelenmiş bir backend/model sürümüyle birlikte açılmalıdır. [Model sözleşmesi](../docs/ml/UNIFIED_YOLOX_TINY.md).

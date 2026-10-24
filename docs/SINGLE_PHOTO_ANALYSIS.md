@@ -1,5 +1,7 @@
 # Hasar analizi sözleşmesi
 
+Güncel birleşik HITL modeli, sürümlü sınıf sözleşmesi, üretim kapıları ve eğitim sonuçları [yeni teknik belgede](ml/UNIFIED_YOLOX_TINY.md) açıklanır. Aşağıdaki kayıt önceki modellerin kaldırılma doğrulamasıdır; yeni model üretim için onaylanmış değildir.
+
 24 Ekim 2026 itibarıyla yeni fotoğraf analizi ve modele bağlı fotoğraf doğrulama geçici olarak kapalıdır. Önceki model uygulaması ve değerlendirme araçları kaldırılmıştır.
 
 Backend'in analiz/doğrulama girişleri, kredi rezervasyonu veya kayıt durumu değişikliğinden önce HTTP 503 döner. Python'un eski görüntü endpoint'leri de kimlik kontrolünden sonra 503 döner. Mobil yeni analiz ekranı durumu açıklar.
