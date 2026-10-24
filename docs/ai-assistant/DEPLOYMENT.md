@@ -3,7 +3,7 @@
 ## Mevcut yapı
 
 - **Spring Boot API:** JWT, plan/kota, kullanıcı araçları, Gemini yanıt üretimi.
-- **FastAPI AI servisi:** YOLO hasar analizi ve AI Asistan kapsam yönlendirme/RAG; aynı Docker dağıtım birimi, farklı sağlık kontrolleri.
+- **FastAPI AI servisi:** AI Asistan kapsam yönlendirme/RAG; hasar analizi geçici olarak kullanılamaz.
 - **PostgreSQL + pgvector:** Uygulama verileri ve sürümlü, yalnızca küratörlü EksperSiz bilgi tabanı.
 - **Railway / Docker:** Backend ve AI servisi ayrı konteynerler; gizli anahtarlar ortam değişkenlerinde.
 
@@ -12,11 +12,11 @@
 1. PostgreSQL yedeği al; `vector` eklentisini ve bağlantı yetkilerini doğrula.
 2. Backend'i dağıt; **Flyway V1–V12** şema geçişlerinin uygulandığını kontrol et.
 3. AI servis imajını dağıt. İmaj `intfloat/multilingual-e5-small` embedding modelini önceden içerir; üretimde `ASSISTANT_EMBEDDING_LOCAL_ONLY=true` olmalıdır.
-4. YOLO ağırlıklarının Docker imajında mevcut olduğunu kontrol et: `yolo11n.pt`, `models/vehicle_part_best.pt`, `models/candidates/damage_detection_v2_cardd_5class.pt`.
+4. `/health` yanıtında servis `UP`, hasar analizi `UNAVAILABLE` olmalıdır. Görüntü ağırlığı sağlanmaz; PyTorch asistan embedding modeli için korunur.
 5. Bilgi tabanını **uygulama başlangıcında değil**, ayrı yönetim/dağıtım adımı olarak işle:
    ```bash
    cd ai-service
-   python scripts/ingest_assistant_knowledge.py --source-version <surum>
+   python scripts/ingest_assistant_knowledge.py --source-version app-only-v2-analysis-unavailable
    ```
 6. `GET /health` ile AI servisinin temel sağlığını doğrula.
 7. `GET /api/v1/assistant/readiness` ile pgvector, aktif belge/parça ve **384 boyutlu embedding** hazırlığını doğrula.

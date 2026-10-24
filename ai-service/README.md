@@ -1,65 +1,29 @@
-# EksperSiz AI Service
+# EksperSiz AI servisi
 
-## Production pipeline
+FastAPI servisi AI Asistan kapsam/kaynak yönlendirmesini, E5 metin embedding'lerini ve pgvector RAG erişimini sağlar. Aktif görüntü/hasar tespit modeli, eğitim veri seti veya eğitim/değerlendirme aracı bulunmaz.
 
-The production service uses the reviewed CarDD five-class damage detector:
+## API davranışı
 
-```text
-image
-  -> existing brightness/blur and supported-file validation
-  -> yolo11n.pt vehicle detection and existing primary-vehicle crop
-     (if no vehicle: require a known vehicle part and keep the full input image)
-  -> models/candidates/damage_detection_v2_cardd_5class.pt damage detection
-  -> models/vehicle_part_best.pt vehicle-part detection
-  -> bounding-box overlap matching
-  -> optional FRONT/REAR correction of ambiguous paired parts
-  -> deterministic severity and repair recommendation
-  -> FastAPI response
-```
+- `GET /health`: servis durumu `UP`, `damageAnalysis` durumu `UNAVAILABLE`.
+- `POST /api/v1/analyze` ve `POST /api/v1/validate-image`: kimliği doğrulanmış isteklere `503`, `DAMAGE_ANALYSIS_UNAVAILABLE`. Görüntü okunmaz, sahte analiz veya hasarsız sonuç üretilmez.
+- `/api/v1/assistant/plan` ve `/api/v1/assistant/readiness`: mevcut asistan sözleşmeleri korunur.
 
-The detector's class IDs are resolved from its checkpoint names on first image request, not
-from a fixed numeric order. The active checkpoint supports `SCRATCH`, `DENT`,
-`CRACK`, `BROKEN_PART`, and `BROKEN_GLASS`. `NO_VISIBLE_DAMAGE` is a
-deterministic domain result, never a learned damage class.
+Backend, analiz/doğrulamayı kredi rezervasyonu ve durum değişikliğinden önce durdurur. Geçmiş analiz verileri, görseller, hasar/parça enum'ları, rapor üretimi ve PDF akışı korunur. Rapor yeniden üretimi kaydedilmiş başarılı analizden devam eder.
 
-All three production weights are deployment artifacts ignored by Git and must
-be present at the paths above. The service has no runtime model override.
-
-The current mobile flow uploads only `image` and forwards `vehicle_region` through
-the backend. `context_image` / `analyze_pair` remain available only for explicit
-legacy two-photo requests. See [single-photo rollout and regression notes](../docs/SINGLE_PHOTO_ANALYSIS.md).
-
-## Detection V2 dataset and training
-
-- Dataset config: `datasets/vehicle_damage_detection_v2/data.yaml`
-- Canonical taxonomy: `config/damage_taxonomy.yaml`
-- CarDD import mapping: `config/cardd_import.yaml`
-- Training command: `python scripts/train_damage_model.py`
-
-Place the untouched CarDD YOLO export under `datasets/raw/cardd` with its
-original `train`, `val`, and `test` splits, then run:
-
-```powershell
-.\venv\Scripts\python.exe .\scripts\import_cardd_dataset.py
-```
-
-The importer validates image/label pairs, preserves the original split, maps
-the supported CarDD classes, and writes generated files beneath
-`datasets/vehicle_damage_detection_v2`. Tire-flat-only images are quarantined
-rather than treated as clean negative examples.
-
-Use the independent `test` split for validation:
+## Kurulum ve test
 
 ```bash
-python scripts/evaluate_damage_models.py \
-  --data datasets/vehicle_damage_detection_v2/data.yaml \
-  --split test \
-  --model detection-v2=models/candidates/damage_detection_v2_cardd_5class.pt
+python -m venv venv
+# Sanal ortamı etkinleştirdikten sonra:
+python -m pip install -r requirements.txt
+python -m unittest discover -s tests -v
+uvicorn main:app --host 0.0.0.0 --port 8000
 ```
 
-For manual review of real images:
+`requirements.txt`, ortak runtime listesini kullanır. PyTorch, NumPy ve Pillow, SentenceTransformers tabanlı AI Asistan için korunur. Docker CPU PyTorch kurar ve mevcut E5 embedding modelini imaja alır; görüntü modeli indirme/yükleme adımı yoktur.
 
-```bash
-python scripts/analyze_damage_errors.py \
-  --model detection-v2=models/candidates/damage_detection_v2_cardd_5class.pt
-```
+Asistan ortam ayarları ve bilgi tabanı yükleme adımları: [dağıtım](../docs/ai-assistant/DEPLOYMENT.md), [bilgi tabanı](knowledge/README.md).
+
+## Gelecekteki hasar sağlayıcısı
+
+Yeni sağlayıcı entegre edilene kadar kullanılabilirlik kapalı kalır. Java `AiAnalysisClient`, modelden bağımsız sınırdır. Yeni sağlayıcı; açık kullanılabilirlik kontrolü, dosya güvenliği, mevcut geçmiş/rapor DTO'ları ve başarısız işlemde kredi tüketmeme sözleşmesiyle entegre edilmelidir. Eski sınıf indeksleri veya eğitim eşlemeleri kullanılmaz. Bu değişiklik yeni model eklemez.

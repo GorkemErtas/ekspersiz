@@ -1,7 +1,7 @@
 # EksperSiz: Hasar Analizi ve Raporlar
 
 ## Hasar analizi akışı
-EksperSiz, kullanıcının yüklediği araç fotoğrafları üzerinde makine öğrenmesi destekli görsel hasar analizi sunar. Akışta hasarlı bölge fotoğrafı ve isteğe bağlı bağlam fotoğrafı kullanılabilir. Sistem desteklenen hasar bölgelerini ve hasarla ilişkili araç parçalarını belirlemeye yardımcı olur.
+Yeni hasar analizi ve fotoğraf uygunluk kontrolü geçici olarak kullanılamıyor. Bu talepler kredi tüketmez. Kullanıcılar mevcut analiz geçmişine, raporlara ve belgelere erişebilir; başarılı geçmiş analizlerden rapor yeniden oluşturabilir. AI Asistan ve araç yönetimi kullanılabilir.
 
 ## Sonuçların anlamı
 Model sonuçları görüntüden elde edilen tahminlerdir. Fotoğraf açısı, ışık, netlik, kapanan bölgeler ve görünmeyen iç hasarlar doğruluğu etkileyebilir. Bir güven skoru kesinlik garantisi değildir. Analiz, aracın mekanik veya yapısal olarak güvenli olduğunu kanıtlamaz.

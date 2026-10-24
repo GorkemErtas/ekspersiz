@@ -1,6 +1,6 @@
 # EksperSiz — Flutter Mobil Uygulaması
 
-EksperSiz'in Flutter/Dart istemcisi. Araç yönetimi, YOLO tabanlı hasar analizine fotoğraf gönderme, Gemini raporlarını görüntüleme, AI Asistan, hatırlatmalar, kurumsal hesaplar ve abonelik arayüzünü içerir.
+EksperSiz'in Flutter/Dart istemcisi. Araç yönetimi, geçmiş hasar analizlerini görüntüleme, Gemini raporlarını görüntüleme, AI Asistan, hatırlatmalar, kurumsal hesaplar ve abonelik arayüzünü içerir.
 
 ## Özellikler
 - E-posta/şifre ve Google oturumu; güvenli token saklama, profil ve hesap işlemleri.
@@ -29,3 +29,5 @@ flutter analyze
 Android sürüm/build numarası `pubspec.yaml` içindeki `version` alanındadır. Yayınlama ve imzalama işlemleri için Google Play Console yapılandırması gerekir. Gizli anahtarları repoya eklemeyin.
 
 Ana proje ve backend bilgileri için [kök README](../README.md) dosyasına bakın.
+
+Yeni hasar analizi ekranı geçici kullanılamama mesajı gösterir. Backend analiz/doğrulama taleplerini kredi ayırmadan HTTP 503 ile reddeder; mevcut raporlar ve AI Asistan kullanılabilir.
