@@ -6,6 +6,7 @@ import 'package:mobile/features/auth/models/business_account.dart';
 import 'package:mobile/features/business/screens/business_management_screen.dart';
 import 'package:mobile/features/inspection/screens/create_inspection_screen.dart';
 import 'package:mobile/features/inspection/screens/inspection_history_screen.dart';
+import 'package:mobile/features/inspection/services/damage_analysis_availability.dart';
 import 'package:mobile/features/notification/screens/notification_center_screen.dart';
 
 import '../support/ui_mock_api.dart';
@@ -15,6 +16,33 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   setUpAll(installOfflineTestFonts);
   setUp(initializeUiSession);
+
+  testWidgets(
+    'new analysis explains unavailability without loading quota or vehicles',
+    (tester) async {
+      var requests = 0;
+      await http.runWithClient(
+        () async {
+          await tester.pumpWidget(
+            uiTestApp(
+              home: const CreateInspectionScreen(),
+              brightness: Brightness.light,
+              textScale: 1,
+              reduceMotion: true,
+            ),
+          );
+          await tester.pumpAndSettle();
+          expect(find.text(DamageAnalysisAvailability.message), findsOneWidget);
+          expect(requests, 0);
+          expect(tester.takeException(), isNull);
+        },
+        () => MockClient((request) async {
+          requests++;
+          return uiJsonResponse({});
+        }),
+      );
+    },
+  );
 
   for (final brightness in Brightness.values) {
     for (final scenario in [

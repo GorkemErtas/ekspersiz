@@ -21,6 +21,7 @@ import '../../billing/models/analysis_quota.dart';
 
 import '../models/damage_inspection.dart';
 import '../services/inspection_service.dart';
+import '../services/damage_analysis_availability.dart';
 import 'upload_damage_image_screen.dart';
 
 class CreateInspectionScreen extends StatefulWidget {
@@ -54,6 +55,7 @@ class _CreateInspectionScreenState extends State<CreateInspectionScreen> {
   @override
   void initState() {
     super.initState();
+    if (!DamageAnalysisAvailability.available) return;
 
     _vehiclesFuture = _vehicleService.getVehicles();
     _quotaFuture = _loadQuota();
@@ -313,6 +315,15 @@ class _CreateInspectionScreenState extends State<CreateInspectionScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (!DamageAnalysisAvailability.available) {
+      return Scaffold(
+        appBar: AppBar(title: const AppText('Hasar analizi')),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: const AppText(DamageAnalysisAvailability.message),
+        ),
+      );
+    }
     final colorScheme = Theme.of(context).colorScheme;
 
     final textTheme = Theme.of(context).textTheme;
