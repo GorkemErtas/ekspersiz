@@ -1,6 +1,6 @@
 # EksperSiz AI servisi
 
-FastAPI servisi AI Asistan kapsam/kaynak yönlendirmesini, E5 metin embedding'lerini ve pgvector RAG erişimini sağlar. HITL'nin 8 hasar ve 21 parça sınıfı için tek YOLOX-Tiny / iki head eğitim ve ONNX inference altyapısı eklenmiştir. Model, düşük hasar doğruluğu nedeniyle üretim için onaylanmamıştır; görüntü özelliği varsayılan kapalıdır.
+FastAPI servisi AI Asistan kapsam/kaynak yönlendirmesini, E5 metin embedding'lerini ve pgvector RAG erişimini sağlar. HITL'nin 8 hasar ve 21 parça sınıfı için YOLOX-Tiny baseline ve ticari lisansı ayrı doğrulanan RF-DETR/RT-DETR transfer adayları aynı sürümlü API'yi kullanır. Hasar modelleri üretim için onaylanmamıştır; görüntü özelliği varsayılan kapalıdır.
 
 ## API davranışı
 
@@ -27,3 +27,7 @@ Asistan ortam ayarları ve bilgi tabanı yükleme adımları: [dağıtım](../do
 ## Birleşik model ve eğitim
 
 Supervisely→COCO dönüşümü, görev maskeli eğitim, değerlendirme, ONNX export/parity ve CPU benchmark komutları [birleşik model belgesindedir](../docs/ml/UNIFIED_YOLOX_TINY.md). [Sınıf sayıları](../docs/ml/HITL_CLASS_COUNTS.md) ve [gerçek sonuçlar](../docs/ml/HITL_RESULTS.json) ayrıca kaydedilir. Export `production_approved: false` üretir. Java, Python ve Flutter release kapıları açıkça değiştirilmeden üretim aktive edilmez. Eski ağırlıklar ve Ultralytics kullanılmaz.
+
+## Transfer öğrenme ve CPU karşılaştırması
+
+DETR eğitim ortamı `requirements-transfer.txt` ile ayrı kurulur; çalışma zamanı bu paketleri, Transformers veya Torchvision'ı import etmez. Hasar için RF-DETR RGB/PIL bilinear + ImageNet normalization veya RT-DETR RGB/PIL bilinear + 0..1 rescale kullanır; parça mevcut BGR letterbox profilini korur. Manifest bu profilleri ayırır; yanlış normalization veya smoke bundle aktif hale getirilemez. Model/katalog hash ve imzaları yüklemeden önce doğrulanır; `hitl-v1`, 29 sınıf, belirsiz sonuç ve kredi davranışı korunur. [Eğitim/evaluation komutları](../docs/ml/TRANSFER_LEARNING.md), [lisans kanıtları](../docs/ml/COMMERCIAL_LICENSE_REVIEW.md), [gerçek karşılaştırma](../docs/ml/TRANSFER_RESULTS.md).

@@ -2,7 +2,7 @@
 
 **Yapay zekâ destekli araç hasar ön değerlendirmesi, raporlama ve araç yönetimi platformu.**
 
-Flutter mobil uygulaması, Java/Spring Boot API'si ve Python/FastAPI AI servisini birleştirir. Mevcut analizlerden açıklayıcı raporlar üretir ve araç sahiplerine kayıt, bakım, hatırlatma ve otomotiv odaklı AI Asistan özellikleri sunar. Yeni fotoğraf analizi, yeni bir model entegre edilene kadar geçici olarak kapalıdır.
+Flutter mobil uygulaması, Java/Spring Boot API'si ve Python/FastAPI AI servisini birleştirir. Mevcut analizlerden açıklayıcı raporlar üretir ve araç sahiplerine kayıt, bakım, hatırlatma ve otomotiv odaklı AI Asistan özellikleri sunar. Hasar modelleri üretim kabul ölçütlerini geçene kadar yeni fotoğraf analizi kapalıdır.
 
 <p align="center">
   <img src="docs/screenshots/home.jpeg" width="23%" alt="Ana ekran" />
@@ -44,11 +44,13 @@ flowchart TB
 
 ## AI/ML tasarımı
 
-### Birleşik hasar analizi
+### Hasar analizi deneyleri
 
-HITL veri setinin gerçek 8 hasar ve 21 parça sınıfını kullanan, paylaşılan YOLOX-Tiny omurgası ve iki detection head'den oluşan tek model altyapısı bulunur. Kısmi etiketli görüntüler yalnızca etiketli görev için eğitilir; aynı piksel görüntülerinin iki görevdeki etiketleri birleştirilir. Tek ONNX grafiği, tek fotoğraf ve tek forward kullanılır. Sınıflar Python, Java ve Flutter arasında sürümlü katalogla tutarlıdır; geçmiş değerler ayrıca korunur.
+HITL veri setinin gerçek 8 hasar ve 21 parça sınıfı, Python/Java/Flutter arasında sürümlü katalogla korunur. İlk YOLOX-Tiny baseline, kısmi etiketli görüntülerde yalnızca etiketli görevi eğiten ortak omurga ve iki head kullanır. Lisansı ayrı doğrulanan RF-DETR ve RT-DETR COCO ağırlıklarıyla transfer öğrenme adayları da aynı analiz sözleşmesini kullanır; hasar ve mevcut parça grafikleri ONNX Runtime üzerinde ayrı çalışabilir.
 
-50 epoch sıfırdan eğitim tamamlanmıştır; bağımsız testte hasar başarısı üretim için yetersizdir. Bu nedenle analiz/doğrulama **varsayılan kapalıdır**, HTTP 503 döner ve kredi ayrılmaz. Model bundle onayı ve açık release ayarları olmadan etkinleşmez. [Veri, mimari ve komutlar](docs/ml/UNIFIED_YOLOX_TINY.md), [gerçek sonuçlar](docs/ml/HITL_RESULTS.json).
+50 epoch sıfırdan eğitim tamamlanmıştır; tarihsel test ayrımında hasar başarısı üretim için yetersizdir. Bu nedenle analiz/doğrulama **varsayılan kapalıdır**, HTTP 503 döner ve kredi ayrılmaz. Model bundle onayı ve açık release ayarları olmadan etkinleşmez. [Veri, mimari ve komutlar](docs/ml/UNIFIED_YOLOX_TINY.md), [gerçek sonuçlar](docs/ml/HITL_RESULTS.json).
+
+Yeni [transfer öğrenme yöntemi ve tekrar çalıştırma adımları](docs/ml/TRANSFER_LEARNING.md), [lisans/kaynak incelemesi](docs/ml/COMMERCIAL_LICENSE_REVIEW.md) ve [karşılaştırma sonuçları](docs/ml/TRANSFER_RESULTS.md) ayrı kaydedilir. SYNDCAR, iki ortak sınıf için eğitimden ayrı bir sentetik alan farkı kontrolüdür. Deploy veya otomatik üretim onayı yapılmaz.
 
 ### Kaynağa göre yönlendirilen AI Asistan
 

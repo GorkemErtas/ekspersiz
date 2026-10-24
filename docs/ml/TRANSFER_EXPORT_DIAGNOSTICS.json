@@ -1,0 +1,44 @@
+[
+  {
+    "image_size": [
+      637,
+      419
+    ],
+    "original_vs_exported_torch_max_abs": [
+      0.0,
+      1.430511474609375e-06
+    ],
+    "exported_torch_vs_ort_max_abs": [
+      1.2248754501342773e-05,
+      0.00015807151794433594
+    ],
+    "api_detection_counts": [
+      13,
+      13
+    ],
+    "matched_min_iou": 0.9999960035096517,
+    "matched_max_score_error": 2.3245811462402344e-06,
+    "matched_class_mismatches": 0
+  },
+  {
+    "image_size": [
+      4032,
+      3024
+    ],
+    "original_vs_exported_torch_max_abs": [
+      0.0,
+      9.5367431640625e-07
+    ],
+    "exported_torch_vs_ort_max_abs": [
+      0.07630312442779541,
+      2.362046480178833
+    ],
+    "api_detection_counts": [
+      9,
+      9
+    ],
+    "matched_min_iou": 0.9999421728024708,
+    "matched_max_score_error": 4.6312808990478516e-05,
+    "matched_class_mismatches": 0
+  }
+]

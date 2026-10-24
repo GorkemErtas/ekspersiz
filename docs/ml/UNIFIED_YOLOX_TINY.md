@@ -1,5 +1,8 @@
 # EksperSiz — birleşik HITL / YOLOX-Tiny
 
+Bu belge ilk sıfırdan eğitim baseline'ını kaydeder. RF-DETR transfer adayları,
+ayrı model CPU adaptörü ve lisans incelemesi [yeni deney belgesindedir](TRANSFER_LEARNING.md).
+
 ## Durum ve kullanım sınırı
 
 24 Ekim 2026. Sistem tek fotoğrafta hasar ve parça çıktısı veren, tek checkpoint ve
