@@ -10,6 +10,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public class DamageInspectionResponse {
+    private String schemaVersion;
+    private String modelVersion;
+
 
     private final Long id;
     private final Long vehicleId;
@@ -200,4 +203,9 @@ public class DamageInspectionResponse {
     public Double getLocationLongitude() {
         return locationLongitude;
     }
+
+    public String getSchemaVersion() { return schemaVersion; }
+    public void setSchemaVersion(String value) { this.schemaVersion = value; }
+    public String getModelVersion() { return modelVersion; }
+    public void setModelVersion(String value) { this.modelVersion = value; }
 }

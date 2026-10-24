@@ -9,6 +9,13 @@ import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class AiAnalysisResponse {
+    private String schemaVersion;
+    private String modelVersion;
+    private String analysisOutcome;
+    private Integer imageWidth;
+    private Integer imageHeight;
+    private List<DetectedObjectResponse> partDetections;
+
 
     private DamageSeverity damageSeverity;
 
@@ -100,4 +107,17 @@ public class AiAnalysisResponse {
         this.repairRecommendations =
                 repairRecommendations;
     }
+
+    public String getSchemaVersion() { return schemaVersion; }
+    public void setSchemaVersion(String value) { this.schemaVersion = value; }
+    public String getModelVersion() { return modelVersion; }
+    public void setModelVersion(String value) { this.modelVersion = value; }
+    public String getAnalysisOutcome() { return analysisOutcome; }
+    public void setAnalysisOutcome(String value) { this.analysisOutcome = value; }
+    public Integer getImageWidth() { return imageWidth; }
+    public void setImageWidth(Integer value) { this.imageWidth = value; }
+    public Integer getImageHeight() { return imageHeight; }
+    public void setImageHeight(Integer value) { this.imageHeight = value; }
+    public List<DetectedObjectResponse> getPartDetections() { return partDetections; }
+    public void setPartDetections(List<DetectedObjectResponse> value) { this.partDetections = value; }
 }

@@ -43,8 +43,7 @@ public class DamageRepairRecommendation {
     private RepairAction recommendedAction;
 
     @Column(
-            name = "part_replacement_required",
-            nullable = false
+            name = "part_replacement_required"
     )
     private Boolean partReplacementRequired;
 

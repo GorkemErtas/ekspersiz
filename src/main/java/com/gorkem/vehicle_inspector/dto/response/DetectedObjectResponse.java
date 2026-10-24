@@ -3,6 +3,10 @@ package com.gorkem.vehicle_inspector.dto.response;
 import com.gorkem.vehicle_inspector.entity.VehiclePart;
 
 public class DetectedObjectResponse {
+    private Integer classId;
+    private String code;
+    private String task;
+
 
     private String label;
     private Double confidence;
@@ -47,4 +51,11 @@ public class DetectedObjectResponse {
     ) {
         this.boundingBox = boundingBox;
     }
+
+    public Integer getClassId() { return classId; }
+    public void setClassId(Integer value) { this.classId = value; }
+    public String getCode() { return code; }
+    public void setCode(String value) { this.code = value; }
+    public String getTask() { return task; }
+    public void setTask(String value) { this.task = value; }
 }
