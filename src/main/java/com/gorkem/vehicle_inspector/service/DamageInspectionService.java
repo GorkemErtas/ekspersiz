@@ -856,6 +856,10 @@ public class DamageInspectionService {
     private void normalizeAndValidateAnalysisResponse(
             AiAnalysisResponse response
     ) {
+        if (response != null && response.getSchemaVersion() != null) {
+            HitlAnalysisValidator.validate(response);
+            return;
+        }
         if (response == null || response.getDamageSeverity() == null
                 || response.getDamageSeverity() == DamageSeverity.UNKNOWN) {
             throw new AiServiceException(
@@ -961,6 +965,17 @@ public class DamageInspectionService {
                     inspection.setAnalysisMessage(
                             aiResponse.getAnalysisMessage()
                     );
+                    inspection.setAnalysisSchemaVersion(aiResponse.getSchemaVersion());
+                    inspection.setAnalysisModelVersion(aiResponse.getModelVersion());
+                    if (aiResponse.getSchemaVersion() != null) {
+                        try {
+                            inspection.setAnalysisPayload(new com.fasterxml.jackson.databind.ObjectMapper()
+                                    .writeValueAsString(aiResponse));
+                        } catch (com.fasterxml.jackson.core.JsonProcessingException exception) {
+                            throw new AiServiceException("Analiz kanıtı kaydedilemedi.", exception);
+                        }
+                    }
+
 
                     inspection.setStatus(
                             InspectionStatus.COMPLETED
@@ -1567,10 +1582,9 @@ public class DamageInspectionService {
                             inspection,
                             response.getDamageType(),
                             response.getRecommendedAction(),
-                            Boolean.TRUE.equals(
-                                    response
-                                            .getPartReplacementRequired()
-                            ),
+                            response.getRecommendedAction() == RepairAction.PROFESSIONAL_INSPECTION
+                                    ? response.getPartReplacementRequired() : Boolean.valueOf(Boolean.TRUE.equals(
+                                    response.getPartReplacementRequired())),
                             recommendationParts
                     );
 

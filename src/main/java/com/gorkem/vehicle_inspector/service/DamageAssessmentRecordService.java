@@ -172,6 +172,10 @@ public class DamageAssessmentRecordService {
 
         Map<String, Object> analysis = new LinkedHashMap<>();
         analysis.put("inspectionId", inspection.getId());
+        if (inspection.getAnalysisSchemaVersion() != null) {
+            analysis.put("schemaVersion", inspection.getAnalysisSchemaVersion());
+            analysis.put("modelVersion", inspection.getAnalysisModelVersion());
+        }
         analysis.put("damageSeverity", inspection.getDamageSeverity());
         analysis.put("confidenceScore", inspection.getConfidenceScore());
         analysis.put("analysisMessage", inspection.getAnalysisMessage());

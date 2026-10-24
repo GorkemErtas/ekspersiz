@@ -242,11 +242,17 @@ public final class InspectionReportNarrativeBuilder {
             case BROKEN_PART -> "parça kırığı";
             case BROKEN_GLASS -> "cam kırığı";
             case DEFORMATION -> "deformasyon";
+            case MISSING_PART -> "eksik parça";
+            case CORROSION -> "korozyon";
+            case CRACKED -> "çatlak";
+            case FLAKING -> "boya soyulması";
+            case PAINT_CHIP -> "boya kopması";
         };
     }
 
     private static String repairName(RepairAction action) {
         return switch (action) {
+            case PROFESSIONAL_INSPECTION -> "fiziksel inceleme";
             case NO_ACTION -> "onarım önerilmiyor";
             case POLISHING -> "pasta ve polisaj işlemi";
             case PAINT_TOUCH_UP -> "boya rötuşu";
@@ -267,15 +273,15 @@ public final class InspectionReportNarrativeBuilder {
         return switch (part) {
             case UNKNOWN -> "belirlenemeyen parça";
             case FRONT_BUMPER -> "ön tampon";
-            case REAR_BUMPER -> "arka tampon";
+            case REAR_BUMPER, BACK_BUMPER -> "arka tampon";
             case FRONT_DOOR -> "ön kapı";
-            case REAR_DOOR -> "arka kapı";
+            case REAR_DOOR, BACK_DOOR -> "arka kapı";
             case FRONT_WHEEL -> "ön tekerlek";
-            case REAR_WHEEL -> "arka tekerlek";
+            case REAR_WHEEL, BACK_WHEEL -> "arka tekerlek";
             case FRONT_WINDOW -> "ön kapı camı";
-            case REAR_WINDOW -> "arka kapı camı";
+            case REAR_WINDOW, BACK_WINDOW -> "arka kapı camı";
             case WINDSHIELD -> "ön cam";
-            case REAR_WINDSHIELD -> "arka cam";
+            case REAR_WINDSHIELD, BACK_WINDSHIELD -> "arka cam";
             case FENDER -> "çamurluk";
             case QUARTER_PANEL -> "arka yan panel";
             case ROCKER_PANEL -> "marşpiyel";

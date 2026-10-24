@@ -50,7 +50,13 @@ public class AiAssistantToolService {
         return inspections.findAllByVehicleIdOrderByCreatedAtDesc(vehicleId).stream()
                 .filter(i -> i.getStatus() == InspectionStatus.COMPLETED).limit(10)
                 .map(i -> new AiAssistantDamageToolResponse(i.getId(), i.getDamageSeverity()==null?null:i.getDamageSeverity().name(),
-                        i.getConfidenceScore(), i.getAnalysisMessage(), i.getCompletedAt())).toList();
+                        i.getConfidenceScore(), i.getAnalysisMessage(), i.getCompletedAt(),
+                        i.getAnalysisSchemaVersion(), i.getAnalysisModelVersion(),
+                        "hitl-v1".equals(i.getAnalysisSchemaVersion()) ? i.getRepairRecommendations().stream()
+                                .map(r -> VisionClassCatalog.byCode(r.getDamageType().name()).originalName()).distinct().toList() : List.of(),
+                        "hitl-v1".equals(i.getAnalysisSchemaVersion()) ? i.getRepairRecommendations().stream()
+                                .flatMap(r -> r.getAffectedParts().stream())
+                                .map(p -> VisionClassCatalog.byCode(p.name()).originalName()).distinct().toList() : List.of())).toList();
     }
 
     private AiAssistantVehicleToolResponse vehicleDto(Vehicle v) {

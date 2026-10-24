@@ -41,7 +41,9 @@ public final class DamageInspectionMapper {
                         )
                         .toList();
 
-        List<VehiclePart> affectedParts =
+        List<VehiclePart> affectedParts = "hitl-v1".equals(inspection.getAnalysisSchemaVersion())
+                ? inspection.getRepairRecommendations().stream().flatMap(r -> r.getAffectedParts().stream()).distinct().toList()
+                :
                 inspection.getDetections()
                         .stream()
                         .filter(detection ->
@@ -86,7 +88,7 @@ public final class DamageInspectionMapper {
                         .distinct()
                         .toList();
 
-        return new DamageInspectionResponse(
+        DamageInspectionResponse response = new DamageInspectionResponse(
                 inspection.getId(),
                 inspection.getVehicle().getId(),
                 inspection.getVehicle().getPlate(),
@@ -113,5 +115,8 @@ public final class DamageInspectionMapper {
                 inspection.getLocationLatitude(),
                 inspection.getLocationLongitude()
         );
+        response.setSchemaVersion(inspection.getAnalysisSchemaVersion());
+        response.setModelVersion(inspection.getAnalysisModelVersion());
+        return response;
     }
 }
