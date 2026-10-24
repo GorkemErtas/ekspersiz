@@ -692,6 +692,29 @@ class InspectionPersistenceTest {
         verify(places).search("repair service", 38.4, 27.1, 10_000);
     }
 
+    @Test
+    void currentAndLegacyAnalysisClassesRemainReadableTogether() {
+        Long id=tx.execute(status -> {
+            var inspection=saveInspection(firstVehicle,owner,NOW,InspectionStatus.COMPLETED);
+            inspection.setDamageSeverity(DamageSeverity.UNKNOWN);
+            inspection.setAnalysisSchemaVersion("hitl-v1");
+            inspection.setAnalysisModelVersion("persistence-test");
+            inspection.setAnalysisPayload("{\"label\":\"Cracked\"}");
+            inspection.addRepairRecommendation(new DamageRepairRecommendation(inspection,
+                    DamageType.CRACKED,RepairAction.PROFESSIONAL_INSPECTION,null,
+                    java.util.Set.of(VehiclePart.BACK_BUMPER)));
+            return inspections.saveAndFlush(inspection).getId();
+        });
+        tx.executeWithoutResult(status -> {
+            var stored=inspections.findById(id).orElseThrow();
+            assertEquals("hitl-v1",stored.getAnalysisSchemaVersion());
+            assertNull(stored.getRepairRecommendations().getFirst().getPartReplacementRequired());
+            assertEquals(DamageType.CRACKED,stored.getRepairRecommendations().getFirst().getDamageType());
+            assertTrue(stored.getAnalysisPayload().contains("Cracked"));
+            assertEquals(DamageType.CRACK,DamageType.valueOf("CRACK"));
+        });
+    }
+
     private DamageInspection saveInspection(Vehicle vehicle, User creator, LocalDateTime started, InspectionStatus status) {
         DamageInspection inspection = new DamageInspection(vehicle, creator, status);
         inspection.setAnalysisStartedAt(started);

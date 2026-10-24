@@ -89,6 +89,14 @@ public class DamageInspection {
     )
     private DamageSeverity damageSeverity;
 
+    @Column(name = "analysis_schema_version", length = 40)
+    private String analysisSchemaVersion;
+    @Column(name = "analysis_model_version", length = 160)
+    private String analysisModelVersion;
+    @Column(name = "analysis_payload", columnDefinition = "text")
+    private String analysisPayload;
+
+
     @Column(name = "confidence_score")
     private Double confidenceScore;
 
@@ -380,4 +388,10 @@ public class DamageInspection {
         this.locationLongitude =
                 locationLongitude;
     }
+    public String getAnalysisSchemaVersion() { return analysisSchemaVersion; }
+    public void setAnalysisSchemaVersion(String value) { this.analysisSchemaVersion = value; }
+    public String getAnalysisModelVersion() { return analysisModelVersion; }
+    public void setAnalysisModelVersion(String value) { this.analysisModelVersion = value; }
+    public String getAnalysisPayload() { return analysisPayload; }
+    public void setAnalysisPayload(String value) { this.analysisPayload = value; }
 }

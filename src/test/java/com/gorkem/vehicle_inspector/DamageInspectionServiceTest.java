@@ -679,6 +679,43 @@ class DamageInspectionServiceTest {
     }
 
     @Test
+    void inconclusiveHitlAnalysisReleasesCreditAndDoesNotGenerateAReport() {
+        var wallet=mock(CreditWalletService.class);
+        var token=java.util.UUID.randomUUID();
+        ReflectionTestUtils.setField(service,"creditWallets",wallet);
+        when(wallet.reserve(eq(actor),eq(true),eq("ANALYSIS"),anyString(),anyString()))
+                .thenReturn(new CreditWalletService.Reservation(token,false));
+        when(wallet.reservationActive(actor,token)).thenReturn(true);
+        AiAnalysisResponse uncertain=new AiAnalysisResponse();
+        uncertain.setSchemaVersion("hitl-v1");uncertain.setAnalysisOutcome("INCONCLUSIVE");
+        uncertain.setDamageSeverity(DamageSeverity.UNKNOWN);
+        when(ai.analyzeSingleImage(any(),any())).thenReturn(uncertain);
+        var result=service.analyzeInspection(30L,actor.getEmail());
+        assertEquals(InspectionStatus.FAILED,result.getStatus());
+        verify(wallet).release(actor,token);
+        verify(wallet,never()).complete(any(),any());
+        verifyNoInteractions(reports);
+    }
+
+    @Test
+    void completedHitlAnalysisPreservesUnknownReplacementAndRawClassEvidence() throws Exception {
+        var wallet=mock(CreditWalletService.class);
+        var token=java.util.UUID.randomUUID();
+        ReflectionTestUtils.setField(service,"creditWallets",wallet);
+        when(wallet.reserve(eq(actor),eq(true),eq("ANALYSIS"),anyString(),anyString()))
+                .thenReturn(new CreditWalletService.Reservation(token,false));
+        when(ai.analyzeSingleImage(any(),any())).thenReturn(new HitlAnalysisValidatorTest().response());
+        when(reports.generateReport(any())).thenReturn(report());
+        var result=service.analyzeInspection(30L,actor.getEmail());
+        assertEquals(InspectionStatus.COMPLETED,result.getStatus());
+        assertEquals(DamageSeverity.UNKNOWN,result.getDamageSeverity());
+        assertEquals("hitl-v1",result.getSchemaVersion());
+        assertNull(result.getRepairRecommendations().getFirst().partReplacementRequired());
+        assertTrue(inspection.getAnalysisPayload().contains("\"label\":\"Scratch\""));
+        verify(wallet).complete(actor,token);
+    }
+
+    @Test
     void paidDamageAnalysisIncludesReportAndReplayDoesNotCallEitherModelOrChargeAgain() {
         var wallet = mock(CreditWalletService.class);
         var token = java.util.UUID.randomUUID();
