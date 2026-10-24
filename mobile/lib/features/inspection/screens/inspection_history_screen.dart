@@ -1,3 +1,4 @@
+import 'package:mobile/features/inspection/models/vision_class_catalog.dart';
 import 'package:mobile/core/localization/app_text.dart';
 import 'package:flutter/material.dart';
 
@@ -64,6 +65,8 @@ class _InspectionHistoryScreenState extends State<InspectionHistoryScreen> {
   }
 
   String _vehiclePartLabel(String part) {
+    final current = VisionClassCatalog.label(part);
+    if (current != null) return current;
     return switch (part) {
       'UNKNOWN' => 'Bilinmeyen Parça',
       'FRONT_BUMPER' => 'Ön Tampon',

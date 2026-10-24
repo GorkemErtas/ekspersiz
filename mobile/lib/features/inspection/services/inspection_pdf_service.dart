@@ -1,3 +1,4 @@
+import 'package:mobile/features/inspection/models/vision_class_catalog.dart';
 import 'dart:io';
 
 import 'package:flutter/services.dart';
@@ -174,6 +175,7 @@ class InspectionPdfService {
               report.estimatedMinimumPrice,
               report.estimatedMaximumPrice,
               report.currency,
+              inspectionOnly: inspection.schemaVersion == 'hitl-v1',
             ),
           ],
           pw.SizedBox(height: 18),
@@ -183,7 +185,7 @@ class InspectionPdfService {
             report?.disclaimer.trim().isNotEmpty == true
                 ? report!.disclaimer
                 : 'Bu rapor yalnızca yüklenen fotoğraftaki görünür alanların yapay zekâ ile değerlendirilmesine dayanır. Mekanik kontrol veya profesyonel ekspertiz garantisi değildir.'
-                    .tr,
+                      .tr,
             accent: _warning,
           ),
         ],
@@ -304,7 +306,7 @@ class InspectionPdfService {
         pw.Text(
           noDamage
               ? 'Gönderilen görüntüde görünür hasar tespit edilmedi. Bu sonuç mekanik veya profesyonel ekspertiz garantisi değildir.'
-                  .tr
+                    .tr
               : (inspection.analysisMessage ?? 'Görsel analiz tamamlandı.').tr,
           style: const pw.TextStyle(fontSize: 10, lineSpacing: 3),
         ),
@@ -363,37 +365,44 @@ class InspectionPdfService {
     ),
   );
 
-  pw.Widget _priceCard(double minimum, double maximum, String currency) =>
-      pw.Container(
-        width: double.infinity,
-        padding: const pw.EdgeInsets.all(14),
-        decoration: pw.BoxDecoration(
-          color: _successSoft,
-          borderRadius: pw.BorderRadius.circular(8),
+  pw.Widget _priceCard(
+    double minimum,
+    double maximum,
+    String currency, {
+    bool inspectionOnly = false,
+  }) => pw.Container(
+    width: double.infinity,
+    padding: const pw.EdgeInsets.all(14),
+    decoration: pw.BoxDecoration(
+      color: _successSoft,
+      borderRadius: pw.BorderRadius.circular(8),
+    ),
+    child: pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.Text(
+          (inspectionOnly
+                  ? 'Tahmini Fiziksel İnceleme Aralığı'
+                  : 'Tahmini Onarım Aralığı')
+              .tr,
+          style: pw.TextStyle(
+            fontSize: 10,
+            fontWeight: pw.FontWeight.bold,
+            color: _success,
+          ),
         ),
-        child: pw.Column(
-          crossAxisAlignment: pw.CrossAxisAlignment.start,
-          children: [
-            pw.Text(
-              'Tahmini Onarım Aralığı'.tr,
-              style: pw.TextStyle(
-                fontSize: 10,
-                fontWeight: pw.FontWeight.bold,
-                color: _success,
-              ),
-            ),
-            pw.SizedBox(height: 5),
-            pw.Text(
-              '${_money(minimum)} - ${_money(maximum)} $currency',
-              style: pw.TextStyle(
-                fontSize: 17,
-                fontWeight: pw.FontWeight.bold,
-                color: _success,
-              ),
-            ),
-          ],
+        pw.SizedBox(height: 5),
+        pw.Text(
+          '${_money(minimum)} - ${_money(maximum)} $currency',
+          style: pw.TextStyle(
+            fontSize: 17,
+            fontWeight: pw.FontWeight.bold,
+            color: _success,
+          ),
         ),
-      );
+      ],
+    ),
+  );
 
   static pw.TextStyle _muted(double size) =>
       pw.TextStyle(fontSize: size, color: PdfColors.grey600);
@@ -411,56 +420,62 @@ class InspectionPdfService {
     'SEVERE' => 'Ağır Seviye Hasar',
     _ => 'Hasar Seviyesi Belirsiz',
   }).tr;
-  static String _damageLabel(String value) => (switch (value) {
-    'SCRATCH' => 'Çizik',
-    'PAINT_DAMAGE' => 'Boya Hasarı',
-    'DENT' => 'Göçük',
-    'CRACK' => 'Çatlak',
-    'BROKEN_PART' => 'Kırık Parça',
-    'BROKEN_GLASS' => 'Kırık Cam',
-    'DEFORMATION' => 'Deformasyon',
-    _ => value,
-  }).tr;
-  static String _partLabel(String value) => (switch (value) {
-    'FRONT_BUMPER' => 'Ön Tampon',
-    'REAR_BUMPER' => 'Arka Tampon',
-    'FRONT_DOOR' => 'Ön Kapı',
-    'REAR_DOOR' => 'Arka Kapı',
-    'FRONT_WHEEL' => 'Ön Tekerlek',
-    'REAR_WHEEL' => 'Arka Tekerlek',
-    'FRONT_WINDOW' => 'Ön Yan Cam',
-    'REAR_WINDOW' => 'Arka Yan Cam',
-    'HOOD' => 'Kaput',
-    'TRUNK' => 'Bagaj Kapağı',
-    'FENDER' => 'Çamurluk',
-    'QUARTER_PANEL' => 'Arka Çamurluk Paneli',
-    'ROCKER_PANEL' => 'Marşpiyel',
-    'GRILLE' => 'Ön Izgara',
-    'ROOF' => 'Tavan',
-    'WINDSHIELD' => 'Ön Cam',
-    'REAR_WINDSHIELD' => 'Arka Cam',
-    'HEADLIGHT' => 'Far',
-    'TAIL_LIGHT' => 'Arka Stop Lambası',
-    'MIRROR' => 'Yan Ayna',
-    'LICENSE_PLATE' => 'Plaka',
-    _ => value,
-  }).tr;
-  static String _repairLabel(String value) => (switch (value) {
-    'NO_ACTION' => 'İşlem Gerekmiyor',
-    'POLISHING' => 'Pasta / Cila',
-    'PAINT_TOUCH_UP' => 'Lokal Boya Rötuşu',
-    'FULL_PAINTING' => 'Tam Boyama',
-    'PAINTLESS_DENT_REPAIR' => 'Boyasız Göçük Düzeltme',
-    'DENT_REPAIR' => 'Göçük Düzeltme',
-    'PLASTIC_REPAIR' => 'Plastik Onarımı',
-    'PART_REPAIR' => 'Parça Onarımı',
-    'PART_REPLACEMENT' => 'Parça Değişimi',
-    'GLASS_REPAIR' => 'Cam Onarımı',
-    'GLASS_REPLACEMENT' => 'Cam Değişimi',
-    'HEADLIGHT_REPAIR' => 'Far Onarımı',
-    'HEADLIGHT_REPLACEMENT' => 'Far Değişimi',
-    _ => value,
-  }).tr;
+  static String _damageLabel(String value) =>
+      VisionClassCatalog.label(value) ??
+      (switch (value) {
+        'SCRATCH' => 'Çizik',
+        'PAINT_DAMAGE' => 'Boya Hasarı',
+        'DENT' => 'Göçük',
+        'CRACK' => 'Çatlak',
+        'BROKEN_PART' => 'Kırık Parça',
+        'BROKEN_GLASS' => 'Kırık Cam',
+        'DEFORMATION' => 'Deformasyon',
+        _ => value,
+      }).tr;
+  static String _partLabel(String value) =>
+      VisionClassCatalog.label(value) ??
+      (switch (value) {
+        'FRONT_BUMPER' => 'Ön Tampon',
+        'REAR_BUMPER' => 'Arka Tampon',
+        'FRONT_DOOR' => 'Ön Kapı',
+        'REAR_DOOR' => 'Arka Kapı',
+        'FRONT_WHEEL' => 'Ön Tekerlek',
+        'REAR_WHEEL' => 'Arka Tekerlek',
+        'FRONT_WINDOW' => 'Ön Yan Cam',
+        'REAR_WINDOW' => 'Arka Yan Cam',
+        'HOOD' => 'Kaput',
+        'TRUNK' => 'Bagaj Kapağı',
+        'FENDER' => 'Çamurluk',
+        'QUARTER_PANEL' => 'Arka Çamurluk Paneli',
+        'ROCKER_PANEL' => 'Marşpiyel',
+        'GRILLE' => 'Ön Izgara',
+        'ROOF' => 'Tavan',
+        'WINDSHIELD' => 'Ön Cam',
+        'REAR_WINDSHIELD' => 'Arka Cam',
+        'HEADLIGHT' => 'Far',
+        'TAIL_LIGHT' => 'Arka Stop Lambası',
+        'MIRROR' => 'Yan Ayna',
+        'LICENSE_PLATE' => 'Plaka',
+        _ => value,
+      }).tr;
+  static String _repairLabel(String value) =>
+      VisionClassCatalog.label(value) ??
+      (switch (value) {
+        'NO_ACTION' => 'İşlem Gerekmiyor',
+        'POLISHING' => 'Pasta / Cila',
+        'PAINT_TOUCH_UP' => 'Lokal Boya Rötuşu',
+        'FULL_PAINTING' => 'Tam Boyama',
+        'PAINTLESS_DENT_REPAIR' => 'Boyasız Göçük Düzeltme',
+        'DENT_REPAIR' => 'Göçük Düzeltme',
+        'PLASTIC_REPAIR' => 'Plastik Onarımı',
+        'PART_REPAIR' => 'Parça Onarımı',
+        'PART_REPLACEMENT' => 'Parça Değişimi',
+        'GLASS_REPAIR' => 'Cam Onarımı',
+        'GLASS_REPLACEMENT' => 'Cam Değişimi',
+        'HEADLIGHT_REPAIR' => 'Far Onarımı',
+        'HEADLIGHT_REPLACEMENT' => 'Far Değişimi',
+        _ => value,
+      }).tr;
 
   static final _brand = PdfColor.fromHex('#7C3AED');
   static final _ink = PdfColor.fromHex('#17131F');

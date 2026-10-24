@@ -4,6 +4,8 @@ import 'inspection_report.dart';
 
 class DamageInspection {
   const DamageInspection({
+    this.schemaVersion,
+    this.modelVersion,
     required this.id,
     required this.vehicleId,
     required this.vehiclePlate,
@@ -31,6 +33,8 @@ class DamageInspection {
     required this.locationLongitude,
   });
 
+  final String? schemaVersion;
+  final String? modelVersion;
   final int id;
 
   final int vehicleId;
@@ -90,6 +94,8 @@ class DamageInspection {
     final reportJson = json['report'];
 
     return DamageInspection(
+      schemaVersion: json['schemaVersion'] as String?,
+      modelVersion: json['modelVersion'] as String?,
       id: _parseInt(json['id']),
       vehicleId: _parseInt(json['vehicleId']),
       vehiclePlate: _parseString(json['vehiclePlate']),

@@ -1,3 +1,4 @@
+import 'package:mobile/features/inspection/models/vision_class_catalog.dart';
 import 'package:mobile/core/localization/app_text.dart';
 import 'dart:typed_data';
 import 'dart:async';
@@ -346,6 +347,8 @@ class _InspectionResultScreenState extends State<InspectionResultScreen>
   }
 
   String _damageTypeLabel(String type) {
+    final current = VisionClassCatalog.label(type);
+    if (current != null) return current;
     return switch (type) {
       'NO_VISIBLE_DAMAGE' => 'Görünür Hasar Yok',
       'SCRATCH' => 'Çizik',
@@ -360,6 +363,8 @@ class _InspectionResultScreenState extends State<InspectionResultScreen>
   }
 
   String _vehiclePartLabel(String part) {
+    final current = VisionClassCatalog.label(part);
+    if (current != null) return current;
     return switch (part) {
       'UNKNOWN' => 'Bilinmeyen Parça',
       'FRONT_BUMPER' => 'Ön Tampon',
@@ -388,6 +393,8 @@ class _InspectionResultScreenState extends State<InspectionResultScreen>
   }
 
   String _repairActionLabel(String action) {
+    final current = VisionClassCatalog.label(action);
+    if (current != null) return current;
     return switch (action) {
       'NO_ACTION' => 'İşlem Gerekmiyor',
       'POLISHING' => 'Pasta / Cila',
@@ -638,6 +645,7 @@ class _InspectionResultScreenState extends State<InspectionResultScreen>
                     const SizedBox(height: AppTheme.spacingM),
 
                     _PriceEstimateCard(
+                      inspectionOnly: _inspection.schemaVersion == 'hitl-v1',
                       minimum: _formatPrice(report.estimatedMinimumPrice),
 
                       maximum: _formatPrice(report.estimatedMaximumPrice),
@@ -1219,7 +1227,7 @@ class _RepairRecommendationTile extends StatelessWidget {
   final String action;
   final String parts;
 
-  final bool replacementRequired;
+  final bool? replacementRequired;
 
   @override
   Widget build(BuildContext context) {
@@ -1264,12 +1272,16 @@ class _RepairRecommendationTile extends StatelessWidget {
                       ),
                     ),
 
-                    if (replacementRequired)
+                    if (replacementRequired == true)
                       AppStatusBadge(
                         label: 'Değişim',
                         color: AppTheme.warningColorFor(context),
                         backgroundColor: AppTheme.warningSoftFor(context),
                         compact: true,
+                      ),
+                    if (replacementRequired == null)
+                      const AppText(
+                        'Parça değişimi gereksinimi fiziksel incelemeyle belirlenecek.',
                       ),
                   ],
                 ),
@@ -1420,6 +1432,7 @@ class _ReportSection extends StatelessWidget {
 
 class _PriceEstimateCard extends StatelessWidget {
   const _PriceEstimateCard({
+    this.inspectionOnly = false,
     required this.minimum,
     required this.maximum,
     required this.currency,
@@ -1429,6 +1442,7 @@ class _PriceEstimateCard extends StatelessWidget {
     required this.disclaimer,
   });
 
+  final bool inspectionOnly;
   final String minimum;
   final String maximum;
   final String currency;
@@ -1451,9 +1465,11 @@ class _PriceEstimateCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const AppSectionHeader(
+          AppSectionHeader(
             icon: Icons.payments_outlined,
-            title: 'Tahmini Onarım Maliyeti',
+            title: inspectionOnly
+                ? 'Tahmini Fiziksel İnceleme Maliyeti'
+                : 'Tahmini Onarım Maliyeti',
             subtitle: 'Bölgesel tahmini servis maliyeti',
           ),
 

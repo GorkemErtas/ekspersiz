@@ -1,3 +1,4 @@
+import 'package:mobile/features/inspection/models/vision_class_catalog.dart';
 import 'package:mobile/core/localization/app_text.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
@@ -509,6 +510,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   String _vehiclePartLabel(String part) {
+    final current = VisionClassCatalog.label(part);
+    if (current != null) return current;
     return switch (part) {
       'UNKNOWN' => 'Bilinmeyen Parça',
       'FRONT_BUMPER' => 'Ön Tampon',
