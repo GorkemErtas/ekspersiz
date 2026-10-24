@@ -1,0 +1,3 @@
+-r requirements-runtime.txt
+onnx==1.23.0
+pycocotools==2.0.11
