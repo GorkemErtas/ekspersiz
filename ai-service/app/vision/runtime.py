@@ -22,6 +22,7 @@ class UnifiedVisionRuntime:
         self._config_lock=Lock()
         self._inference_lock=Lock()
         self._session=None
+        self._severity=None
         self._config_cache=None
         self._loaded_signature=None
 
@@ -38,7 +39,14 @@ class UnifiedVisionRuntime:
             ensemble=manifest.get('format')=='ensemble-v1'
             if manifest.get('format') not in (None, 'ensemble-v1'):
                 raise ValueError('Unsupported bundle format')
+            severity_config=manifest.get('severity')
+            if severity_config is not None and not isinstance(severity_config,dict):
+                raise ValueError('Invalid severity metadata')
+            if severity_config and severity_config.get('enabled') is True and not ensemble:
+                raise ValueError('Severity requires a reviewed ensemble bundle')
             model_files=('damage.onnx','part.onnx') if ensemble else ('model.onnx',)
+            if severity_config and severity_config.get('enabled') is True:
+                model_files+=('severity.onnx',)
             signature=(str(bundle.resolve()),tuple((p.stat().st_size,p.stat().st_mtime_ns)
                 for p in (bundle/'manifest.json',bundle/'classes.json',*(bundle/f for f in model_files))))
             if self._loaded_signature is not None and signature != self._loaded_signature:
@@ -105,6 +113,13 @@ class UnifiedVisionRuntime:
                             session=EnsembleBackend(bundle,self.manifest,self.categories)
                         except Exception as exc:
                             raise VisionUnavailable('Model ensemble imzası geçersiz.') from exc
+                        severity_config=self.manifest.get('severity')
+                        if severity_config and severity_config.get('enabled') is True:
+                            from .severity import VisualSeverityClassifier
+                            try:
+                                self._severity=VisualSeverityClassifier(bundle,severity_config)
+                            except Exception as exc:
+                                raise VisionUnavailable('Onaylı görsel şiddet modeli geçersiz.') from exc
                         self._session=session
                         self._loaded_signature=self._config_cache[0]
                         return session
@@ -141,6 +156,13 @@ class UnifiedVisionRuntime:
                 outputs=session.run(['damage','part'],{'images':pixels[None]})
                 damage,parts=(postprocess(p,c,ratio,image.width,image.height,self.manifest['threshold'],self.manifest['nms_threshold'])
                               for p,c in zip(outputs,(self.categories['damage'],self.categories['part'])))
+        severity='UNKNOWN'
+        if damage and self._severity is not None:
+            try:
+                severity=self._severity.classify(image,damage)
+            except Exception:
+                # A severity inference failure must never manufacture a physical-damage claim.
+                severity='UNKNOWN'
         recommendations=[]
         for detection in damage:
             matches=match_parts(detection,parts,vehicle_region)
@@ -151,9 +173,10 @@ class UnifiedVisionRuntime:
         return {'schemaVersion':'hitl-v1','modelVersion':self.manifest['model_version'],
             'analysisOutcome':'DAMAGE_DETECTED' if damage else 'INCONCLUSIVE',
             'imageWidth':image.width,'imageHeight':image.height,
-            'damageSeverity':'UNKNOWN','confidenceScore':max((d['confidence'] for d in damage),default=None),
+            'damageSeverity':severity,'confidenceScore':max((d['confidence'] for d in damage),default=None),
             'damageTypes':list(dict.fromkeys(d['code'] for d in damage)),
             'affectedParts':list(dict.fromkeys(p for r in recommendations for p in r['affectedParts'])),
             'detections':damage,'partDetections':parts,'repairRecommendations':recommendations,
-            'analysisMessage':('Görsel hasar bulguları saptandı. Derinlik, şiddet ve kesin onarım yöntemi fotoğraftan doğrulanamaz; fiziksel inceleme gerekir.'
+            'analysisMessage':(('Görsel hasar şiddeti ön tahminidir; yapısal hasar, derinlik ve onarım kararı fotoğraftan kesinleştirilemez. Fiziksel inceleme gerekir.'
+                if severity!='UNKNOWN' else 'Görsel hasar bulguları saptandı. Derinlik, şiddet ve kesin onarım yöntemi fotoğraftan doğrulanamaz; fiziksel inceleme gerekir.')
                 if damage else 'Güvenilir bir hasar bulgusu belirlenemedi. Bu sonuç hasarsızlık anlamına gelmez; farklı bir fotoğraf veya fiziksel inceleme gerekir.')}
