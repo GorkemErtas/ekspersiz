@@ -52,6 +52,8 @@ HITL veri setinin gerçek 8 hasar ve 21 parça sınıfı, Python/Java/Flutter ar
 
 Yeni [transfer öğrenme yöntemi ve tekrar çalıştırma adımları](docs/ml/TRANSFER_LEARNING.md), [lisans/kaynak incelemesi](docs/ml/COMMERCIAL_LICENSE_REVIEW.md) ve [karşılaştırma sonuçları](docs/ml/TRANSFER_RESULTS.md) ayrı kaydedilir. SYNDCAR, iki ortak sınıf için eğitimden ayrı bir sentetik alan farkı kontrolüdür. Deploy veya otomatik üretim onayı yapılmaz.
 
+**Görsel hasar şiddeti:** CC0 HITL hasar bölgelerinden yalnızca bağımsız uzman kontrolüyle oluşturulan `MINOR/MODERATE/SEVERE` etiketleri için lisansı doğrulanmış hafif bir MobileNetV3 eğitim/ONNX entegrasyon yolu hazırlandı. Şu an şiddet modeli **eğitilmedi ve onaylanmadı**; `UNKNOWN` korunur. Kaynak denetimi, etiketleme şeması, eğitim ve güvenlik koşulları: [görsel şiddet deney planı](docs/ml/VISUAL_SEVERITY.md).
+
 ### Kaynağa göre yönlendirilen AI Asistan
 
 ```mermaid
