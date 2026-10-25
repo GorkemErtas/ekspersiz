@@ -1,0 +1,383 @@
+{
+  "$defs": {
+    "PhotoAssessment": {
+      "additionalProperties": false,
+      "properties": {
+        "overviewUsable": {
+          "title": "Overviewusable",
+          "type": "boolean"
+        },
+        "detailUsable": {
+          "title": "Detailusable",
+          "type": "boolean"
+        },
+        "sameVehicleAndArea": {
+          "title": "Samevehicleandarea",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "overviewUsable",
+        "detailUsable",
+        "sameVehicleAndArea"
+      ],
+      "title": "PhotoAssessment",
+      "type": "object"
+    },
+    "Recommendation": {
+      "additionalProperties": false,
+      "properties": {
+        "damageType": {
+          "enum": [
+            "SCRATCH",
+            "PAINT_DAMAGE",
+            "DENT",
+            "CRACK",
+            "BROKEN_PART",
+            "BROKEN_GLASS",
+            "DEFORMATION",
+            "CORROSION",
+            "CRACKED",
+            "FLAKING",
+            "MISSING_PART",
+            "PAINT_CHIP"
+          ],
+          "title": "Damagetype",
+          "type": "string"
+        },
+        "recommendedAction": {
+          "enum": [
+            "POLISHING",
+            "PAINT_TOUCH_UP",
+            "FULL_PAINTING",
+            "PAINTLESS_DENT_REPAIR",
+            "DENT_REPAIR",
+            "PLASTIC_REPAIR",
+            "PART_REPAIR",
+            "PART_REPLACEMENT",
+            "GLASS_REPAIR",
+            "GLASS_REPLACEMENT",
+            "HEADLIGHT_REPAIR",
+            "HEADLIGHT_REPLACEMENT",
+            "PROFESSIONAL_INSPECTION"
+          ],
+          "title": "Recommendedaction",
+          "type": "string"
+        },
+        "partReplacementRequired": {
+          "default": null,
+          "title": "Partreplacementrequired",
+          "type": "null"
+        },
+        "affectedParts": {
+          "items": {
+            "enum": [
+              "UNKNOWN",
+              "FRONT_BUMPER",
+              "REAR_BUMPER",
+              "FRONT_DOOR",
+              "REAR_DOOR",
+              "FRONT_WHEEL",
+              "REAR_WHEEL",
+              "FRONT_WINDOW",
+              "REAR_WINDOW",
+              "WINDSHIELD",
+              "REAR_WINDSHIELD",
+              "FENDER",
+              "QUARTER_PANEL",
+              "ROCKER_PANEL",
+              "GRILLE",
+              "HEADLIGHT",
+              "TAIL_LIGHT",
+              "HOOD",
+              "LICENSE_PLATE",
+              "MIRROR",
+              "ROOF",
+              "TRUNK"
+            ],
+            "type": "string"
+          },
+          "title": "Affectedparts",
+          "type": "array"
+        }
+      },
+      "required": [
+        "damageType",
+        "recommendedAction",
+        "affectedParts"
+      ],
+      "title": "Recommendation",
+      "type": "object"
+    },
+    "VisualFinding": {
+      "additionalProperties": false,
+      "properties": {
+        "damageType": {
+          "enum": [
+            "SCRATCH",
+            "PAINT_DAMAGE",
+            "DENT",
+            "CRACK",
+            "BROKEN_PART",
+            "BROKEN_GLASS",
+            "DEFORMATION",
+            "CORROSION",
+            "CRACKED",
+            "FLAKING",
+            "MISSING_PART",
+            "PAINT_CHIP"
+          ],
+          "title": "Damagetype",
+          "type": "string"
+        },
+        "affectedPart": {
+          "enum": [
+            "UNKNOWN",
+            "FRONT_BUMPER",
+            "REAR_BUMPER",
+            "FRONT_DOOR",
+            "REAR_DOOR",
+            "FRONT_WHEEL",
+            "REAR_WHEEL",
+            "FRONT_WINDOW",
+            "REAR_WINDOW",
+            "WINDSHIELD",
+            "REAR_WINDSHIELD",
+            "FENDER",
+            "QUARTER_PANEL",
+            "ROCKER_PANEL",
+            "GRILLE",
+            "HEADLIGHT",
+            "TAIL_LIGHT",
+            "HOOD",
+            "LICENSE_PLATE",
+            "MIRROR",
+            "ROOF",
+            "TRUNK"
+          ],
+          "title": "Affectedpart",
+          "type": "string"
+        },
+        "severity": {
+          "enum": [
+            "MINOR",
+            "MODERATE",
+            "SEVERE",
+            "UNKNOWN"
+          ],
+          "title": "Severity",
+          "type": "string"
+        },
+        "description": {
+          "maxLength": 400,
+          "minLength": 10,
+          "title": "Description",
+          "type": "string"
+        },
+        "recommendedAction": {
+          "enum": [
+            "POLISHING",
+            "PAINT_TOUCH_UP",
+            "FULL_PAINTING",
+            "PAINTLESS_DENT_REPAIR",
+            "DENT_REPAIR",
+            "PLASTIC_REPAIR",
+            "PART_REPAIR",
+            "PART_REPLACEMENT",
+            "GLASS_REPAIR",
+            "GLASS_REPLACEMENT",
+            "HEADLIGHT_REPAIR",
+            "HEADLIGHT_REPLACEMENT",
+            "PROFESSIONAL_INSPECTION"
+          ],
+          "title": "Recommendedaction",
+          "type": "string"
+        },
+        "repairNotes": {
+          "maxLength": 300,
+          "minLength": 10,
+          "title": "Repairnotes",
+          "type": "string"
+        },
+        "replacementAssessment": {
+          "enum": [
+            "POSSIBLE",
+            "NOT_INDICATED",
+            "UNDETERMINED"
+          ],
+          "title": "Replacementassessment",
+          "type": "string"
+        },
+        "evidenceImages": {
+          "items": {
+            "enum": [
+              "OVERVIEW",
+              "DETAIL"
+            ],
+            "type": "string"
+          },
+          "maxItems": 2,
+          "minItems": 1,
+          "title": "Evidenceimages",
+          "type": "array"
+        }
+      },
+      "required": [
+        "damageType",
+        "affectedPart",
+        "severity",
+        "description",
+        "recommendedAction",
+        "repairNotes",
+        "replacementAssessment",
+        "evidenceImages"
+      ],
+      "title": "VisualFinding",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "analysisOutcome": {
+      "enum": [
+        "DAMAGE_DETECTED",
+        "NEEDS_MORE_PHOTOS",
+        "INCONCLUSIVE"
+      ],
+      "title": "Analysisoutcome",
+      "type": "string"
+    },
+    "damageSeverity": {
+      "enum": [
+        "MINOR",
+        "MODERATE",
+        "SEVERE",
+        "UNKNOWN"
+      ],
+      "title": "Damageseverity",
+      "type": "string"
+    },
+    "photoAssessment": {
+      "$ref": "#/$defs/PhotoAssessment"
+    },
+    "visualFindings": {
+      "items": {
+        "$ref": "#/$defs/VisualFinding"
+      },
+      "maxItems": 8,
+      "title": "Visualfindings",
+      "type": "array"
+    },
+    "analysisMessage": {
+      "maxLength": 1000,
+      "minLength": 10,
+      "title": "Analysismessage",
+      "type": "string"
+    },
+    "additionalPhotoGuidance": {
+      "maxLength": 400,
+      "title": "Additionalphotoguidance",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "const": "gemini-vision-v1",
+      "default": "gemini-vision-v1",
+      "title": "Schemaversion",
+      "type": "string"
+    },
+    "modelVersion": {
+      "title": "Modelversion",
+      "type": "string"
+    },
+    "confidenceScore": {
+      "default": null,
+      "title": "Confidencescore",
+      "type": "null"
+    },
+    "detections": {
+      "items": {},
+      "maxItems": 0,
+      "title": "Detections",
+      "type": "array"
+    },
+    "partDetections": {
+      "items": {},
+      "maxItems": 0,
+      "title": "Partdetections",
+      "type": "array"
+    },
+    "damageTypes": {
+      "items": {
+        "enum": [
+          "SCRATCH",
+          "PAINT_DAMAGE",
+          "DENT",
+          "CRACK",
+          "BROKEN_PART",
+          "BROKEN_GLASS",
+          "DEFORMATION",
+          "CORROSION",
+          "CRACKED",
+          "FLAKING",
+          "MISSING_PART",
+          "PAINT_CHIP"
+        ],
+        "type": "string"
+      },
+      "title": "Damagetypes",
+      "type": "array"
+    },
+    "affectedParts": {
+      "items": {
+        "enum": [
+          "UNKNOWN",
+          "FRONT_BUMPER",
+          "REAR_BUMPER",
+          "FRONT_DOOR",
+          "REAR_DOOR",
+          "FRONT_WHEEL",
+          "REAR_WHEEL",
+          "FRONT_WINDOW",
+          "REAR_WINDOW",
+          "WINDSHIELD",
+          "REAR_WINDSHIELD",
+          "FENDER",
+          "QUARTER_PANEL",
+          "ROCKER_PANEL",
+          "GRILLE",
+          "HEADLIGHT",
+          "TAIL_LIGHT",
+          "HOOD",
+          "LICENSE_PLATE",
+          "MIRROR",
+          "ROOF",
+          "TRUNK"
+        ],
+        "type": "string"
+      },
+      "title": "Affectedparts",
+      "type": "array"
+    },
+    "repairRecommendations": {
+      "items": {
+        "$ref": "#/$defs/Recommendation"
+      },
+      "title": "Repairrecommendations",
+      "type": "array"
+    }
+  },
+  "required": [
+    "analysisOutcome",
+    "damageSeverity",
+    "photoAssessment",
+    "visualFindings",
+    "analysisMessage",
+    "additionalPhotoGuidance",
+    "modelVersion",
+    "damageTypes",
+    "affectedParts",
+    "repairRecommendations"
+  ],
+  "title": "AnalysisResponse",
+  "type": "object"
+}

@@ -1,0 +1,47 @@
+{
+  "analysisOutcome": "DAMAGE_DETECTED",
+  "damageSeverity": "MINOR",
+  "photoAssessment": {
+    "overviewUsable": true,
+    "detailUsable": true,
+    "sameVehicleAndArea": true
+  },
+  "visualFindings": [
+    {
+      "damageType": "SCRATCH",
+      "affectedPart": "FRONT_DOOR",
+      "severity": "MINOR",
+      "description": "Kapı yüzeyinde çizik görünümü izleniyor.",
+      "recommendedAction": "POLISHING",
+      "repairNotes": "Polisaj uygunluğu fiziksel incelemeyle değerlendirilebilir.",
+      "replacementAssessment": "UNDETERMINED",
+      "evidenceImages": [
+        "OVERVIEW",
+        "DETAIL"
+      ]
+    }
+  ],
+  "analysisMessage": "İki fotoğrafta kapı yüzeyinde çizik görünümü mevcut. Bu değerlendirme yalnızca iki fotoğraftaki görünür bulgulara dayanır; fiziksel ekspertiz yerine geçmez.",
+  "additionalPhotoGuidance": "",
+  "schemaVersion": "gemini-vision-v1",
+  "modelVersion": "gemini-3.8-flash",
+  "confidenceScore": null,
+  "detections": [],
+  "partDetections": [],
+  "damageTypes": [
+    "SCRATCH"
+  ],
+  "affectedParts": [
+    "FRONT_DOOR"
+  ],
+  "repairRecommendations": [
+    {
+      "damageType": "SCRATCH",
+      "recommendedAction": "POLISHING",
+      "partReplacementRequired": null,
+      "affectedParts": [
+        "FRONT_DOOR"
+      ]
+    }
+  ]
+}

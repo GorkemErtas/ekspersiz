@@ -5,7 +5,7 @@ from threading import Lock
 from fastapi import FastAPI, HTTPException
 
 from app.service_security import ServiceSecurityMiddleware
-from app.vision.api import router as vision_router, runtime as vision_runtime
+from app.damage_analysis.api import router as vision_router, runtime as vision_runtime
 from app.assistant.api_schemas import AssistantPlanRequest, AssistantPlanResponse, RetrievedContext
 from app.assistant.domain_classifier import SemanticDomainClassifier
 from app.assistant.embeddings import LocalMultilingualEmbedder

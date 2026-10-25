@@ -30,15 +30,14 @@ class ServiceSecurityMiddleware:
             )(scope, receive, send)
 
         if scope['path'] in {'/api/v1/analyze','/api/v1/validate-image'}:
-            from app.vision.runtime import VisionUnavailable
-            from app.vision.api import runtime
+            from app.damage_analysis.provider import VisionUnavailable
+            from app.damage_analysis.api import runtime
             try:
                 await run_in_threadpool(runtime.require_available)
             except VisionUnavailable as exc:
                 return await JSONResponse({'detail': {'code': 'DAMAGE_ANALYSIS_UNAVAILABLE', 'message': str(exc)}}, status_code=503)(scope, receive, send)
 
-        # Allow older image payload sizes to receive the explicit 503 response;
-        # retired image routes do not read or buffer their request bodies.
+        # Two bounded image parts plus multipart overhead; assistant limit is independent.
         limit = 22 * 1024 * 1024 if scope["path"] in {
             "/api/v1/analyze", "/api/v1/validate-image"
         } else 256 * 1024 if scope["path"] == "/api/v1/assistant/plan" else 64 * 1024
