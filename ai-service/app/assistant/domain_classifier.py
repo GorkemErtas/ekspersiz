@@ -107,13 +107,16 @@ CURRENT_USER_QUESTION:
 {question}"""
         url = (
             "https://generativelanguage.googleapis.com/v1beta/models/"
-            f"{self.model}:generateContent?key={self.api_key}"
+            f"{self.model}:generateContent"
         )
         payload = json.dumps({
             "contents": [{"parts": [{"text": prompt}]}],
-            "generationConfig": {"responseMimeType": "application/json", "temperature": 0}
+            "generationConfig": {"responseMimeType": "application/json"}
         }).encode()
-        req = request.Request(url, data=payload, headers={"Content-Type": "application/json"})
+        req = request.Request(url, data=payload, headers={
+            "Content-Type": "application/json",
+            "x-goog-api-key": self.api_key,
+        })
         try:
             with request.urlopen(req, timeout=self.timeout_seconds) as response:
                 raw = json.loads(response.read().decode())
