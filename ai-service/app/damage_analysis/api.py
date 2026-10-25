@@ -1,7 +1,8 @@
+import logging
 from threading import BoundedSemaphore
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from fastapi.concurrency import run_in_threadpool
-from .images import MAX_BYTES, prepare
+from .images import MAX_BYTES, ImageValidationError, prepare
 from .provider import ProviderError, VisionUnavailable
 from .schemas import AnalysisResponse
 from .service import DamageAnalysisService
@@ -9,6 +10,7 @@ from .service import DamageAnalysisService
 router = APIRouter()
 runtime = DamageAnalysisService()
 capacity = BoundedSemaphore(1)
+logger = logging.getLogger(__name__)
 
 
 def require_available():
@@ -68,7 +70,10 @@ async def validate(image: UploadFile = File(...)):
         return {'suitable': True, 'code': 'TECHNICALLY_VALID',
                 'message': 'Dosya uygun; görsel yeterlilik iki fotoğraf birlikte değerlendirilirken kontrol edilecek.'}
     except ValueError as exc:
-        return {'suitable': False, 'code': 'INVALID_IMAGE', 'message': str(exc)}
+        code = exc.code if isinstance(exc, ImageValidationError) else 'INVALID_IMAGE'
+        # Never log image bytes, metadata, filenames or request credentials.
+        logger.warning('Image validation rejected code=%s', code)
+        return {'suitable': False, 'code': code, 'message': str(exc)}
     finally:
         await image.close()
         if acquired:

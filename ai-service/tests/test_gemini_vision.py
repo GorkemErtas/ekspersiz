@@ -118,7 +118,7 @@ class ProviderTests(unittest.TestCase):
             self.assertEqual(1, opener.call_count)
 
 
-async def call(app, images, authenticated=True, content_length=None):
+async def call(app, images, authenticated=True, content_length=None, path='/api/v1/analyze'):
     boundary = 'test-photo-boundary'
     pieces = []
     for name, content, mime in images:
@@ -137,7 +137,7 @@ async def call(app, images, authenticated=True, content_length=None):
     async def send(message):
         sent.append(message)
     await app({'type': 'http', 'asgi': {'version': '3.0'}, 'http_version': '1.1', 'method': 'POST',
-               'scheme': 'http', 'path': '/api/v1/analyze', 'root_path': '', 'query_string': b'',
+               'scheme': 'http', 'path': path, 'root_path': '', 'query_string': b'',
                'headers': headers, 'server': ('test', 80), 'client': ('127.0.0.1', 1234)}, receive, send)
     status = next(m['status'] for m in sent if m['type'] == 'http.response.start')
     result = json.loads(b''.join(m.get('body', b'') for m in sent if m['type'] == 'http.response.body'))
@@ -155,6 +155,61 @@ class ApiTests(unittest.IsolatedAsyncioTestCase):
         app = FastAPI(); app.include_router(api.router)
         self.app = ServiceSecurityMiddleware(app)
         self.images = [('image', photo(), 'image/png'), ('context_image', photo(11), 'image/png')]
+
+    async def test_validation_200_is_not_suitability_and_never_calls_gemini(self):
+        from pathlib import Path
+        source = Path(__file__).resolve().parents[2] / 'mobile/test/fixtures/inspection/48mp.jpg'
+        raw = source.read_bytes()
+        self.assertLess(len(raw), 10 * 1024 * 1024)
+        with Image.open(io.BytesIO(raw)) as image:
+            self.assertEqual(48_000_000, image.width * image.height)
+        status, result, _ = await call(self.app, [('image', raw, 'image/jpeg')], path='/api/v1/validate-image')
+        self.assertEqual(200, status)
+        self.assertFalse(result['suitable'])
+        self.assertEqual('IMAGE_RESOLUTION_EXCEEDED', result['code'])
+        self.provider.analyze.assert_not_called()
+
+    async def test_technical_rejections_have_distinct_codes(self):
+        blank = io.BytesIO(); Image.new('RGB', (320, 320)).save(blank, format='PNG')
+        small = io.BytesIO(); Image.new('RGB', (255, 320)).save(small, format='PNG')
+        for raw, mime, code in [(blank.getvalue(), 'image/png', 'IMAGE_DETAIL_INSUFFICIENT'),
+                (small.getvalue(), 'image/png', 'IMAGE_RESOLUTION_TOO_LOW'),
+                (photo(), 'image/jpeg', 'IMAGE_FORMAT_INVALID'),
+                (b'broken', 'image/png', 'IMAGE_DECODE_FAILED')]:
+            with self.subTest(code=code):
+                status, result, _ = await call(self.app, [('image', raw, mime)], path='/api/v1/validate-image')
+                self.assertEqual(200, status)
+                self.assertEqual(code, result['code'])
+                self.assertFalse(result['suitable'])
+        self.provider.analyze.assert_not_called()
+
+    async def test_jpeg_png_webp_pairs_reach_exactly_one_gemini_call(self):
+        for fmt, mime in [('JPEG', 'image/jpeg'), ('PNG', 'image/png'), ('WEBP', 'image/webp')]:
+            with self.subTest(fmt=fmt):
+                self.provider.analyze.reset_mock()
+                images = [('image', photo(fmt=fmt), mime), ('context_image', photo(11, fmt=fmt), mime)]
+                for image in images:
+                    status, result, _ = await call(self.app, [('image', image[1], mime)], path='/api/v1/validate-image')
+                    self.assertEqual(200, status)
+                    self.assertTrue(result['suitable'])
+                self.provider.analyze.assert_not_called()
+                status, _, _ = await call(self.app, images)
+                self.assertEqual(200, status)
+                self.provider.analyze.assert_called_once()
+
+    @unittest.skipUnless(os.getenv('FLUTTER_IMAGE_CONTRACT_DIR'), 'Run Flutter optimizer tests and set FLUTTER_IMAGE_CONTRACT_DIR')
+    async def test_real_flutter_optimized_pair_reaches_gemini(self):
+        from pathlib import Path
+        directory = Path(os.environ['FLUTTER_IMAGE_CONTRACT_DIR'])
+        images = [(name, (directory / filename).read_bytes(), 'image/jpeg')
+                  for name, filename in [('image', 'detail.jpg'), ('context_image', 'overview.jpg')]]
+        for image in images:
+            status, result, _ = await call(self.app, [('image', image[1], image[2])], path='/api/v1/validate-image')
+            self.assertEqual(200, status)
+            self.assertTrue(result['suitable'], result)
+        status, result, _ = await call(self.app, images)
+        self.assertEqual(200, status, result)
+        self.provider.analyze.assert_called_once()
 
     async def test_success_has_both_images_no_fabricated_confidence_or_boxes(self):
         status, result, _ = await call(self.app, self.images)
