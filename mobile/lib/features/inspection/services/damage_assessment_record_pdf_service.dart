@@ -205,7 +205,7 @@ class DamageAssessmentRecordPdfService {
             if (_number(report['estimatedMaximumPrice']) > 0) ...[
               pw.SizedBox(height: 8),
               _textCard(
-                '${analysis['schemaVersion'] == 'hitl-v1' ? 'Tahmini fiziksel inceleme aralığı' : 'Tahmini onarım aralığı'}: ${_money(_number(report['estimatedMinimumPrice']))} - '
+                '${_inspectionOnly(analysis) ? 'Tahmini fiziksel inceleme aralığı' : 'Tahmini onarım aralığı'}: ${_money(_number(report['estimatedMinimumPrice']))} - '
                 '${_money(_number(report['estimatedMaximumPrice']))} ${_text(report['currency'])}',
               ),
             ],
@@ -346,6 +346,18 @@ class DamageAssessmentRecordPdfService {
   static String _percent(dynamic value) {
     final n = _number(value);
     return n <= 0 ? '-' : '%${(n * 100).round()}';
+  }
+
+  static bool _inspectionOnly(Map<String, dynamic> analysis) {
+    final rows = analysis['repairRecommendations'];
+    return analysis['schemaVersion'] == 'hitl-v1' ||
+        (rows is List &&
+            rows.isNotEmpty &&
+            rows.every(
+              (row) =>
+                  row is Map &&
+                  row['recommendedAction'] == 'PROFESSIONAL_INSPECTION',
+            ));
   }
 
   static String _formatIso(dynamic value) {

@@ -1,7 +1,7 @@
 import 'package:mobile/core/localization/app_text.dart';
-import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../core/network/api_exception.dart';
@@ -22,10 +22,12 @@ class UploadDamageImageScreen extends StatefulWidget {
     super.key,
     required this.inspection,
     this.imagePicker,
+    this.inspectionService = const InspectionService(),
   });
 
   final DamageInspection inspection;
   final ImagePicker? imagePicker;
+  final InspectionService inspectionService;
 
   @override
   State<UploadDamageImageScreen> createState() =>
@@ -37,18 +39,22 @@ class _UploadDamageImageScreenState extends State<UploadDamageImageScreen> {
 
   late final ImagePicker _imagePicker = widget.imagePicker ?? ImagePicker();
 
-  final InspectionService _inspectionService = const InspectionService();
+  InspectionService get _inspectionService => widget.inspectionService;
 
   Uint8List? _selectedImageBytes;
 
   String? _selectedContentType;
   String? _selectedFilename;
 
+  Uint8List? _overviewBytes;
+  String? _overviewContentType;
+  String? _overviewFilename;
+  bool _isPicking = false;
   bool _isUploading = false;
-  String? _qualityIssue;
-  String? _vehicleRegion;
 
-  Future<void> _pickImage(ImageSource source) async {
+  Future<void> _pickImage(ImageSource source, {bool overview = false}) async {
+    if (_isPicking || _isUploading) return;
+    _isPicking = true;
     try {
       final image = await _imagePicker.pickImage(
         source: source,
@@ -99,12 +105,15 @@ class _UploadDamageImageScreenState extends State<UploadDamageImageScreen> {
       );
 
       setState(() {
-        _selectedImageBytes = bytes;
-
-        _selectedContentType = detectedContentType;
-
-        _selectedFilename = correctedFilename;
-        _qualityIssue = null;
+        if (overview) {
+          _overviewBytes = bytes;
+          _overviewContentType = detectedContentType;
+          _overviewFilename = correctedFilename;
+        } else {
+          _selectedImageBytes = bytes;
+          _selectedContentType = detectedContentType;
+          _selectedFilename = correctedFilename;
+        }
       });
     } catch (_) {
       if (!mounted) {
@@ -112,6 +121,8 @@ class _UploadDamageImageScreenState extends State<UploadDamageImageScreen> {
       }
 
       _showMessage('Fotoğraf seçilemedi.');
+    } finally {
+      _isPicking = false;
     }
   }
 
@@ -192,13 +203,26 @@ class _UploadDamageImageScreenState extends State<UploadDamageImageScreen> {
     final contentType = _selectedContentType;
 
     final filename = _selectedFilename;
+    final overviewBytes = _overviewBytes;
+    final overviewContentType = _overviewContentType;
+    final overviewFilename = _overviewFilename;
 
     if (imageBytes == null || contentType == null || filename == null) {
       _showMessage('Lütfen önce bir fotoğraf seçin.');
       return;
     }
-    if (_vehicleRegion != 'FRONT' && _vehicleRegion != 'REAR') {
-      _showMessage('Lütfen hasarın bulunduğu ön veya arka yarıyı seçin.');
+    if (overviewBytes == null ||
+        overviewContentType == null ||
+        overviewFilename == null) {
+      _showMessage(
+        'Genel görünüm ve yakın detay için iki ayrı fotoğraf seçin.',
+      );
+      return;
+    }
+    if (listEquals(imageBytes, overviewBytes)) {
+      _showMessage(
+        'Genel görünüm ve yakın detay için iki farklı fotoğraf kullanın.',
+      );
       return;
     }
 
@@ -217,32 +241,27 @@ class _UploadDamageImageScreenState extends State<UploadDamageImageScreen> {
     });
 
     try {
-      final updatedInspection = await _inspectionService.uploadImage(
+      await _inspectionService.uploadImage(
         inspectionId: widget.inspection.id,
         imageBytes: imageBytes,
         filename: filename,
         contentType: contentType,
       );
-      final quality = await _inspectionService.validateImageQuality(
-        widget.inspection.id,
+      // Upload the detail first: replacing it invalidates any old overview on the server.
+      final updatedInspection = await _inspectionService.uploadContextImage(
+        inspectionId: widget.inspection.id,
+        imageBytes: overviewBytes,
+        filename: overviewFilename,
+        contentType: overviewContentType,
       );
-
-      if (!mounted) {
-        return;
-      }
-
-      if (!quality.suitable) {
-        setState(() {
-          _qualityIssue = quality.message;
-        });
-        return;
-      }
+      if (!mounted) return;
 
       Navigator.of(context).pushReplacement(
         MaterialPageRoute<void>(
           builder: (_) => AnalyzingScreen(
             inspection: updatedInspection,
-            vehicleRegion: _vehicleRegion!,
+            vehicleRegion: '',
+            inspectionService: _inspectionService,
           ),
         ),
       );
@@ -271,7 +290,7 @@ class _UploadDamageImageScreenState extends State<UploadDamageImageScreen> {
       ..showSnackBar(SnackBar(content: AppText(message)));
   }
 
-  void _showImageSourceSheet() {
+  void _showImageSourceSheet({bool overview = false}) {
     if (_isUploading) {
       return;
     }
@@ -316,7 +335,7 @@ class _UploadDamageImageScreenState extends State<UploadDamageImageScreen> {
                 onTap: () {
                   Navigator.of(context).pop();
 
-                  _pickImage(ImageSource.camera);
+                  _pickImage(ImageSource.camera, overview: overview);
                 },
               ),
 
@@ -329,7 +348,7 @@ class _UploadDamageImageScreenState extends State<UploadDamageImageScreen> {
                 onTap: () {
                   Navigator.of(context).pop();
 
-                  _pickImage(ImageSource.gallery);
+                  _pickImage(ImageSource.gallery, overview: overview);
                 },
               ),
             ],
@@ -339,8 +358,8 @@ class _UploadDamageImageScreenState extends State<UploadDamageImageScreen> {
     );
   }
 
-  String _formatFileSize() {
-    final bytes = _selectedImageBytes;
+  String _formatFileSize([Uint8List? selected]) {
+    final bytes = selected ?? _selectedImageBytes;
 
     if (bytes == null) {
       return '';
@@ -364,6 +383,7 @@ class _UploadDamageImageScreenState extends State<UploadDamageImageScreen> {
     final textTheme = Theme.of(context).textTheme;
 
     final hasImage = _selectedImageBytes != null;
+    final hasBothImages = hasImage && _overviewBytes != null;
 
     return Scaffold(
       appBar: AppBar(title: const AppText('Hasar Fotoğrafı')),
@@ -384,11 +404,11 @@ class _UploadDamageImageScreenState extends State<UploadDamageImageScreen> {
               children: [
                 const AppPageHeader(
                   icon: Icons.image_search_rounded,
-                  title: 'Hasarı ve çevresindeki parçayı gösterin',
+                  title: 'Hasarı iki fotoğrafla gösterin',
                   subtitle:
-                      'Tek bir net fotoğraf yeterli. Hasarın ayrıntıları ve bulunduğu '
-                      'araç parçası aynı karede görünsün; çok yakından veya uzaktan çekmeyin.',
-                  badge: 'TEK FOTOĞRAF',
+                      'Önce araç parçasını ve hasarın çevresini gösteren genel görünümü, '
+                      'ardından aynı hasarın net yakın detayını ekleyin.',
+                  badge: 'İKİ FOTOĞRAF',
                 ),
 
                 const SizedBox(height: AppTheme.spacingL),
@@ -456,7 +476,43 @@ class _UploadDamageImageScreenState extends State<UploadDamageImageScreen> {
 
                 const SizedBox(height: 18),
 
+                const AppText(
+                  '1. Genel görünüm',
+                  style: TextStyle(fontWeight: FontWeight.w800),
+                ),
+                const SizedBox(height: 6),
+                const AppText(
+                  'Hasarın bulunduğu araç parçası ve çevresi aynı karede görünsün. İnsan ve plaka gibi kişisel bilgileri kadraja almayın.',
+                ),
+                const SizedBox(height: 12),
                 _PhotoUploadArea(
+                  key: const ValueKey('overview-photo'),
+                  imageBytes: _overviewBytes,
+                  isUploading: _isUploading,
+                  onTap: () => _showImageSourceSheet(overview: true),
+                ),
+                if (_overviewBytes != null) ...[
+                  const SizedBox(height: 12),
+                  _SelectedFileInfo(
+                    filename: _overviewFilename ?? 'Genel görünüm',
+                    fileSize: _formatFileSize(_overviewBytes),
+                    onChange: _isUploading
+                        ? null
+                        : () => _showImageSourceSheet(overview: true),
+                  ),
+                ],
+                const SizedBox(height: 20),
+                const AppText(
+                  '2. Yakın detay',
+                  style: TextStyle(fontWeight: FontWeight.w800),
+                ),
+                const SizedBox(height: 6),
+                const AppText(
+                  'Aynı hasarın ayrıntılarını net gösterin; fotoğraf bulanık veya yansımalı olmasın.',
+                ),
+                const SizedBox(height: 12),
+                _PhotoUploadArea(
+                  key: const ValueKey('detail-photo'),
                   imageBytes: _selectedImageBytes,
                   isUploading: _isUploading,
                   onTap: _showImageSourceSheet,
@@ -472,36 +528,28 @@ class _UploadDamageImageScreenState extends State<UploadDamageImageScreen> {
                   ),
                 ],
 
-                if (_qualityIssue != null) ...[
-                  const SizedBox(height: 12),
-                  _ImageQualityIssueCard(message: _qualityIssue!),
-                ],
-
                 const SizedBox(height: 18),
 
                 const _PhotoTipsCard(),
 
                 const SizedBox(height: 18),
 
-                _VehicleRegionSelector(
-                  value: _vehicleRegion,
-                  enabled: !_isUploading,
-                  onChanged: (value) => setState(() => _vehicleRegion = value),
-                ),
-
                 const SizedBox(height: 26),
 
+                const AppText('İki fotoğraf görsel değerlendirme için Google Gemini’ye gönderilir. İnsan, plaka veya belge gibi kişisel bilgileri kadraja almayın.'),
+                const SizedBox(height: 12),
+
                 PrimaryButton(
-                  label: hasImage ? 'Analizi Başlat' : 'Fotoğraf Seç',
+                  label: hasBothImages
+                      ? 'Analizi Başlat'
+                      : 'İki fotoğrafı tamamlayın',
                   icon: hasImage
                       ? Icons.auto_awesome_rounded
                       : Icons.add_a_photo_outlined,
                   isLoading: _isUploading,
-                  onPressed: _isUploading
+                  onPressed: _isUploading || !hasBothImages
                       ? null
-                      : hasImage
-                      ? (_vehicleRegion == null ? null : _uploadImage)
-                      : _showImageSourceSheet,
+                      : _uploadImage,
                 ),
               ],
             ),
@@ -512,106 +560,9 @@ class _UploadDamageImageScreenState extends State<UploadDamageImageScreen> {
   }
 }
 
-class _VehicleRegionSelector extends StatelessWidget {
-  const _VehicleRegionSelector({
-    required this.value,
-    required this.enabled,
-    required this.onChanged,
-  });
-
-  final String? value;
-  final bool enabled;
-  final ValueChanged<String> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-
-    return AppCard(
-      showShadow: false,
-      padding: const EdgeInsets.all(14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          AppText(
-            'Hasar aracın hangi yarısında?',
-            style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
-          ),
-          const SizedBox(height: 4),
-          AppText(
-            'Analizden önce bir yarı seçin. AI’ın ön ve arka parçaları ayırmasına yardımcı olur.',
-            style: textTheme.bodySmall?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 10,
-            runSpacing: 8,
-            children: [
-              ChoiceChip(
-                label: const AppText('Ön yarı'),
-                avatar: const Icon(Icons.arrow_upward_rounded, size: 18),
-                selected: value == 'FRONT',
-                onSelected: enabled ? (_) => onChanged('FRONT') : null,
-                materialTapTargetSize: MaterialTapTargetSize.padded,
-              ),
-              ChoiceChip(
-                label: const AppText('Arka yarı'),
-                avatar: const Icon(Icons.arrow_downward_rounded, size: 18),
-                selected: value == 'REAR',
-                onSelected: enabled ? (_) => onChanged('REAR') : null,
-                materialTapTargetSize: MaterialTapTargetSize.padded,
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ImageQualityIssueCard extends StatelessWidget {
-  const _ImageQualityIssueCard({required this.message});
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return AppCard(
-      showShadow: false,
-      backgroundColor: colorScheme.errorContainer.withValues(alpha: 0.45),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(Icons.camera_alt_outlined, color: colorScheme.error),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                AppText(
-                  'Fotoğrafı yeniden çekin',
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: colorScheme.error,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                const SizedBox(height: 5),
-                AppText(message, style: Theme.of(context).textTheme.bodyMedium),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _PhotoUploadArea extends StatelessWidget {
   const _PhotoUploadArea({
+    super.key,
     required this.imageBytes,
     required this.isUploading,
     required this.onTap,
@@ -880,7 +831,7 @@ class _PhotoTipsCard extends StatelessWidget {
           const _PhotoTip(
             icon: Icons.center_focus_strong_outlined,
             text:
-                'Hasar ayrıntıları ve çevresindeki araç parçası aynı karede net görünsün.',
+                'Genel görünüm ve yakın detay aynı araç bölgesini göstermeli.',
           ),
 
           const SizedBox(height: 10),
@@ -888,8 +839,7 @@ class _PhotoTipsCard extends StatelessWidget {
           const _PhotoTip(
             icon: Icons.zoom_out_map_rounded,
             text:
-                'Aracın tamamını çekmeniz gerekmez. Yalnızca boya yüzeyini gösteren '
-                'çok yakın veya hasarı küçük bırakan uzak çekimlerden kaçının.',
+                'İki farklı fotoğraf kullanın. Yapay zekâ değerlendirmesi fiziksel ekspertiz yerine geçmez.',
           ),
         ],
       ),

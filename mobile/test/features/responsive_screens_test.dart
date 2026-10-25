@@ -121,14 +121,11 @@ void main() {
             ),
           );
           await tester.pumpAndSettle();
-          await tester.scrollUntilVisible(
-            find.byType(PrimaryButton),
-            200,
-            maxScrolls: 30,
-          );
-          await tester.ensureVisible(find.byType(PrimaryButton));
+            final overviewArea = find.byKey(const ValueKey('overview-photo'));
+            await tester.scrollUntilVisible(overviewArea, 200, maxScrolls: 30);
+            await tester.ensureVisible(overviewArea);
           await tester.pumpAndSettle();
-          await tester.tap(find.byType(PrimaryButton));
+            await tester.tap(overviewArea);
           await tester.pumpAndSettle();
           expect(find.text('Fotoğraf kaynağı'), findsOneWidget);
           // Both sources remain reachable without invoking a platform picker.

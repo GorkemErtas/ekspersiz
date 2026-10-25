@@ -1,11 +1,11 @@
-/// Keep new image operations disabled until a damage provider is integrated.
+/// Server readiness and credentials control Gemini availability.
 class DamageAnalysisAvailability {
   static bool get available => const bool.fromEnvironment(
     'DAMAGE_ANALYSIS_ENABLED',
-    defaultValue: false,
+    defaultValue: true,
   );
 
   static const message =
-      'Hasar analizi geçici olarak kullanılamıyor. '
-      'Mevcut analiz ve raporlarınıza erişebilirsiniz.';
+      'Hasar analizi geÃ§ici olarak kullanÄ±lamÄ±yor. '
+      'Mevcut analiz ve raporlarÄ±nÄ±za eriÅŸebilirsiniz.';
 }

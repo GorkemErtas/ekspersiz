@@ -12,7 +12,7 @@ class InspectionService {
     this.imageCache,
   });
 
-  static const Duration _analysisTimeout = Duration(seconds: 90);
+  static const Duration _analysisTimeout = Duration(seconds: 120);
 
   final ApiClient apiClient;
   final InspectionImageCache? imageCache;
@@ -93,18 +93,36 @@ class InspectionService {
     return uploaded;
   }
 
+  Future<DamageInspection> uploadContextImage({
+    required int inspectionId,
+    required List<int> imageBytes,
+    required String filename,
+    required String contentType,
+  }) async {
+    final response = await apiClient.postMultipart(
+      '/inspections/$inspectionId/context-image',
+      fileBytes: imageBytes,
+      filename: filename,
+      fileFieldName: 'image',
+      contentType: contentType,
+    );
+    return _parseInspection(response, 'Genel görünüm fotoğrafı yüklenemedi.');
+  }
+
   Future<DamageInspection> analyzeInspection(
     int inspectionId, {
     required String vehicleRegion,
   }) async {
     final normalizedRegion = vehicleRegion.trim().toUpperCase();
-    if (normalizedRegion != 'FRONT' && normalizedRegion != 'REAR') {
+    if (normalizedRegion.isNotEmpty &&
+        normalizedRegion != 'FRONT' &&
+        normalizedRegion != 'REAR') {
       throw const FormatException('Araç bölgesi seçimi geçersiz.');
     }
 
     final response = await apiClient.post(
       '/inspections/$inspectionId/analyze'
-      '?vehicleRegion=${Uri.encodeQueryComponent(normalizedRegion)}',
+      '?requireContext=true${normalizedRegion.isEmpty ? '' : '&vehicleRegion=${Uri.encodeQueryComponent(normalizedRegion)}'}',
       timeout: _analysisTimeout,
     );
 

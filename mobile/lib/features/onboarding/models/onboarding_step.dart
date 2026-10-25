@@ -28,11 +28,11 @@ const onboardingSteps = [
   ),
   OnboardingStep(
     feature: GuideFeature.analysis,
-    category: 'TEK FOTOĞRAF · AI ANALİZİ',
-    title: 'Bir fotoğrafla\nhasarı anlamaya başla.',
+      category: 'İKİ FOTOĞRAF · AI ANALİZİ',
+      title: 'İki fotoğrafla\nhasarı anlamaya başla.',
     description:
-        'Aracını seç, hasarlı bölgenin net bir fotoğrafını çek veya '
-        'galeriden yükle. AI, fotoğraftaki görünür hasarları değerlendirsin.',
+          'Aracını seç; hasarın genel görünümünü ve yakın detayını yükle. '
+          'AI, aynı bölgenin iki fotoğrafındaki görünür bulguları birlikte yorumlasın.',
     hint: 'Ana Sayfa → Yeni Analiz Başlat',
   ),
   OnboardingStep(

@@ -1,4 +1,4 @@
-import 'package:mobile/features/inspection/models/vision_class_catalog.dart';
+import 'package:mobile/features/inspection/models/inspection_labels.dart';
 import 'package:mobile/core/localization/app_text.dart';
 import 'dart:typed_data';
 import 'dart:async';
@@ -347,7 +347,7 @@ class _InspectionResultScreenState extends State<InspectionResultScreen>
   }
 
   String _damageTypeLabel(String type) {
-    final current = VisionClassCatalog.label(type);
+    final current = InspectionLabels.label(type);
     if (current != null) return current;
     return switch (type) {
       'NO_VISIBLE_DAMAGE' => 'Görünür Hasar Yok',
@@ -363,7 +363,7 @@ class _InspectionResultScreenState extends State<InspectionResultScreen>
   }
 
   String _vehiclePartLabel(String part) {
-    final current = VisionClassCatalog.label(part);
+    final current = InspectionLabels.label(part);
     if (current != null) return current;
     return switch (part) {
       'UNKNOWN' => 'Bilinmeyen Parça',
@@ -393,7 +393,7 @@ class _InspectionResultScreenState extends State<InspectionResultScreen>
   }
 
   String _repairActionLabel(String action) {
-    final current = VisionClassCatalog.label(action);
+    final current = InspectionLabels.label(action);
     if (current != null) return current;
     return switch (action) {
       'NO_ACTION' => 'İşlem Gerekmiyor',
@@ -534,6 +534,25 @@ class _InspectionResultScreenState extends State<InspectionResultScreen>
                   _ConfidenceCard(confidence: _inspection.confidenceScore!),
                 ],
 
+                if (_inspection.visualFindings.isNotEmpty) ...[
+                  const SizedBox(height: AppTheme.spacingM),
+                  _SectionCard(
+                    icon: Icons.visibility_outlined,
+                    title: 'Fotoğraflarda Görülen Bulgular',
+                    subtitle: 'Yapay zekâ yorumu · Fiziksel ekspertiz değildir',
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: _inspection.visualFindings
+                          .map(
+                            (finding) => Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: AppText(finding.description),
+                            ),
+                          )
+                          .toList(),
+                    ),
+                  ),
+                ],
                 if (!noVisibleDamage && _inspection.damageTypes.isNotEmpty) ...[
                   const SizedBox(height: AppTheme.spacingM),
 
@@ -645,7 +664,7 @@ class _InspectionResultScreenState extends State<InspectionResultScreen>
                     const SizedBox(height: AppTheme.spacingM),
 
                     _PriceEstimateCard(
-                      inspectionOnly: _inspection.schemaVersion == 'hitl-v1',
+                      inspectionOnly: _inspection.isInspectionOnly,
                       minimum: _formatPrice(report.estimatedMinimumPrice),
 
                       maximum: _formatPrice(report.estimatedMaximumPrice),

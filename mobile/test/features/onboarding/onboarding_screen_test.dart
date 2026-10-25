@@ -182,7 +182,7 @@ void main() {
     await tester.pump();
     expect(find.text('2 / 6'), findsOneWidget);
     expect(
-      find.bySemanticsLabel('Adım 2 / 6: TEK FOTOĞRAF · AI ANALİZİ'),
+      find.bySemanticsLabel('Adım 2 / 6: İKİ FOTOĞRAF · AI ANALİZİ'),
       findsOneWidget,
     );
     expect(tester.takeException(), isNull);

@@ -1,4 +1,4 @@
-import 'package:mobile/features/inspection/models/vision_class_catalog.dart';
+import 'package:mobile/features/inspection/models/inspection_labels.dart';
 import 'dart:io';
 
 import 'package:flutter/services.dart';
@@ -175,7 +175,7 @@ class InspectionPdfService {
               report.estimatedMinimumPrice,
               report.estimatedMaximumPrice,
               report.currency,
-              inspectionOnly: inspection.schemaVersion == 'hitl-v1',
+              inspectionOnly: inspection.isInspectionOnly,
             ),
           ],
           pw.SizedBox(height: 18),
@@ -421,7 +421,7 @@ class InspectionPdfService {
     _ => 'Hasar Seviyesi Belirsiz',
   }).tr;
   static String _damageLabel(String value) =>
-      VisionClassCatalog.label(value) ??
+      InspectionLabels.label(value) ??
       (switch (value) {
         'SCRATCH' => 'Çizik',
         'PAINT_DAMAGE' => 'Boya Hasarı',
@@ -433,7 +433,7 @@ class InspectionPdfService {
         _ => value,
       }).tr;
   static String _partLabel(String value) =>
-      VisionClassCatalog.label(value) ??
+      InspectionLabels.label(value) ??
       (switch (value) {
         'FRONT_BUMPER' => 'Ön Tampon',
         'REAR_BUMPER' => 'Arka Tampon',
@@ -459,7 +459,7 @@ class InspectionPdfService {
         _ => value,
       }).tr;
   static String _repairLabel(String value) =>
-      VisionClassCatalog.label(value) ??
+      InspectionLabels.label(value) ??
       (switch (value) {
         'NO_ACTION' => 'İşlem Gerekmiyor',
         'POLISHING' => 'Pasta / Cila',

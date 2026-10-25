@@ -13,6 +13,8 @@ import '../../../core/widgets/app_motion.dart';
 import '../models/damage_inspection.dart';
 import '../services/inspection_service.dart';
 import 'inspection_result_screen.dart';
+import 'upload_damage_image_screen.dart';
+import 'create_inspection_screen.dart';
 import '../../billing/screens/subscription_screen.dart';
 
 class AnalyzingScreen extends StatefulWidget {
@@ -43,6 +45,7 @@ class _AnalyzingScreenState extends State<AnalyzingScreen>
   bool _needsStatusCheck = false;
   bool _statusUncertain = false;
   bool _legacyReportStarted = false;
+  bool _creatingPhotoAttempt = false;
   int _run = 0;
 
   late final AnimationController _pulseController;
@@ -242,7 +245,11 @@ class _AnalyzingScreenState extends State<AnalyzingScreen>
         _acceptStatus(run, current);
         return;
       }
-      _fail(run, error);
+      if (current.needsMorePhotos) {
+        _acceptStatus(run, current);
+      } else {
+        _fail(run, error);
+      }
     } catch (_) {
       if (!_isCurrent(run)) return;
       // Even when status cannot be fetched, already received ML is useful.
@@ -284,6 +291,51 @@ class _AnalyzingScreenState extends State<AnalyzingScreen>
     );
   }
 
+  Future<void> _requestNewPhotos() async {
+    if (_creatingPhotoAttempt) return;
+    _creatingPhotoAttempt = true;
+    try {
+      final current = _progress ?? widget.inspection;
+      // Started inspections remain immutable. A replacement photo pair gets
+      // a new attempt; the failed attempt remains in history without a charge.
+      if (current.locationLatitude == null ||
+          current.locationLongitude == null) {
+        if (!mounted) return;
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute<void>(
+            builder: (_) => const CreateInspectionScreen(),
+          ),
+        );
+        return;
+      }
+      final next = await _inspectionService.createInspection(
+        vehicleId: current.vehicleId,
+        city: current.locationCity,
+        latitude: current.locationLatitude!,
+        longitude: current.locationLongitude!,
+      );
+      if (!mounted) return;
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute<void>(
+          builder: (_) => UploadDamageImageScreen(
+            inspection: next,
+            inspectionService: _inspectionService,
+          ),
+        ),
+      );
+    } catch (error) {
+      if (mounted) {
+        setState(
+          () => _errorMessage = error is ApiException
+              ? error.message
+              : 'Yeni fotoğraf yükleme adımı başlatılamadı.',
+        );
+      }
+    } finally {
+      _creatingPhotoAttempt = false;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return PopScope(
@@ -297,12 +349,16 @@ class _AnalyzingScreenState extends State<AnalyzingScreen>
 
               child: _hasError
                   ? AppStateView.error(
-                      title: 'Analiz tamamlanamadı',
+                      title: _progress?.needsMorePhotos == true
+                          ? 'Yeni fotoğraflar gerekli'
+                          : 'Analiz tamamlanamadı',
                       message: _errorMessage ?? 'Beklenmeyen bir hata oluştu.',
                       actionLabel: _creditRequired
                           ? 'Analiz kredisi al'
                           : _statusUncertain
                           ? 'Sonucu Kontrol Et'
+                          : _progress?.needsMorePhotos == true
+                          ? 'Fotoğrafları Güncelle'
                           : 'Analizi Tekrar Dene',
                       actionIcon: Icons.refresh_rounded,
                       onActionPressed: _creditRequired
@@ -316,6 +372,8 @@ class _AnalyzingScreenState extends State<AnalyzingScreen>
                               );
                               if (mounted) await _analyze();
                             }
+                          : _progress?.needsMorePhotos == true
+                          ? _requestNewPhotos
                           : _analyze,
                     )
                   : SingleChildScrollView(
@@ -547,7 +605,7 @@ class _AnalyzingContent extends StatelessWidget {
                 icon: Icons.description_outlined,
                 title: 'Detaylı AI raporu ve maliyetler',
                 description:
-                    'ML sonuçlarından rapor, onarım önerileri ve fiyat tahmini otomatik hazırlanır.',
+                    'İki fotoğraftaki görsel yorumlardan rapor, olası onarımlar ve fiyat tahmini hazırlanır.',
                 showLine: false,
               ),
             ],

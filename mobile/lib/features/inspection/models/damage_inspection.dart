@@ -1,4 +1,5 @@
 import 'damage_detection.dart';
+import 'visual_finding.dart';
 import 'damage_repair_recommendation.dart';
 import 'inspection_report.dart';
 
@@ -6,6 +7,10 @@ class DamageInspection {
   const DamageInspection({
     this.schemaVersion,
     this.modelVersion,
+    this.contextImagePath,
+    this.analysisOutcome,
+    this.additionalPhotoGuidance,
+    this.visualFindings = const [],
     required this.id,
     required this.vehicleId,
     required this.vehiclePlate,
@@ -35,6 +40,19 @@ class DamageInspection {
 
   final String? schemaVersion;
   final String? modelVersion;
+  final String? contextImagePath;
+  final String? analysisOutcome;
+  final String? additionalPhotoGuidance;
+  final List<VisualFinding> visualFindings;
+  bool get needsMorePhotos =>
+      analysisOutcome == 'NEEDS_MORE_PHOTOS' ||
+      analysisOutcome == 'INCONCLUSIVE';
+  bool get isInspectionOnly =>
+      schemaVersion == 'hitl-v1' ||
+      (repairRecommendations.isNotEmpty &&
+          repairRecommendations.every(
+            (r) => r.recommendedAction == 'PROFESSIONAL_INSPECTION',
+          ));
   final int id;
 
   final int vehicleId;
@@ -96,6 +114,15 @@ class DamageInspection {
     return DamageInspection(
       schemaVersion: json['schemaVersion'] as String?,
       modelVersion: json['modelVersion'] as String?,
+      contextImagePath: json['contextImagePath'] as String?,
+      analysisOutcome: json['analysisOutcome'] as String?,
+      additionalPhotoGuidance: json['additionalPhotoGuidance'] as String?,
+      visualFindings: (json['visualFindings'] as List? ?? const [])
+          .whereType<Map>()
+          .map(
+            (item) => VisualFinding.fromJson(Map<String, dynamic>.from(item)),
+          )
+          .toList(),
       id: _parseInt(json['id']),
       vehicleId: _parseInt(json['vehicleId']),
       vehiclePlate: _parseString(json['vehiclePlate']),

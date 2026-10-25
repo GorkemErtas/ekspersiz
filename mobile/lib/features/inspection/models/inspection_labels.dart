@@ -1,5 +1,5 @@
-// Generated from the audited HITL catalog. Original IDs/names remain in API data.
-class VisionClassCatalog {
+// Display labels for current enums and historical records. No model/class-ID mapping.
+class InspectionLabels {
   static const labels = <String, String>{
     'BROKEN_PART': 'Kırık parça',
     'Broken part': 'Kırık parça',

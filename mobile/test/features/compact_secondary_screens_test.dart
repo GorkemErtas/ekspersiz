@@ -18,7 +18,7 @@ void main() {
   setUp(initializeUiSession);
 
   testWidgets(
-    'new analysis explains unavailability without loading quota or vehicles',
+    'new analysis respects its availability configuration',
     (tester) async {
       var requests = 0;
       await http.runWithClient(
@@ -32,13 +32,19 @@ void main() {
             ),
           );
           await tester.pumpAndSettle();
-          expect(find.text(DamageAnalysisAvailability.message), findsOneWidget);
-          expect(requests, 0);
+            if (DamageAnalysisAvailability.available) {
+              expect(requests, greaterThan(0));
+              expect(find.text(DamageAnalysisAvailability.message), findsNothing);
+            } else {
+              expect(find.text(DamageAnalysisAvailability.message), findsOneWidget);
+              expect(requests, 0);
+            }
           expect(tester.takeException(), isNull);
         },
         () => MockClient((request) async {
           requests++;
-          return uiJsonResponse({});
+            return uiJsonResponse(request.url.path.endsWith('/vehicles')
+                ? [uiVehicleJson] : {'remaining': 1, 'canAnalyze': true});
         }),
       );
     },

@@ -157,7 +157,7 @@ class GuideArtwork extends StatelessWidget {
       right: 24,
       child: _MiniCard(
         icon: Icons.add_a_photo_outlined,
-        title: 'Net bir fotoğrafla başla',
+        title: 'Genel görünüm ve yakın detay',
         subtitle: 'Çek veya galeriden seç',
       ),
     ),
