@@ -46,7 +46,7 @@ public class GeminiInspectionReportService {
 
     /**
      * Gemini estimates ONLY repair prices and pricing explanations.
-     * Narrative/title/disclaimer are generated locally from the ML results.
+     * Narrative/title/disclaimer are generated locally from the visual observations.
      * Keep the same public result/persistence contract for existing clients.
      */
     public LlmInspectionReportResult generateReport(InspectionLlmRequest request) {
@@ -75,7 +75,7 @@ public class GeminiInspectionReportService {
         // Keep price evidence internal; do not expose raw URLs in user-facing reports.
         String source = evidence == null
                 ? "Güncel web fiyatı doğrulanamadı veya arama kapalı; genel piyasa, araç, şehir "
-                    + "ve ML onarım bilgileri kullanıldı. Güncel bir servis teklifi değildir."
+                    + "ve görsel onarım bilgileri kullanıldı. Güncel bir servis teklifi değildir."
                 : "Çevrimiçi piyasa fiyat örnekleri, araç, şehir ve önerilen onarım işlemleri "
                     + "dikkate alınarak yaklaşık tahmin oluşturuldu. Kesin servis teklifi değildir.";
 

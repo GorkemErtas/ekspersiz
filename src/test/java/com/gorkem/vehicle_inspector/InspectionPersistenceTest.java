@@ -142,11 +142,9 @@ class InspectionPersistenceTest {
         when(verificationCodes.generate()).thenReturn("123456");
         when(verificationCodes.hash("123456")).thenReturn("code-hash");
         when(verificationCodes.matches("123456", "code-hash")).thenReturn(true);
-        when(ai.analyzeSingleImage(any(), any())).thenAnswer(call -> {
+        when(ai.analyze(any(), any(), any())).thenAnswer(call -> {
             assertFalse(TransactionSynchronizationManager.isActualTransactionActive());
-            AiAnalysisResponse response = new AiAnalysisResponse();
-            response.setDamageSeverity(DamageSeverity.NONE);
-            return response;
+            return GeminiVisionFixtures.success();
         });
         when(reports.generateReport(any())).thenAnswer(call -> {
             assertFalse(TransactionSynchronizationManager.isActualTransactionActive());
@@ -409,11 +407,11 @@ class InspectionPersistenceTest {
                 owner.getEmail()
         );
 
-        tx.executeWithoutResult(status ->
-                inspections.findById(created.getId())
-                        .orElseThrow()
-                        .setImagePath("test.jpg")
-        );
+        tx.executeWithoutResult(status -> {
+            var pair = inspections.findById(created.getId()).orElseThrow();
+            pair.setImagePath("test.jpg");
+            pair.setContextImagePath("overview.jpg");
+        });
 
         assertEquals(
                 owner.getId(),
@@ -636,7 +634,7 @@ class InspectionPersistenceTest {
                             )
             );
             assertNull(inspections.findById(ids[1]).orElseThrow().getAnalysisStartedAt());
-            verify(ai, times(1)).analyzeSingleImage(any(), any());
+            verify(ai, times(1)).analyze(any(), any(), any());
         } finally {
             releaseFirst.countDown();
             executor.shutdownNow();
@@ -649,12 +647,10 @@ class InspectionPersistenceTest {
         Long id = tx.execute(status -> saveInspection(firstVehicle, owner, null, InspectionStatus.PENDING).getId());
         CountDownLatch analyzing = new CountDownLatch(1);
         CountDownLatch finish = new CountDownLatch(1);
-        when(ai.analyzeSingleImage(any(), any())).thenAnswer(call -> {
+        when(ai.analyze(any(), any(), any())).thenAnswer(call -> {
             analyzing.countDown();
             assertTrue(finish.await(10, TimeUnit.SECONDS));
-            AiAnalysisResponse response = new AiAnalysisResponse();
-            response.setDamageSeverity(DamageSeverity.NONE);
-            return response;
+            return GeminiVisionFixtures.success();
         });
         ExecutorService executor = Executors.newSingleThreadExecutor();
         try {
@@ -663,7 +659,7 @@ class InspectionPersistenceTest {
             assertThrows(IllegalStateException.class, () -> service.analyzeInspection(id, member.getEmail()));
             finish.countDown();
             request.get(10, TimeUnit.SECONDS);
-            verify(ai, times(1)).analyzeSingleImage(any(), any());
+            verify(ai, times(1)).analyze(any(), any(), any());
         } finally {
             finish.countDown();
             executor.shutdownNow();
@@ -719,6 +715,7 @@ class InspectionPersistenceTest {
         DamageInspection inspection = new DamageInspection(vehicle, creator, status);
         inspection.setAnalysisStartedAt(started);
         inspection.setImagePath("test.jpg");
+        inspection.setContextImagePath("overview.jpg");
         inspection.setLocationCity("İzmir");
         inspection.setLocationLatitude(38.4);
         inspection.setLocationLongitude(27.1);

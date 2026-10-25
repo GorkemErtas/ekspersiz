@@ -52,11 +52,9 @@ public class AiAssistantToolService {
                 .map(i -> new AiAssistantDamageToolResponse(i.getId(), i.getDamageSeverity()==null?null:i.getDamageSeverity().name(),
                         i.getConfidenceScore(), i.getAnalysisMessage(), i.getCompletedAt(),
                         i.getAnalysisSchemaVersion(), i.getAnalysisModelVersion(),
-                        "hitl-v1".equals(i.getAnalysisSchemaVersion()) ? i.getRepairRecommendations().stream()
-                                .map(r -> VisionClassCatalog.byCode(r.getDamageType().name()).originalName()).distinct().toList() : List.of(),
-                        "hitl-v1".equals(i.getAnalysisSchemaVersion()) ? i.getRepairRecommendations().stream()
-                                .flatMap(r -> r.getAffectedParts().stream())
-                                .map(p -> VisionClassCatalog.byCode(p.name()).originalName()).distinct().toList() : List.of())).toList();
+                        i.getRepairRecommendations().stream().map(r -> r.getDamageType().name()).distinct().toList(),
+                        i.getRepairRecommendations().stream().flatMap(r -> r.getAffectedParts().stream())
+                                .map(Enum::name).distinct().toList())).toList();
     }
 
     private AiAssistantVehicleToolResponse vehicleDto(Vehicle v) {

@@ -203,6 +203,6 @@ class InspectionReportNarrativeBuilderTest {
         assertTrue(prompt.contains("TOPLAM ONARIM FİYATI"));
         assertTrue(prompt.contains("ML'in verdiği özet"));
         assertTrue(prompt.contains("0.91"));
-        assertTrue(prompt.contains("ML güven skoru"));
+        assertTrue(prompt.contains("Tarihsel güven skoru"));
     }
 }

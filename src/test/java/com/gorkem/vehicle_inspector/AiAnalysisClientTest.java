@@ -15,7 +15,7 @@ class AiAnalysisClientTest {
     @org.junit.jupiter.api.io.TempDir Path temporary;
 
     @Test
-    void approvedProviderReadinessThenSinglePhotoContractIsUsed() throws Exception {
+    void configuredProviderReceivesBothPhotosInOneRequest() throws Exception {
         var template=new org.springframework.web.client.RestTemplate();
         var server=org.springframework.test.web.client.MockRestServiceServer.createServer(template);
         var client=new AiAnalysisClient(template);
@@ -23,19 +23,23 @@ class AiAnalysisClientTest {
         org.springframework.test.util.ReflectionTestUtils.setField(client,"baseUrl","https://vision.test");
         org.springframework.test.util.ReflectionTestUtils.setField(client,"serviceApiKey","test-service-key");
         var image=temporary.resolve("car.png");java.nio.file.Files.write(image,new byte[]{1,2,3});
+        var overview=temporary.resolve("overview.png");java.nio.file.Files.write(overview,new byte[]{4,5,6});
         server.expect(org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo("https://vision.test/api/v1/vision/readiness"))
                 .andExpect(org.springframework.test.web.client.match.MockRestRequestMatchers.header("X-AI-Service-Key","test-service-key"))
                 .andRespond(org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess(
-                        "{\"status\":\"READY\",\"schemaVersion\":\"hitl-v1\"}",org.springframework.http.MediaType.APPLICATION_JSON));
+                        "{\"status\":\"READY\",\"schemaVersion\":\"gemini-vision-v1\"}",org.springframework.http.MediaType.APPLICATION_JSON));
         server.expect(org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo("https://vision.test/api/v1/analyze"))
                 .andExpect(org.springframework.test.web.client.match.MockRestRequestMatchers.method(org.springframework.http.HttpMethod.POST))
                 .andExpect(org.springframework.test.web.client.match.MockRestRequestMatchers.content().contentTypeCompatibleWith(org.springframework.http.MediaType.MULTIPART_FORM_DATA))
+                .andExpect(org.springframework.test.web.client.match.MockRestRequestMatchers.content().string(org.hamcrest.Matchers.containsString("name=\"image\"")))
+                .andExpect(org.springframework.test.web.client.match.MockRestRequestMatchers.content().string(org.hamcrest.Matchers.containsString("name=\"context_image\"")))
                 .andRespond(org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess(
-                        new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(new HitlAnalysisValidatorTest().response()),
+                        java.nio.file.Files.readString(Path.of("contracts/gemini-vision-v1.example.json")),
                         org.springframework.http.MediaType.APPLICATION_JSON));
-        var result=client.analyzeSingleImage(image,"FRONT");
-        assertEquals("hitl-v1",result.getSchemaVersion());
-        assertEquals("Scratch",result.getDetections().getFirst().getLabel());
+        var result=client.analyze(image,overview,"FRONT");
+        assertEquals("gemini-vision-v1",result.getSchemaVersion());
+        assertEquals("SCRATCH",result.getVisualFindings().getFirst().damageType().name());
+        assertTrue(result.getVisualFindings().getFirst().description().contains("Kapı"));
         server.verify();
     }
     @Test
@@ -44,8 +48,6 @@ class AiAnalysisClientTest {
         var missing = Path.of("nonexistent-photo.jpg");
         List<Executable> operations = List.of(
                 client::requireAvailable,
-                () -> client.analyze(missing),
-                () -> client.analyzeSingleImage(missing, "FRONT"),
                 () -> client.analyze(missing, missing),
                 () -> client.analyze(missing, missing, "REAR"),
                 () -> client.validateImage(missing),

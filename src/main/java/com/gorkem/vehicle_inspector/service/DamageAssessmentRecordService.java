@@ -180,6 +180,11 @@ public class DamageAssessmentRecordService {
         analysis.put("confidenceScore", inspection.getConfidenceScore());
         analysis.put("analysisMessage", inspection.getAnalysisMessage());
         analysis.put("imagePath", inspection.getImagePath());
+        var visual = VisualAnalysisPayload.read(inspection);
+        if (visual != null) {
+            analysis.put("visualFindings", visual.getVisualFindings());
+            analysis.put("analysisOutcome", visual.getAnalysisOutcome());
+        }
         analysis.put("completedAt", toIsoDateTime(inspection.getCompletedAt()));
         analysis.put("detections", inspection.getDetections().stream()
                 .map(detection -> Map.of(

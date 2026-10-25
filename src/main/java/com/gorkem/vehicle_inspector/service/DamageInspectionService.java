@@ -542,19 +542,22 @@ public class DamageInspectionService {
             boolean requireContextImage,
             String vehicleRegion
     ) {
-        aiAnalysisClient.requireAvailable();
-        if (creditWallets == null) return analyzeWithReservedCredit(inspectionId,authenticatedEmail,requireContextImage,vehicleRegion,null);
+        if (creditWallets == null) {
+            aiAnalysisClient.requireAvailable();
+            return analyzeWithReservedCredit(inspectionId,authenticatedEmail,true,vehicleRegion,null);
+        }
         User user=businessContextService.requireUser(authenticatedEmail);
         DamageInspection initial=inspectionAccessService.requireInspection(inspectionId,user);
         if (initial.getStatus()==InspectionStatus.COMPLETED) {
             return regenerateReport(inspectionId,authenticatedEmail);
         }
+        aiAnalysisClient.requireAvailable();
         boolean company=initial.getVehicle().getBusinessAccount()!=null;
         var reservation=creditWallets.reserve(user,company,"ANALYSIS","inspection:"+inspectionId,"inspection:"+inspectionId);
         if (reservation.completed()) return transactionTemplate.execute(status -> buildResponse(inspectionAccessService.requireInspection(inspectionId,user)));
         boolean completed=false;
         try {
-            DamageInspectionResponse response=analyzeWithReservedCredit(inspectionId,authenticatedEmail,requireContextImage,vehicleRegion,reservation.token());
+            DamageInspectionResponse response=analyzeWithReservedCredit(inspectionId,authenticatedEmail,true,vehicleRegion,reservation.token());
             completed=response.getStatus()==InspectionStatus.COMPLETED && response.getReportStatus()==ReportStatus.COMPLETED;
             return response;
         } finally {
@@ -700,24 +703,9 @@ public class DamageInspectionService {
                                     context.imagePath()
                             );
 
-            AiAnalysisResponse aiResponse;
-            if (context.contextImagePath() == null
-                    || context.contextImagePath().isBlank()) {
-                aiResponse = aiAnalysisClient.analyzeSingleImage(
-                        storedImagePath,
-                        normalizedVehicleRegion
-                );
-            } else {
-                Path storedContextImagePath =
-                        fileStorageService.resolveStoredFile(
-                                context.contextImagePath()
-                        );
-                aiResponse = aiAnalysisClient.analyze(
-                        storedImagePath,
-                        storedContextImagePath,
-                        normalizedVehicleRegion
-                );
-            }
+            Path storedContextImagePath = fileStorageService.resolveStoredFile(context.contextImagePath());
+            AiAnalysisResponse aiResponse = aiAnalysisClient.analyze(
+                    storedImagePath, storedContextImagePath, normalizedVehicleRegion);
 
             normalizeAndValidateAnalysisResponse(aiResponse);
 
@@ -853,73 +841,10 @@ public class DamageInspectionService {
         );
     }
 
-    private void normalizeAndValidateAnalysisResponse(
-            AiAnalysisResponse response
-    ) {
-        if (response != null && response.getSchemaVersion() != null) {
-            HitlAnalysisValidator.validate(response);
-            return;
-        }
-        if (response == null || response.getDamageSeverity() == null
-                || response.getDamageSeverity() == DamageSeverity.UNKNOWN) {
-            throw new AiServiceException(
-                    "AI servisi geçerli bir hasar sonucu döndürmedi."
-            );
-        }
-
-        if (response.getDamageSeverity() == DamageSeverity.NONE) {
-            boolean hasDetections = response.getDetections() != null
-                    && !response.getDetections().isEmpty();
-            boolean hasVisibleDamageType = response.getDamageTypes() != null
-                    && response.getDamageTypes().stream().anyMatch(
-                    type -> type != null
-                            && type != DamageType.NO_VISIBLE_DAMAGE);
-            boolean hasVisibleDamageRecommendation =
-                    response.getRepairRecommendations() != null
-                    && response.getRepairRecommendations().stream().anyMatch(
-                    item -> item != null
-                            && item.getDamageType() != null
-                            && item.getDamageType() != DamageType.NO_VISIBLE_DAMAGE);
-            if (hasDetections || hasVisibleDamageType
-                    || hasVisibleDamageRecommendation) {
-                throw new AiServiceException(
-                        "AI servisi birbiriyle çelişen analiz verisi döndürdü."
-                );
-            }
-
-            RepairRecommendationResponse recommendation =
-                    new RepairRecommendationResponse();
-            recommendation.setDamageType(DamageType.NO_VISIBLE_DAMAGE);
-            recommendation.setRecommendedAction(RepairAction.NO_ACTION);
-            recommendation.setPartReplacementRequired(false);
-            recommendation.setAffectedParts(List.of());
-
-            response.setDamageTypes(List.of(DamageType.NO_VISIBLE_DAMAGE));
-            response.setAffectedParts(List.of());
-            response.setDetections(List.of());
-            response.setRepairRecommendations(List.of(recommendation));
-            response.setConfidenceScore(0.0);
-            response.setAnalysisMessage(
-                    "Gönderilen görüntüde görünür hasar tespit edilmedi. "
-                            + "Bu sonuç yalnızca görüntüdeki görünür hasar analizidir; "
-                            + "mekanik veya profesyonel ekspertiz garantisi değildir."
-            );
-            return;
-        }
-
-        Double confidence = response.getConfidenceScore();
-        if (confidence == null || !Double.isFinite(confidence)
-                || confidence < 0.0 || confidence > 1.0
-                || response.getRepairRecommendations() == null
-                || response.getRepairRecommendations().stream().noneMatch(
-                item -> item != null
-                        && item.getDamageType() != null
-                        && item.getDamageType() != DamageType.NO_VISIBLE_DAMAGE
-                        && item.getRecommendedAction() != null
-                        && item.getRecommendedAction() != RepairAction.NO_ACTION)) {
-            throw new AiServiceException(
-                    "AI servisi eksik veya geçersiz analiz verisi döndürdü."
-            );
+    private void normalizeAndValidateAnalysisResponse(AiAnalysisResponse response) {
+        GeminiAnalysisValidator.validate(response);
+        if (!"DAMAGE_DETECTED".equals(response.getAnalysisOutcome())) {
+            throw new com.gorkem.vehicle_inspector.exception.AdditionalPhotosRequiredException(response);
         }
     }
 
@@ -943,11 +868,6 @@ public class DamageInspectionService {
                     }
                     inspection.clearDetections();
                     inspection.clearRepairRecommendations();
-
-                    saveDetections(
-                            inspection,
-                            aiResponse.getDetections()
-                    );
 
                     saveRepairRecommendations(
                             inspection,
@@ -1264,6 +1184,18 @@ public class DamageInspectionService {
                             inspection.setCompletedAt(
                                     null
                             );
+                            if (exception instanceof com.gorkem.vehicle_inspector.exception.AdditionalPhotosRequiredException more) {
+                                var evidence = more.getAnalysis();
+                                inspection.setDamageSeverity(DamageSeverity.UNKNOWN);
+                                inspection.setConfidenceScore(null);
+                                inspection.setAnalysisSchemaVersion(evidence.getSchemaVersion());
+                                inspection.setAnalysisModelVersion(evidence.getModelVersion());
+                                try {
+                                    inspection.setAnalysisPayload(new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(evidence));
+                                } catch (com.fasterxml.jackson.core.JsonProcessingException invalid) {
+                                    throw new AiServiceException("Görsel değerlendirme kaydedilemedi.", invalid);
+                                }
+                            }
 
                             inspection.setAnalysisMessage(
                                     buildAnalysisErrorMessage(
@@ -1276,7 +1208,7 @@ public class DamageInspectionService {
                             );
 
                             inspection.setReportMessage(
-                                    "ML analizi tamamlanamadığı için "
+                                    "Görsel analiz tamamlanamadığı için "
                                             + "rapor oluşturulamadı."
                             );
 
@@ -1359,7 +1291,7 @@ public class DamageInspectionService {
                                     != InspectionStatus.COMPLETED) {
 
                                 throw new IllegalStateException(
-                                        "Rapor oluşturmak için ML analizi "
+                                        "Rapor oluşturmak için görsel analiz "
                                                 + "tamamlanmış olmalıdır."
                                 );
                             }
@@ -1368,7 +1300,7 @@ public class DamageInspectionService {
                                     == null) {
 
                                 throw new IllegalStateException(
-                                        "İncelemeye ait ML analiz sonucu "
+                                        "İncelemeye ait görsel analiz sonucu "
                                                 + "bulunamadı."
                                 );
                             }
@@ -1492,53 +1424,6 @@ public class DamageInspectionService {
         }
     }
 
-    private void saveDetections(
-            DamageInspection inspection,
-            List<DetectedObjectResponse> detections
-    ) {
-        if (detections == null) {
-            return;
-        }
-
-        for (DetectedObjectResponse detectedObject
-                : detections) {
-
-            if (detectedObject == null
-                    || detectedObject
-                    .getBoundingBox() == null) {
-
-                continue;
-            }
-
-            BoundingBoxResponse boundingBox =
-                    detectedObject.getBoundingBox();
-
-            if (boundingBox.getX1() == null
-                    || boundingBox.getY1() == null
-                    || boundingBox.getX2() == null
-                    || boundingBox.getY2() == null) {
-
-                continue;
-            }
-
-            DamageDetection detection =
-                    new DamageDetection(
-                            inspection,
-                            detectedObject.getLabel(),
-                            detectedObject.getConfidence(),
-                            detectedObject.getAffectedPart(),
-                            boundingBox.getX1(),
-                            boundingBox.getY1(),
-                            boundingBox.getX2(),
-                            boundingBox.getY2()
-                    );
-
-            inspection.addDetection(
-                    detection
-            );
-        }
-    }
-
     private void saveRepairRecommendations(
             DamageInspection inspection,
             List<RepairRecommendationResponse>
@@ -1582,9 +1467,7 @@ public class DamageInspectionService {
                             inspection,
                             response.getDamageType(),
                             response.getRecommendedAction(),
-                            response.getRecommendedAction() == RepairAction.PROFESSIONAL_INSPECTION
-                                    ? response.getPartReplacementRequired() : Boolean.valueOf(Boolean.TRUE.equals(
-                                    response.getPartReplacementRequired())),
+                            response.getPartReplacementRequired(),
                             recommendationParts
                     );
 

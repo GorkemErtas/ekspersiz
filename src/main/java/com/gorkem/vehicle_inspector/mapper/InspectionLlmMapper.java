@@ -59,6 +59,7 @@ public final class InspectionLlmMapper {
                             .toList();
         }
 
+        var visual = com.gorkem.vehicle_inspector.service.VisualAnalysisPayload.read(inspection);
         return new InspectionLlmRequest(
                 vehicle,
                 inspection.getLocationCity(),
@@ -68,7 +69,8 @@ public final class InspectionLlmMapper {
                 inspection.getDamageSeverity(),
                 inspection.getConfidenceScore(),
                 inspection.getAnalysisMessage(),
-                damages
+                damages,
+                visual == null ? List.of() : visual.getVisualFindings()
         );
     }
 

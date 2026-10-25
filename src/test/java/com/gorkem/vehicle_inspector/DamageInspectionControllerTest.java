@@ -29,12 +29,12 @@ class DamageInspectionControllerTest {
     }
 
     @Test
-    void newClientDefaultsToSinglePhotoAndForwardsRegion() throws Exception {
-        when(service.analyzeInspection(1L, actor.getName(), false, "FRONT"))
+    void newClientDefaultsToBothPhotosAndForwardsRegion() throws Exception {
+        when(service.analyzeInspection(1L, actor.getName(), true, "FRONT"))
                 .thenReturn(mock(DamageInspectionResponse.class));
         mvc.perform(post("/api/v1/inspections/1/analyze").param("vehicleRegion", "FRONT").principal(actor))
                 .andExpect(status().isOk());
-        verify(service).analyzeInspection(1L, actor.getName(), false, "FRONT");
+        verify(service).analyzeInspection(1L, actor.getName(), true, "FRONT");
     }
 
     @Test
@@ -49,10 +49,10 @@ class DamageInspectionControllerTest {
 
     @Test
     void oldestClientCanOmitRegion() throws Exception {
-        when(service.analyzeInspection(1L, actor.getName(), false, null))
+        when(service.analyzeInspection(1L, actor.getName(), true, null))
                 .thenReturn(mock(DamageInspectionResponse.class));
         mvc.perform(post("/api/v1/inspections/1/analyze").principal(actor)).andExpect(status().isOk());
-        verify(service).analyzeInspection(1L, actor.getName(), false, null);
+        verify(service).analyzeInspection(1L, actor.getName(), true, null);
     }
 
     @Test

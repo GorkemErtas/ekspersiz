@@ -69,8 +69,8 @@ public final class InspectionReportPromptBuilder {
                 Şehir: %s
                 Analiz tarihi: %s
                 Hasar seviyesi: %s
-                ML güven skoru: %s
-                ML analiz mesajı: %s
+                Tarihsel güven skoru (yoksa belirsiz): %s
+                Görsel analiz mesajı: %s
                 Hasarlar ve önerilen onarımlar:
                 %s
                 </inspection_data>
@@ -101,7 +101,7 @@ public final class InspectionReportPromptBuilder {
                 - Aynı fiziksel parçayı birden çok hasar kaydı için iki kere
                   fiyatlandırma; ilgili operasyonları panel bazında birleştir.
                 - Lokal rötuşu parça boyasıyla veya parça değişimiyle
-                  karıştırma. Yalnızca ML'in önerdiği işlem için fiyat ver.
+                  karıştırma. Yalnızca görsel analizin önerdiği işlem için fiyat ver.
                 - Aralığı mevcut belirsizliğe uygun ve gerçekçi tut;
                   kesinlik veya güncel fiyat doğrulaması iddia etme.
                 - currency yalnızca TRY.
@@ -149,7 +149,7 @@ public final class InspectionReportPromptBuilder {
         return """
                 Türkiye'de %s tarihi itibarıyla %s %s (%s model yılı) için
                 %s ilindeki araç kaporta/boya/onarım maliyetlerini Google Search
-                ile araştır. Şu ML onarım önerilerini esas al:
+                ile araştır. Şu görsel onarım önerilerini esas al:
                 <repair_data>
                 %s
                 </repair_data>
@@ -198,6 +198,6 @@ public final class InspectionReportPromptBuilder {
         if (value == null || value.toString().isBlank()) {
             return "Belirtilmemiş";
         }
-        return value.toString().trim();
+        return value.toString().trim().replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
     }
 }

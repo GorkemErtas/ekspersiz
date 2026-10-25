@@ -10,6 +10,18 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public class DamageInspectionResponse {
+    private String contextImagePath;
+    private String analysisOutcome;
+    private String additionalPhotoGuidance;
+    private List<VisualFindingResponse> visualFindings = List.of();
+    public String getContextImagePath() { return contextImagePath; }
+    public void setContextImagePath(String value) { contextImagePath = value; }
+    public String getAnalysisOutcome() { return analysisOutcome; }
+    public void setAnalysisOutcome(String value) { analysisOutcome = value; }
+    public String getAdditionalPhotoGuidance() { return additionalPhotoGuidance; }
+    public void setAdditionalPhotoGuidance(String value) { additionalPhotoGuidance = value; }
+    public List<VisualFindingResponse> getVisualFindings() { return visualFindings; }
+    public void setVisualFindings(List<VisualFindingResponse> value) { visualFindings = value == null ? List.of() : value; }
     private String schemaVersion;
     private String modelVersion;
 

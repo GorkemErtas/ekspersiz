@@ -184,15 +184,15 @@ public class DamageInspectionController {
         );
     }
 
-    // requireContext=true is an explicit legacy opt-in, never inferred from stored files.
-    // Region stays optional for older clients; the current mobile UI requires FRONT/REAR.
+    // Both photos are mandatory for all new analyses, including requests from older clients.
+    // The region remains an optional hint; Gemini verifies the relationship between both photos.
     @PostMapping("/{inspectionId}/analyze")
     public ResponseEntity<DamageInspectionResponse>
     analyzeInspection(
             @PathVariable Long inspectionId,
             @RequestParam(
                     name = "requireContext",
-                    defaultValue = "false"
+                    defaultValue = "true"
             ) boolean requireContext,
             @RequestParam(
                     name = "vehicleRegion",

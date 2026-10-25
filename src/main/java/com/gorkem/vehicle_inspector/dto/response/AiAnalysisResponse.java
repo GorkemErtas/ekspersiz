@@ -4,17 +4,23 @@ import com.gorkem.vehicle_inspector.entity.DamageSeverity;
 import com.gorkem.vehicle_inspector.entity.DamageType;
 import com.gorkem.vehicle_inspector.entity.RepairAction;
 import com.gorkem.vehicle_inspector.entity.VehiclePart;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.util.List;
 
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class AiAnalysisResponse {
+    private List<VisualFindingResponse> visualFindings;
+    private PhotoAssessmentResponse photoAssessment;
+    private String additionalPhotoGuidance;
+
+    public List<VisualFindingResponse> getVisualFindings() { return visualFindings; }
+    public void setVisualFindings(List<VisualFindingResponse> value) { visualFindings = value; }
+    public PhotoAssessmentResponse getPhotoAssessment() { return photoAssessment; }
+    public void setPhotoAssessment(PhotoAssessmentResponse value) { photoAssessment = value; }
+    public String getAdditionalPhotoGuidance() { return additionalPhotoGuidance; }
+    public void setAdditionalPhotoGuidance(String value) { additionalPhotoGuidance = value; }
     private String schemaVersion;
     private String modelVersion;
     private String analysisOutcome;
-    private Integer imageWidth;
-    private Integer imageHeight;
-    private List<DetectedObjectResponse> partDetections;
+    private List<Object> partDetections;
 
 
     private DamageSeverity damageSeverity;
@@ -23,7 +29,7 @@ public class AiAnalysisResponse {
 
     private String analysisMessage;
 
-    private List<DetectedObjectResponse> detections;
+    private List<Object> detections;
 
     private List<VehiclePart> affectedParts;
 
@@ -65,12 +71,12 @@ public class AiAnalysisResponse {
         this.analysisMessage = analysisMessage;
     }
 
-    public List<DetectedObjectResponse> getDetections() {
+    public List<Object> getDetections() {
         return detections;
     }
 
     public void setDetections(
-            List<DetectedObjectResponse> detections
+            List<Object> detections
     ) {
         this.detections = detections;
     }
@@ -114,10 +120,6 @@ public class AiAnalysisResponse {
     public void setModelVersion(String value) { this.modelVersion = value; }
     public String getAnalysisOutcome() { return analysisOutcome; }
     public void setAnalysisOutcome(String value) { this.analysisOutcome = value; }
-    public Integer getImageWidth() { return imageWidth; }
-    public void setImageWidth(Integer value) { this.imageWidth = value; }
-    public Integer getImageHeight() { return imageHeight; }
-    public void setImageHeight(Integer value) { this.imageHeight = value; }
-    public List<DetectedObjectResponse> getPartDetections() { return partDetections; }
-    public void setPartDetections(List<DetectedObjectResponse> value) { this.partDetections = value; }
+    public List<Object> getPartDetections() { return partDetections; }
+    public void setPartDetections(List<Object> value) { this.partDetections = value; }
 }

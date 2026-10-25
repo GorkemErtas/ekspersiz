@@ -41,7 +41,7 @@ public final class DamageInspectionMapper {
                         )
                         .toList();
 
-        List<VehiclePart> affectedParts = "hitl-v1".equals(inspection.getAnalysisSchemaVersion())
+        List<VehiclePart> affectedParts = ("hitl-v1".equals(inspection.getAnalysisSchemaVersion()) || "gemini-vision-v1".equals(inspection.getAnalysisSchemaVersion()))
                 ? inspection.getRepairRecommendations().stream().flatMap(r -> r.getAffectedParts().stream()).distinct().toList()
                 :
                 inspection.getDetections()
@@ -117,6 +117,13 @@ public final class DamageInspectionMapper {
         );
         response.setSchemaVersion(inspection.getAnalysisSchemaVersion());
         response.setModelVersion(inspection.getAnalysisModelVersion());
+        response.setContextImagePath(inspection.getContextImagePath());
+        var visual = com.gorkem.vehicle_inspector.service.VisualAnalysisPayload.read(inspection);
+        if (visual != null) {
+            response.setVisualFindings(visual.getVisualFindings());
+            response.setAnalysisOutcome(visual.getAnalysisOutcome());
+            response.setAdditionalPhotoGuidance(visual.getAdditionalPhotoGuidance());
+        }
         return response;
     }
 }

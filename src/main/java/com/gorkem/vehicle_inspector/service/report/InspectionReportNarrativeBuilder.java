@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 
 /**
  * Naturally worded Turkish inspection narrative based strictly on existing
- * structured ML results. No Gemini call and no invented defects or repairs.
+ * structured visual observations. No Gemini call and no invented defects or repairs.
  * Prices and pricing explanations remain untouched and are supplied by Gemini.
  */
 public final class InspectionReportNarrativeBuilder {
@@ -53,8 +53,14 @@ public final class InspectionReportNarrativeBuilder {
         LlmInspectionReportResult result = new LlmInspectionReportResult();
         result.title = "Araç Hasar Değerlendirme Raporu";
         result.summary = buildSummary(request, damages);
-        result.damageDescription = buildDamageDescription(damages);
-        result.repairRecommendation = buildRepairRecommendation(damages);
+        result.damageDescription = request.visualFindings() == null || request.visualFindings().isEmpty()
+                ? buildDamageDescription(damages)
+                : fit(request.visualFindings().stream().map(f -> clean(f.description()))
+                        .collect(Collectors.joining(" ")) + " Bu yorumlar yalnızca fotoğraflarda görünen alanlarla sınırlıdır.", DESCRIPTION_LIMIT);
+        result.repairRecommendation = request.visualFindings() == null || request.visualFindings().isEmpty()
+                ? buildRepairRecommendation(damages)
+                : fit(request.visualFindings().stream().map(f -> clean(f.repairNotes()))
+                        .collect(Collectors.joining(" ")) + " Kesin işlem ve parça değişimi gereksinimi fiziksel incelemeyle belirlenmelidir.", DESCRIPTION_LIMIT);
         result.estimatedMinimumPrice = price.estimatedMinimumPrice();
         result.estimatedMaximumPrice = price.estimatedMaximumPrice();
         result.currency = price.currency();
@@ -212,7 +218,7 @@ public final class InspectionReportNarrativeBuilder {
         if (value.length() <= limit) {
             return value;
         }
-        // Avoid a database length violation for unusually many ML findings.
+        // Avoid a database length violation for unusually many visual findings.
         return value.substring(0, Math.max(0, limit - 1)).stripTrailing() + "…";
     }
 
