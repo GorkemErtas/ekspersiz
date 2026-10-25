@@ -124,6 +124,24 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   setUpAll(installOfflineTestFonts);
 
+  testWidgets(
+    '422 shows the rejected photo and reason without retrying paid work',
+    (tester) async {
+      const message =
+          'Genel görünüm fotoğrafı: Fotoğraf 24 MP sınırını aşıyor.';
+      final service =
+          _FlowService(_inspection(status: 'PENDING', report: 'PENDING'))
+            ..analyze = () async =>
+                throw const ApiException(statusCode: 422, message: message);
+      await _pumpAnalysis(tester, service);
+      await tester.pumpAndSettle();
+      expect(find.text(message), findsOneWidget);
+      expect(service.analyses, 1);
+      expect(service.reports, 0);
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
+
   for (final brightness in Brightness.values) {
     testWidgets(
       'one screen shows real ML/report stages then combined results: $brightness',

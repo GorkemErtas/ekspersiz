@@ -15,6 +15,7 @@ import '../../../core/widgets/app_motion.dart';
 
 import '../models/damage_inspection.dart';
 import '../services/inspection_service.dart';
+import '../services/inspection_image_optimizer.dart';
 import 'analyzing_screen.dart';
 
 class UploadDamageImageScreen extends StatefulWidget {
@@ -54,150 +55,37 @@ class _UploadDamageImageScreenState extends State<UploadDamageImageScreen> {
 
   Future<void> _pickImage(ImageSource source, {bool overview = false}) async {
     if (_isPicking || _isUploading) return;
-    _isPicking = true;
+    setState(() => _isPicking = true);
     try {
-      final image = await _imagePicker.pickImage(
-        source: source,
-        imageQuality: 90,
-      );
-
-      if (image == null || !mounted) {
-        return;
-      }
-
-      // Reject oversized files before allocating their full byte buffer.
-      // Keep the byte-length check below in case the file changes after stat.
-      final fileLength = await image.length();
+      // Keep the original until validation: picker recompression can flatten
+      // animations before we have a chance to reject them.
+      final image = await _imagePicker.pickImage(source: source);
+      if (image == null || !mounted) return;
+      final bytes = await InspectionImageOptimizer().prepare(image);
       if (!mounted) return;
-      if (fileLength > _maxImageSizeBytes) {
-        _showMessage('Fotoğraf boyutu 10 MB’dan büyük olamaz.');
-        return;
-      }
-
-      final bytes = await image.readAsBytes();
-
-      if (!mounted) {
-        return;
-      }
-
-      if (bytes.isEmpty) {
-        _showMessage('Seçilen fotoğraf boş veya okunamıyor.');
-        return;
-      }
-
-      if (bytes.length > _maxImageSizeBytes) {
-        _showMessage('Fotoğraf boyutu 10 MB’dan büyük olamaz.');
-        return;
-      }
-
-      final detectedContentType = _detectContentType(bytes);
-
-      if (detectedContentType == null) {
-        _showMessage(
-          'Seçilen dosya geçerli bir JPG, PNG veya WEBP fotoğraf değil.',
-        );
-        return;
-      }
-
-      final correctedFilename = _buildCorrectFilename(
-        originalFilename: image.name,
-        contentType: detectedContentType,
-      );
-
       setState(() {
         if (overview) {
           _overviewBytes = bytes;
-          _overviewContentType = detectedContentType;
-          _overviewFilename = correctedFilename;
+          _overviewContentType = 'image/jpeg';
+          _overviewFilename = 'overview.jpg';
         } else {
           _selectedImageBytes = bytes;
-          _selectedContentType = detectedContentType;
-          _selectedFilename = correctedFilename;
+          _selectedContentType = 'image/jpeg';
+          _selectedFilename = 'detail.jpg';
         }
       });
-    } catch (_) {
-      if (!mounted) {
-        return;
-      }
-
-      _showMessage('Fotoğraf seçilemedi.');
+    } catch (error) {
+      if (!mounted) return;
+      _showMessage(
+        error is FormatException ? error.message : 'Fotoğraf seçilemedi.',
+      );
     } finally {
-      _isPicking = false;
+      if (mounted) setState(() => _isPicking = false);
     }
-  }
-
-  String? _detectContentType(Uint8List bytes) {
-    if (_isJpeg(bytes)) {
-      return 'image/jpeg';
-    }
-
-    if (_isPng(bytes)) {
-      return 'image/png';
-    }
-
-    if (_isWebp(bytes)) {
-      return 'image/webp';
-    }
-
-    return null;
-  }
-
-  bool _isJpeg(Uint8List bytes) {
-    return bytes.length >= 2 && bytes[0] == 0xFF && bytes[1] == 0xD8;
-  }
-
-  bool _isPng(Uint8List bytes) {
-    return bytes.length >= 8 &&
-        bytes[0] == 0x89 &&
-        bytes[1] == 0x50 &&
-        bytes[2] == 0x4E &&
-        bytes[3] == 0x47 &&
-        bytes[4] == 0x0D &&
-        bytes[5] == 0x0A &&
-        bytes[6] == 0x1A &&
-        bytes[7] == 0x0A;
-  }
-
-  bool _isWebp(Uint8List bytes) {
-    return bytes.length >= 12 &&
-        bytes[0] == 0x52 &&
-        bytes[1] == 0x49 &&
-        bytes[2] == 0x46 &&
-        bytes[3] == 0x46 &&
-        bytes[8] == 0x57 &&
-        bytes[9] == 0x45 &&
-        bytes[10] == 0x42 &&
-        bytes[11] == 0x50;
-  }
-
-  String _buildCorrectFilename({
-    required String originalFilename,
-    required String contentType,
-  }) {
-    final baseName = _removeExtension(originalFilename);
-
-    final extension = switch (contentType) {
-      'image/jpeg' => 'jpg',
-      'image/png' => 'png',
-      'image/webp' => 'webp',
-      _ => 'jpg',
-    };
-
-    return '$baseName.$extension';
-  }
-
-  String _removeExtension(String filename) {
-    final lastDotIndex = filename.lastIndexOf('.');
-
-    if (lastDotIndex <= 0) {
-      return filename;
-    }
-
-    return filename.substring(0, lastDotIndex);
   }
 
   Future<void> _uploadImage() async {
-    if (_isUploading) return;
+    if (_isUploading || _isPicking) return;
     final imageBytes = _selectedImageBytes;
 
     final contentType = _selectedContentType;
@@ -291,7 +179,7 @@ class _UploadDamageImageScreenState extends State<UploadDamageImageScreen> {
   }
 
   void _showImageSourceSheet({bool overview = false}) {
-    if (_isUploading) {
+    if (_isUploading || _isPicking) {
       return;
     }
 
@@ -536,7 +424,9 @@ class _UploadDamageImageScreenState extends State<UploadDamageImageScreen> {
 
                 const SizedBox(height: 26),
 
-                const AppText('İki fotoğraf görsel değerlendirme için Google Gemini’ye gönderilir. İnsan, plaka veya belge gibi kişisel bilgileri kadraja almayın.'),
+                const AppText(
+                  'İki fotoğraf görsel değerlendirme için Google Gemini’ye gönderilir. İnsan, plaka veya belge gibi kişisel bilgileri kadraja almayın.',
+                ),
                 const SizedBox(height: 12),
 
                 PrimaryButton(
@@ -546,8 +436,8 @@ class _UploadDamageImageScreenState extends State<UploadDamageImageScreen> {
                   icon: hasImage
                       ? Icons.auto_awesome_rounded
                       : Icons.add_a_photo_outlined,
-                  isLoading: _isUploading,
-                  onPressed: _isUploading || !hasBothImages
+                  isLoading: _isUploading || _isPicking,
+                  onPressed: _isUploading || _isPicking || !hasBothImages
                       ? null
                       : _uploadImage,
                 ),

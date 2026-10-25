@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:image/image.dart' as img;
 import 'package:mobile/core/widgets/primary_button.dart';
 import 'package:mobile/features/inspection/models/damage_inspection.dart';
 import 'package:mobile/features/inspection/screens/upload_damage_image_screen.dart';
@@ -54,6 +55,15 @@ DamageInspection inspection({bool complete = false}) =>
 
 class PairService extends InspectionService {
   int detailUploads = 0, overviewUploads = 0, analyses = 0;
+  void expectOptimized(List<int> bytes, String filename, String contentType) {
+    expect(contentType, 'image/jpeg');
+    expect(filename, endsWith('.jpg'));
+    expect(bytes.length, lessThanOrEqualTo(10 * 1024 * 1024));
+    final image = img.decodeJpg(Uint8List.fromList(bytes))!;
+    expect(image.width, lessThanOrEqualTo(2048));
+    expect(image.height, lessThanOrEqualTo(2048));
+  }
+
   @override
   Future<DamageInspection> uploadImage({
     required int inspectionId,
@@ -61,6 +71,7 @@ class PairService extends InspectionService {
     required String filename,
     required String contentType,
   }) async {
+    expectOptimized(imageBytes, filename, contentType);
     detailUploads++;
     return inspection();
   }
@@ -72,6 +83,7 @@ class PairService extends InspectionService {
     required String filename,
     required String contentType,
   }) async {
+    expectOptimized(imageBytes, filename, contentType);
     expect(detailUploads, 1);
     overviewUploads++;
     return inspection();
@@ -140,7 +152,20 @@ Future<void> pick(WidgetTester tester, String key) async {
   await tester.pumpAndSettle();
   await tester.ensureVisible(find.text('Galeriden seç'));
   await tester.pumpAndSettle();
-  await tester.tap(find.text('Galeriden seç'));
+  await tester.runAsync(() async {
+    await tester.tap(find.text('Galeriden seç'));
+    // Native decoding and the JPEG isolate run outside the fake widget clock.
+    for (var i = 0; i < 200; i++) {
+      await Future<void>.delayed(const Duration(milliseconds: 25));
+      await tester.pump(const Duration(milliseconds: 25));
+      if (find
+          .descendant(of: area, matching: find.byType(Image))
+          .evaluate()
+          .isNotEmpty) {
+        break;
+      }
+    }
+  });
   await tester.pumpAndSettle();
 }
 
