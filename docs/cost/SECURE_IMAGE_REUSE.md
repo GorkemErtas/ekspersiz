@@ -13,7 +13,7 @@ her görüntü oluşturulurken `Uint8List.fromList` ile kopya üretiyordu ve dec
 sınırlanmıyordu.
 
 Yükleme ekranında zaten `Uint8List` bulunuyor. Mevcut akış korunuyor:
-tek fotoğraf yükleme → kalite doğrulama → FRONT/REAR analizi → sonuç ekranı.
+yakın detay yükleme → genel görünüm yükleme → iki fotoğrafla tek Gemini görsel analizi → sonuç ekranı.
 Baytlar navigasyon parametresi olarak taşınmıyor; `AnalyzingScreen` ve yükleme
 ekranının üretim kodunda değişiklik gerekmiyor. Başarılı yükleme yanıtından sonra
 aynı byte nesnesi sınırlara uygunsa geçici görüntü katmanına kaydediliyor.
@@ -105,7 +105,7 @@ oluşturur. Üretim egress baytı, p95 gecikme, gerçek cihaz RAM'i veya fatura 
 - `mobile/test/features/inspection/services/inspection_image_cache_test.dart`: sınırlar, yarışlar, hata ve upload testleri.
 - `mobile/test/features/inspection/services/inspection_image_session_test.dart`: gerçek ApiClient/TokenStorage üzerinden auth ve timeout testleri.
 - `mobile/test/features/inspection/screens/inspection_result_screen_test.dart`: decode sınırı ve görüntü temizliği.
-- `mobile/test/features/inspection/screens/single_photo_flow_test.dart`: upload → sonuç ve geçmişten tekrar açma.
+- `mobile/test/features/inspection/screens/two_photo_flow_test.dart`: iki fotoğraf yükleme → birleşik analiz/rapor sonucu.
 - `mobile/test/features/responsive_screens_test.dart`, `mobile/test/support/ui_mock_api.dart`: mevcut mock'ların yetki kontrolüne ve gerçek async codec'e uyarlanması.
 - Bu rapor.
 

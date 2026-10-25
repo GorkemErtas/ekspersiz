@@ -1,37 +1,43 @@
 # EksperSiz AI servisi
 
-FastAPI servisi AI Asistan kapsam/kaynak yönlendirmesini, E5 metin embedding'lerini ve pgvector RAG erişimini sağlar. HITL'nin 8 hasar ve 21 parça sınıfı için YOLOX-Tiny baseline ve ticari lisansı ayrı doğrulanan RF-DETR/RT-DETR transfer adayları aynı sürümlü API'yi kullanır. Hasar modelleri üretim için onaylanmamıştır; görüntü özelliği varsayılan kapalıdır.
+FastAPI iki bağımsız sorumluluk taşır: Gemini ile iki fotoğraflı görsel hasar yorumu ve
+AI Asistan için semantic routing, yerel E5 embedding, pgvector RAG. Java yetki, ödeme,
+kredi, kalıcı kayıt ve rapor süreçlerinin otoritesidir.
 
-## API davranışı
+## Yerel kullanım
 
-- `GET /health`: genel servis durumu `UP`. `/api/v1/vision/readiness`, açık release ayarı ve doğrulanmış bundle olmadan 503 döner.
-- `POST /api/v1/analyze` ve `POST /api/v1/validate-image`: varsayılan kapalı durumda kimliği doğrulanmış isteklere `503`, `DAMAGE_ANALYSIS_UNAVAILABLE`. Görüntü okunmaz, sahte analiz veya hasarsız sonuç üretilmez.
-- `/api/v1/assistant/plan` ve `/api/v1/assistant/readiness`: mevcut asistan sözleşmeleri korunur.
-
-Backend, analiz/doğrulamayı kredi rezervasyonu ve durum değişikliğinden önce durdurur. Geçmiş analiz verileri, görseller, hasar/parça enum'ları, rapor üretimi ve PDF akışı korunur. Rapor yeniden üretimi kaydedilmiş başarılı analizden devam eder.
-
-## Kurulum ve test
-
-```bash
+```powershell
 python -m venv venv
-# Sanal ortamı etkinleştirdikten sonra:
-python -m pip install -r requirements.txt
-python -m unittest discover -s tests -v
-uvicorn main:app --host 0.0.0.0 --port 8000
+venv/Scripts/python.exe -m pip install -r requirements.txt
+# .env.example değerlerini ortam değişkenleri olarak tanımlayın.
+venv/Scripts/python.exe -m uvicorn main:app --host 127.0.0.1 --port 8000
 ```
 
-`requirements.txt`, runtime listesini kullanır. PyTorch, SentenceTransformers tabanlı AI Asistan için korunur; görüntü çıkarımı ONNX Runtime kullanır. Docker CPU PyTorch ve mevcut E5 embedding modelini içerir; `ml/`, eğitim/export araçları ve ham veriler imaja alınmaz. Vision bundle dışarıdan bağlanır, çalışma anında indirilmez. Geliştirme/ML testleri için `requirements-training.txt` kullanılır.
+`/health` dışındaki uçlar en az 32 karakterlik `X-AI-Service-Key` ister.
+`POST /api/v1/analyze`, `image` (yakın detay) ve `context_image` (genel görünüm)
+multipart alanlarını birlikte gerektirir. İkisi tek Gemini çağrısında işlenir.
+`POST /api/v1/validate-image` yalnız yerel dosya kontrolüdür; Gemini çağrısı yapmaz.
+`GET /api/v1/vision/readiness` anahtar/yapılandırma hazır oluşunu bildirir; ücretli bir test çağrısı yapmaz.
 
-Asistan ortam ayarları ve bilgi tabanı yükleme adımları: [dağıtım](../docs/ai-assistant/DEPLOYMENT.md), [bilgi tabanı](knowledge/README.md).
+Native JSON Schema, Pydantic doğrulaması, süre/token sınırı ve yalnız açık HTTP 429 reddinde
+bir yeniden deneme bulunur. Fotoğraflar burada saklanmaz; EXIF/GPS temizlenmiş ve en fazla
+2048 piksele ölçeklenmiş iki JPEG inline gönderilir. Cloud Files/caching kullanılmaz.
+API anahtarları ve fotoğraflar loglanmaz. Günlüklerde model, süre, tokenlar ve yapılandırılmış
+birim fiyatlardan hesaplanan yaklaşık API maliyeti yer alır.
 
-## Birleşik model ve eğitim
+## Asistan
 
-Supervisely→COCO dönüşümü, görev maskeli eğitim, değerlendirme, ONNX export/parity ve CPU benchmark komutları [birleşik model belgesindedir](../docs/ml/UNIFIED_YOLOX_TINY.md). [Sınıf sayıları](../docs/ml/HITL_CLASS_COUNTS.md) ve [gerçek sonuçlar](../docs/ml/HITL_RESULTS.json) ayrıca kaydedilir. Export `production_approved: false` üretir. Java, Python ve Flutter release kapıları açıkça değiştirilmeden üretim aktive edilmez. Eski ağırlıklar ve Ultralytics kullanılmaz.
+`POST /api/v1/assistant/plan`, kapsam/kaynak yönlendirmesini sürdürür. E5 ve
+SentenceTransformers için **PyTorch korunur**. `knowledge/`, `scripts/ingest_assistant_knowledge.py`,
+embedding, pgvector ve semantic routing görsel analizden bağımsızdır.
+Docker, CPU PyTorch ve mevcut E5 modelini içerir. Kaynak belgeler değiştiğinde bilgi tabanı
+yalnız yetkili, açık ingestion komutuyla güncellenir; bu çalışma çalışan veritabanını değiştirmez.
 
-## Transfer öğrenme ve CPU karşılaştırması
+## Test
 
-DETR eğitim ortamı `requirements-transfer.txt` ile ayrı kurulur; çalışma zamanı bu paketleri, Transformers veya Torchvision'ı import etmez. Hasar için RF-DETR RGB/PIL bilinear + ImageNet normalization veya RT-DETR RGB/PIL bilinear + 0..1 rescale kullanır; parça mevcut BGR letterbox profilini korur. Manifest bu profilleri ayırır; yanlış normalization veya smoke bundle aktif hale getirilemez. Model/katalog hash ve imzaları yüklemeden önce doğrulanır; `hitl-v1`, 29 sınıf, belirsiz sonuç ve kredi davranışı korunur. [Eğitim/evaluation komutları](../docs/ml/TRANSFER_LEARNING.md), [lisans kanıtları](../docs/ml/COMMERCIAL_LICENSE_REVIEW.md), [gerçek karşılaştırma](../docs/ml/TRANSFER_RESULTS.md).
+```powershell
+venv/Scripts/python.exe -m unittest discover -s tests -v
+```
 
-## Görsel şiddet sınıflandırması (varsayılan kapalı)
-
-`app/vision/severity.py`, yalnızca bağımsız uzman etiketleriyle eğitilmiş ve ayrıca onaylanmış `severity.onnx` modeli bulunduğunda çalışan isteğe bağlı hasar-bölgesi sınıflandırıcısıdır. `ml/prepare_severity.py` ve `ml/train_severity.py`, CC0 HITL görüntülerinden denetlenebilir veri hazırlama ve lisansı doğrulanmış MobileNetV3 ile ayrı deney yoludur. **Henüz etiketli severity veri seti ve eğitilmiş model yoktur; `damageSeverity=UNKNOWN` korunur.** Üretim bayrakları değiştirilmedi. Ayrıntılar: [görsel şiddet planı](../docs/ml/VISUAL_SEVERITY.md).
+Görsel analiz testleri Gemini'yi mock eder; dış sağlayıcıya fotoğraf veya ücretli istek göndermez.
+[Tam sözleşme, yapılandırma ve sınırlar](../docs/GEMINI_VISION_ANALYSIS.md).

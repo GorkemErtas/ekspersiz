@@ -2,7 +2,7 @@
 
 **Yapay zekâ destekli araç hasar ön değerlendirmesi, raporlama ve araç yönetimi platformu.**
 
-Flutter mobil uygulaması, Java/Spring Boot API'si ve Python/FastAPI AI servisini birleştirir. Mevcut analizlerden açıklayıcı raporlar üretir ve araç sahiplerine kayıt, bakım, hatırlatma ve otomotiv odaklı AI Asistan özellikleri sunar. Hasar modelleri üretim kabul ölçütlerini geçene kadar yeni fotoğraf analizi kapalıdır.
+Flutter mobil uygulaması, Java/Spring Boot API'si ve Python/FastAPI AI servisini birleştirir. Mevcut analizlerden açıklayıcı raporlar üretir ve araç sahiplerine kayıt, bakım, hatırlatma ve otomotiv odaklı AI Asistan özellikleri sunar. Yeni hasar analizinde genel görünüm ve yakın detay fotoğrafları Gemini tarafından birlikte değerlendirilir; görsel yorum fiziksel ekspertiz yerine geçmez.
 
 <p align="center">
   <img src="docs/screenshots/home.jpeg" width="23%" alt="Ana ekran" />
@@ -13,8 +13,8 @@ Flutter mobil uygulaması, Java/Spring Boot API'si ve Python/FastAPI AI servisin
 
 ## Özellikler
 
-- **Hasar analizi:** Yeni analiz ve modele bağlı fotoğraf doğrulama geçici olarak kapalıdır; mevcut analiz geçmişi ve raporlar korunur.
-- **Rapor ve tutanak:** ML sonuçlarından yerel hasar anlatımı ve Gemini fiyat tahmini; isteğe bağlı Google Search kaynaklarıyla desteklenen onarım maliyet aralıkları, analiz geçmişi ve PDF tutanağı.
+- **Hasar analizi:** İki ayrı fotoğrafla Gemini görsel değerlendirmesi; görünür hasar türü, etkilenen parçalar, şiddet ve olası onarım. Belirsiz/yetersiz fotoğraflarda ek kanıt istenir.
+- **Rapor ve tutanak:** Görsel bulgulardan yerel hasar anlatımı ve Gemini fiyat tahmini; isteğe bağlı Google Search kaynaklarıyla desteklenen onarım maliyet aralıkları, analiz geçmişi ve PDF tutanağı.
 - **Araç yönetimi:** Araç profilleri, kilometre/bakım kayıtları, muayene ve bakım hatırlatmaları, birleşik araç geçmişi.
 - **AI Asistan:** Araç, bakım ve muayene soruları; uygulama bilgi tabanı; yetkili kullanıcının araç, hasar ve hatırlatma kayıtları; Türkçe sesli giriş.
 - **Entegrasyonlar:** Yakındaki servisler (Google Maps/Places), uygulama içi ve FCM bildirimleri, e-posta/Google ile giriş.
@@ -27,32 +27,38 @@ flowchart TB
     Mobile["Flutter Mobil Uygulama"]
     API["Spring Boot API<br/>Kimlik · İş kuralları · Kota"]
     DB[("PostgreSQL<br/>Flyway + pgvector")]
-    AI["FastAPI<br/>RAG · Yönlendirme"]
+    AI["FastAPI<br/>İki fotoğraf · RAG · Yönlendirme"]
     Gemini["Google Gemini<br/>Yanıt ve rapor üretimi"]
     External["RevenueCat · Google Places<br/>Firebase · Brevo"]
 
     Mobile -->|"HTTPS / JWT"| API
     API --> DB
-    API -->|"Asistan isteği"| AI
+    API -->|"İki fotoğraf / asistan isteği"| AI
     AI -->|"RAG araması"| DB
-    AI -->|"Kapsam sınıflandırması"| Gemini
+    AI -->|"Tek görsel analiz / kapsam sınıflandırması"| Gemini
     API -->|"Yanıt / rapor"| Gemini
     API --> External
 ```
 
 **Mimari kararlar:** Flutter, mobil arayüzü özellik bazlı modüllere ayırır; Spring Boot kimlik doğrulama, veri sahipliği, ödeme ve iş kurallarının otoritesidir. Python/FastAPI, asistan yönlendirmesini ve bilgi erişimini API katmanından ayırır. PostgreSQL + pgvector, uygulama verileri ve vektör araması için ayrı bir vektör veritabanı hizmeti gereksinimini azaltır. Backend ve AI servisi Docker ile Railway üzerinde ayrı dağıtılır.
 
-## AI/ML tasarımı
+## AI mimarisi
 
-### Hasar analizi deneyleri
+### İki fotoğrafla hasar değerlendirmesi
 
-HITL veri setinin gerçek 8 hasar ve 21 parça sınıfı, Python/Java/Flutter arasında sürümlü katalogla korunur. İlk YOLOX-Tiny baseline, kısmi etiketli görüntülerde yalnızca etiketli görevi eğiten ortak omurga ve iki head kullanır. Lisansı ayrı doğrulanan RF-DETR ve RT-DETR COCO ağırlıklarıyla transfer öğrenme adayları da aynı analiz sözleşmesini kullanır; hasar ve mevcut parça grafikleri ONNX Runtime üzerinde ayrı çalışabilir.
+Kullanıcı, hasarın bulunduğu araç parçasını gösteren **genel görünüm** ile aynı hasarın **yakın detayını** ekler.
+FastAPI, boyut/format/çözünürlük kontrolü ve EXIF temizliğinin ardından iki görseli tek
+`gemini-3.8-flash` isteğinde işler. Native JSON Schema çıktısı Python ve Java'da bağımsız doğrulanır.
+Hasar derecesi `MINOR / MODERATE / SEVERE / UNKNOWN` olabilir; parça değişimi kesinleştirilmez.
+Yeni bulgulara dedektör kutuları veya güven yüzdeleri eklenmez.
 
-50 epoch sıfırdan eğitim tamamlanmıştır; tarihsel test ayrımında hasar başarısı üretim için yetersizdir. Bu nedenle analiz/doğrulama **varsayılan kapalıdır**, HTTP 503 döner ve kredi ayrılmaz. Model bundle onayı ve açık release ayarları olmadan etkinleşmez. [Veri, mimari ve komutlar](docs/ml/UNIFIED_YOLOX_TINY.md), [gerçek sonuçlar](docs/ml/HITL_RESULTS.json).
+Spring Boot, kredi rezervasyonu, yetki, geçmiş, rapor ve fiyat tahmini sorumluluğunu korur.
+Görsel analizden sonra mevcut Gemini fiyat araştırması/tahmini kullanılır; rapor anlatımı yerel oluşturulur.
+Belirsiz/başarısız analizlerde kredi tamamlanmaz; rapor hatasından sonra tekrar yalnız raporu üretir.
+Eski kayıt ve PDF'ler okunmaya devam eder. Yerel görsel model, eğitim veri seti ve inference ağırlığı kalmaz.
 
-Yeni [transfer öğrenme yöntemi ve tekrar çalıştırma adımları](docs/ml/TRANSFER_LEARNING.md), [lisans/kaynak incelemesi](docs/ml/COMMERCIAL_LICENSE_REVIEW.md) ve [karşılaştırma sonuçları](docs/ml/TRANSFER_RESULTS.md) ayrı kaydedilir. SYNDCAR, iki ortak sınıf için eğitimden ayrı bir sentetik alan farkı kontrolüdür. Deploy veya otomatik üretim onayı yapılmaz.
-
-**Görsel hasar şiddeti:** CC0 HITL hasar bölgelerinden yalnızca bağımsız uzman kontrolüyle oluşturulan `MINOR/MODERATE/SEVERE` etiketleri için lisansı doğrulanmış hafif bir MobileNetV3 eğitim/ONNX entegrasyon yolu hazırlandı. Şu an şiddet modeli **eğitilmedi ve onaylanmadı**; `UNKNOWN` korunur. Kaynak denetimi, etiketleme şeması, eğitim ve güvenlik koşulları: [görsel şiddet deney planı](docs/ml/VISUAL_SEVERITY.md).
+[Mimari, yapılandırma, sözleşme, gizlilik ve testler](docs/GEMINI_VISION_ANALYSIS.md).
+Bu değişiklik bir deployment veya production release içermez.
 
 ### Kaynağa göre yönlendirilen AI Asistan
 
@@ -106,7 +112,7 @@ Fiyat hesaplaması yalnızca ML'in tespit ettiği hasar, önerilen işlem, araç
 | --- | --- |
 | Mobil | Flutter, Dart, Google Sign-In, Firebase Messaging, Google Maps, RevenueCat |
 | Backend | Java 21, Spring Boot 4.1, Spring Security, JPA, Flyway |
-| AI/ML | Python, FastAPI, YOLOX-Tiny eğitim, ONNX Runtime, Google Gemini, SentenceTransformers |
+| AI/ML | Python, FastAPI, Google Gemini Vision, SentenceTransformers / E5, pgvector |
 | Veri | PostgreSQL, pgvector |
 | Dağıtım ve entegrasyon | Docker, Railway, Google Play, Google Places, Brevo |
 

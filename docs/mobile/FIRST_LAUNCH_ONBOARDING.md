@@ -1,7 +1,7 @@
 # İlk açılış rehberi
 
 Rehber `mobile/lib/features/onboarding` altında bağımsız bir Flutter özelliğidir.
-Altı adım; karşılama, tek fotoğrafla AI analizi, rapor/geçmiş, araç ve bakım
+Altı adım; karşılama, iki fotoğrafla AI analizi, rapor/geçmiş, araç ve bakım
 takibi, AI Asistan/yakındaki servisler, kredi/kurumsal kullanım sırasını izler.
 İçerik gerçek ekranlara dayanır; ücretsiz/sınırsız kullanım, kesin hasar tespiti,
 sabit fiyat veya her hesapta kurumsal yetki vaat etmez. Servis keşfi analiz

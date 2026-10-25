@@ -1,12 +1,12 @@
 # EksperSiz: Hasar Analizi ve Raporlar
 
 ## Hasar analizi akışı
-Yeni hasar analizi ve fotoğraf uygunluk kontrolü geçici olarak kullanılamıyor. Bu talepler kredi tüketmez. Kullanıcılar mevcut analiz geçmişine, raporlara ve belgelere erişebilir; başarılı geçmiş analizlerden rapor yeniden oluşturabilir. AI Asistan ve araç yönetimi kullanılabilir.
+Yeni analiz için iki ayrı fotoğraf gerekir: araç parçasını ve hasarın çevresini gösteren uzaktan genel görünüm ile aynı hasarın yakından net detayı. Gemini iki fotoğrafı tek görsel değerlendirmede birlikte inceler. Eksik, bulanık, yanlış bölgeyi gösteren veya yetersiz fotoğraflarda ek fotoğraf istenebilir. Belirsiz veya başarısız analiz başarılı ücretli işlem sayılmaz. Önceki analiz, rapor ve belgeler görüntülenmeye devam eder.
 
 ## Sonuçların anlamı
-Model sonuçları görüntüden elde edilen tahminlerdir. Fotoğraf açısı, ışık, netlik, kapanan bölgeler ve görünmeyen iç hasarlar doğruluğu etkileyebilir. Bir güven skoru kesinlik garantisi değildir. Analiz, aracın mekanik veya yapısal olarak güvenli olduğunu kanıtlamaz.
+Sonuçlar fotoğraflardan elde edilen yapay zekâ yorumlarıdır. Fotoğraf açısı, ışık, netlik, kapanan bölgeler ve görünmeyen iç hasarlar doğruluğu etkileyebilir. Yeni değerlendirmelerde yapay bir güven yüzdesi gösterilmez; eski kayıtların güven skorları kesinlik garantisi değildir. Analiz, aracın mekanik veya yapısal olarak güvenli olduğunu kanıtlamaz.
 
-Yeni fotoğraf analizi etkinleştirildiğinde çizik, göçük, çatlak, kırık parça, eksik parça, boya soyulması, boya kopması ve korozyon sınıflarını değerlendirebilir. Bir tespit bulunamaması aracın hasarsız olduğu anlamına gelmez. Belirsiz veya tamamlanmayan analiz ücretli başarılı işlem sayılmaz. Hasarın derinliği, şiddeti ve parça değişimi gereksinimi fotoğraf sınıfından kesin olarak çıkarılamaz; fiziksel inceleme gerekir. Yalnızca fiziksel inceleme önerilmişse gösterilen fiyat aralığı onarım bedeli değildir.
+Çizik, göçük, çatlak, kırık parça, boya hasarı ve diğer görünür hasarlar; etkilenmiş olabilecek parça, açıklama ve olası onarımla birlikte değerlendirilebilir. Hasar derecesi hafif, orta, ağır veya belirsiz olabilir; belirsiz sonuç hafif hasar ya da hasarsızlık sayılmaz. Parça değişimi fotoğraflardan kesinleştirilmez. Maliyet tahmini araç, şehir ve önerilen işlemlere dayanır; kesin servis teklifi değildir. Yalnızca fiziksel inceleme önerilmişse gösterilen fiyat aralığı onarım bedeli değildir.
 
 ## Kayıt ve geçmiş
 Hasar analizi sonuçları uygulamada ilgili araçla ilişkilendirilebilir. Kullanıcının önceki analizleri AI Asistan'a yalnızca yetkili backend aracı üzerinden aktarılır; kişisel sonuçlar uygulama bilgi tabanına gömülmez.
