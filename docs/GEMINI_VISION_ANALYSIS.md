@@ -125,3 +125,21 @@ kotası, gerçek fatura, gerçek Railway gecikmesi ve üretim kabulü bu testler
 Deploy, Railway başlatma veya production release yapılmaz.
 
 [Yerel test sonuçları ve doğrulama sınırları](GEMINI_VISION_VALIDATION.md).
+
+## Kontrollü production testi
+
+`DAMAGE_ANALYSIS_ENABLED` hem Spring backend'de hem Python AI servisinde açık olmalıdır.
+Analizi tüm kullanıcılara açmadan test etmek için **önce güncellenmiş backend'i dağıtın**, sonra
+yalnız backend'de `DAMAGE_ANALYSIS_TEST_ONLY=true` ve
+`DAMAGE_ANALYSIS_TEST_EMAILS=test-hesabi@example.com` yapılandırın. Bu örnek e-posta
+bir yer tutucudur; gerçek hesap adreslerini yalnız Railway değişkenlerinde tutun.
+
+Test-only açıkken boş veya eksik e-posta listesi **hiçbir hesabın analizine izin vermez**.
+Yalnızca kimliği doğrulanmış hesabın e-postası birebir eşleşiyorsa fotoğraf kalite
+kontrolü, analiz veya yeniden rapor üretme istekleri kabul edilir. Eşleşmeyen
+hesapların mevcut analizleri okuması etkilenmez. AI servisi hâlâ ayrı sunucu anahtarı
+ile korunur. Genel yayından önce test kullanıcı listesi ve test-only bayrağı
+bilinçli şekilde kaldırılmalıdır; `DAMAGE_ANALYSIS_TEST_ONLY=false` genel erişimdir.
+
+Gerçek Gemini faturası, kredi tüketimi/iadesi ve onarım fiyatı doğruluğu CI
+testlerinden bağımsız olarak canlı test hesabıyla kontrol edilmelidir.
