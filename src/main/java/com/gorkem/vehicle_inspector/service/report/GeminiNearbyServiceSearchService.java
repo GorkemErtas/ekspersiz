@@ -56,7 +56,6 @@ public class GeminiNearbyServiceSearchService {
                         .responseSchema(
                                 createResponseSchema()
                         )
-                        .candidateCount(1)
                         .build();
 
         GenerateContentResponse response =
