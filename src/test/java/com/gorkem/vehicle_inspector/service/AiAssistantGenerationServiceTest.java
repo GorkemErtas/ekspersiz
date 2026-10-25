@@ -48,6 +48,8 @@ class AiAssistantGenerationServiceTest {
         assertFalse(prompt.getValue().contains("CONVERSATION_HISTORY"));
         assertTrue(config.getValue().tools().orElse(List.of()).isEmpty());
         assertEquals(4096, config.getValue().maxOutputTokens().orElseThrow());
+        assertTrue(config.getValue().candidateCount().isEmpty());
+        assertTrue(config.getValue().temperature().isEmpty());
     }
 
     @Test
@@ -64,6 +66,7 @@ class AiAssistantGenerationServiceTest {
         assertEquals(8192, config.getAllValues().getLast().maxOutputTokens().orElseThrow());
         for (var request : config.getAllValues()) {
             assertTrue(request.tools().orElseThrow().getFirst().googleSearch().isPresent());
+            assertTrue(request.candidateCount().isEmpty());
         }
         assertTrue(system(config.getAllValues().getLast()).contains("baştan yanıtla"));
     }

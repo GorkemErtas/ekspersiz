@@ -94,8 +94,7 @@ public class AiAssistantGenerationService {
         var config = GenerateContentConfig.builder()
                 .systemInstruction(Content.fromParts(Part.fromText(
                         SYSTEM_INSTRUCTION + (retry ? RETRY_INSTRUCTION : ""))))
-                .maxOutputTokens(tokenLimit)
-                .candidateCount(1);
+                .maxOutputTokens(tokenLimit);
         if ("PUBLIC_WEB".equals(plan.knowledgeSource())) {
             config.tools(Tool.builder().googleSearch(GoogleSearch.builder()).build());
         }

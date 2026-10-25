@@ -20,6 +20,22 @@ class GeminiInspectionReportPriceTest {
     }
 
     @Test
+    void omitsGemini36UnsupportedOptionsFromPriceAndWebSearchConfigs() {
+        var service = new GeminiInspectionReportService(
+                null, new ObjectMapper(), "gemini-3.6-flash", true);
+        var priceConfig = service.createPriceGenerationConfig();
+        assertTrue(priceConfig.candidateCount().isEmpty());
+        assertTrue(priceConfig.temperature().isEmpty());
+        assertEquals("application/json", priceConfig.responseMimeType().orElseThrow());
+        assertTrue(priceConfig.responseSchema().isPresent());
+
+        var searchConfig = service.createWebSearchGenerationConfig();
+        assertTrue(searchConfig.candidateCount().isEmpty());
+        assertTrue(searchConfig.temperature().isEmpty());
+        assertTrue(searchConfig.tools().isPresent());
+    }
+
+    @Test
     void parsesOnlyTheFivePricingFieldsFromGeminiJson() throws Exception {
         String json = """
                 {

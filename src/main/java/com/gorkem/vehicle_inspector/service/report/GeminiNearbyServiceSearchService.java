@@ -48,16 +48,7 @@ public class GeminiNearbyServiceSearchService {
                         request
                 );
 
-        GenerateContentConfig config =
-                GenerateContentConfig.builder()
-                        .responseMimeType(
-                                "application/json"
-                        )
-                        .responseSchema(
-                                createResponseSchema()
-                        )
-                        .candidateCount(1)
-                        .build();
+        GenerateContentConfig config = createSearchGenerationConfig();
 
         GenerateContentResponse response =
                 geminiClient.models.generateContent(
@@ -83,6 +74,13 @@ public class GeminiNearbyServiceSearchService {
         validateResult(result);
 
         return result;
+    }
+
+    GenerateContentConfig createSearchGenerationConfig() {
+        return GenerateContentConfig.builder()
+                .responseMimeType("application/json")
+                .responseSchema(createResponseSchema())
+                .build();
     }
 
     private Schema createResponseSchema() {
