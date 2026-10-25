@@ -58,11 +58,7 @@ public class GeminiInspectionReportService {
         String prompt = InspectionReportPromptBuilder.build(
                 request, evidence == null ? null : evidence.summary()
         );
-        GenerateContentConfig config = GenerateContentConfig.builder()
-                .responseMimeType("application/json")
-                .responseSchema(createResponseSchema())
-                .candidateCount(1)
-                .build();
+        GenerateContentConfig config = createPriceGenerationConfig();
 
         GenerateContentResponse response =
                 geminiClient.models.generateContent(model, prompt, config);
@@ -86,12 +82,26 @@ public class GeminiInspectionReportService {
         return InspectionReportNarrativeBuilder.build(request, price);
     }
 
+    // Package-visible so tests can verify the exact API request configuration.
+    // Gemini 3.6+ does not support candidateCount; deprecated sampling
+    // parameters must not be sent either.
+    GenerateContentConfig createPriceGenerationConfig() {
+        return GenerateContentConfig.builder()
+                .responseMimeType("application/json")
+                .responseSchema(createResponseSchema())
+                .build();
+    }
+
+    GenerateContentConfig createWebSearchGenerationConfig() {
+        return GenerateContentConfig.builder()
+                .tools(Tool.builder().googleSearch(GoogleSearch.builder()).build())
+                .build();
+    }
+
     private WebPriceEvidence lookUpPriceEvidence(InspectionLlmRequest request) {
         if (!webSearchEnabled || request.vehicle() == null) return null;
         try {
-            GenerateContentConfig config = GenerateContentConfig.builder()
-                    .tools(Tool.builder().googleSearch(GoogleSearch.builder()).build())
-                    .candidateCount(1).build();
+            GenerateContentConfig config = createWebSearchGenerationConfig();
             GenerateContentResponse response = geminiClient.models.generateContent(
                     model, InspectionReportPromptBuilder.buildWebSearchPrompt(request), config
             );
