@@ -59,6 +59,9 @@ class ProviderTests(unittest.TestCase):
         opener.assert_called_once()
         sent = opener.call_args.args[0]
         payload = json.loads(sent.data)
+        self.assertNotIn('candidateCount', payload['generationConfig'])
+        self.assertNotIn('temperature', payload['generationConfig'])
+        self.assertEqual(4096, payload['generationConfig']['maxOutputTokens'])
         self.assertNotIn('private-api-secret', sent.full_url)
         self.assertEqual('private-api-secret', sent.get_header('X-goog-api-key'))
         self.assertEqual(['OVERVIEW', 'DETAIL'], [p['text'] for p in payload['contents'][0]['parts'] if 'text' in p])

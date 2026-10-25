@@ -82,7 +82,8 @@ saklama, hesap silme ve eski kayıt temizleme kuralları sürer; Python ek kopya
 - Servis kimliği multipart okumadan önce doğrulanır. İstek gövdesi 22 MiB ile sınırlıdır;
   chunked aktarım da sınıra tabidir. Görsel decode/analiz kapasitesi aynı anda bir istektir.
 - Varsayılan toplam sağlayıcı süre bütçesi 35 saniye, çıktı sınırı 4096 token,
-  temperature 0 ve tek adaydır. Aynı sonuç/aynı maliyet garantisi değildir.
+  Gemini 3.8 için desteklenmeyen `temperature` ve `candidateCount` alanları gönderilmez;
+  API'nin varsayılan tek aday davranışı kullanılır. Aynı sonuç/aynı maliyet garantisi değildir.
 - Yalnız açık HTTP 429 reddi en fazla bir kez, aynı toplam süre bütçesinde denenir.
   Timeout/5xx, geçersiz JSON, bloke veya kesilmiş yanıt yeni ücretli çağrıyla onarılmaz.
 - Log: model, süre, deneme, giriş/çıkış/düşünme tokenları ve yaklaşık USD maliyeti.

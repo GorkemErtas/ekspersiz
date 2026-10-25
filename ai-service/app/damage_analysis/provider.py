@@ -91,7 +91,7 @@ class GeminiVisionProvider:
             parts.append({'text': f'Optional user-provided location hint: {vehicle_region}. Verify against both images.'})
         payload = {'systemInstruction': {'parts': [{'text': PROMPT}]},
                    'contents': [{'role': 'user', 'parts': parts}],
-                   'generationConfig': {'temperature': 0, 'candidateCount': 1,
+                   'generationConfig': {
                                         'maxOutputTokens': self.settings.max_output_tokens,
                                         'responseMimeType': 'application/json',
                                         'responseJsonSchema': GeminiAnalysis.model_json_schema()}}
