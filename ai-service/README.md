@@ -31,3 +31,7 @@ Supervisely→COCO dönüşümü, görev maskeli eğitim, değerlendirme, ONNX e
 ## Transfer öğrenme ve CPU karşılaştırması
 
 DETR eğitim ortamı `requirements-transfer.txt` ile ayrı kurulur; çalışma zamanı bu paketleri, Transformers veya Torchvision'ı import etmez. Hasar için RF-DETR RGB/PIL bilinear + ImageNet normalization veya RT-DETR RGB/PIL bilinear + 0..1 rescale kullanır; parça mevcut BGR letterbox profilini korur. Manifest bu profilleri ayırır; yanlış normalization veya smoke bundle aktif hale getirilemez. Model/katalog hash ve imzaları yüklemeden önce doğrulanır; `hitl-v1`, 29 sınıf, belirsiz sonuç ve kredi davranışı korunur. [Eğitim/evaluation komutları](../docs/ml/TRANSFER_LEARNING.md), [lisans kanıtları](../docs/ml/COMMERCIAL_LICENSE_REVIEW.md), [gerçek karşılaştırma](../docs/ml/TRANSFER_RESULTS.md).
+
+## Görsel şiddet sınıflandırması (varsayılan kapalı)
+
+`app/vision/severity.py`, yalnızca bağımsız uzman etiketleriyle eğitilmiş ve ayrıca onaylanmış `severity.onnx` modeli bulunduğunda çalışan isteğe bağlı hasar-bölgesi sınıflandırıcısıdır. `ml/prepare_severity.py` ve `ml/train_severity.py`, CC0 HITL görüntülerinden denetlenebilir veri hazırlama ve lisansı doğrulanmış MobileNetV3 ile ayrı deney yoludur. **Henüz etiketli severity veri seti ve eğitilmiş model yoktur; `damageSeverity=UNKNOWN` korunur.** Üretim bayrakları değiştirilmedi. Ayrıntılar: [görsel şiddet planı](../docs/ml/VISUAL_SEVERITY.md).
