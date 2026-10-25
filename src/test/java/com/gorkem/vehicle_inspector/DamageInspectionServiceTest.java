@@ -552,6 +552,26 @@ class DamageInspectionServiceTest {
         verifyNoInteractions(analysisUsageRepository);
     }
 
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void oversizedDetailOrOverviewStopsBeforeGeminiAndReleasesWalletReservation(boolean overview) {
+        var wallets = mock(CreditWalletService.class);
+        ReflectionTestUtils.setField(service, "creditWallets", wallets);
+        var token = java.util.UUID.randomUUID();
+        when(wallets.reserve(any(), anyBoolean(), anyString(), anyString(), anyString()))
+                .thenReturn(new CreditWalletService.Reservation(token, false));
+        when(ai.validateImage(Path.of(overview ? "context-image.jpg" : "image.jpg"), overview ? "context" : "damage"))
+                .thenReturn(new ImageQualityResponse(false, "IMAGE_RESOLUTION_EXCEEDED", "Fotoğraf 24 MP sınırını aşıyor."));
+        var error = assertThrows(UnsuitableInspectionImageException.class,
+                () -> service.analyzeInspection(30L, actor.getEmail()));
+        assertEquals("IMAGE_RESOLUTION_EXCEEDED", error.getCode());
+        assertEquals(overview ? "context" : "damage", error.getImageRole());
+        verify(wallets).release(actor, token);
+        verify(ai, never()).analyze(any(), any(), any());
+        verifyNoInteractions(reports);
+        assertEquals(InspectionStatus.PENDING, inspection.getStatus());
+    }
+
     @Test
     void technicalQualityValidationFailureIsFailedWithoutReservingQuota() {
         when(ai.validateImage(any(), anyString())).thenThrow(

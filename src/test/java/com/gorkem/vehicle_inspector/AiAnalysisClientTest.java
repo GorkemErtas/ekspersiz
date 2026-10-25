@@ -15,6 +15,34 @@ class AiAnalysisClientTest {
     @org.junit.jupiter.api.io.TempDir Path temporary;
 
     @Test
+    void http200WithUnsuitableBodyRemainsARejection() throws Exception {
+        var template = new org.springframework.web.client.RestTemplate();
+        var server = org.springframework.test.web.client.MockRestServiceServer.createServer(template);
+        var client = new AiAnalysisClient(template);
+        org.springframework.test.util.ReflectionTestUtils.setField(client, "baseUrl", "https://vision.test");
+        var image = temporary.resolve("photo.jpg");
+        java.nio.file.Files.write(image, new byte[]{1, 2, 3});
+        server.expect(org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo("https://vision.test/api/v1/vision/readiness"))
+                .andRespond(org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess(
+                        "{\"status\":\"READY\",\"schemaVersion\":\"gemini-vision-v1\"}", org.springframework.http.MediaType.APPLICATION_JSON));
+        server.expect(org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo("https://vision.test/api/v1/validate-image"))
+                .andRespond(org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess(
+                        "{\"suitable\":false,\"code\":\"IMAGE_RESOLUTION_EXCEEDED\",\"message\":\"Fotoğraf 24 MP sınırını aşıyor.\"}",
+                        org.springframework.http.MediaType.APPLICATION_JSON));
+        var result = client.validateImage(image);
+        assertFalse(result.suitable());
+        assertEquals("IMAGE_RESOLUTION_EXCEEDED", result.code());
+        server.verify();
+    }
+
+    @Test
+    void unknownRejectionCodesCannotLeakUntrustedTextToLogs() {
+        var error = new com.gorkem.vehicle_inspector.exception.UnsuitableInspectionImageException(
+                "Fotoğraf uygun değil.", "private-filename.jpg\nforged-log-entry", false);
+        assertEquals("INVALID_IMAGE", error.getCode());
+    }
+
+    @Test
     void configuredProviderReceivesBothPhotosInOneRequest() throws Exception {
         var template=new org.springframework.web.client.RestTemplate();
         var server=org.springframework.test.web.client.MockRestServiceServer.createServer(template);

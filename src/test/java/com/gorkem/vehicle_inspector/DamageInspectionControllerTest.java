@@ -25,7 +25,20 @@ class DamageInspectionControllerTest {
     void setUp() {
         service = mock(DamageInspectionService.class);
         mvc = MockMvcBuilders.standaloneSetup(new DamageInspectionController(
-                service, mock(NearbyServiceService.class))).build();
+                service, mock(NearbyServiceService.class)))
+                .setControllerAdvice(new com.gorkem.vehicle_inspector.exception.GlobalExceptionHandler()).build();
+    }
+
+    @Test
+    void rejectionPreserves422ReasonCodeAndPhotoRole() throws Exception {
+        when(service.analyzeInspection(1L, actor.getName(), true, null))
+                .thenThrow(new com.gorkem.vehicle_inspector.exception.UnsuitableInspectionImageException(
+                        "Fotoğraf 24 MP sınırını aşıyor.", "IMAGE_RESOLUTION_EXCEEDED", true));
+        mvc.perform(post("/api/v1/inspections/1/analyze").principal(actor))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.error").value("Genel görünüm fotoğrafı: Fotoğraf 24 MP sınırını aşıyor."))
+                .andExpect(jsonPath("$.validationErrors.code").value("IMAGE_RESOLUTION_EXCEEDED"))
+                .andExpect(jsonPath("$.validationErrors.imageRole").value("context"));
     }
 
     @Test

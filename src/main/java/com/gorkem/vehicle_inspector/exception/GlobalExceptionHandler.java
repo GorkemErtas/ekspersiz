@@ -193,9 +193,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiErrorResponse> handleUnsuitableInspectionImage(
             UnsuitableInspectionImageException exception
     ) {
+        log.warn("Inspection image rejected status=422 code={} imageRole={}",
+                exception.getCode(), exception.getImageRole());
         return buildResponse(
                 HttpStatus.UNPROCESSABLE_ENTITY,
-                exception.getMessage()
+                exception.getMessage(),
+                Map.of("code", exception.getCode(), "imageRole", exception.getImageRole())
         );
     }
 

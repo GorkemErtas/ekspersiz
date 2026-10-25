@@ -603,7 +603,7 @@ public class DamageInspectionService {
                 );
         if (!imageValidation.quality().suitable()) {
             throw new UnsuitableInspectionImageException(
-                    imageValidation.quality().message()
+                    imageValidation.quality().message(), imageValidation.quality().code(), false
             );
         }
 
@@ -637,7 +637,7 @@ public class DamageInspectionService {
         if (contextImageValidation != null
                 && !contextImageValidation.quality().suitable()) {
             throw new UnsuitableInspectionImageException(
-                    contextImageValidation.quality().message()
+                    contextImageValidation.quality().message(), contextImageValidation.quality().code(), true
             );
         }
 
