@@ -22,7 +22,7 @@ def packages():
         # Classifier-bearing native artifacts have one extra coordinate.
         if len(parts) in (5, 6) and parts[-1] in ("compile", "runtime"):
             found.add(("Maven", f"{parts[0]}:{parts[1]}", parts[-2]))
-    for filename in ("requirements.txt", "requirements-runtime.txt", "requirements-training.txt", "requirements-transfer.txt"):
+    for filename in ("requirements.txt", "requirements-runtime.txt"):
         content = (ROOT / "ai-service" / filename).read_bytes()
         encoding = "utf-16" if content.startswith((b"\xff\xfe", b"\xfe\xff")) else "utf-8-sig"
         for line in content.decode(encoding).splitlines():

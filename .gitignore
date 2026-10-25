@@ -45,15 +45,6 @@ ai-service/venv/
 ai-service/__pycache__/
 *.py[cod]
 
-### Local ML artifacts ###
-ai-service/models/
-ai-service/datasets/
-ai-service/*-runs/
-ai-service/evaluation-images/
-ai-service/test-images/
-ai-service/target/
-ai-service/*.pt
-
 ### Firebase / Secrets ###
 firebase-admin.json
 **/firebase-admin.json

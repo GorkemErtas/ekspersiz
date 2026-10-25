@@ -1,5 +1,0 @@
-# Offline severity training only. Do not add to runtime Docker image.
--r requirements-transfer.txt
-# Record the exact resolved version in experiment metadata and pin before reproducible release.
-timm>=1.0.20,<1.1
-safetensors>=0.6,<1
