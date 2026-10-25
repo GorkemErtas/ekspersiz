@@ -156,13 +156,14 @@ class UnifiedVisionRuntime:
                 outputs=session.run(['damage','part'],{'images':pixels[None]})
                 damage,parts=(postprocess(p,c,ratio,image.width,image.height,self.manifest['threshold'],self.manifest['nms_threshold'])
                               for p,c in zip(outputs,(self.categories['damage'],self.categories['part'])))
-        severity='UNKNOWN'
-        if damage and self._severity is not None:
-            try:
-                severity=self._severity.classify(image,damage)
-            except Exception:
-                # A severity inference failure must never manufacture a physical-damage claim.
-                severity='UNKNOWN'
+            # Serialize all image forwards, including the optional severity head.
+            severity='UNKNOWN'
+            if damage and self._severity is not None:
+                try:
+                    severity=self._severity.classify(image,damage)
+                except Exception:
+                    # A severity inference failure must never manufacture a physical-damage claim.
+                    severity='UNKNOWN'
         recommendations=[]
         for detection in damage:
             matches=match_parts(detection,parts,vehicle_region)
