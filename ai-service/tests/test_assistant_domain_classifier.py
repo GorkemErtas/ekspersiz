@@ -49,6 +49,12 @@ class SemanticDomainClassifierTest(unittest.TestCase):
         self.assertEqual(AssistantIntent.MAINTENANCE, decision.intent)
         self.assertFalse(decision.use_rag)
         self.assertEqual("PUBLIC_WEB", decision.knowledge_source)
+        request_sent = urlopen.call_args.args[0]
+        self.assertNotIn("test-key", request_sent.full_url)
+        self.assertEqual("test-key", request_sent.get_header("X-goog-api-key"))
+        config = json.loads(request_sent.data)["generationConfig"]
+        self.assertNotIn("temperature", config)
+        self.assertEqual("application/json", config["responseMimeType"])
 
     @patch("app.assistant.domain_classifier.request.urlopen")
     def test_out_of_scope_disables_model_requested_rag_and_tool(self, urlopen):
