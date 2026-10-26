@@ -4,6 +4,11 @@ import '../../../core/localization/app_text.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_state_view.dart';
 import '../../../core/workspace/workspace_session.dart';
+import '../../../core/workspace/workspace_service.dart';
+import '../../auth/services/auth_service.dart';
+import '../../auth/models/business_account.dart';
+import '../../business/screens/business_management_screen.dart';
+import '../../business/services/business_service.dart';
 import '../models/billing_plan.dart';
 import '../models/credit_catalog.dart';
 import '../services/analysis_quota_service.dart';
@@ -18,11 +23,15 @@ class SubscriptionScreen extends StatefulWidget {
     this.quotaService = const AnalysisQuotaService(),
     this.initialCategory = 0,
     this.preferCompany = false,
+    this.authService = const AuthService(),
+    this.businessService = const BusinessService(),
   });
   final BillingService billingService;
   final AnalysisQuotaService quotaService;
   final int initialCategory;
   final bool preferCompany;
+  final AuthService authService;
+  final BusinessService businessService;
   @override
   State<SubscriptionScreen> createState() => _SubscriptionScreenState();
 }
@@ -32,9 +41,10 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
   BillingPageData? _billing;
   CreditOverview? _credits;
   String? _error;
+  String? _notice;
   bool _busy = false;
   bool _company = false;
-  bool _refreshing = false;
+  Future<void>? _refreshing;
   late int _category = widget.initialCategory.clamp(0, 2);
   static const _resources = ['ANALYSIS', 'ASSISTANT', 'SLOT'];
   static const _labels = ['Hasar analizi', 'AI Asistan', 'Araç slotları'];
@@ -59,12 +69,15 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
     if (state == AppLifecycleState.resumed && !_busy) _load();
   }
 
-  Future<void> _load() async {
-    if (_refreshing) return;
-    _refreshing = true;
+  Future<void> _load() =>
+      _refreshing ??= _loadData().whenComplete(() => _refreshing = null);
+
+  Future<void> _loadData() async {
+    final scope = WorkspaceSession.capture();
     try {
       final billing = await widget.billingService.load();
       final credits = await widget.billingService.credits();
+      WorkspaceSession.check(scope);
       if (!mounted) return;
       final workspace = WorkspaceSession.state.value;
       if (workspace != null &&
@@ -82,12 +95,11 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
         _billing = billing;
         _credits = credits;
         _error = null;
+        _notice = null;
         if (workspace == null && credits.company == null) _company = false;
       });
     } catch (e) {
       if (mounted) setState(() => _error = _message(e));
-    } finally {
-      _refreshing = false;
     }
   }
 
@@ -104,17 +116,26 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
 
   Future<void> _perform(Future<String> Function() action) async {
     if (_busy) return;
+    final scope = WorkspaceSession.capture();
     setState(() => _busy = true);
     try {
+      await _refreshing;
+      WorkspaceSession.check(scope);
       final message = await action();
       if (!mounted) return;
       await _load();
+      if (mounted) setState(() => _notice = message);
       _show(message);
     } on BillingPurchaseCancelled {
       /* A cancelled payment grants nothing. */
     } on BillingPurchasePending {
-      _show('Ödeme onayı bekleniyor. Onaylanınca kredileriniz eklenecek.');
+      if (!mounted) return;
+      const message =
+          'Satın alma henüz doğrulanmadı. Ödeme veya sunucu doğrulaması bekleniyor. Tekrar ödeme yapmadan yeniden kontrol edin.';
+      setState(() => _notice = message);
+      _show(message);
     } catch (e) {
+      if (mounted) setState(() => _notice = _message(e));
       _show(_message(e));
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -133,14 +154,47 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
       currentPlan: _billing!.overview.status.currentPlan,
       currentProductId: _billing!.overview.status.productId,
     );
-    return result.status.currentPlan == 'BUSINESS'
-        ? 'Business aboneliğiniz aktif.'
-        : 'Abonelik değişikliği mağaza tarafından işleniyor.';
+    if (result.status.currentPlan == 'BUSINESS') {
+      await _continueBusiness();
+      return WorkspaceSession.state.value?.isBusiness == true
+          ? 'Business aboneliğiniz doğrulandı. Business çalışma alanına geçildi.'
+          : 'Business aboneliğiniz doğrulandı. Şirket kurulumuna tekrar ödeme yapmadan devam edebilirsiniz.';
+    }
+    return _verificationMessage(result.status.verificationStatus);
   });
   Future<void> _restore() => _perform(() async {
-    await widget.billingService.restore();
-    return 'Satın alma bilgileri güncellendi.';
+    final result = await widget.billingService.restore();
+    return result.status.currentPlan == 'BUSINESS'
+        ? 'Business aboneliğiniz doğrulandı. Şirket kurulumuna devam edebilirsiniz.'
+        : _verificationMessage(result.status.verificationStatus);
   });
+  String _verificationMessage(String status) => status == 'SANDBOX_REJECTED'
+      ? 'Bu test satın alımı sandbox ortamında. Bu sunucu sandbox aboneliklerine Business hakkı vermez. Tekrar satın almayın.'
+      : 'Aktif Business aboneliği henüz sunucu tarafından doğrulanmadı. Tekrar ödeme yapmadan yeniden kontrol edin.';
+
+  Future<void> _continueBusiness() async {
+    final profile = await widget.authService.getCurrentUser();
+    if (!mounted) return;
+    if (profile.businessAccount != null) {
+      await const WorkspaceService().select(WorkspaceType.business);
+      return;
+    }
+    if (profile.subscriptionPlan != 'BUSINESS') {
+      throw StateError(
+        'Business aboneliğiniz doğrulanamadı. Yeniden kontrol edin.',
+      );
+    }
+    await Navigator.of(context).push<BusinessAccount>(
+      MaterialPageRoute<BusinessAccount>(
+        builder: (_) => BusinessManagementScreen(
+          subscriptionPlan: profile.subscriptionPlan,
+          authService: widget.authService,
+          businessService: widget.businessService,
+        ),
+      ),
+    );
+  }
+
   Future<void> _welcome() => _perform(() async {
     return WelcomeCreditService.claim().timeout(const Duration(seconds: 30));
   });
@@ -174,6 +228,33 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
                         Padding(
                           padding: const EdgeInsets.only(bottom: 12),
                           child: AppText(_error!),
+                        ),
+                      if (_notice != null ||
+                          _billing!.overview.status.verificationStatus ==
+                              'SANDBOX_REJECTED')
+                        Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                AppText(
+                                  _billing!
+                                              .overview
+                                              .status
+                                              .verificationStatus ==
+                                          'SANDBOX_REJECTED'
+                                      ? _verificationMessage('SANDBOX_REJECTED')
+                                      : _notice!,
+                                ),
+                                TextButton.icon(
+                                  onPressed: _busy ? null : _load,
+                                  icon: const Icon(Icons.refresh),
+                                  label: const AppText('Yeniden kontrol et'),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                       if (WorkspaceSession.state.value == null &&
                           _credits!.company != null) ...[
@@ -422,7 +503,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             AppText(
-              'Business${active ? ' · Aktif' : ''}',
+              'Business${active ? ' · Abonelik aktif' : ''}',
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 8),
@@ -458,6 +539,26 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
             ],
             const SizedBox(height: 12),
             if (active) ...[
+              AppText(
+                WorkspaceSession.state.value?.isBusiness == true
+                    ? 'Aktif çalışma alanı: Business'
+                    : 'Aktif çalışma alanı: Kişisel',
+              ),
+              if (WorkspaceSession.state.value?.isBusiness != true)
+                FilledButton.icon(
+                  onPressed: _busy
+                      ? null
+                      : () => _perform(() async {
+                          await _continueBusiness();
+                          return 'Business kurulumu kontrol edildi.';
+                        }),
+                  icon: const Icon(Icons.business_outlined),
+                  label: AppText(
+                    WorkspaceSession.state.value?.businessId == null
+                        ? 'Şirketini oluştur'
+                        : 'Business çalışma alanına geç',
+                  ),
+                ),
               AppText(
                 status.autoRenewing
                     ? 'Aboneliğiniz otomatik yenilenir.'

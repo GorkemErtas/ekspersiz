@@ -8,7 +8,7 @@ void main() {
     'FREE': 'Kredi hesabı',
     'PLUS': 'Kredi hesabı · Önceki dönem hakları aktif',
     'PRO': 'Kredi hesabı · Önceki dönem hakları aktif',
-    'BUSINESS': 'Kurumsal',
+    'BUSINESS': 'Business aboneliği',
   }.entries) {
     testWidgets('profile shows user identity and ${entry.key} subscription', (
       tester,
@@ -27,9 +27,7 @@ void main() {
       expect(find.text(entry.value), findsWidgets);
       expect(find.text('Bireysel'), findsNothing);
 
-      final accountLabel = entry.key == 'BUSINESS'
-          ? 'Hesap Türü'
-          : 'Hesap Türü';
+      const accountLabel = 'Abonelik durumu';
       await tester.scrollUntilVisible(
         find.text(accountLabel),
         150,
@@ -95,7 +93,7 @@ void main() {
     },
   );
 
-  testWidgets('business plan profile shows business operations', (
+  testWidgets('business plan without a company offers resumable setup', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -109,12 +107,12 @@ void main() {
     );
 
     await tester.scrollUntilVisible(
-      find.text('Şirket İşlemleri'),
+      find.text('Şirketini oluştur'),
       150,
       scrollable: find.byType(Scrollable).first,
     );
 
-    expect(find.text('Şirket İşlemleri'), findsOneWidget);
+    expect(find.text('Şirketini oluştur'), findsOneWidget);
     expect(find.text('Şirket Daveti'), findsNothing);
   });
 

@@ -46,6 +46,7 @@ class AuthService {
         businessId: authResponse.businessAccount?.id,
         companyName: authResponse.businessAccount?.companyName,
         role: authResponse.businessAccount?.role,
+        subscriptionPlan: authResponse.subscriptionPlan,
       );
       try {
         await WelcomeCreditService.claim().timeout(const Duration(seconds: 15));
@@ -119,6 +120,7 @@ class AuthService {
       businessId: authResponse.businessAccount?.id,
       companyName: authResponse.businessAccount?.companyName,
       role: authResponse.businessAccount?.role,
+      subscriptionPlan: authResponse.subscriptionPlan,
     );
     try {
       await WelcomeCreditService.claim().timeout(const Duration(seconds: 15));
@@ -211,6 +213,7 @@ class AuthService {
   }
 
   Future<UserProfile> getCurrentUser() async {
+    final workspace = WorkspaceSession.capture();
     final scope = SessionManager.imageScope.value;
     final response = await apiClient.get('/auth/me');
 
@@ -219,6 +222,7 @@ class AuthService {
     }
 
     final user = UserProfile.fromJson(Map<String, dynamic>.from(response));
+    WorkspaceSession.check(workspace);
     if (identical(scope, SessionManager.imageScope.value)) {
       SessionManager.updateImageUserScope(
         user.id,
@@ -231,6 +235,7 @@ class AuthService {
       businessId: user.businessAccount?.id,
       companyName: user.businessAccount?.companyName,
       role: user.businessAccount?.role,
+      subscriptionPlan: user.subscriptionPlan,
     );
     return user;
   }

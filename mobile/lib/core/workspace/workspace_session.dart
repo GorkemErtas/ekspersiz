@@ -20,12 +20,14 @@ class WorkspaceState {
     this.businessId,
     this.companyName,
     this.role,
+    this.subscriptionPlan,
   });
   final int userId;
   final WorkspaceType type;
   final int? businessId;
   final String? companyName;
   final String? role;
+  final String? subscriptionPlan;
   bool get isBusiness => type == WorkspaceType.business;
 }
 
@@ -61,9 +63,13 @@ class WorkspaceSession {
     int? businessId,
     String? companyName,
     String? role,
+    String? subscriptionPlan,
   }) async {
     final ticket = _initialization = Object();
     final current = state.value;
+    final plan =
+        subscriptionPlan ??
+        (current?.userId == userId ? current?.subscriptionPlan : null);
     WorkspaceType type;
     if (current?.userId == userId) {
       type = current!.type;
@@ -88,23 +94,33 @@ class WorkspaceSession {
           ? WorkspaceType.personal
           : WorkspaceType.business;
     }
-    if (current?.userId == userId &&
+    final sameWorkspace =
+        current?.userId == userId &&
         current?.type == type &&
         current?.businessId == businessId &&
         current?.companyName == companyName &&
-        current?.role == role) {
+        current?.role == role;
+    if (sameWorkspace && current?.subscriptionPlan == plan) {
       return;
     }
-    _publish(
-      WorkspaceState(
-        userId: userId,
-        type: type,
-        businessId: businessId,
-        companyName: companyName,
-        role: role,
-      ),
+    final next = WorkspaceState(
+      userId: userId,
+      type: type,
+      businessId: businessId,
+      companyName: companyName,
+      role: role,
+      subscriptionPlan: plan,
     );
+    if (sameWorkspace) {
+      // Subscription metadata can refresh as the store sheet closes. It does
+      // not change the request's user/workspace or invalidate its purchase.
+      state.value = next;
+    } else {
+      _publish(next);
+    }
+    final published = capture();
     await _remember(userId, type);
+    check(published);
   }
 
   static Future<void> select(WorkspaceType type) async {
@@ -121,16 +137,23 @@ class WorkspaceSession {
         businessId: current.businessId,
         companyName: current.companyName,
         role: current.role,
+        subscriptionPlan: current.subscriptionPlan,
       ),
     );
+    final published = capture();
     await _remember(current.userId, type);
+    check(published);
   }
 
   static void revokeBusiness() {
     final current = state.value;
     if (current == null) return;
     _publish(
-      WorkspaceState(userId: current.userId, type: WorkspaceType.personal),
+      WorkspaceState(
+        userId: current.userId,
+        type: WorkspaceType.personal,
+        subscriptionPlan: current.subscriptionPlan,
+      ),
     );
     _remember(current.userId, WorkspaceType.personal);
   }

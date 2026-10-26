@@ -9,6 +9,7 @@ class BillingStatus {
     this.currentPeriodEndsAt,
     this.managementUrl,
     this.lastSyncedAt,
+    this.verificationStatus = 'NOT_CHECKED',
   });
 
   final String billingCustomerId;
@@ -20,6 +21,7 @@ class BillingStatus {
   final DateTime? currentPeriodEndsAt;
   final String? managementUrl;
   final DateTime? lastSyncedAt;
+  final String verificationStatus;
 
   factory BillingStatus.fromJson(Map<String, dynamic> json) {
     return BillingStatus(
@@ -32,6 +34,8 @@ class BillingStatus {
       currentPeriodEndsAt: _parseDate(json['currentPeriodEndsAt']),
       managementUrl: json['managementUrl'] as String?,
       lastSyncedAt: _parseDate(json['lastSyncedAt']),
+      verificationStatus:
+          json['verificationStatus'] as String? ?? 'NOT_CHECKED',
     );
   }
 
