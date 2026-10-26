@@ -97,7 +97,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       'FREE' => 'Kredi hesabı',
       'PLUS' => 'Kredi hesabı · Önceki dönem hakları aktif',
       'PRO' => 'Kredi hesabı · Önceki dönem hakları aktif',
-      'BUSINESS' => 'Kurumsal',
+      'BUSINESS' => 'Business aboneliği',
       _ => _currentSubscriptionPlan,
     };
   }
@@ -462,9 +462,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       const Divider(height: 1, indent: 82),
                       _ProfileItem(
                         icon: Icons.workspace_premium_outlined,
-                        title: widget.businessAccount != null
-                            ? 'Abonelik Planı'
-                            : 'Hesap Türü',
+                        title: 'Abonelik durumu',
                         value: _subscriptionPlanLabel,
                       ),
                       if (widget.businessAccount != null) ...[
@@ -505,7 +503,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       if (canManageBusiness) ...[
                         _ActionProfileItem(
                           icon: Icons.business_center_outlined,
-                          title: 'Şirket İşlemleri',
+                          title: widget.businessAccount == null
+                              ? 'Şirketini oluştur'
+                              : 'Şirket İşlemleri',
                           subtitle: widget.businessAccount == null
                               ? 'Şirket oluşturun veya bir şirket davetini kabul edin.'
                               : 'Çalışanları görüntüleyin, davet edin ve yönetin.',

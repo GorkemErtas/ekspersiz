@@ -309,11 +309,65 @@ class BillingServiceTest {
         var testSubscription = new RevenueCatSubscription("eksper_business_monthly", CLOCK.instant(),
                 CLOCK.instant().plusSeconds(3600), null, true, false, false, true, "play_store");
         when(revenueCatClient.getCustomer(user.getBillingCustomerId())).thenReturn(customer(testSubscription));
-        service.sync(user.getEmail());
+        var result = service.sync(user.getEmail());
+        assertEquals("SANDBOX_REJECTED", result.status().verificationStatus());
         assertEquals(SubscriptionPlan.FREE, user.getSubscriptionPlan());
         ReflectionTestUtils.setField(service, "sandboxPolicy", new com.gorkem.vehicle_inspector.service.billing.BillingSandboxPolicy(user.getBillingCustomerId()));
         service.sync(user.getEmail());
         assertEquals(SubscriptionPlan.FREE, user.getSubscriptionPlan());
+    }
+
+    @Test
+    void productionBusinessSyncRecoversDelayedWebhookAndIgnoresSandboxSubscription() {
+        var production = subscription("eksper_business_monthly:monthly", true, false, false,
+                CLOCK.instant().plusSeconds(3600));
+        var sandbox = new RevenueCatSubscription("eksper_business_monthly", CLOCK.instant(),
+                CLOCK.instant().plusSeconds(7200), null, true, false, false, true, "play_store");
+        when(revenueCatClient.getCustomer(user.getBillingCustomerId())).thenReturn(
+                new RevenueCatCustomer(List.of(sandbox, production), List.of(), null));
+
+        var result = service.sync(user.getEmail());
+        assertEquals(SubscriptionPlan.BUSINESS, result.status().currentPlan());
+        assertEquals("VERIFIED", result.status().verificationStatus());
+        var saved = ArgumentCaptor.forClass(BillingSubscription.class);
+        verify(subscriptions).save(saved.capture());
+        assertFalse(saved.getValue().isSandbox());
+        assertEquals("eksper_business_monthly:monthly", saved.getValue().getProductId());
+        verify(revenueCatClient).getCustomer(user.getBillingCustomerId());
+        verifyNoInteractions(webhookEvents);
+    }
+
+    @Test
+    void sandboxSubscriptionWebhookNeverCreatesProductionEntitlements() {
+        service.processRevenueCatWebhook("secret", null, """
+                {"event":{"id":"sandbox-business","type":"INITIAL_PURCHASE","environment":"SANDBOX",
+                "app_user_id":"%s","product_id":"eksper_business_monthly"}}
+                """.formatted(user.getBillingCustomerId()));
+        verifyNoInteractions(revenueCatClient, subscriptions);
+        verify(webhookEvents, never()).save(any());
+        assertEquals(SubscriptionPlan.FREE, user.getSubscriptionPlan());
+    }
+
+    @Test
+    void sandboxBusinessRejectionPreservesAnExistingProductionPersonalPlan() {
+        var production = subscription("eksper_plus_monthly", true, false, false,
+                CLOCK.instant().plusSeconds(3600));
+        var sandbox = new RevenueCatSubscription("eksper_business_monthly", CLOCK.instant(),
+                CLOCK.instant().plusSeconds(7200), null, true, false, false, true, "play_store");
+        when(revenueCatClient.getCustomer(user.getBillingCustomerId())).thenReturn(
+                new RevenueCatCustomer(List.of(production, sandbox), List.of(), null));
+        var result = service.sync(user.getEmail());
+        assertEquals(SubscriptionPlan.PLUS, result.status().currentPlan());
+        assertEquals("SANDBOX_REJECTED", result.status().verificationStatus());
+    }
+
+    @Test
+    void unrecognizedSkuCannotGrantBusiness() {
+        when(revenueCatClient.getCustomer(user.getBillingCustomerId())).thenReturn(customer(
+                subscription("other_business_monthly", true, false, false, CLOCK.instant().plusSeconds(3600))));
+        var result = service.sync(user.getEmail());
+        assertEquals(SubscriptionPlan.FREE, result.status().currentPlan());
+        assertEquals("NO_ACTIVE_SUBSCRIPTION", result.status().verificationStatus());
     }
 
     @Test

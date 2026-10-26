@@ -77,6 +77,31 @@ void main() {
   );
 
   test(
+    'a verified plan refresh while the store closes preserves the request workspace',
+    () async {
+      await WorkspaceSession.initialize(userId: 1, subscriptionPlan: 'FREE');
+      final purchaseScope = WorkspaceSession.capture();
+      await WorkspaceSession.initialize(
+        userId: 1,
+        subscriptionPlan: 'BUSINESS',
+      );
+      expect(WorkspaceSession.state.value!.subscriptionPlan, 'BUSINESS');
+      expect(WorkspaceSession.state.value!.isBusiness, isFalse);
+      WorkspaceSession.check(purchaseScope);
+      await WorkspaceSession.initialize(
+        userId: 1,
+        businessId: 7,
+        role: 'OWNER',
+        subscriptionPlan: 'BUSINESS',
+      );
+      expect(
+        () => WorkspaceSession.check(purchaseScope),
+        throwsA(isA<ApiException>()),
+      );
+    },
+  );
+
+  test(
     'JSON, binary and multipart requests carry the same explicit workspace',
     () async {
       await member();

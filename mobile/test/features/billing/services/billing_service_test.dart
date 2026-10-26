@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/core/network/api_client.dart';
 import 'package:mobile/features/billing/models/credit_catalog.dart';
+import 'package:mobile/features/billing/models/billing_plan.dart';
 import 'package:mobile/features/billing/services/billing_service.dart';
 import 'package:mobile/features/billing/services/revenue_cat_gateway.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
@@ -12,6 +13,30 @@ const _package = Package(
   _productId,
   PackageType.custom,
   StoreProduct(_productId, '', '5 analyses', 189.95, '189,95 TL', 'TRY'),
+  PresentedOfferingContext('credits_v1', null, null),
+);
+const _businessPlan = BillingPlan(
+  plan: 'BUSINESS',
+  title: 'Business',
+  description: '',
+  productId: 'eksper_business_monthly',
+  packageIdentifier: 'business_monthly',
+  fallbackMonthlyPrice: 4999.99,
+  currency: 'TRY',
+  highlighted: false,
+  features: [],
+);
+const _businessPackage = Package(
+  'business_monthly',
+  PackageType.custom,
+  StoreProduct(
+    'eksper_business_monthly:monthly',
+    '',
+    'Business',
+    4999.99,
+    '4.999,99 TL',
+    'TRY',
+  ),
   PresentedOfferingContext('credits_v1', null, null),
 );
 
@@ -91,7 +116,12 @@ void main() {
     'restore reconciles through backend without creating purchase intent',
     () async {
       await service.restore();
-      expect(calls, ['restore', 'POST /billing/sync']);
+      expect(calls, [
+        'GET /billing',
+        'configure $_customerId',
+        'restore',
+        'POST /billing/sync',
+      ]);
       expect(api.bodies, everyElement(isNull));
     },
   );
@@ -100,6 +130,64 @@ void main() {
     api.failIntent = true;
     await expectLater(service.purchaseCredit(product), throwsStateError);
     expect(calls, isNot(contains('purchase')));
+  });
+
+  test(
+    'subscription uses current server customer and confirms through backend sync',
+    () async {
+      gateway.packageMap = {'business_monthly': _businessPackage};
+      gateway.onSubscriptionPurchase = () => api.plan = 'BUSINESS';
+      final result = await service.purchase(_businessPlan);
+      expect(result.status.currentPlan, 'BUSINESS');
+      expect(calls, [
+        'GET /billing',
+        'configure $_customerId',
+        'packages',
+        'subscription purchase',
+        'POST /billing/sync',
+      ]);
+    },
+  );
+
+  test(
+    'store subscription success with FREE backend never becomes Business locally',
+    () async {
+      gateway.packageMap = {'business_monthly': _businessPackage};
+      expect(
+        (await service.purchase(_businessPlan)).status.currentPlan,
+        'FREE',
+      );
+    },
+  );
+
+  test(
+    'already active backend subscription is synced without a second store payment',
+    () async {
+      api.plan = 'BUSINESS';
+      await service.purchase(_businessPlan);
+      expect(calls, [
+        'GET /billing',
+        'configure $_customerId',
+        'POST /billing/sync',
+      ]);
+    },
+  );
+
+  test(
+    'store catalogue outage preserves backend plan and setup access',
+    () async {
+      api.plan = 'BUSINESS';
+      gateway.failPackages = true;
+      final result = await service.load();
+      expect(result.overview.status.currentPlan, 'BUSINESS');
+      expect(result.storePrices, isEmpty);
+    },
+  );
+
+  test('wrong SKU behind the expected alias cannot start payment', () async {
+    gateway.packageMap = {'business_monthly': _package};
+    await expectLater(service.purchase(_businessPlan), throwsStateError);
+    expect(calls, isNot(contains('subscription purchase')));
   });
 }
 
@@ -110,8 +198,9 @@ class RecordingApi extends ApiClient {
   bool confirmed = false;
   bool failSync = false;
   bool failIntent = false;
+  String plan = 'FREE';
   Map<String, dynamic> get overview => {
-    'status': {'billingCustomerId': _customerId, 'currentPlan': 'FREE'},
+    'status': {'billingCustomerId': _customerId, 'currentPlan': plan},
     'plans': <dynamic>[],
   };
 
@@ -148,6 +237,9 @@ class RecordingApi extends ApiClient {
 class RecordingGateway extends RevenueCatGateway {
   RecordingGateway(this.calls);
   final List<String> calls;
+  Map<String, Package> packageMap = {_productId: _package};
+  bool failPackages = false;
+  void Function()? onSubscriptionPurchase;
   @override
   Future<bool> configure(String appUserId) async {
     calls.add('configure $appUserId');
@@ -157,7 +249,18 @@ class RecordingGateway extends RevenueCatGateway {
   @override
   Future<Map<String, Package>> getPackages() async {
     calls.add('packages');
-    return {_productId: _package};
+    if (failPackages) throw StateError('Store catalogue unavailable');
+    return packageMap;
+  }
+
+  @override
+  Future<void> purchase(
+    Package package, {
+    String? oldProductId,
+    StoreReplacementMode? replacementMode,
+  }) async {
+    calls.add('subscription purchase');
+    onSubscriptionPurchase?.call();
   }
 
   @override

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../localization/app_text.dart';
-import '../network/api_client.dart';
+import 'workspace_service.dart';
 import 'workspace_session.dart';
 
 class WorkspaceSwitcher extends StatefulWidget {
@@ -14,6 +14,7 @@ class _WorkspaceSwitcherState extends State<WorkspaceSwitcher> {
   bool _busy = false;
 
   Future<void> _choose(WorkspaceState current) async {
+    final scope = WorkspaceSession.capture();
     final selected = await showModalBottomSheet<WorkspaceType>(
       context: context,
       showDragHandle: true,
@@ -50,16 +51,8 @@ class _WorkspaceSwitcherState extends State<WorkspaceSwitcher> {
     if (!mounted || selected == null || selected == current.type) return;
     setState(() => _busy = true);
     try {
-      final result = await ApiClient(workspace: selected).get('/workspace');
-      if (result is! Map ||
-          result['userId'] != current.userId ||
-          (selected == WorkspaceType.business &&
-              result['businessId'] != current.businessId)) {
-        throw StateError(
-          'Çalışma alanı bilgileri değişti. Lütfen hesabınızı yenileyin.',
-        );
-      }
-      await WorkspaceSession.select(selected);
+      WorkspaceSession.check(scope);
+      await const WorkspaceService().select(selected);
     } catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(

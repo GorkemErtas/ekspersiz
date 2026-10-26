@@ -50,3 +50,10 @@ kişisel alana dönülmesini sağlar. Oturum değişiminde bellekteki seçim tem
 başlıkla alanı doğrular. Yeni mobil sürümden **önce backend güncellenmelidir**.
 Workspace desteği olmayan eski backend verileri yanlış hesap etiketiyle gösterilmez.
 [Teknik sözleşme ve rollback sınırları](../docs/architecture/PERSONAL_BUSINESS_WORKSPACES.md).
+
+Business aboneliği ile seçili çalışma alanı ayrı durumlardır. Sunucu BUSINESS
+doğruladığında satın alma ekranı şirket adını ve onayını alan kuruluma yönlendirir.
+Mevcut üyelik kullanılır; yeni şirket yalnız üyelik yoksa oluşturulur. Üyelik
+`/auth/me` ile yenilenip `/workspace` doğrulandıktan sonra şirket alanı seçilir.
+Kurulum yarıda kalırsa aynı ekrandaki **Şirketini oluştur** düğmesiyle devam edilir;
+yeniden ödeme gerekmez. [Akış ve manuel kontroller](../docs/billing/BUSINESS_WORKSPACE_ONBOARDING.md).

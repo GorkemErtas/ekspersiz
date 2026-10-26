@@ -50,7 +50,14 @@ class BillingService {
     // Reconcile the backend subscription with RevenueCat when opening plans.
     // A purchase can be active in the store while a webhook is delayed or missed.
     final syncedOverview = await sync();
-    final packages = await revenueCatGateway.getPackages();
+    Map<String, Package> packages;
+    try {
+      packages = await revenueCatGateway.getPackages();
+    } catch (_) {
+      // A store catalogue outage must not hide a server-verified subscription
+      // or prevent resuming a company setup that has already been paid for.
+      packages = const {};
+    }
     WorkspaceSession.check(scope);
 
     return BillingPageData(
@@ -77,6 +84,16 @@ class BillingService {
     String? currentProductId,
   }) async {
     final scope = WorkspaceSession.capture();
+    final overview = await getOverview();
+    WorkspaceSession.check(scope);
+    if (!await revenueCatGateway.configure(overview.status.billingCustomerId)) {
+      throw StateError('Satın alma mağazası şu anda kullanılamıyor.');
+    }
+    WorkspaceSession.check(scope);
+    // Recover an already paid subscription without opening a second payment.
+    if (overview.status.currentPlan == plan.plan) return sync();
+    currentPlan = overview.status.currentPlan;
+    currentProductId = overview.status.productId;
     final packageIdentifier = plan.packageIdentifier;
 
     if (packageIdentifier == null) {
@@ -87,7 +104,10 @@ class BillingService {
     WorkspaceSession.check(scope);
     final package = packages[packageIdentifier];
 
-    if (package == null) {
+    final sku = package?.storeProduct.identifier;
+    if (package == null ||
+        plan.productId == null ||
+        (sku != plan.productId && !sku!.startsWith('${plan.productId}:'))) {
       throw StateError('Bu plan mağazada henüz yayınlanmadı.');
     }
 
@@ -111,6 +131,12 @@ class BillingService {
 
   Future<BillingOverview> restore() async {
     final scope = WorkspaceSession.capture();
+    final overview = await getOverview();
+    WorkspaceSession.check(scope);
+    if (!await revenueCatGateway.configure(overview.status.billingCustomerId)) {
+      throw StateError('Satın alma mağazası şu anda kullanılamıyor.');
+    }
+    WorkspaceSession.check(scope);
     await revenueCatGateway.restorePurchases();
     WorkspaceSession.check(scope);
     return sync();

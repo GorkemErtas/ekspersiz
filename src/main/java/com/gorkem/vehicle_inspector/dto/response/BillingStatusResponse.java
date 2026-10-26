@@ -14,6 +14,7 @@ public record BillingStatusResponse(
         boolean sandbox,
         LocalDateTime currentPeriodEndsAt,
         String managementUrl,
-        LocalDateTime lastSyncedAt
+        LocalDateTime lastSyncedAt,
+        String verificationStatus
 ) {
 }

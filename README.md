@@ -139,6 +139,13 @@ kredileri ve önceki PLUS/PRO dönem hakları mevcut backend kurallarıyla yöne
 [Güncel kredi sistemi](docs/billing/CREDIT_SYSTEM.md) ·
 [Workspace mimarisi, güvenlik ve yayın sırası](docs/architecture/PERSONAL_BUSINESS_WORKSPACES.md).
 
+Business satın alımı sunucuda doğrulanınca **Şirketini oluştur** adımı açılır.
+Şirket adı ve açık onayınızla kurulum tamamlanır; üyelik yenilenip workspace yetkisi
+doğrulandıktan sonra şirket alanına geçilir. Yarım kalan kuruluma **Krediler ve
+Paketler → Şirketini oluştur** yolundan tekrar ödeme yapmadan devam edebilirsiniz.
+Sandbox abonelikleri üretimde Business hakkı vermez.
+[Business satın alma ve sorun giderme](docs/billing/BUSINESS_WORKSPACE_ONBOARDING.md).
+
 ## Geliştirme ve test
 
 **Gereksinimler:** Java 21, Flutter/Dart SDK, Python 3.12, PostgreSQL/pgvector ve ilgili servis kimlik bilgileri. Hasar modeli ağırlığı gerekli değildir.

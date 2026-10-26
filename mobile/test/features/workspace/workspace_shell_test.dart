@@ -147,6 +147,65 @@ void main() {
   });
 
   testWidgets(
+    'new company metadata preserves setup route; selection and role revocation close it',
+    (tester) async {
+      await WorkspaceSession.initialize(userId: 1);
+      await http.runWithClient(() async {
+        await tester.pumpWidget(
+          uiTestApp(
+            home: const MainShell(
+              userId: 1,
+              fullName: 'Test',
+              email: 'test@example.com',
+              subscriptionPlan: 'FREE',
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        void openSetup() =>
+            Navigator.of(tester.element(find.byType(HomeScreen)))
+                .push<void>(
+                  MaterialPageRoute<void>(
+                    builder: (_) => const Scaffold(body: Text('setup route')),
+                  ),
+                )
+                .ignore();
+        openSetup();
+        await tester.pumpAndSettle();
+        await WorkspaceSession.initialize(
+          userId: 1,
+          businessId: 7,
+          companyName: 'New Company',
+          role: 'OWNER',
+          subscriptionPlan: 'BUSINESS',
+        );
+        await tester.pumpAndSettle();
+        expect(find.text('setup route'), findsOneWidget);
+        await WorkspaceSession.select(WorkspaceType.business);
+        await tester.pumpAndSettle();
+        expect(find.text('setup route'), findsNothing);
+        expect(
+          tester.widget<HomeScreen>(find.byType(HomeScreen)).subscriptionPlan,
+          'BUSINESS',
+        );
+        openSetup();
+        await tester.pumpAndSettle();
+        await WorkspaceSession.initialize(
+          userId: 1,
+          businessId: 7,
+          companyName: 'New Company',
+          role: 'MEMBER',
+          subscriptionPlan: 'FREE',
+        );
+        await tester.pumpAndSettle();
+        expect(find.text('setup route'), findsNothing);
+        expect(tester.takeException(), isNull);
+        await tester.pumpWidget(const SizedBox());
+      }, uiMockClient);
+    },
+  );
+
+  testWidgets(
     'credit screen follows personal selection even when opened from company management',
     (tester) async {
       await WorkspaceSession.initialize(

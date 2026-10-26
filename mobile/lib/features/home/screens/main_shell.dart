@@ -48,6 +48,7 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
   Object _cacheEpoch = Object();
   bool _workspaceReady = false;
   bool _leavingSession = false;
+  WorkspaceState? _lastWorkspace;
 
   BusinessAccount? get _activeBusiness => WorkspaceSession.state.value == null
       ? _businessAccount
@@ -109,6 +110,7 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
     _screenCache = List<Widget?>.filled(4, null);
     _businessAccount = widget.businessAccount;
     _subscriptionPlan = widget.subscriptionPlan;
+    _lastWorkspace = WorkspaceSession.state.value;
     WorkspaceSession.state.addListener(_workspaceChanged);
     WidgetsBinding.instance.addObserver(this);
     _workspaceReady =
@@ -152,7 +154,16 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
       if (widget.userId != null) _handleSessionExpired();
       return;
     }
+    final previous = _lastWorkspace;
+    _lastWorkspace = current;
+    final changedArea =
+        previous?.type != current.type ||
+        (current.isBusiness && previous?.businessId != current.businessId) ||
+        (previous?.businessId != null &&
+            (previous?.businessId != current.businessId ||
+                previous?.role != current.role));
     setState(() {
+      _subscriptionPlan = current.subscriptionPlan ?? _subscriptionPlan;
       _businessAccount = current.businessId == null
           ? null
           : BusinessAccount(
@@ -163,9 +174,11 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
       _cacheEpoch = Object();
       _screenCache.fillRange(0, _screenCache.length, null);
     });
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) Navigator.of(context).popUntil((route) => route.isFirst);
-    });
+    if (changedArea) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) Navigator.of(context).popUntil((route) => route.isFirst);
+      });
+    }
   }
 
   Future<void> _initializeDevicePermissions() async {

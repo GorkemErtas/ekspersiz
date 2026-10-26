@@ -4,6 +4,8 @@ import 'package:flutter/services.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/network/api_exception.dart';
+import '../../../core/workspace/workspace_service.dart';
+import '../../../core/workspace/workspace_session.dart';
 import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/app_page_header.dart';
 import '../../../core/widgets/app_section_header.dart';
@@ -75,9 +77,29 @@ class _BusinessManagementScreenState extends State<BusinessManagementScreen> {
     setState(() => _isCreating = true);
 
     try {
-      final account = await widget.businessService.createAccount(
-        companyName: _companyNameController.text,
-      );
+      // Another device may already have created a company or accepted an invite.
+      var profile = await widget.authService.getCurrentUser();
+      if (!mounted) return;
+      if (profile.businessAccount == null) {
+        if (profile.subscriptionPlan != 'BUSINESS') {
+          throw const FormatException(
+            'Business aboneliğiniz doğrulanamadı. Krediler ve Paketler ekranından yeniden kontrol edin.',
+          );
+        }
+        await widget.businessService.createAccount(
+          companyName: _companyNameController.text,
+        );
+        if (!mounted) return;
+        profile = await widget.authService.getCurrentUser();
+      }
+      final account = profile.businessAccount;
+      if (account == null) {
+        throw const FormatException(
+          'Şirket üyeliği yenilenemedi. Tekrar ödeme yapmadan yeniden deneyin.',
+        );
+      }
+      if (!mounted) return;
+      await const WorkspaceService().select(WorkspaceType.business);
 
       if (mounted) {
         Navigator.of(context).pop<BusinessAccount>(account);
@@ -138,6 +160,8 @@ class _BusinessManagementScreenState extends State<BusinessManagementScreen> {
       if (account == null) {
         throw const FormatException('Şirket üyeliği yenilenemedi.');
       }
+      if (!mounted) return;
+      await const WorkspaceService().select(WorkspaceType.business);
 
       if (mounted) {
         Navigator.of(context).pop<BusinessAccount>(account);
@@ -252,7 +276,11 @@ class _BusinessManagementScreenState extends State<BusinessManagementScreen> {
     return Scaffold(
       appBar: AppBar(
         title: AppText(
-          _isInvitationOnly ? 'Şirket Daveti' : 'Şirket İşlemleri',
+          _isInvitationOnly
+              ? 'Şirket Daveti'
+              : _canCreateAccount
+              ? 'Şirketini oluştur'
+              : 'Şirket İşlemleri',
         ),
       ),
       body: SafeArea(
@@ -273,11 +301,11 @@ class _BusinessManagementScreenState extends State<BusinessManagementScreen> {
                       : Icons.business_rounded,
                   title: _isInvitationOnly
                       ? 'Şirket davetini kabul et'
-                      : account?.companyName ?? 'Şirket üyeliği',
+                      : account?.companyName ?? 'Business aboneliğin hazır',
                   subtitle: _isInvitationOnly
                       ? 'E-postanıza gelen 6 haneli kodla bir şirkete çalışan olarak katılın.'
                       : account == null
-                      ? 'Şirket oluşturun veya e-postanıza gelen davet koduyla mevcut bir şirkete katılın.'
+                      ? 'Şirketinize bir ad verin ve ortak çalışma alanınızı açın. Kişisel araçlarınız ve kredileriniz kişisel hesabınızda kalır. Kuruluma daha sonra tekrar ödeme yapmadan devam edebilirsiniz.'
                       : 'Şirket araçları ve analizleri bütün üyeler tarafından ortak kullanılır.',
                   badge: _isInvitationOnly
                       ? 'DAVET'

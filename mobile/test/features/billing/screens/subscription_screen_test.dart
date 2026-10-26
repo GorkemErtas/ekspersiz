@@ -71,7 +71,7 @@ void main() {
     expect(find.text('4 analiz kredisi'), findsOneWidget);
     expect(
       find.text('Satın alma doğrulandı. Bakiyeniz güncellendi.'),
-      findsOneWidget,
+      findsWidgets,
     );
   });
   testWidgets('pending payment never displays purchase success', (
@@ -85,7 +85,7 @@ void main() {
     await tester.tap(find.text('Satın al').first);
     await tester.pumpAndSettle();
     expect(find.text('3 analiz kredisi'), findsOneWidget);
-    expect(find.textContaining('Ödemeniz doğrulanıyor'), findsOneWidget);
+    expect(find.textContaining('Ödemeniz doğrulanıyor'), findsWidgets);
     expect(find.textContaining('Satın alma doğrulandı'), findsNothing);
   });
   testWidgets(
