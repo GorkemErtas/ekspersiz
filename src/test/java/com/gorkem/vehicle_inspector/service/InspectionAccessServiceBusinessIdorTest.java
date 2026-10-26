@@ -35,7 +35,7 @@ class InspectionAccessServiceBusinessIdorTest {
         when(inspection.getId()).thenReturn(41L);
         when(inspection.getVehicle()).thenReturn(vehicle);
         when(vehicle.getBusinessAccount()).thenReturn(mock(BusinessAccount.class));
-        when(businessContext.findMembership(requester)).thenReturn(Optional.empty());
+        when(businessContext.findWorkspaceMembership(requester)).thenReturn(Optional.empty());
         when(repository.findById(41L)).thenReturn(Optional.of(inspection));
 
         assertThrows(ResourceNotFoundException.class,
@@ -50,7 +50,7 @@ class InspectionAccessServiceBusinessIdorTest {
         when(inspection.getId()).thenReturn(41L);
         when(inspection.getVehicle()).thenReturn(vehicle);
         when(vehicle.getBusinessAccount()).thenReturn(mock(BusinessAccount.class));
-        when(businessContext.findMembership(requester)).thenReturn(Optional.empty());
+        when(businessContext.findWorkspaceMembership(requester)).thenReturn(Optional.empty());
         when(repository.findByIdForUpdate(41L)).thenReturn(Optional.of(inspection));
 
         assertThrows(ResourceNotFoundException.class,
@@ -68,7 +68,7 @@ class InspectionAccessServiceBusinessIdorTest {
         when(ownBusiness.getId()).thenReturn(1L);
         when(otherBusiness.getId()).thenReturn(2L);
         when(membership.getBusinessAccount()).thenReturn(ownBusiness);
-        when(businessContext.findMembership(requester)).thenReturn(Optional.of(membership));
+        when(businessContext.findWorkspaceMembership(requester)).thenReturn(Optional.of(membership));
         when(vehicle.getBusinessAccount()).thenReturn(otherBusiness);
         when(inspection.getId()).thenReturn(41L);
         when(inspection.getVehicle()).thenReturn(vehicle);
@@ -89,7 +89,7 @@ class InspectionAccessServiceBusinessIdorTest {
         when(ownBusiness.getId()).thenReturn(1L);
         when(otherBusiness.getId()).thenReturn(2L);
         when(membership.getBusinessAccount()).thenReturn(ownBusiness);
-        when(businessContext.findMembership(requester)).thenReturn(Optional.of(membership));
+        when(businessContext.findWorkspaceMembership(requester)).thenReturn(Optional.of(membership));
         when(vehicle.getBusinessAccount()).thenReturn(otherBusiness);
         when(inspection.getId()).thenReturn(41L);
         when(inspection.getVehicle()).thenReturn(vehicle);
@@ -108,7 +108,7 @@ class InspectionAccessServiceBusinessIdorTest {
         DamageInspection inspection = mock(DamageInspection.class);
         when(business.getId()).thenReturn(1L);
         when(membership.getBusinessAccount()).thenReturn(business);
-        when(businessContext.findMembership(requester)).thenReturn(Optional.of(membership));
+        when(businessContext.findWorkspaceMembership(requester)).thenReturn(Optional.of(membership));
         when(vehicle.getBusinessAccount()).thenReturn(business);
         when(inspection.getVehicle()).thenReturn(vehicle);
         when(repository.findById(41L)).thenReturn(Optional.of(inspection));

@@ -39,7 +39,7 @@ public class InspectionAccessService {
 
     private DamageInspection validateAccess(DamageInspection inspection, User user) {
         Vehicle vehicle = inspection.getVehicle();
-        boolean accessible = businessContextService.findMembership(user)
+        boolean accessible = businessContextService.findWorkspaceMembership(user)
                 .map(member -> vehicle.getBusinessAccount() != null
                         && member.getBusinessAccount().getId()
                         .equals(vehicle.getBusinessAccount().getId()))

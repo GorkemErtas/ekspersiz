@@ -62,7 +62,7 @@ class VehicleServiceTest {
                 "user@example.com"
         )).thenReturn(user);
 
-        when(businessContextService.isBusinessMember(user))
+        when(businessContextService.isBusinessWorkspace(user))
                 .thenReturn(false);
 
         Vehicle vehicle = new Vehicle(
@@ -113,7 +113,7 @@ class VehicleServiceTest {
                 "member@example.com"
         )).thenReturn(user);
 
-        when(businessContextService.isBusinessMember(user))
+        when(businessContextService.isBusinessWorkspace(user))
                 .thenReturn(true);
 
         when(businessContextService.requireBusinessAccount(user))
@@ -171,7 +171,7 @@ class VehicleServiceTest {
                 "member@example.com"
         )).thenReturn(user);
 
-        when(businessContextService.isBusinessMember(user))
+        when(businessContextService.isBusinessWorkspace(user))
                 .thenReturn(true);
 
         when(businessContextService.requireBusinessAccount(user))
@@ -201,7 +201,7 @@ class VehicleServiceTest {
                 "user@example.com"
         )).thenReturn(user);
 
-        when(businessContextService.isBusinessMember(user))
+        when(businessContextService.isBusinessWorkspace(user))
                 .thenReturn(false);
 
         when(user.getId()).thenReturn(1L);
@@ -260,7 +260,7 @@ class VehicleServiceTest {
                 "member@example.com"
         )).thenReturn(user);
 
-        when(businessContextService.isBusinessMember(user))
+        when(businessContextService.isBusinessWorkspace(user))
                 .thenReturn(true);
 
         when(businessContextService.requireBusinessAccount(user))

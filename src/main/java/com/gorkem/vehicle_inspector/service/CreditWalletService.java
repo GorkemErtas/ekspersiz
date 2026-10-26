@@ -4,6 +4,9 @@ import com.gorkem.vehicle_inspector.entity.User;
 import com.gorkem.vehicle_inspector.exception.InsufficientAnalysisCreditException;
 import com.gorkem.vehicle_inspector.service.billing.CreditCatalog;
 import com.gorkem.vehicle_inspector.service.billing.BillingSandboxPolicy;
+import com.gorkem.vehicle_inspector.service.workspace.WorkspaceResolver;
+import com.gorkem.vehicle_inspector.service.workspace.WorkspaceType;
+import com.gorkem.vehicle_inspector.exception.WorkspaceAccessDeniedException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -38,8 +41,9 @@ public class CreditWalletService {
 
     @Transactional
     public Overview overview(User user) {
-        Account personal = account(user, false);
-        Account company = membership(user).isEmpty() ? null : account(user, true);
+        var requested = WorkspaceResolver.requestedType();
+        Account personal = requested == WorkspaceType.BUSINESS ? null : account(user, false);
+        Account company = requested == WorkspaceType.PERSONAL || membership(user).isEmpty() ? null : account(user, true);
         return new Overview(personal, company, CreditCatalog.products());
     }
 
@@ -157,6 +161,7 @@ public class CreditWalletService {
         if (!Set.of("ANALYSIS","ASSISTANT").contains(resource) || operationKey==null || operationKey.length()>160)
             throw new IllegalArgumentException("Geçersiz kredi işlemi.");
         String account=resolve(user,business,false);
+        WorkspaceResolver.requireAccount(user.getId(), account);
         lock(account);
         // Serialize duplicate requests, including a retry after an expired lease.
         var existing=jdbc.queryForList("SELECT * FROM credit_reservations WHERE account_id=? AND resource=? AND operation_key=? AND state<>'RELEASED'",account,resource,operationKey);
@@ -192,6 +197,7 @@ public class CreditWalletService {
     @Transactional
     public void complete(User user, UUID token) {
         var r=owned(user,token);
+        assertReservationAccess(user, r);
         if ("COMPLETED".equals(r.get("state"))) return;
         if (!"RESERVED".equals(r.get("state")) || !date(r.get("expires_at")).isAfter(now()))
             throw new IllegalStateException("İşlem zaman aşımına uğradı; kredi iade edildi. Tekrar deneyin.");
@@ -203,6 +209,7 @@ public class CreditWalletService {
     @Transactional
     public void assertReservation(User user,UUID token) {
         var r=owned(user,token);
+        assertReservationAccess(user, r);
         if (!"RESERVED".equals(r.get("state")) || !date(r.get("expires_at")).isAfter(now()))
             throw new IllegalStateException("Kredi rezervasyonunun süresi doldu. Lütfen tekrar deneyin.");
     }
@@ -215,7 +222,27 @@ public class CreditWalletService {
 
     @Transactional(readOnly=true)
     public String response(User user,UUID token) {
+        var reservation = jdbc.queryForMap("SELECT * FROM credit_reservations WHERE token=? AND user_id=?",token,user.getId());
+        assertReservationAccess(user, reservation, false);
         return jdbc.queryForObject("SELECT response_json FROM credit_reservations WHERE token=? AND user_id=? AND state='COMPLETED'",String.class,token,user.getId());
+    }
+
+    private void assertReservationAccess(User user, Map<String,Object> reservation) {
+        assertReservationAccess(user, reservation, true);
+    }
+
+    private void assertReservationAccess(User user, Map<String,Object> reservation, boolean lockMembership) {
+        String account = (String)reservation.get("account_id");
+        WorkspaceResolver.requireAccount(user.getId(), account);
+        if (account.startsWith("business:")) {
+            long businessId = Long.parseLong(account.substring("business:".length()));
+            // Lock only at completion; a concurrent removal must serialize with
+            // consumption. Release deliberately remains possible after removal.
+            var membership = jdbc.queryForList("SELECT user_id FROM business_members WHERE user_id=? AND business_account_id=?" + (lockMembership ? " FOR SHARE" : ""), user.getId(), businessId);
+            if (membership.isEmpty() || !account.equals(resolve(user, true, false))) {
+                throw new WorkspaceAccessDeniedException();
+            }
+        }
     }
 
     @Transactional
@@ -240,7 +267,12 @@ public class CreditWalletService {
     public UUID preparePurchase(User user, String productId) {
         var product=CreditCatalog.find(productId);
         if (product==null) throw new IllegalArgumentException("Ürün bulunamadı.");
+        var workspace = WorkspaceResolver.requestedType();
+        if (workspace != null && (workspace == WorkspaceType.BUSINESS) != product.business()) {
+            throw new WorkspaceAccessDeniedException();
+        }
         String account=resolve(user,product.business(),true);
+        if (WorkspaceResolver.requestedType() != null) WorkspaceResolver.requireAccount(user.getId(), account);
         lock(account);
         UUID id=UUID.randomUUID();
         jdbc.update("INSERT INTO credit_purchase_intents(id,customer_id,product_id,account_id,created_at,expires_at) VALUES (?,?,?,?,?,?)",id,user.ensureBillingCustomerId(),productId,account,now(),now().plusDays(30));

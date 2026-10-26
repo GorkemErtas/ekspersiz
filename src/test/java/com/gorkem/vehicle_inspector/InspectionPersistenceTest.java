@@ -711,6 +711,58 @@ class InspectionPersistenceTest {
         });
     }
 
+    @AfterEach void clearWorkspaceRequest() {
+        org.springframework.web.context.request.RequestContextHolder.resetRequestAttributes();
+    }
+
+    @Test
+    void companyMemberCanReadOwnPersonalHistoryAndImagesWithoutSeeingCompanyRecords() {
+        Long personalId = tx.execute(status -> {
+            var own = vehicles.save(new Vehicle("PERSONAL-MEMBER", "Brand", "Own", 2024, 1000, member));
+            return saveInspection(own, member, NOW, InspectionStatus.COMPLETED).getId();
+        });
+        Long sharedId = tx.execute(status -> saveInspection(firstVehicle, owner, NOW, InspectionStatus.COMPLETED).getId());
+        WorkspaceResolverTest.request("PERSONAL");
+        assertEquals(List.of(personalId), service.getMyInspections(member.getEmail()).stream().map(i -> i.getId()).toList());
+        assertEquals(Path.of("test.jpg"), service.getInspectionImage(personalId, member.getEmail()));
+        assertThrows(ResourceNotFoundException.class, () -> service.getMyInspectionById(sharedId, member.getEmail()));
+
+        WorkspaceResolverTest.request("BUSINESS");
+        assertEquals(List.of(sharedId), service.getMyInspections(member.getEmail()).stream().map(i -> i.getId()).toList());
+        assertThrows(ResourceNotFoundException.class, () -> service.getInspectionImage(personalId, member.getEmail()));
+
+        tx.executeWithoutResult(status -> members.findByUserId(member.getId()).ifPresent(members::delete));
+        assertThrows(com.gorkem.vehicle_inspector.exception.WorkspaceAccessDeniedException.class,
+                () -> service.getMyInspectionById(sharedId, member.getEmail()));
+        WorkspaceResolverTest.request("PERSONAL");
+        assertEquals(personalId, service.getMyInspectionById(personalId, member.getEmail()).getId());
+    }
+
+    @Test
+    void notificationQueriesAndMarkReadAreWorkspaceScopedAndRevokeCompanyHistory() {
+        var notifications = app.getBean(AppNotificationRepository.class);
+        var ids = tx.execute(status -> {
+            var own = vehicles.save(new Vehicle("PERSONAL-NOTICE", "Brand", "Own", 2024, 1000, member));
+            var personalNote = notifications.save(new AppNotification(member, own, null, "own-note",
+                    NotificationType.VEHICLE_REMINDER, NotificationSeverity.INFO, "Own", "Own body", null, NOW));
+            var sharedNote = notifications.save(new AppNotification(member, firstVehicle, null, "shared-note",
+                    NotificationType.VEHICLE_REMINDER, NotificationSeverity.INFO, "Company", "Company body", null, NOW));
+            return List.of(personalNote.getId(), sharedNote.getId());
+        });
+        assertEquals(List.of(ids.getFirst()), tx.execute(status -> notifications.findVisible(member.getId(), null, false,
+                org.springframework.data.domain.PageRequest.of(0, 100)).stream().map(AppNotification::getId).toList()));
+        long sharedUnread = tx.execute(status -> notifications.countVisibleUnread(member.getId(), business.getId()));
+        int marked = tx.execute(status -> notifications.markVisibleRead(member.getId(), null, NOW));
+        long remainingShared = tx.execute(status -> notifications.countVisibleUnread(member.getId(), business.getId()));
+        assertEquals(1L, sharedUnread);
+        assertEquals(1, marked);
+        assertEquals(1L, remainingShared);
+        assertTrue(Boolean.TRUE.equals(tx.execute(status -> notifications.findVisibleById(ids.getLast(), member.getId(), null).isEmpty())));
+        tx.executeWithoutResult(status -> members.findByUserId(member.getId()).ifPresent(members::delete));
+        long removedUnread = tx.execute(status -> notifications.countVisibleUnread(member.getId(), business.getId()));
+        assertEquals(0L, removedUnread);
+    }
+
     private DamageInspection saveInspection(Vehicle vehicle, User creator, LocalDateTime started, InspectionStatus status) {
         DamageInspection inspection = new DamageInspection(vehicle, creator, status);
         inspection.setAnalysisStartedAt(started);

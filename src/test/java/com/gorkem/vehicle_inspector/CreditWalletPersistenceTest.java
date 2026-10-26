@@ -142,6 +142,75 @@ class CreditWalletPersistenceTest {
         jdbc.update("INSERT INTO business_accounts(id,company_name,created_at) VALUES (77,'Test',?)",now());
         jdbc.update("INSERT INTO business_members(business_account_id,user_id,role,joined_at) VALUES (77,?,'OWNER',?),(77,?,'MEMBER',?)",user.getId(),now(),other.getId(),now());
     }
+
+    @AfterEach void clearWorkspaceRequest() {
+        org.springframework.web.context.request.RequestContextHolder.resetRequestAttributes();
+    }
+
+    @Test void membershipAndWorkspaceSwitchingPreserveIndependentCreditPools() {
+        buy(other,"eksper_analysis_5","before-joining");
+        company();
+        WorkspaceResolverTest.request("PERSONAL");
+        var personal = inTx(() -> service.overview(other));
+        assertEquals(5, personal.personal().balances().get("ANALYSIS").available());
+        assertNull(personal.company());
+        var own = reserve(other,"own-analysis");
+        run(() -> service.complete(other,own.token()));
+
+        WorkspaceResolverTest.request("BUSINESS");
+        var shared = inTx(() -> service.overview(other));
+        assertNull(shared.personal());
+        assertEquals(100,shared.company().balances().get("ANALYSIS").available());
+        var company = inTx(() -> service.reserve(other,true,"ANALYSIS","company-analysis","hash"));
+        run(() -> service.complete(other,company.token()));
+        assertEquals(99,inTx(() -> service.account(other,true).balances().get("ANALYSIS").available()));
+
+        WorkspaceResolverTest.request("PERSONAL");
+        assertEquals(4,balance(other,"ANALYSIS"));
+        assertThrows(com.gorkem.vehicle_inspector.exception.WorkspaceAccessDeniedException.class,
+                () -> run(() -> service.preparePurchase(other,"eksper_analysis_5_business")));
+        run(() -> service.preparePurchase(other,"eksper_analysis_1"));
+        // Owner's personal account also remains independent of the Business plan.
+        assertTrue(inTx(() -> service.account(user,false).canPurchase()));
+    }
+
+    @Test void switchingDuringAReservationCannotChargeTheOtherAccountButCanRefundOriginal() {
+        buy(other,"eksper_analysis_5","personal"); company();
+        WorkspaceResolverTest.request("BUSINESS");
+        var reservation = inTx(() -> service.reserve(other,true,"ASSISTANT","question","hash"));
+        WorkspaceResolverTest.request("PERSONAL");
+        assertThrows(com.gorkem.vehicle_inspector.exception.WorkspaceAccessDeniedException.class,
+                () -> run(() -> service.complete(other,reservation.token())));
+        run(() -> service.release(other,reservation.token()));
+        assertEquals(5,balance(other,"ANALYSIS"));
+        assertEquals(200,inTx(() -> service.account(other,true).balances().get("ASSISTANT").available()));
+    }
+
+    @Test void removedMemberCannotCompleteOrReplayCompanyWorkButReservationIsRefundable() {
+        company();
+        WorkspaceResolverTest.request("BUSINESS");
+        var reservation = inTx(() -> service.reserve(other,true,"ANALYSIS","before-removal","hash"));
+        jdbc.update("DELETE FROM business_members WHERE user_id=?",other.getId());
+        assertThrows(com.gorkem.vehicle_inspector.exception.WorkspaceAccessDeniedException.class,
+                () -> run(() -> service.complete(other,reservation.token())));
+        run(() -> service.release(other,reservation.token()));
+        assertEquals(100,inTx(() -> service.account(user,true).balances().get("ANALYSIS").available()));
+        WorkspaceResolverTest.request("PERSONAL");
+        assertEquals(0,balance(other,"ANALYSIS"));
+    }
+
+    @Test void webhookUsesPurchaseIntentAccountAfterClientChangesWorkspace() {
+        company();
+        WorkspaceResolverTest.request("BUSINESS");
+        run(() -> service.preparePurchase(user,"eksper_analysis_5_business"));
+        WorkspaceResolverTest.request("PERSONAL");
+        run(() -> service.purchase(user,"eksper_analysis_5_business","paid-company",now(),false));
+        assertEquals(0,balance(user,"ANALYSIS"));
+        assertEquals(105,inTx(() -> service.account(user,true).balances().get("ANALYSIS").available()));
+        run(() -> service.purchase(user,"eksper_analysis_5_business","paid-company",now(),true));
+        assertEquals(100,inTx(() -> service.account(user,true).balances().get("ANALYSIS").available()));
+        assertEquals(0,balance(user,"ANALYSIS"));
+    }
     @Test void companyRenewalAndOwnerOnlyPurchases() {
         company();assertEquals(100,inTx(() -> service.account(other,true).balances().get("ANALYSIS").available()));
         assertThrows(IllegalStateException.class,() -> run(() -> service.preparePurchase(other,"eksper_analysis_5_business")));

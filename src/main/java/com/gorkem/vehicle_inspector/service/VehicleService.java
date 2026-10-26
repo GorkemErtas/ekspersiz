@@ -67,7 +67,7 @@ public class VehicleService {
 
         Vehicle vehicle;
 
-        if (!businessContextService.isBusinessMember(user)) {
+        if (!businessContextService.isBusinessWorkspace(user)) {
 
             // Kişisel kullanım → kullanıcının kendi plan limiti
             subscriptionService.validateVehicleLimit(user);
@@ -127,7 +127,7 @@ public class VehicleService {
 
         List<Vehicle> vehicles;
 
-        if (!businessContextService.isBusinessMember(user)) {
+        if (!businessContextService.isBusinessWorkspace(user)) {
             vehicles =
                     vehicleRepository
                             .findAllByUserIdAndArchivedFalseOrderByIdDesc(
@@ -209,7 +209,7 @@ public class VehicleService {
         Vehicle selectedVehicle =
                 findAccessibleVehicle(id, user);
 
-        if (!businessContextService.isBusinessMember(user)) {
+        if (!businessContextService.isBusinessWorkspace(user)) {
             vehicleRepository
                     .findByUserIdAndPrimaryVehicleTrueAndArchivedFalse(
                             user.getId()
@@ -273,7 +273,7 @@ public class VehicleService {
 
         List<Vehicle> remainingVehicles;
 
-        if (!businessContextService.isBusinessMember(user)) {
+        if (!businessContextService.isBusinessWorkspace(user)) {
             remainingVehicles =
                     vehicleRepository
                             .findAllByUserIdAndArchivedFalseOrderByIdDesc(
@@ -303,12 +303,13 @@ public class VehicleService {
             Long vehicleId,
             User user
     ) {
-        if (!businessContextService.isBusinessMember(user)) {
+        if (!businessContextService.isBusinessWorkspace(user)) {
             return vehicleRepository
                     .findByIdAndUserIdAndArchivedFalse(
                             vehicleId,
                             user.getId()
                     )
+                    .filter(vehicle -> vehicle.getBusinessAccount() == null)
                     .orElseThrow(() ->
                             vehicleNotFound(vehicleId)
                     );

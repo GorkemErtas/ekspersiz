@@ -12,6 +12,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
+import com.gorkem.vehicle_inspector.service.workspace.WorkspaceContext;
+import com.gorkem.vehicle_inspector.service.workspace.WorkspaceResolver;
 
 @Service
 public class BusinessContextService {
@@ -19,6 +21,7 @@ public class BusinessContextService {
     private final UserRepository userRepository;
     private final BusinessMemberRepository businessMemberRepository;
     private final SubscriptionService subscriptionService;
+    private final WorkspaceResolver workspaces = new WorkspaceResolver();
 
     public BusinessContextService(
             UserRepository userRepository,
@@ -46,6 +49,28 @@ public class BusinessContextService {
     public Optional<BusinessMember> findMembership(User user) {
         return businessMemberRepository
                 .findByUserId(user.getId());
+    }
+
+    @Transactional(readOnly = true)
+    public WorkspaceContext workspace(User user) {
+        return workspaces.resolve(user.getId(), workspaceMembership(user));
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<BusinessMember> findWorkspaceMembership(User user) {
+        var membership = workspaceMembership(user);
+        return workspaces.resolve(user.getId(), membership).business()
+                ? membership : Optional.empty();
+    }
+
+    @Transactional(readOnly = true)
+    public boolean isBusinessWorkspace(User user) {
+        return findWorkspaceMembership(user).isPresent();
+    }
+
+    private Optional<BusinessMember> workspaceMembership(User user) {
+        return WorkspaceResolver.requestedType() == com.gorkem.vehicle_inspector.service.workspace.WorkspaceType.PERSONAL
+                ? Optional.empty() : findMembership(user);
     }
 
     @Transactional(readOnly = true)

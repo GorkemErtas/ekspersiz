@@ -30,7 +30,7 @@ public class VehicleAccessService {
     }
 
     private Vehicle find(Long vehicleId, User user, boolean includeArchived) {
-        if (businessContext.findMembership(user).isPresent()) {
+        if (businessContext.findWorkspaceMembership(user).isPresent()) {
             var business = businessContext.requireBusinessAccount(user);
             return (includeArchived
                     ? vehicles.findByIdAndBusinessAccountId(vehicleId, business.getId())
@@ -41,6 +41,7 @@ public class VehicleAccessService {
         return (includeArchived
                 ? vehicles.findByIdAndUserId(vehicleId, user.getId())
                 : vehicles.findByIdAndUserIdAndArchivedFalse(vehicleId, user.getId()))
+                .filter(vehicle -> vehicle.getBusinessAccount() == null)
                 .orElseThrow(() -> notFound(vehicleId));
     }
 

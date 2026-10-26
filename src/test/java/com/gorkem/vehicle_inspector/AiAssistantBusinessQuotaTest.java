@@ -36,7 +36,7 @@ class AiAssistantBusinessQuotaTest {
         AiAssistantAccess access = new AiAssistantAccess(user, LocalDateTime.now(clock));
 
         when(businessContext.requireUser("status@example.com")).thenReturn(user);
-        when(businessContext.isBusinessMember(user)).thenReturn(true);
+        when(businessContext.isBusinessWorkspace(user)).thenReturn(true);
         when(businessContext.requireBusinessAccount(user)).thenReturn(company);
         when(accesses.findByUserId(5L)).thenReturn(Optional.of(access));
         when(subscriptions.getEffectivePlan(user)).thenReturn(SubscriptionPlan.BUSINESS);
@@ -66,7 +66,7 @@ class AiAssistantBusinessQuotaTest {
 
         when(businessContext.requireUser("owner@example.com")).thenReturn(owner);
         when(businessContext.requireUser("employee@example.com")).thenReturn(employee);
-        when(businessContext.isBusinessMember(any(User.class))).thenReturn(true);
+        when(businessContext.isBusinessWorkspace(any(User.class))).thenReturn(true);
         when(businessContext.requireBusinessAccount(any(User.class))).thenReturn(company);
         when(accesses.findByUserId(1L)).thenReturn(Optional.of(ownerAccess));
         when(accesses.findByUserId(2L)).thenReturn(Optional.of(employeeAccess));

@@ -77,7 +77,7 @@ class AiAssistantServiceConcurrencyIT {
         }
         when(businessContext.requireUser(any(String.class)))
                 .thenAnswer(call -> workers.get(call.getArgument(0, String.class)));
-        when(businessContext.isBusinessMember(any(User.class))).thenReturn(true);
+        when(businessContext.isBusinessWorkspace(any(User.class))).thenReturn(true);
         when(businessContext.requireBusinessAccount(any(User.class))).thenReturn(company);
         when(subscriptions.getEffectivePlan(any(User.class))).thenReturn(SubscriptionPlan.BUSINESS);
 

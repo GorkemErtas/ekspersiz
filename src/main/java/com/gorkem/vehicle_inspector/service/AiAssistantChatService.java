@@ -38,7 +38,7 @@ public class AiAssistantChatService {
             byte[] payload=creditJson.writeValueAsBytes(java.util.Arrays.asList(request.question(),request.vehicleId(),request.history()));
             hash=java.util.HexFormat.of().formatHex(java.security.MessageDigest.getInstance("SHA-256").digest(payload));
         } catch (Exception e) { throw new IllegalStateException("İstek doğrulanamadı.",e); }
-        var reservation=credits.reserve(user,businessContext.isBusinessMember(user),"ASSISTANT",key,hash);
+        var reservation=credits.reserve(user,businessContext.isBusinessWorkspace(user),"ASSISTANT",key,hash);
         if (reservation.completed()) {
             try { return creditJson.readValue(credits.response(user,reservation.token()),AiAssistantChatResponse.class); }
             catch (Exception e) { throw new IllegalStateException("Önceki yanıt alınamadı; tekrar kredi düşülmedi.",e); }
