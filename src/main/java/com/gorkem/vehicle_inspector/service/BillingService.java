@@ -101,8 +101,8 @@ public class BillingService {
     @Transactional
     public BillingOverviewResponse sync(String email) {
         User user = requireUser(email);
-        syncUser(user);
-        return buildOverview(user);
+        String verification = syncUser(user);
+        return buildOverview(user, verification);
     }
 
     @Transactional
@@ -180,7 +180,7 @@ public class BillingService {
         ));
     }
 
-    private void syncUser(User user) {
+    private String syncUser(User user) {
         String billingCustomerId = user.ensureBillingCustomerId();
         RevenueCatCustomer customer = revenueCatClient.getCustomer(
                 billingCustomerId
@@ -231,6 +231,17 @@ public class BillingService {
                         toLocalDateTime(purchase.purchasedAt()),purchase.refunded(),purchase.sandbox());
             }
         }
+        // Diagnostic only: rejected sandbox subscriptions never become entitlements
+        // or enter the production subscription/credit ledger.
+        boolean sandboxRejected = customer.subscriptions().stream()
+                .anyMatch(subscription -> subscription.sandbox()
+                        && isActive(subscription, now)
+                        && BillingProduct.fromProductId(subscription.productId())
+                            .map(product -> selected.isEmpty()
+                                    || product.getPlan().ordinal() > selected.get().product().getPlan().ordinal())
+                            .orElse(false));
+        return sandboxRejected ? "SANDBOX_REJECTED"
+                : selected.isPresent() ? "VERIFIED" : "NO_ACTIVE_SUBSCRIPTION";
     }
 
     private void applyActiveSubscription(
@@ -306,6 +317,10 @@ public class BillingService {
     }
 
     private BillingOverviewResponse buildOverview(User user) {
+        return buildOverview(user, "NOT_CHECKED");
+    }
+
+    private BillingOverviewResponse buildOverview(User user, String verification) {
         BillingSubscription billingSubscription = subscriptionRepository
                 .findByUserId(user.getId())
                 .orElse(null);
@@ -337,7 +352,8 @@ public class BillingService {
                         : billingSubscription.getManagementUrl(),
                 billingSubscription == null
                         ? null
-                        : billingSubscription.getLastSyncedAt()
+                        : billingSubscription.getLastSyncedAt(),
+                verification
         );
 
         return new BillingOverviewResponse(status, catalog());
