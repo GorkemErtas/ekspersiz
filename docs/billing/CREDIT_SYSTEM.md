@@ -97,6 +97,19 @@ uygulama başarı mesajı yerine bekleme mesajı gösterir; yeniden açılışta
 MEMBER birlikte kullanır; yalnızca aktif Business sahibi şirket adına alabilir.
 Üyelikten ayrılmak kişinin kişisel bakiyesini değiştirmez.
 
+Yeni mobil istemci `X-Workspace: PERSONAL|BUSINESS` ile aktif alanı açıkça seçer.
+Kredi ekranı aynı seçimi kullanır; yetersiz bakiyede diğer hesap devreye girmez.
+Yeni isteklerde `/credits` yalnız seçili hesabın bakiyesini yükler; diğer hesap
+alanı `null` olur. Header göndermeyen eski istemciye önceki iki hesaplı yanıt korunur.
+Üye kendi kişisel alanında kişisel paket alabilir; şirket adına alım OWNER kuralındadır.
+
+Satın alma niyetinin SKU/hesap türü açık workspace ile eşleşmelidir. Webhook,
+pending purchase, refund ve uzlaştırma aktif mobil seçime göre yeniden yönlendirilmez;
+kayıtlı işlem/niyet hesabını kullanır. Rezervasyon tamamlama kaynak hesabını ve güncel
+şirket üyeliğini doğrular; üye çıkarılırsa tüketim reddedilir. İade, güncel seçime
+bakmadan token'ın orijinal havuzuna yapılabilir. Mevcut dönem/iade/idempotency
+kuralları korunur. [Mimari ve doğrulama](../architecture/PERSONAL_BUSINESS_WORKSPACES.md).
+
 `CreditWalletService` kısa transaction içinde hesap satırını kilitler. Aynı
 kullanıcının eşzamanlı pahalı istekleri advisory lock + aktif rezervasyonla
 sınırlanır. Kilit beklemesi 3 saniyedir; meşgul isteği kontrollü hata alır.

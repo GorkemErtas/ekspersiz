@@ -9,6 +9,7 @@ EksperSiz'in Flutter/Dart istemcisi. Araç yönetimi, geçmiş hasar analizlerin
 - Rapordan PDF paylaşımı, yakındaki servisler ve ayrı Hasar Durum Tutanağı.
 - AI Asistan: yazılı sohbet, Türkçe konuşmadan metne giriş, araç bağlamı, günlük hakların görüntülenmesi.
 - Mevcut planlar, kişisel/şirket kredi cüzdanları ve RevenueCat satın alma akışı; kullanım hakkını backend doğrular. [Kredi kuralları](../docs/billing/CREDIT_SYSTEM.md).
+- Şirket sahibi/üyesi için ana ekranda Kişisel Hesap / Şirket Hesabı değiştiricisi; aktif alana uygun araçlar, raporlar, asistan ve bakiye.
 - Harita/yakındaki servisler, bildirimler/FCM, tema, yerelleştirme ve Android uygulama içi güncelleme kontrolü.
 
 ## Mimari
@@ -38,3 +39,14 @@ Analiz tüm uygun hesaplara açıktır; test e-postası listesi kullanılmaz. Bu
 Belirsiz şiddet ve parça değişimi belirsiz kalır; yeni Gemini sonuçları için güven yüzdesi gösterilmez. Ek fotoğraf yönlendirmesi, bulgu/onarım notları ve uyarılar korunur; tekrar eden uzun anlatım Rapor Ayrıntıları altında açılır. Eski kayıtlar ve kesinleşmiş tutanaklar değiştirilmez.
 
 [Gemini sözleşmesi](../docs/GEMINI_VISION_ANALYSIS.md) · [Genel erişim ve yayın sırası](../docs/GEMINI_GENERAL_ACCESS_REPORT_UX.md).
+
+Workspace tercihi kullanıcı kimliğiyle güvenli depoda tutulur. Geçişte ekran ve görsel
+önbellekleri yenilenir, eski alanın açık ekranları kapatılır ve geç gelen HTTP yanıtları
+kabul edilmez. Krediler ve Paketler ekranı uygulamanın aktif alanını kullanır; bağımsız
+bir hesap seçimi sunmaz. Üyelik kaldırılırsa sunucunun 403 yanıtı veya hesap yenilemesi
+kişisel alana dönülmesini sağlar. Oturum değişiminde bellekteki seçim temizlenir.
+
+İstekler `X-Workspace: PERSONAL|BUSINESS` taşır; başarılı veri yanıtında sunucu aynı
+başlıkla alanı doğrular. Yeni mobil sürümden **önce backend güncellenmelidir**.
+Workspace desteği olmayan eski backend verileri yanlış hesap etiketiyle gösterilmez.
+[Teknik sözleşme ve rollback sınırları](../docs/architecture/PERSONAL_BUSINESS_WORKSPACES.md).
