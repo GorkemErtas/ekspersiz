@@ -6,7 +6,6 @@ import com.gorkem.vehicle_inspector.dto.llm.LlmInspectionReportResult;
 import com.gorkem.vehicle_inspector.dto.response.*;
 import com.gorkem.vehicle_inspector.entity.*;
 import com.gorkem.vehicle_inspector.exception.AiServiceException;
-import com.gorkem.vehicle_inspector.exception.DamageAnalysisUnavailableException;
 import com.gorkem.vehicle_inspector.exception.ResourceNotFoundException;
 import com.gorkem.vehicle_inspector.exception.UnsuitableInspectionImageException;
 import com.gorkem.vehicle_inspector.mapper.DamageInspectionMapper;
@@ -22,7 +21,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -37,8 +35,6 @@ import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Arrays;
-import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
 
@@ -46,28 +42,6 @@ import java.util.Set;
 public class DamageInspectionService {
     @Autowired
     private CreditWalletService creditWallets;
-
-    // Fail closed during controlled testing. An empty tester list grants no access.
-    @Value("${application.damage-analysis.test-only:false}")
-    private boolean analysisTestOnly;
-
-    @Value("${application.damage-analysis.test-emails:}")
-    private String analysisTestEmails = "";
-
-    static boolean analysisAccessAllowed(boolean testOnly, String allowedEmails, String email) {
-        if (!testOnly) return true;
-        if (email == null || email.isBlank() || allowedEmails == null) return false;
-        String normalizedEmail = email.strip().toLowerCase(Locale.ROOT);
-        return Arrays.stream(allowedEmails.split(","))
-                .map(value -> value.strip().toLowerCase(Locale.ROOT))
-                .anyMatch(normalizedEmail::equals);
-    }
-
-    private void requireAnalysisTesterAccess(String authenticatedEmail) {
-        if (!analysisAccessAllowed(analysisTestOnly, analysisTestEmails, authenticatedEmail)) {
-            throw new DamageAnalysisUnavailableException();
-        }
-    }
 
     private static final Logger log =
             LoggerFactory.getLogger(
@@ -568,7 +542,6 @@ public class DamageInspectionService {
             boolean requireContextImage,
             String vehicleRegion
     ) {
-        requireAnalysisTesterAccess(authenticatedEmail);
         if (creditWallets == null) {
             aiAnalysisClient.requireAvailable();
             return analyzeWithReservedCredit(inspectionId,authenticatedEmail,true,vehicleRegion,null);
@@ -779,7 +752,6 @@ public class DamageInspectionService {
     }
 
     private ImageQualityResponse validateWithCredit(Long inspectionId,String email,boolean contextImage) {
-        requireAnalysisTesterAccess(email);
         aiAnalysisClient.requireAvailable();
         if (creditWallets==null) return validateInspectionImageInternal(inspectionId,email,contextImage).quality();
         User user=businessContextService.requireUser(email);
@@ -1279,7 +1251,6 @@ public class DamageInspectionService {
             Long inspectionId,
             String authenticatedEmail
     ) {
-        requireAnalysisTesterAccess(authenticatedEmail);
         if (creditWallets==null) return regenerateReservedReport(inspectionId,authenticatedEmail,null);
         User user=businessContextService.requireUser(authenticatedEmail);
         var initial=inspectionAccessService.requireInspection(inspectionId,user);

@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -121,6 +122,79 @@ class DamageInspectionServiceTest {
         verify(inspections, never()).save(any());
         assertEquals(InspectionStatus.PENDING, inspection.getStatus());
         assertNull(inspection.getAnalysisStartedAt());
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "pilot@example.com, true", "ordinary@example.com, true",
+            "pilot@example.com, false", "ordinary@example.com, false"
+    })
+    void formerTestersAndRegularUsersUseTheSamePaidAnalysisFlow(String email, boolean company) {
+        actor.setEmail(email);
+        when(context.requireUser(email)).thenReturn(actor);
+        if (!company) {
+            vehicle.assignToUser(actor);
+            when(context.findMembership(actor)).thenReturn(Optional.empty());
+        }
+        var wallet = mock(CreditWalletService.class);
+        var token = java.util.UUID.randomUUID();
+        ReflectionTestUtils.setField(service, "creditWallets", wallet);
+        when(wallet.reserve(actor, company, "ANALYSIS", "inspection:30", "inspection:30"))
+                .thenReturn(new CreditWalletService.Reservation(token, false));
+        successfulAnalysis();
+
+        var result = service.analyzeInspection(30L, email);
+
+        assertEquals(ReportStatus.COMPLETED, result.getReportStatus());
+        verify(wallet).reserve(actor, company, "ANALYSIS", "inspection:30", "inspection:30");
+        verify(wallet).complete(actor, token);
+        verify(wallet, never()).release(any(), any());
+        verify(ai).analyze(Path.of("image.jpg"), Path.of("context-image.jpg"), null);
+
+        // Reopening a paid result is idempotent for both account types.
+        service.analyzeInspection(30L, email);
+        verify(wallet, times(1)).reserve(any(), anyBoolean(), anyString(), anyString(), anyString());
+        verify(reports, times(1)).generateReport(any());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"pilot@example.com", "ordinary@example.com"})
+    void photoValidationStillRequiresCreditForEveryEmail(String email) {
+        actor.setEmail(email);
+        when(context.requireUser(email)).thenReturn(actor);
+        var wallet = mock(CreditWalletService.class);
+        ReflectionTestUtils.setField(service, "creditWallets", wallet);
+        when(wallet.reserve(eq(actor), eq(true), eq("ANALYSIS"), anyString(), anyString()))
+                .thenThrow(new com.gorkem.vehicle_inspector.exception.InsufficientAnalysisCreditException("No credits"));
+
+        assertThrows(com.gorkem.vehicle_inspector.exception.InsufficientAnalysisCreditException.class,
+                () -> service.validateInspectionImage(30L, email));
+        assertThrows(com.gorkem.vehicle_inspector.exception.InsufficientAnalysisCreditException.class,
+                () -> service.validateInspectionContextImage(30L, email));
+        verify(ai, never()).validateImage(any(), anyString());
+        verifyNoInteractions(reports);
+    }
+
+    @Test
+    void obsoletePilotConfigurationCannotRestrictGeneralAccess() {
+        var wallet = mock(CreditWalletService.class);
+        var token = java.util.UUID.randomUUID();
+        when(wallet.reserve(eq(actor), eq(true), eq("ANALYSIS"), anyString(), anyString()))
+                .thenReturn(new CreditWalletService.Reservation(token, false));
+        successfulAnalysis();
+        new org.springframework.boot.test.context.runner.ApplicationContextRunner()
+                .withPropertyValues(
+                        "application.damage-analysis.test-only=true",
+                        "application.damage-analysis.test-emails=pilot@example.com")
+                .withBean(CreditWalletService.class, () -> wallet)
+                .withBean(DamageInspectionService.class, () -> service)
+                .run(application -> {
+                    assertNull(application.getStartupFailure());
+                    var result = application.getBean(DamageInspectionService.class)
+                            .analyzeInspection(30L, actor.getEmail());
+                    assertEquals(ReportStatus.COMPLETED, result.getReportStatus());
+                    verify(wallet).complete(actor, token);
+                });
     }
 
     @ParameterizedTest

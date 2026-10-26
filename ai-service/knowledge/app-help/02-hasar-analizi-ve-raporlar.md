@@ -12,7 +12,9 @@ Sonuçlar fotoğraflardan elde edilen yapay zekâ yorumlarıdır. Fotoğraf aç�
 Hasar analizi sonuçları uygulamada ilgili araçla ilişkilendirilebilir. Kullanıcının önceki analizleri AI Asistan'a yalnızca yetkili backend aracı üzerinden aktarılır; kişisel sonuçlar uygulama bilgi tabanına gömülmez.
 
 ## Rapor ve belge
-EksperSiz, hasar değerlendirme ve raporlama akışları sunar. Üretilen belgeler, uygulamanın sağladığı bilgiler kapsamında ön değerlendirme ve kayıt amacı taşır; resmi eksper raporu veya sigorta şirketi kararı olarak sunulmamalıdır.
+Hasar Analiz Raporu; genel hasar seviyesini, parça bazında bulguları ve onarım önerilerini, tahmini maliyet aralığını tek ekranda gösterir. Ek açıklamalar ve kaynak bilgisi Rapor Ayrıntıları bölümünden açılır. Rapor PDF olarak paylaşılabilir; yakındaki servislere ve ayrı Hasar Durum Tutanağı belgesine aynı ekrandan ulaşılır. Rapor hazırlanamazsa fotoğraflar tekrar analiz edilmeden yalnız rapor adımı denenir.
+
+Analiz test kullanıcılarıyla sınırlı değildir; mevcut plan, kredi bakiyesi ve şirket yetkileri geçerlidir. Genel erişim ücretsiz veya sınırsız kullanım hakkı vermez. Üretilen belgeler ön değerlendirme ve kayıt amacı taşır; resmi eksper raporu veya sigorta şirketi kararı olarak sunulmamalıdır.
 
 ## Güvenlik ve kritik durumlar
 Fren, direksiyon, lastik, şasi, hava yastığı, yakıt sızıntısı veya yüksek sıcaklık şüphesinde yalnızca fotoğraf analizine dayanarak sürüş güvenliği kararı verilmemelidir. Profesyonel inceleme önerilmelidir.

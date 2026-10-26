@@ -29,14 +29,12 @@ void main() {
     );
     expect(find.text('İşlem Gerekmiyor'), findsOneWidget);
     expect(
-      find.textContaining(
-        'mekanik veya profesyonel ekspertiz garantisi değildir',
-      ),
+      find.text('Profesyonel ekspertiz garantisi değildir.'),
       findsOneWidget,
     );
     expect(find.text('Tespit Edilen Hasarlar'), findsNothing);
     expect(find.text('Onarım Önerileri'), findsNothing);
-    expect(find.text('Yakındaki Uygun Servisler'), findsNothing);
+    expect(find.text('Yakındaki Servisler'), findsNothing);
     await tester.scrollUntilVisible(
       find.text('Tutanak Oluştur / Görüntüle'),
       200,
@@ -52,18 +50,19 @@ void main() {
 
     expect(find.text('Hafif Seviye Hasar'), findsOneWidget);
     await tester.scrollUntilVisible(
-      find.text('Tespit Edilen Hasarlar'),
+      find.text('Bulgular ve Onarım'),
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    expect(find.text('Tespit Edilen Hasarlar'), findsOneWidget);
+    expect(find.text('Bulgular ve Onarım'), findsOneWidget);
     expect(find.text('Çizik'), findsOneWidget);
     await tester.scrollUntilVisible(
-      find.text('Onarım Önerileri'),
+      find.text('Lokal Boya Rötuşu'),
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    expect(find.text('Onarım Önerileri'), findsOneWidget);
+    expect(find.text('Lokal Boya Rötuşu'), findsOneWidget);
+    expect(find.text('AI İnceleme Raporu'), findsNothing);
     expect(find.text('İşlem Gerekmiyor'), findsNothing);
   });
 
@@ -108,6 +107,8 @@ void main() {
         reason: 'Do not reload immediately under memory pressure',
       );
 
+      await tester.ensureVisible(find.text('Fotoğrafı Yeniden Yükle'));
+      await tester.pumpAndSettle();
       await tester.runAsync(() async {
         await tester.tap(find.text('Fotoğrafı Yeniden Yükle'));
         await tester.pump();
@@ -160,6 +161,8 @@ void main() {
       service.images.didHaveMemoryPressure();
       await tester.pumpAndSettle();
       api.error = const ApiException(statusCode: 403, message: 'Denied');
+      await tester.ensureVisible(find.text('Fotoğrafı Yeniden Yükle'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Fotoğrafı Yeniden Yükle'));
       await tester.pumpAndSettle();
       expect(find.text('Analiz fotoğrafı yüklenemedi.'), findsOneWidget);

@@ -57,6 +57,12 @@ Görsel analizden sonra mevcut Gemini fiyat araştırması/tahmini kullanılır;
 Belirsiz/başarısız analizlerde kredi tamamlanmaz; rapor hatasından sonra tekrar yalnız raporu üretir.
 Eski kayıt ve PDF'ler okunmaya devam eder. Yerel görsel model, eğitim veri seti ve inference ağırlığı kalmaz.
 
+Analiz test e-postası kısıtı olmadan, mevcut plan/kredi ve şirket yetkileri kapsamında açıktır.
+Hasar Analiz Raporu; şiddet, parça bazında bulgu/onarım ve maliyet aralığını tek ekranda birleştirir.
+Uzun anlatım açılabilir ayrıntılarda korunur; PDF paylaşımı ve ayrı Hasar Durum Tutanağı kullanılabilir.
+Sunucudaki `DAMAGE_ANALYSIS_ENABLED=false` bakım anahtarı korunur.
+[Genel erişim, doğrulama ve Railway yayın sırası](docs/GEMINI_GENERAL_ACCESS_REPORT_UX.md).
+
 [Mimari, yapılandırma, sözleşme, gizlilik ve testler](docs/GEMINI_VISION_ANALYSIS.md).
 Bu değişiklik bir deployment veya production release içermez.
 

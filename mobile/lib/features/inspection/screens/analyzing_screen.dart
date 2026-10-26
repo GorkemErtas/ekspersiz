@@ -603,7 +603,7 @@ class _AnalyzingContent extends StatelessWidget {
 
               const _AnalysisStep(
                 icon: Icons.description_outlined,
-                title: 'Detaylı AI raporu ve maliyetler',
+                title: 'Rapor ve maliyet tahmini',
                 description:
                     'İki fotoğraftaki görsel yorumlardan rapor, olası onarımlar ve fiyat tahmini hazırlanır.',
                 showLine: false,

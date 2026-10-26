@@ -1,4 +1,3 @@
-import 'package:mobile/features/inspection/models/inspection_labels.dart';
 import 'package:mobile/core/localization/app_text.dart';
 import 'dart:typed_data';
 import 'dart:async';
@@ -8,11 +7,10 @@ import 'package:flutter/material.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_card.dart';
-import '../../../core/widgets/app_icon_box.dart';
-import '../../../core/widgets/app_section_header.dart';
-import '../../../core/widgets/app_status_badge.dart';
 
 import '../models/damage_inspection.dart';
+import '../models/inspection_report_content.dart';
+import '../services/inspection_pdf_service.dart';
 import '../services/inspection_service.dart';
 import 'damage_assessment_record_screen.dart';
 import 'nearby_services_screen.dart';
@@ -39,6 +37,7 @@ class _InspectionResultScreenState extends State<InspectionResultScreen>
   Object _imageLifetime = Object();
 
   bool _isRegeneratingReport = false;
+  bool _isSharingPdf = false;
   Timer? _reportRefreshTimer;
   Timer? _reportRefreshDeadline;
   bool _checkingReport = false;
@@ -77,7 +76,9 @@ class _InspectionResultScreenState extends State<InspectionResultScreen>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed && mounted) {
       setState(_loadInspectionImage);
-      if (_inspection.isReportProcessing) _refreshReportStatus(restart: true);
+      if (_inspection.isProcessing || _inspection.isReportProcessing) {
+        _refreshReportStatus(restart: true);
+      }
     }
   }
 
@@ -186,7 +187,7 @@ class _InspectionResultScreenState extends State<InspectionResultScreen>
         return;
       }
 
-      // Recover a completed/in-flight report without repeating ML or billing.
+      // Recover a completed/in-flight report without repeating image analysis or billing.
       try {
         final current = await _inspectionService.getInspectionById(
           _inspection.id,
@@ -202,7 +203,7 @@ class _InspectionResultScreenState extends State<InspectionResultScreen>
 
       final message = exception is ApiException
           ? exception.message
-          : 'AI raporu yeniden oluşturulamadı.';
+          : 'Rapor yeniden oluşturulamadı.';
 
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
@@ -227,7 +228,7 @@ class _InspectionResultScreenState extends State<InspectionResultScreen>
 
   void _scheduleReportRefresh() {
     _reportRefreshTimer?.cancel();
-    if (!_inspection.isReportProcessing) {
+    if (!_inspection.isProcessing && !_inspection.isReportProcessing) {
       _resetReportRefresh();
       return;
     }
@@ -261,7 +262,7 @@ class _InspectionResultScreenState extends State<InspectionResultScreen>
       );
       if (mounted) setState(() => _applyInspection(current));
     } catch (_) {
-      // Preserve the visible ML findings during a transient connection failure.
+      // Preserve the visible findings during a transient connection failure.
     } finally {
       _checkingReport = false;
       if (mounted) _scheduleReportRefresh();
@@ -296,419 +297,302 @@ class _InspectionResultScreenState extends State<InspectionResultScreen>
     );
   }
 
-  String _severityDisplayText(String? severity) {
-    return switch (severity) {
-      'NONE' => 'Görünür Hasar Tespit Edilmedi',
-      'MINOR' => 'Hafif Seviye Hasar',
-      'MODERATE' => 'Orta Seviye Hasar',
-      'SEVERE' => 'Ağır Seviye Hasar',
-      _ => 'Hasar Seviyesi Belirsiz',
-    };
-  }
-
-  String _severityShortText(String? severity) {
-    return switch (severity) {
-      'NONE' => 'Hasar Yok',
-      'MINOR' => 'Hafif',
-      'MODERATE' => 'Orta',
-      'SEVERE' => 'Ağır',
-      _ => 'Belirsiz',
-    };
-  }
-
-  Color _severityColor(String? severity) {
-    return switch (severity) {
-      'NONE' => AppTheme.successColorFor(context),
-      'MINOR' => AppTheme.warningColorFor(context),
-      'MODERATE' => AppTheme.moderateColorFor(context),
-      'SEVERE' => AppTheme.dangerColorFor(context),
-      _ => AppTheme.neutralColorFor(context),
-    };
-  }
-
-  Color _severitySoftColor(String? severity) {
-    return switch (severity) {
-      'NONE' => AppTheme.successSoftFor(context),
-      'MINOR' => AppTheme.warningSoftFor(context),
-      'MODERATE' => AppTheme.moderateSoftFor(context),
-      'SEVERE' => AppTheme.dangerSoftFor(context),
-      _ => AppTheme.neutralSoftFor(context),
-    };
-  }
-
-  IconData _severityIcon(String? severity) {
-    return switch (severity) {
-      'NONE' => Icons.verified_outlined,
-      'MINOR' => Icons.info_outline_rounded,
-      'MODERATE' => Icons.warning_amber_rounded,
-      'SEVERE' => Icons.report_problem_outlined,
-      _ => Icons.help_outline_rounded,
-    };
-  }
-
-  String _damageTypeLabel(String type) {
-    final current = InspectionLabels.label(type);
-    if (current != null) return current;
-    return switch (type) {
-      'NO_VISIBLE_DAMAGE' => 'Görünür Hasar Yok',
-      'SCRATCH' => 'Çizik',
-      'PAINT_DAMAGE' => 'Boya Hasarı',
-      'DENT' => 'Göçük',
-      'CRACK' => 'Çatlak',
-      'BROKEN_PART' => 'Kırık Parça',
-      'BROKEN_GLASS' => 'Kırık Cam',
-      'DEFORMATION' => 'Deformasyon',
-      _ => type,
-    };
-  }
-
-  String _vehiclePartLabel(String part) {
-    final current = InspectionLabels.label(part);
-    if (current != null) return current;
-    return switch (part) {
-      'UNKNOWN' => 'Bilinmeyen Parça',
-      'FRONT_BUMPER' => 'Ön Tampon',
-      'REAR_BUMPER' => 'Arka Tampon',
-      'FRONT_DOOR' => 'Ön Kapı',
-      'REAR_DOOR' => 'Arka Kapı',
-      'FRONT_WHEEL' => 'Ön Tekerlek',
-      'REAR_WHEEL' => 'Arka Tekerlek',
-      'FRONT_WINDOW' => 'Ön Yan Cam',
-      'REAR_WINDOW' => 'Arka Yan Cam',
-      'WINDSHIELD' => 'Ön Cam',
-      'REAR_WINDSHIELD' => 'Arka Cam',
-      'FENDER' => 'Çamurluk',
-      'QUARTER_PANEL' => 'Arka Çamurluk Paneli',
-      'ROCKER_PANEL' => 'Marşpiyel',
-      'GRILLE' => 'Ön Izgara',
-      'HEADLIGHT' => 'Far',
-      'TAIL_LIGHT' => 'Arka Stop Lambası',
-      'HOOD' => 'Kaput',
-      'LICENSE_PLATE' => 'Plaka',
-      'MIRROR' => 'Yan Ayna',
-      'ROOF' => 'Tavan',
-      'TRUNK' => 'Bagaj Kapağı',
-      _ => part,
-    };
-  }
-
-  String _repairActionLabel(String action) {
-    final current = InspectionLabels.label(action);
-    if (current != null) return current;
-    return switch (action) {
-      'NO_ACTION' => 'İşlem Gerekmiyor',
-      'POLISHING' => 'Pasta / Cila',
-      'PAINT_TOUCH_UP' => 'Lokal Boya Rötuşu',
-      'FULL_PAINTING' => 'Tam Boyama',
-      'PAINTLESS_DENT_REPAIR' => 'Boyasız Göçük Düzeltme',
-      'DENT_REPAIR' => 'Göçük Düzeltme',
-      'PLASTIC_REPAIR' => 'Plastik Onarımı',
-      'PART_REPAIR' => 'Parça Onarımı',
-      'PART_REPLACEMENT' => 'Parça Değişimi',
-      'GLASS_REPAIR' => 'Cam Onarımı',
-      'GLASS_REPLACEMENT' => 'Cam Değişimi',
-      'HEADLIGHT_REPAIR' => 'Far Onarımı',
-      'HEADLIGHT_REPLACEMENT' => 'Far Değişimi',
-      _ => action,
-    };
-  }
-
-  String _reportStatusMessage() {
-    if (_inspection.isReportProcessing) {
-      return 'AI raporu oluşturuluyor...';
+  Future<void> _sharePdf(BuildContext buttonContext) async {
+    if (_isSharingPdf || !_inspection.isCompleted) return;
+    final box = buttonContext.findRenderObject() as RenderBox?;
+    final origin = box == null
+        ? null
+        : box.localToGlobal(Offset.zero) & box.size;
+    setState(() => _isSharingPdf = true);
+    try {
+      await InspectionPdfService(
+        inspectionService: _inspectionService,
+      ).createAndShare(_inspection, sharePositionOrigin: origin);
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: AppText('PDF oluşturulamadı. Lütfen tekrar deneyin.'),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isSharingPdf = false);
     }
-
-    if (_inspection.isReportFailed) {
-      return _inspection.reportMessage ?? 'AI raporu oluşturulamadı.';
-    }
-
-    return 'Hasar tespitleriniz kaydedildi. Detaylı rapor tamamlanamadı; '
-        'ML analizini tekrarlamadan yalnızca raporu tekrar deneyebilirsiniz.';
   }
 
-  String _formatPrice(double value) {
-    final rounded = value.round();
-
-    final source = rounded.toString();
-
-    final result = StringBuffer();
-
-    for (int i = 0; i < source.length; i++) {
-      final remaining = source.length - i;
-
-      result.write(source[i]);
-
-      if (remaining > 1 && remaining % 3 == 1) {
-        result.write('.');
-      }
-    }
-
-    return result.toString();
-  }
-
-  String _formatDate(DateTime? date) {
-    if (date == null) {
-      return '-';
-    }
-
-    final day = date.day.toString().padLeft(2, '0');
-
-    final month = date.month.toString().padLeft(2, '0');
-
-    return '$day.$month.${date.year}';
-  }
+  String _formatDate(DateTime? date) => date == null
+      ? '-'
+      : '${date.day.toString().padLeft(2, '0')}.${date.month.toString().padLeft(2, '0')}.${date.year}';
 
   @override
   Widget build(BuildContext context) {
+    final content = InspectionReportContent(_inspection);
     final report = _inspection.report;
-    final noVisibleDamage = _inspection.damageSeverity == 'NONE';
+    final colors = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
+    final findings = content.findings;
+    final uncertain = _inspection.needsMorePhotos;
+    final severityColor = _inspection.isCompleted && !uncertain
+        ? switch (_inspection.damageSeverity) {
+            'NONE' => AppTheme.successColorFor(context),
+            'MINOR' => AppTheme.warningColorFor(context),
+            'MODERATE' => AppTheme.moderateColorFor(context),
+            'SEVERE' => AppTheme.dangerColorFor(context),
+            _ => colors.onSurfaceVariant,
+          }
+        : colors.onSurfaceVariant;
 
     return Scaffold(
       appBar: AppBar(
-        title: const AppText('Analiz Sonucu'),
+        title: const AppText(
+          'Hasar Analiz Raporu',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
         leading: IconButton(
           tooltip: 'Kapat'.tr,
           icon: const Icon(Icons.close_rounded),
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
+          onPressed: () => Navigator.of(context).pop(),
         ),
+        actions: [
+          if (_inspection.isCompleted)
+            Builder(
+              builder: (buttonContext) => IconButton(
+                tooltip: 'PDF Paylaş'.tr,
+                onPressed: _isSharingPdf
+                    ? null
+                    : () => _sharePdf(buttonContext),
+                icon: _isSharingPdf
+                    ? const SizedBox.square(
+                        dimension: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.ios_share_rounded),
+              ),
+            ),
+        ],
       ),
-
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 820),
-
             child: ListView(
               padding: const EdgeInsets.fromLTRB(
                 AppTheme.pageInset,
-                AppTheme.spacingM,
+                12,
                 AppTheme.pageInset,
-                40,
+                24,
               ),
-
               children: [
-                _ResultHero(
-                  inspection: _inspection,
-
-                  severityText: _severityShortText(_inspection.damageSeverity),
-
-                  severityDescription: _severityDisplayText(
-                    _inspection.damageSeverity,
-                  ),
-
-                  severityColor: _severityColor(_inspection.damageSeverity),
-
-                  severitySoftColor: _severitySoftColor(
-                    _inspection.damageSeverity,
-                  ),
-
-                  severityIcon: _severityIcon(_inspection.damageSeverity),
-
-                  date: _formatDate(
-                    _inspection.completedAt ?? _inspection.createdAt,
+                AppCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      AppText(
+                        '${_inspection.vehiclePlate} · ${_inspection.vehicleBrand} ${_inspection.vehicleModel}',
+                        style: text.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      AppText(
+                        '${_inspection.locationCity} · ${_formatDate(_inspection.completedAt ?? _inspection.createdAt)}',
+                        style: text.bodySmall?.copyWith(
+                          color: colors.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(height: 18),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(
+                            content.noVisibleDamage
+                                ? Icons.verified_outlined
+                                : uncertain
+                                ? Icons.add_a_photo_outlined
+                                : Icons.car_crash_outlined,
+                            color: severityColor,
+                            size: 26,
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: AppText(
+                              content.title,
+                              style: text.titleLarge?.copyWith(
+                                color: severityColor,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      for (final note in InspectionReportContent.uniqueText([
+                        _inspection.analysisMessage,
+                        _inspection.additionalPhotoGuidance,
+                      ])) ...[
+                        const SizedBox(height: 10),
+                        AppText(
+                          note,
+                          style: text.bodyMedium?.copyWith(height: 1.45),
+                        ),
+                      ],
+                      if (content.noVisibleDamage) ...[
+                        const SizedBox(height: 10),
+                        const AppText('İşlem Gerekmiyor'),
+                      ],
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 16),
+                        child: Divider(height: 1),
+                      ),
+                      AppText(
+                        content.priceTitle,
+                        style: text.labelLarge?.copyWith(
+                          color: colors.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      AppText(
+                        content.price,
+                        key: const Key('inspection-price'),
+                        style: text.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      if (report?.priceInformation.trim().isNotEmpty ==
+                          true) ...[
+                        const SizedBox(height: 8),
+                        AppText(
+                          report!.priceInformation,
+                          style: text.bodySmall?.copyWith(
+                            color: colors.onSurfaceVariant,
+                            height: 1.4,
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
-
+                if (findings.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  _SectionCard(
+                    icon: Icons.manage_search_rounded,
+                    title: 'Bulgular ve Onarım',
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        for (var i = 0; i < findings.length; i++) ...[
+                          if (i > 0)
+                            const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 14),
+                              child: Divider(height: 1),
+                            ),
+                          _FindingRow(finding: findings[i]),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
+                if (uncertain) ...[
+                  const SizedBox(height: 12),
+                  const AppText(
+                    'Bu sonuç hasarsızlık anlamına gelmez. Fotoğraf yönlendirmesine göre yeni bir inceleme oluşturun.',
+                  ),
+                ] else if (report == null) ...[
+                  const SizedBox(height: 12),
+                  _ReportStatus(
+                    inspection: _inspection,
+                    isLoading: _isRegeneratingReport,
+                    stopped: _reportRefreshStopped,
+                    onRetry: () => _regenerateReport(
+                      recoverStalled: _reportRefreshStopped,
+                    ),
+                    onRefresh: () => _refreshReportStatus(restart: true),
+                  ),
+                ],
+                const SizedBox(height: 12),
+                AppText(
+                  content.disclaimer,
+                  key: const Key('inspection-disclaimer'),
+                  style: text.bodySmall?.copyWith(
+                    color: colors.onSurfaceVariant,
+                    height: 1.45,
+                  ),
+                ),
+                if (_inspection.isCompleted &&
+                    !content.noVisibleDamage &&
+                    _inspection.locationLatitude != null &&
+                    _inspection.locationLongitude != null) ...[
+                  const SizedBox(height: 16),
+                  OutlinedButton.icon(
+                    onPressed: _openNearbyServices,
+                    icon: const Icon(Icons.map_outlined),
+                    label: const AppText('Yakındaki Servisler'),
+                  ),
+                ],
+                if (_inspection.isCompleted) ...[
+                  const SizedBox(height: 8),
+                  OutlinedButton.icon(
+                    onPressed: _openDamageRecord,
+                    icon: const Icon(Icons.assignment_outlined),
+                    label: const AppText('Tutanak Oluştur / Görüntüle'),
+                  ),
+                ],
                 if (_hasInspectionImage) ...[
-                  const SizedBox(height: AppTheme.spacingM),
-
+                  const SizedBox(height: 16),
                   _InspectionImageCard(
                     key: ValueKey(_imageLifetime),
                     imageFuture: _inspectionImageFuture,
                     onRetry: _retryInspectionImage,
                   ),
                 ],
-
-                if (noVisibleDamage) ...[
-                  const SizedBox(height: AppTheme.spacingM),
-
-                  const _NoVisibleDamageCard(),
-                ],
-
-                if (!noVisibleDamage &&
+                if (report != null ||
+                    _inspection.schemaVersion != null ||
                     _inspection.confidenceScore != null) ...[
-                  const SizedBox(height: AppTheme.spacingM),
-
-                  _ConfidenceCard(confidence: _inspection.confidenceScore!),
-                ],
-
-                if (_inspection.visualFindings.isNotEmpty) ...[
-                  const SizedBox(height: AppTheme.spacingM),
-                  _SectionCard(
-                    icon: Icons.visibility_outlined,
-                    title: 'Fotoğraflarda Görülen Bulgular',
-                    subtitle: 'Yapay zekâ yorumu · Fiziksel ekspertiz değildir',
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: _inspection.visualFindings
-                          .map(
-                            (finding) => Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: AppText(finding.description),
+                  const SizedBox(height: 12),
+                  AppCard(
+                    padding: EdgeInsets.zero,
+                    child: ExpansionTile(
+                      key: const Key('inspection-report-details'),
+                      shape: const Border(),
+                      collapsedShape: const Border(),
+                      title: const AppText('Rapor Ayrıntıları'),
+                      childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                      expandedCrossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        for (final paragraph in content.narrative) ...[
+                          AppText(
+                            paragraph,
+                            style: text.bodyMedium?.copyWith(height: 1.45),
+                          ),
+                          const SizedBox(height: 8),
+                        ],
+                        if (report?.priceSourceDescription.trim().isNotEmpty ==
+                            true)
+                          AppText(
+                            report!.priceSourceDescription,
+                            style: text.bodySmall?.copyWith(
+                              color: colors.onSurfaceVariant,
                             ),
-                          )
-                          .toList(),
-                    ),
-                  ),
-                ],
-                if (!noVisibleDamage && _inspection.damageTypes.isNotEmpty) ...[
-                  const SizedBox(height: AppTheme.spacingM),
-
-                  _SectionCard(
-                    icon: Icons.car_crash_outlined,
-                    title: 'Tespit Edilen Hasarlar',
-                    subtitle:
-                        '${_inspection.damageTypes.length} hasar türü belirlendi',
-                    child: Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: _inspection.damageTypes
-                          .map(
-                            (type) => _ResultChip(
-                              icon: Icons.warning_amber_rounded,
-                              label: _damageTypeLabel(type),
-                            ),
-                          )
-                          .toList(),
-                    ),
-                  ),
-                ],
-
-                if (!noVisibleDamage &&
-                    _inspection.affectedParts.isNotEmpty) ...[
-                  const SizedBox(height: AppTheme.spacingM),
-
-                  _SectionCard(
-                    icon: Icons.directions_car_outlined,
-                    title: 'Etkilenen Parçalar',
-                    subtitle:
-                        '${_inspection.affectedParts.length} araç parçası',
-                    child: Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: _inspection.affectedParts
-                          .map(
-                            (part) => _ResultChip(
-                              icon: Icons.build_outlined,
-                              label: _vehiclePartLabel(part),
-                            ),
-                          )
-                          .toList(),
-                    ),
-                  ),
-                ],
-
-                if (!noVisibleDamage &&
-                    _inspection.repairRecommendations.isNotEmpty) ...[
-                  const SizedBox(height: AppTheme.spacingM),
-
-                  _SectionCard(
-                    icon: Icons.handyman_outlined,
-                    title: 'Onarım Önerileri',
-                    subtitle: 'AI modelinin önerdiği işlemler',
-                    child: Column(
-                      children: _inspection.repairRecommendations
-                          .asMap()
-                          .entries
-                          .map((entry) {
-                            final index = entry.key;
-
-                            final recommendation = entry.value;
-
-                            final parts = recommendation.affectedParts
-                                .map(_vehiclePartLabel)
-                                .join(', ');
-
-                            return Padding(
-                              padding: EdgeInsets.only(
-                                bottom:
-                                    index ==
-                                        _inspection
-                                                .repairRecommendations
-                                                .length -
-                                            1
-                                    ? 0
-                                    : 12,
-                              ),
-
-                              child: _RepairRecommendationTile(
-                                action: _repairActionLabel(
-                                  recommendation.recommendedAction,
-                                ),
-
-                                parts: parts,
-
-                                replacementRequired:
-                                    recommendation.partReplacementRequired,
-                              ),
-                            );
-                          })
-                          .toList(),
-                    ),
-                  ),
-                ],
-
-                const SizedBox(height: AppTheme.spacingM),
-
-                if (report != null) ...[
-                  _AiReportCard(
-                    title: report.title,
-                    summary: report.summary,
-                    damageDescription: report.damageDescription,
-                    repairRecommendation: report.repairRecommendation,
-                  ),
-
-                  if (!noVisibleDamage) ...[
-                    const SizedBox(height: AppTheme.spacingM),
-
-                    _PriceEstimateCard(
-                      inspectionOnly: _inspection.isInspectionOnly,
-                      minimum: _formatPrice(report.estimatedMinimumPrice),
-
-                      maximum: _formatPrice(report.estimatedMaximumPrice),
-
-                      currency: report.currency,
-
-                      city: _inspection.locationCity,
-
-                      priceInformation: report.priceInformation,
-
-                      sourceDescription: report.priceSourceDescription,
-
-                      disclaimer: report.disclaimer,
-                    ),
-                  ],
-
-                  if (!noVisibleDamage &&
-                      _inspection.locationLatitude != null &&
-                      _inspection.locationLongitude != null) ...[
-                    const SizedBox(height: AppTheme.spacingM),
-
-                    _NearbyServicesCard(onExplore: _openNearbyServices),
-                  ],
-                ] else ...[
-                  _ReportStatusCard(
-                    inspection: _inspection,
-                    message: _reportStatusMessage(),
-                    isLoading: _isRegeneratingReport,
-                    onRegenerate: _regenerateReport,
-                    onRefresh: _reportRefreshStopped
-                        ? () => _regenerateReport(recoverStalled: true)
-                        : null,
-                  ),
-                ],
-
-                if (_inspection.isCompleted) ...[
-                  const SizedBox(height: 20),
-
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton.icon(
-                      onPressed: _openDamageRecord,
-                      icon: const Icon(Icons.assignment_outlined),
-                      label: const AppText('Tutanak Oluştur / Görüntüle'),
+                          ),
+                        const SizedBox(height: 8),
+                        AppText('EXP-${_inspection.id}', style: text.bodySmall),
+                        if (_inspection.schemaVersion != null)
+                          AppText(
+                            _inspection.schemaVersion!,
+                            style: text.bodySmall,
+                          ),
+                        if (_inspection.modelVersion != null)
+                          AppText(
+                            _inspection.modelVersion!,
+                            style: text.bodySmall,
+                          ),
+                        if (_inspection.confidenceScore != null &&
+                            _inspection.schemaVersion != 'gemini-vision-v1')
+                          AppText(
+                            'Tarihsel model skoru: ${_inspection.confidenceScore}. Doğruluk garantisi değildir.',
+                            style: text.bodySmall,
+                          ),
+                      ],
                     ),
                   ),
                 ],
@@ -716,6 +600,205 @@ class _InspectionResultScreenState extends State<InspectionResultScreen>
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _FindingRow extends StatelessWidget {
+  const _FindingRow({required this.finding});
+  final ReportFinding finding;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    final colors = Theme.of(context).colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        AppText(
+          finding.part,
+          style: text.titleSmall?.copyWith(fontWeight: FontWeight.w800),
+        ),
+        const SizedBox(height: 4),
+        Wrap(
+          spacing: 10,
+          runSpacing: 4,
+          children: [
+            for (final type in finding.damageTypes)
+              AppText(
+                type,
+                style: text.labelLarge?.copyWith(color: colors.primary),
+              ),
+          ],
+        ),
+        for (final note in InspectionReportContent.uniqueText(
+          finding.observations,
+        )) ...[
+          const SizedBox(height: 8),
+          AppText(note, style: text.bodyMedium?.copyWith(height: 1.4)),
+        ],
+        if (finding.repairs.isNotEmpty) ...[
+          const SizedBox(height: 10),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(
+                Icons.build_outlined,
+                size: 16,
+                color: colors.onSurfaceVariant,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    for (final repair in InspectionReportContent.uniqueText(
+                      finding.repairs,
+                    ))
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 4),
+                        child: AppText(
+                          repair,
+                          style: text.bodyMedium?.copyWith(height: 1.4),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _SectionCard extends StatelessWidget {
+  const _SectionCard({
+    required this.icon,
+    required this.title,
+    required this.child,
+  });
+  final IconData icon;
+  final String title;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => AppCard(
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(
+              icon,
+              size: 20,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: AppText(
+                title,
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 14),
+        child,
+      ],
+    ),
+  );
+}
+
+class _ReportStatus extends StatelessWidget {
+  const _ReportStatus({
+    required this.inspection,
+    required this.isLoading,
+    required this.stopped,
+    required this.onRetry,
+    required this.onRefresh,
+  });
+
+  final DamageInspection inspection;
+  final bool isLoading;
+  final bool stopped;
+  final VoidCallback onRetry;
+  final VoidCallback onRefresh;
+
+  @override
+  Widget build(BuildContext context) {
+    final processing =
+        inspection.isProcessing || inspection.isReportProcessing || isLoading;
+    final canRetry =
+        inspection.isCompleted && (!inspection.isReportProcessing || stopped);
+    final colors = Theme.of(context).colorScheme;
+    return AppCard(
+      backgroundColor: colors.surfaceContainerLow,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (processing && !stopped)
+                const SizedBox.square(
+                  dimension: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              else
+                Icon(
+                  Icons.info_outline_rounded,
+                  size: 20,
+                  color: colors.onSurfaceVariant,
+                ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: AppText(
+                  processing
+                      ? stopped
+                            ? 'İşlem beklenenden uzun sürüyor'
+                            : inspection.isProcessing
+                            ? 'Fotoğraflar Değerlendiriliyor'
+                            : 'Rapor Hazırlanıyor'
+                      : inspection.isCompleted
+                      ? 'Rapor Tamamlanamadı'
+                      : 'Analiz Tamamlanmadı',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                ),
+              ),
+            ],
+          ),
+          if (!processing && inspection.isCompleted) ...[
+            const SizedBox(height: 8),
+            AppText(
+              inspection.reportMessage?.trim().isNotEmpty == true
+                  ? inspection.reportMessage!
+                  : 'Bulgularınız kaydedildi. Fotoğrafları yeniden analiz etmeden raporu tekrar deneyebilirsiniz.',
+            ),
+          ],
+          if (canRetry) ...[
+            const SizedBox(height: 8),
+            TextButton.icon(
+              onPressed: isLoading ? null : onRetry,
+              icon: const Icon(Icons.refresh_rounded),
+              label: const AppText('Raporu Tekrar Dene'),
+            ),
+          ] else if (inspection.isProcessing && stopped) ...[
+            const SizedBox(height: 8),
+            TextButton.icon(
+              onPressed: onRefresh,
+              icon: const Icon(Icons.refresh_rounded),
+              label: const AppText('Sonucu Kontrol Et'),
+            ),
+          ],
+        ],
       ),
     );
   }
@@ -753,7 +836,6 @@ class _InspectionImageCardState extends State<_InspectionImageCard> {
     return _SectionCard(
       icon: Icons.photo_outlined,
       title: 'Analiz Fotoğrafı',
-      subtitle: 'Hasar analizi için yüklenen görüntü',
       child: FutureBuilder<Uint8List>(
         future: widget.imageFuture,
         builder: (context, snapshot) {
@@ -865,963 +947,6 @@ class _InspectionImageCardState extends State<_InspectionImageCard> {
             },
           );
         },
-      ),
-    );
-  }
-}
-
-class _NoVisibleDamageCard extends StatelessWidget {
-  const _NoVisibleDamageCard();
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return AppCard(
-      showShadow: false,
-      backgroundColor: AppTheme.successSoftFor(context),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(
-            Icons.verified_outlined,
-            color: AppTheme.successColorFor(context),
-            size: 26,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                AppText(
-                  'İşlem Gerekmiyor',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w900),
-                ),
-                const SizedBox(height: 6),
-                AppText(
-                  'Gönderdiğiniz görüntüde görünür hasar tespit edilmedi. '
-                  'Bu sonuç yalnızca fotoğraftaki görünür alanları değerlendirir; '
-                  'mekanik veya profesyonel ekspertiz garantisi değildir.',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                    height: 1.4,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ResultHero extends StatelessWidget {
-  const _ResultHero({
-    required this.inspection,
-    required this.severityText,
-    required this.severityDescription,
-    required this.severityColor,
-    required this.severitySoftColor,
-    required this.severityIcon,
-    required this.date,
-  });
-
-  final DamageInspection inspection;
-
-  final String severityText;
-  final String severityDescription;
-
-  final Color severityColor;
-  final Color severitySoftColor;
-
-  final IconData severityIcon;
-
-  final String date;
-
-  @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return AppCard(
-      padding: const EdgeInsets.all(AppTheme.largeCardPadding),
-
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const AppIconBox(
-                icon: Icons.directions_car_filled_rounded,
-                size: 54,
-                iconSize: 27,
-                borderRadius: 19,
-                iconColor: Colors.white,
-                gradient: LinearGradient(
-                  colors: [AppTheme.primaryColor, AppTheme.secondaryColor],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-              ),
-
-              const SizedBox(width: 14),
-
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    AppText(
-                      inspection.vehiclePlate,
-                      style: textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-
-                    const SizedBox(height: 5),
-
-                    Wrap(
-                      spacing: 12,
-                      runSpacing: 5,
-                      children: [
-                        _HeroMeta(
-                          icon: Icons.location_on_outlined,
-                          text: inspection.locationCity,
-                        ),
-                        _HeroMeta(
-                          icon: Icons.calendar_today_outlined,
-                          text: date,
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 22),
-
-          Divider(color: colorScheme.outlineVariant, height: 1),
-
-          const SizedBox(height: 20),
-
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(18),
-
-            decoration: BoxDecoration(
-              color: severitySoftColor,
-
-              borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
-            ),
-
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                AppIconBox(
-                  icon: severityIcon,
-                  size: 48,
-                  iconSize: 25,
-                  borderRadius: 24,
-                  backgroundColor: severityColor.withValues(alpha: 0.13),
-                  iconColor: severityColor,
-                ),
-
-                const SizedBox(width: 13),
-
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      AppText(
-                        'HASAR SEVİYESİ',
-                        style: textTheme.labelSmall?.copyWith(
-                          color: severityColor,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-
-                      const SizedBox(height: 6),
-
-                      AppStatusBadge(
-                        label: severityText,
-                        color: severityColor,
-                        backgroundColor: severityColor.withValues(alpha: 0.10),
-                      ),
-
-                      const SizedBox(height: 8),
-
-                      AppText(
-                        severityDescription,
-                        style: textTheme.bodyMedium?.copyWith(
-                          color: severityColor.withValues(alpha: 0.88),
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _HeroMeta extends StatelessWidget {
-  const _HeroMeta({required this.icon, required this.text});
-
-  final IconData icon;
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    final textTheme = Theme.of(context).textTheme;
-
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 15, color: colorScheme.onSurfaceVariant),
-
-        const SizedBox(width: 4),
-
-        Flexible(
-          child: AppText(
-            text,
-            style: textTheme.bodySmall?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _ConfidenceCard extends StatelessWidget {
-  const _ConfidenceCard({required this.confidence});
-
-  final double confidence;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    final textTheme = Theme.of(context).textTheme;
-
-    final safeConfidence = confidence.clamp(0.0, 1.0).toDouble();
-
-    final percentage = safeConfidence * 100;
-
-    return AppCard(
-      showShadow: false,
-      backgroundColor: colorScheme.surfaceContainerLow,
-      padding: const EdgeInsets.all(18),
-
-      child: Column(
-        children: [
-          AppSectionHeader(
-            icon: Icons.analytics_outlined,
-            title: 'Model G\u00fcveni',
-            subtitle: 'G\u00f6r\u00fcnt\u00fc analizinin g\u00fcven skoru',
-            trailing: AppText(
-              '%${percentage.toStringAsFixed(1)}',
-              style: textTheme.titleLarge?.copyWith(
-                color: colorScheme.primary,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-          ),
-
-          const SizedBox(height: AppTheme.spacingM),
-
-          ClipRRect(
-            borderRadius: BorderRadius.circular(AppTheme.radiusPill),
-            child: LinearProgressIndicator(
-              value: safeConfidence,
-              minHeight: 8,
-              backgroundColor: colorScheme.surfaceContainerHighest,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SectionCard extends StatelessWidget {
-  const _SectionCard({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.child,
-  });
-
-  final IconData icon;
-
-  final String title;
-  final String subtitle;
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return AppCard(
-      padding: const EdgeInsets.all(AppTheme.cardPadding),
-
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          AppSectionHeader(icon: icon, title: title, subtitle: subtitle),
-
-          const SizedBox(height: 18),
-
-          child,
-        ],
-      ),
-    );
-  }
-}
-
-class _ResultChip extends StatelessWidget {
-  const _ResultChip({required this.icon, required this.label});
-
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    final textTheme = Theme.of(context).textTheme;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
-
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerLow,
-
-        borderRadius: BorderRadius.circular(AppTheme.radiusPill),
-
-        border: Border.all(color: colorScheme.outlineVariant),
-      ),
-
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 16, color: colorScheme.primary),
-
-          const SizedBox(width: 6),
-
-          Flexible(
-            child: AppText(
-              label,
-              style: textTheme.labelMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _RepairRecommendationTile extends StatelessWidget {
-  const _RepairRecommendationTile({
-    required this.action,
-    required this.parts,
-    required this.replacementRequired,
-  });
-
-  final String action;
-  final String parts;
-
-  final bool? replacementRequired;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    final textTheme = Theme.of(context).textTheme;
-
-    return Container(
-      width: double.infinity,
-
-      padding: const EdgeInsets.all(15),
-
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerLow,
-
-        borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-      ),
-
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const AppIconBox(
-            icon: Icons.handyman_outlined,
-            size: 40,
-            iconSize: 20,
-            borderRadius: 13,
-          ),
-
-          const SizedBox(width: 12),
-
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    AppText(
-                      action,
-                      style: textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-
-                    if (replacementRequired == true)
-                      AppStatusBadge(
-                        label: 'Değişim',
-                        color: AppTheme.warningColorFor(context),
-                        backgroundColor: AppTheme.warningSoftFor(context),
-                        compact: true,
-                      ),
-                    if (replacementRequired == null)
-                      const AppText(
-                        'Parça değişimi gereksinimi fiziksel incelemeyle belirlenecek.',
-                      ),
-                  ],
-                ),
-
-                if (parts.isNotEmpty) ...[
-                  const SizedBox(height: 5),
-
-                  AppText(
-                    parts,
-                    style: textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                      height: 1.4,
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _AiReportCard extends StatelessWidget {
-  const _AiReportCard({
-    required this.title,
-    required this.summary,
-    required this.damageDescription,
-    required this.repairRecommendation,
-  });
-
-  final String title;
-  final String summary;
-
-  final String damageDescription;
-  final String repairRecommendation;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    final textTheme = Theme.of(context).textTheme;
-
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppTheme.radiusXLarge),
-
-        color: colorScheme.surface,
-
-        border: Border.all(color: colorScheme.primary.withValues(alpha: 0.18)),
-      ),
-
-      padding: const EdgeInsets.all(AppTheme.largeCardPadding),
-
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const AppSectionHeader(
-            icon: Icons.auto_awesome_rounded,
-            title: 'AI İnceleme Raporu',
-            subtitle: 'Yapay zekâ tarafından oluşturuldu',
-          ),
-
-          const SizedBox(height: 22),
-
-          AppText(
-            title,
-            style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
-          ),
-
-          const SizedBox(height: 9),
-
-          AppText(summary, style: textTheme.bodyMedium?.copyWith(height: 1.55)),
-
-          const SizedBox(height: 22),
-
-          _ReportSection(
-            icon: Icons.search_rounded,
-            title: 'Hasar Açıklaması',
-            text: damageDescription,
-          ),
-
-          const SizedBox(height: 18),
-
-          _ReportSection(
-            icon: Icons.build_circle_outlined,
-            title: 'Onarım Önerisi',
-            text: repairRecommendation,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ReportSection extends StatelessWidget {
-  const _ReportSection({
-    required this.icon,
-    required this.title,
-    required this.text,
-  });
-
-  final IconData icon;
-
-  final String title;
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    final textTheme = Theme.of(context).textTheme;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(icon, size: 19, color: colorScheme.primary),
-
-            const SizedBox(width: 7),
-
-            Expanded(
-              child: AppText(
-                title,
-                style: textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-            ),
-          ],
-        ),
-
-        const SizedBox(height: 8),
-
-        AppText(
-          text,
-          style: textTheme.bodyMedium?.copyWith(
-            color: colorScheme.onSurfaceVariant,
-            height: 1.55,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _PriceEstimateCard extends StatelessWidget {
-  const _PriceEstimateCard({
-    this.inspectionOnly = false,
-    required this.minimum,
-    required this.maximum,
-    required this.currency,
-    required this.city,
-    required this.priceInformation,
-    required this.sourceDescription,
-    required this.disclaimer,
-  });
-
-  final bool inspectionOnly;
-  final String minimum;
-  final String maximum;
-  final String currency;
-
-  final String city;
-
-  final String priceInformation;
-  final String sourceDescription;
-  final String disclaimer;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    final textTheme = Theme.of(context).textTheme;
-
-    return AppCard(
-      padding: const EdgeInsets.all(AppTheme.largeCardPadding),
-
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          AppSectionHeader(
-            icon: Icons.payments_outlined,
-            title: inspectionOnly
-                ? 'Tahmini Fiziksel İnceleme Maliyeti'
-                : 'Tahmini Onarım Maliyeti',
-            subtitle: 'Bölgesel tahmini servis maliyeti',
-          ),
-
-          const SizedBox(height: 22),
-
-          Container(
-            width: double.infinity,
-
-            padding: const EdgeInsets.all(18),
-
-            decoration: BoxDecoration(
-              color: AppTheme.successSoftFor(context),
-
-              borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
-            ),
-
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      Icons.location_on_outlined,
-                      size: 16,
-                      color: AppTheme.successColorFor(context),
-                    ),
-
-                    const SizedBox(width: 5),
-
-                    Expanded(
-                      child: AppText(
-                        city,
-                        style: textTheme.bodySmall?.copyWith(
-                          color: AppTheme.successColorFor(context),
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 10),
-
-                AppText(
-                  'TAHMİNİ ARALIK',
-                  style: textTheme.labelSmall?.copyWith(
-                    color: AppTheme.successColorFor(context),
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-
-                const SizedBox(height: 7),
-
-                AppText(
-                  '$minimum - $maximum $currency',
-                  style: textTheme.headlineSmall?.copyWith(
-                    color: AppTheme.successColorFor(context),
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          if (priceInformation.trim().isNotEmpty) ...[
-            const SizedBox(height: 18),
-
-            AppText(
-              priceInformation,
-              style: textTheme.bodyMedium?.copyWith(height: 1.5),
-            ),
-          ],
-
-          if (sourceDescription.trim().isNotEmpty) ...[
-            const SizedBox(height: 18),
-
-            AppText(
-              'Fiyat Tahmini Hakkında',
-              style: textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-
-            const SizedBox(height: 7),
-
-            AppText(
-              sourceDescription,
-              style: textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-                height: 1.5,
-              ),
-            ),
-          ],
-
-          if (disclaimer.trim().isNotEmpty) ...[
-            const SizedBox(height: 18),
-
-            Container(
-              padding: const EdgeInsets.all(14),
-
-              decoration: BoxDecoration(
-                color: colorScheme.surfaceContainerLow,
-
-                borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-              ),
-
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(
-                    Icons.info_outline_rounded,
-                    size: 18,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-
-                  const SizedBox(width: 9),
-
-                  Expanded(
-                    child: AppText(
-                      disclaimer,
-                      style: textTheme.bodySmall?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                        height: 1.45,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _NearbyServicesCard extends StatelessWidget {
-  const _NearbyServicesCard({required this.onExplore});
-
-  final VoidCallback onExplore;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-
-    return AppCard(
-      padding: const EdgeInsets.all(AppTheme.largeCardPadding),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          AppSectionHeader(
-            icon: Icons.location_on_outlined,
-            title: 'Yakındaki Uygun Servisler',
-            subtitle: 'Araç ve hasar bilgilerine göre servis keşfi',
-          ),
-          const SizedBox(height: 18),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: colorScheme.primaryContainer.withValues(alpha: 0.45),
-              borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                AppIconBox(
-                  icon: Icons.auto_awesome_rounded,
-                  size: 44,
-                  iconSize: 22,
-                  borderRadius: 14,
-                  backgroundColor: colorScheme.primary.withValues(alpha: 0.12),
-                  iconColor: colorScheme.primary,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: AppText(
-                    'Yapay zekânın araç markası, modeli ve tespit edilen '
-                    'hasara göre belirlediği aramalarla yakınınızdaki gerçek '
-                    'servisleri haritada görüntüleyin.',
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                      height: 1.5,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 18),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton.icon(
-              onPressed: onExplore,
-              icon: const Icon(Icons.map_outlined),
-              label: const AppText('Haritada Keşfet'),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ReportStatusCard extends StatelessWidget {
-  const _ReportStatusCard({
-    required this.inspection,
-    required this.message,
-    required this.isLoading,
-    required this.onRegenerate,
-    this.onRefresh,
-  });
-
-  final DamageInspection inspection;
-
-  final String message;
-
-  final bool isLoading;
-
-  final VoidCallback onRegenerate;
-  final VoidCallback? onRefresh;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    final textTheme = Theme.of(context).textTheme;
-
-    final isFailed = inspection.isReportFailed;
-
-    final isProcessing = isLoading || inspection.isReportProcessing;
-
-    return AppCard(
-      padding: const EdgeInsets.all(AppTheme.largeCardPadding),
-
-      child: Column(
-        children: [
-          Container(
-            width: 66,
-            height: 66,
-
-            decoration: BoxDecoration(
-              color: isFailed && !isProcessing
-                  ? colorScheme.errorContainer
-                  : colorScheme.primaryContainer,
-
-              borderRadius: BorderRadius.circular(22),
-            ),
-
-            child: isProcessing
-                ? Padding(
-                    padding: const EdgeInsets.all(AppTheme.largeCardPadding),
-                    child: CircularProgressIndicator(
-                      strokeWidth: 3,
-                      color: colorScheme.primary,
-                    ),
-                  )
-                : Icon(
-                    isFailed
-                        ? Icons.error_outline_rounded
-                        : Icons.description_outlined,
-                    size: 32,
-                    color: isFailed ? colorScheme.error : colorScheme.primary,
-                  ),
-          ),
-
-          const SizedBox(height: 18),
-
-          AppText(
-            isProcessing
-                ? 'Detaylı AI raporu hazırlanıyor'
-                : isFailed
-                ? 'Detaylı AI raporu oluşturulamadı'
-                : 'Hasar tespitleriniz hazır',
-            textAlign: TextAlign.center,
-            style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
-          ),
-
-          const SizedBox(height: 8),
-
-          AppText(
-            message,
-            textAlign: TextAlign.center,
-            style: textTheme.bodyMedium?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-              height: 1.45,
-            ),
-          ),
-
-          if (inspection.isFailed &&
-              inspection.analysisMessage != null &&
-              inspection.analysisMessage!.trim().isNotEmpty) ...[
-            const SizedBox(height: 12),
-
-            AppText(
-              inspection.analysisMessage!,
-              textAlign: TextAlign.center,
-              style: textTheme.bodySmall?.copyWith(color: colorScheme.error),
-            ),
-          ],
-
-          if (onRefresh != null) ...[
-            const SizedBox(height: 16),
-            OutlinedButton.icon(
-              onPressed: isLoading ? null : onRefresh,
-              icon: const Icon(Icons.refresh_rounded),
-              label: const AppText('AI Raporunu Tekrar Dene'),
-            ),
-          ],
-          if (inspection.isCompleted && !inspection.isReportProcessing) ...[
-            const SizedBox(height: 22),
-
-            SizedBox(
-              width: double.infinity,
-
-              child: FilledButton.tonalIcon(
-                onPressed: isLoading ? null : onRegenerate,
-
-                icon: isLoading
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.refresh_rounded),
-
-                label: AppText('AI Raporunu Tekrar Dene'),
-              ),
-            ),
-          ],
-        ],
       ),
     );
   }
