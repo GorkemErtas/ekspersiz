@@ -28,11 +28,11 @@ const onboardingSteps = [
   ),
   OnboardingStep(
     feature: GuideFeature.analysis,
-      category: 'İKİ FOTOĞRAF · AI ANALİZİ',
-      title: 'İki fotoğrafla\nhasarı anlamaya başla.',
+    category: 'İKİ FOTOĞRAF · AI ANALİZİ',
+    title: 'İki fotoğrafla\nhasarı anlamaya başla.',
     description:
-          'Aracını seç; hasarın genel görünümünü ve yakın detayını yükle. '
-          'AI, aynı bölgenin iki fotoğrafındaki görünür bulguları birlikte yorumlasın.',
+        'Aracını seç; hasarın genel görünümünü ve yakın detayını yükle. '
+        'AI, aynı bölgenin iki fotoğrafındaki görünür bulguları birlikte yorumlasın.',
     hint: 'Ana Sayfa → Yeni Analiz Başlat',
   ),
   OnboardingStep(
@@ -40,8 +40,9 @@ const onboardingSteps = [
     category: 'RAPORLAR VE GEÇMİŞ',
     title: 'Detayları gör.\nGeçmişine dön.',
     description:
-        'Hasar tespitlerini ve hazır olduğunda detaylı AI raporunu '
-        'incele. Önceki sonuçlarına Analizler sekmesinden yeniden ulaş.',
+        'Bulguları, onarım önerilerini ve tahmini maliyeti tek hasar '
+        'raporunda incele. PDF olarak paylaş; önceki sonuçlarına Analizler '
+        'sekmesinden yeniden ulaş.',
     hint: 'AI değerlendirmesi, fiziksel ekspertizin yerini tutmaz.',
   ),
   OnboardingStep(

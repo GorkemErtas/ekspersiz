@@ -86,6 +86,22 @@ class AiAnalysisClientTest {
     }
 
     @Test
+    void maintenanceSwitchBlocksAllImageOperationsEvenWhenProviderIsConfigured() {
+        var template = new org.springframework.web.client.RestTemplate();
+        var server = org.springframework.test.web.client.MockRestServiceServer.createServer(template);
+        var client = new AiAnalysisClient(template);
+        org.springframework.test.util.ReflectionTestUtils.setField(client, "enabled", false);
+        org.springframework.test.util.ReflectionTestUtils.setField(client, "baseUrl", "https://vision.test");
+        List<Executable> operations = List.of(
+                client::requireAvailable,
+                () -> client.analyze(temporary.resolve("detail.jpg"), temporary.resolve("overview.jpg")),
+                () -> client.validateImage(temporary.resolve("detail.jpg")),
+                () -> client.validateImage(temporary.resolve("overview.jpg"), "context"));
+        for (var operation : operations) assertThrows(DamageAnalysisUnavailableException.class, operation);
+        server.verify(); // No readiness, validation or paid provider request.
+    }
+
+    @Test
     void unavailableIsReportedAs503WithAnActionableMessage() {
         var response = new GlobalExceptionHandler().handleDamageAnalysisUnavailable(
                 new DamageAnalysisUnavailableException());

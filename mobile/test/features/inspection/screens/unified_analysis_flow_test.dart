@@ -111,12 +111,12 @@ Future<void> _pumpAnalysis(
 
 Future<void> _showReportRetry(WidgetTester tester) async {
   await tester.scrollUntilVisible(
-    find.text('AI Raporunu Tekrar Dene'),
+    find.text('Raporu Tekrar Dene'),
     200,
     maxScrolls: 40,
     scrollable: find.byType(Scrollable).first,
   );
-  await tester.ensureVisible(find.text('AI Raporunu Tekrar Dene'));
+  await tester.ensureVisible(find.text('Raporu Tekrar Dene'));
   await tester.pumpAndSettle();
 }
 
@@ -144,7 +144,7 @@ void main() {
 
   for (final brightness in Brightness.values) {
     testWidgets(
-      'one screen shows real ML/report stages then combined results: $brightness',
+      'one screen shows real analysis/report stages then combined results: $brightness',
       (tester) async {
         await setUiSize(tester, const Size(320, 640));
         final response = Completer<DamageInspection>();
@@ -192,7 +192,7 @@ void main() {
   }
 
   testWidgets(
-    'failed report preserves ML and retry only generates a report once',
+    'failed report preserves findings and retry only generates a report once',
     (tester) async {
       final service = _FlowService(_inspection(report: 'FAILED'));
       await _pumpAnalysis(tester, service);
@@ -205,16 +205,16 @@ void main() {
       final response = Completer<DamageInspection>();
       service.report = () => response.future;
       await _showReportRetry(tester);
-      await tester.tap(find.text('AI Raporunu Tekrar Dene'));
+      await tester.tap(find.text('Raporu Tekrar Dene'));
       await tester.pump(const Duration(milliseconds: 300));
-      await tester.tap(find.text('AI Raporunu Tekrar Dene'));
+      await tester.tap(find.text('Raporu Tekrar Dene'));
       await tester.pump();
       expect(service.reports, 1);
       service.current = _inspection(report: 'COMPLETED');
       response.complete(service.current);
       await tester.pumpAndSettle();
-      expect(find.text('AI İnceleme Raporu'), findsOneWidget);
-      expect(find.text('AI Raporunu Tekrar Dene'), findsNothing);
+      expect(find.text('Hasar Analiz Raporu'), findsOneWidget);
+      expect(find.text('Raporu Tekrar Dene'), findsNothing);
       expect(service.analyses, 1);
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox());
@@ -239,24 +239,25 @@ void main() {
     },
   );
 
-  testWidgets('offline retry first reads saved result and never repeats ML', (
-    tester,
-  ) async {
-    final service = _FlowService(_inspection())
-      ..readError = const ApiException(statusCode: 0, message: 'Offline')
-      ..analyze = () async =>
-          throw const ApiException(statusCode: 0, message: 'Offline');
-    await _pumpAnalysis(tester, service);
-    expect(find.text('Sonucu Kontrol Et'), findsOneWidget);
-    service.readError = null;
-    service.current = _inspection(report: 'COMPLETED');
-    await tester.tap(find.text('Sonucu Kontrol Et'));
-    await tester.pumpAndSettle();
-    expect(find.byType(InspectionResultScreen), findsOneWidget);
-    expect(service.analyses, 1);
-    expect(service.reports, 0);
-    await tester.pumpWidget(const SizedBox());
-  });
+  testWidgets(
+    'offline retry first reads saved result and never repeats analysis',
+    (tester) async {
+      final service = _FlowService(_inspection())
+        ..readError = const ApiException(statusCode: 0, message: 'Offline')
+        ..analyze = () async =>
+            throw const ApiException(statusCode: 0, message: 'Offline');
+      await _pumpAnalysis(tester, service);
+      expect(find.text('Sonucu Kontrol Et'), findsOneWidget);
+      service.readError = null;
+      service.current = _inspection(report: 'COMPLETED');
+      await tester.tap(find.text('Sonucu Kontrol Et'));
+      await tester.pumpAndSettle();
+      expect(find.byType(InspectionResultScreen), findsOneWidget);
+      expect(service.analyses, 1);
+      expect(service.reports, 0);
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
 
   testWidgets(
     'old-server pending response automatically generates report only once',
@@ -280,7 +281,7 @@ void main() {
   );
 
   testWidgets(
-    'legacy report timeout keeps ML instead of requesting another analysis',
+    'legacy report timeout keeps findings instead of requesting another analysis',
     (tester) async {
       final service = _FlowService(_inspection(report: 'PENDING'))
         ..report = () async =>
@@ -296,7 +297,7 @@ void main() {
   );
 
   testWidgets(
-    'history watches a processing report without starting ML or Gemini',
+    'history watches a processing report without starting analysis or Gemini',
     (tester) async {
       await setUiSize(tester, const Size(800, 2000));
       final service = _FlowService(_inspection(report: 'COMPLETED'));
@@ -310,10 +311,10 @@ void main() {
         ),
       );
       await tester.pump();
-      expect(find.text('Detaylı AI raporu hazırlanıyor'), findsOneWidget);
+      expect(find.text('Rapor Hazırlanıyor'), findsOneWidget);
       await tester.pump(const Duration(seconds: 2));
       await tester.pumpAndSettle();
-      expect(find.text('AI İnceleme Raporu'), findsOneWidget);
+      expect(find.text('Hasar Analiz Raporu'), findsOneWidget);
       expect(service.analyses, 0);
       expect(service.reports, 0);
       await tester.pumpWidget(const SizedBox());
@@ -340,9 +341,9 @@ void main() {
       );
       await tester.pumpAndSettle();
       await _showReportRetry(tester);
-      await tester.tap(find.text('AI Raporunu Tekrar Dene'));
+      await tester.tap(find.text('Raporu Tekrar Dene'));
       await tester.pumpAndSettle();
-      expect(find.text('AI İnceleme Raporu'), findsOneWidget);
+      expect(find.text('Hasar Analiz Raporu'), findsOneWidget);
       expect(service.reports, 1);
       expect(service.analyses, 0);
       expect(find.byType(SnackBar), findsNothing);
@@ -365,37 +366,38 @@ void main() {
         ),
       );
       await tester.pump();
-      expect(find.text('AI Raporunu Tekrar Dene'), findsNothing);
+      expect(find.text('Raporu Tekrar Dene'), findsNothing);
       await tester.pump(const Duration(minutes: 3));
       await tester.pump();
-      expect(find.text('AI Raporunu Tekrar Dene'), findsOneWidget);
+      expect(find.text('Raporu Tekrar Dene'), findsOneWidget);
       expect(service.reports, 0);
       service.report = () async => _inspection(report: 'COMPLETED');
-      await tester.ensureVisible(find.text('AI Raporunu Tekrar Dene'));
-      await tester.tap(find.text('AI Raporunu Tekrar Dene'));
+      await tester.ensureVisible(find.text('Raporu Tekrar Dene'));
+      await tester.tap(find.text('Raporu Tekrar Dene'));
       await tester.pumpAndSettle();
       expect(service.reports, 1);
       expect(service.analyses, 0);
-      expect(find.text('AI İnceleme Raporu'), findsOneWidget);
+      expect(find.text('Hasar Analiz Raporu'), findsOneWidget);
       await tester.pumpWidget(const SizedBox());
     },
   );
 
-  testWidgets('long wait permits status check and never silently restarts ML', (
-    tester,
-  ) async {
-    final service = _FlowService(_inspection(status: 'PROCESSING'));
-    await _pumpAnalysis(tester, service);
-    await tester.pump(const Duration(minutes: 3));
-    await tester.pumpAndSettle();
-    expect(find.text('Sonucu Kontrol Et'), findsOneWidget);
-    service.current = _inspection(report: 'COMPLETED');
-    await tester.tap(find.text('Sonucu Kontrol Et'));
-    await tester.pumpAndSettle();
-    expect(find.byType(InspectionResultScreen), findsOneWidget);
-    expect(service.analyses, 1);
-    await tester.pumpWidget(const SizedBox());
-  });
+  testWidgets(
+    'long wait permits status check and never silently restarts analysis',
+    (tester) async {
+      final service = _FlowService(_inspection(status: 'PROCESSING'));
+      await _pumpAnalysis(tester, service);
+      await tester.pump(const Duration(minutes: 3));
+      await tester.pumpAndSettle();
+      expect(find.text('Sonucu Kontrol Et'), findsOneWidget);
+      service.current = _inspection(report: 'COMPLETED');
+      await tester.tap(find.text('Sonucu Kontrol Et'));
+      await tester.pumpAndSettle();
+      expect(find.byType(InspectionResultScreen), findsOneWidget);
+      expect(service.analyses, 1);
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
 
   testWidgets(
     'disposing the progress screen stops reads and ignores late completion',

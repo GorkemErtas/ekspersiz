@@ -103,9 +103,9 @@ sınırlanır. Kilit beklemesi 3 saniyedir; meşgul isteği kontrollü hata alı
 Araç kapasitesi doğrulaması, aracın insert edildiği transaction'a katılır.
 AI/network çağrıları kredi transaction'ı dışında yürür.
 
-Analiz: önce 1 kredi rezerve edilir, fotoğraf/ML ve detaylı rapor tamamlanınca
+Analiz: önce 1 kredi rezerve edilir, Gemini görsel değerlendirmesi ve rapor tamamlanınca
 rapor erişimi ile tüketim aynı transaction'da kaydedilir. Teknik hata veya
-uygunsuz fotoğraf krediyi iade eder. ML başarılı, rapor başarısızsa tekrar rapor
+uygunsuz fotoğraf krediyi iade eder. Görsel analiz başarılı, rapor başarısızsa tekrar rapor
 istenebilir; sadece başarılı tamamlanış ücretlenir. Önceden açılmış rapor tekrar
 ücretlenmez. Asistan: request UUID + soru/araç/geçmiş hash'i, başarılı yanıtla
 birlikte saklanır; aynı istek kayıtlı yanıtı döndürür. Kapsam dışı, açıklama

@@ -126,20 +126,20 @@ Deploy, Railway başlatma veya production release yapılmaz.
 
 [Yerel test sonuçları ve doğrulama sınırları](GEMINI_VISION_VALIDATION.md).
 
-## Kontrollü production testi
+## Genel erişim
 
-`DAMAGE_ANALYSIS_ENABLED` hem Spring backend'de hem Python AI servisinde açık olmalıdır.
-Analizi tüm kullanıcılara açmadan test etmek için **önce güncellenmiş backend'i dağıtın**, sonra
-yalnız backend'de `DAMAGE_ANALYSIS_TEST_ONLY=true` ve
-`DAMAGE_ANALYSIS_TEST_EMAILS=test-hesabi@example.com` yapılandırın. Bu örnek e-posta
-bir yer tutucudur; gerçek hesap adreslerini yalnız Railway değişkenlerinde tutun.
+Test e-postası kısıtı kaldırıldı. `DAMAGE_ANALYSIS_TEST_ONLY` ve
+`DAMAGE_ANALYSIS_TEST_EMAILS` artık okunmaz; Railway backend değişkenlerinden
+kaldırılmalıdır. Bu, mevcut kredi/abonelik/şirket yetkilerinden bağımsız bir hak vermez.
 
-Test-only açıkken boş veya eksik e-posta listesi **hiçbir hesabın analizine izin vermez**.
-Yalnızca kimliği doğrulanmış hesabın e-postası birebir eşleşiyorsa fotoğraf kalite
-kontrolü, analiz veya yeniden rapor üretme istekleri kabul edilir. Eşleşmeyen
-hesapların mevcut analizleri okuması etkilenmez. AI servisi hâlâ ayrı sunucu anahtarı
-ile korunur. Genel yayından önce test kullanıcı listesi ve test-only bayrağı
-bilinçli şekilde kaldırılmalıdır; `DAMAGE_ANALYSIS_TEST_ONLY=false` genel erişimdir.
+`DAMAGE_ANALYSIS_ENABLED` Spring backend ve Python AI servisinde açık olmalıdır.
+Kapalı bakım anahtarı ve başarısız readiness yeni görsel analiz/doğrulamayı kredi
+ayırmadan durdurur. Geçmişi okuma ve mevcut bulgulardan yalnız rapor üretme davranışı korunur.
+Flutter aynı isimli derleme seçeneğinde varsayılan `true` kullanır; sunucu kapısını aşamaz.
 
-Gerçek Gemini faturası, kredi tüketimi/iadesi ve onarım fiyatı doğruluğu CI
-testlerinden bağımsız olarak canlı test hesabıyla kontrol edilmelidir.
+Hasar Analiz Raporu ve PDF aynı sunum kurallarını kullanır. Bulgu ve onarım notları
+parça bazında birleştirilir; tahmin üstte, tekrar eden anlatım açılabilir ayrıntılardadır.
+Eski rapor metinleri, belirsizlikler, uyarılar ve kaynak bilgisi korunur.
+Yeni Gemini çağrısı, şema değişikliği veya geçmiş kayıt güncellemesi yoktur.
+
+[Yayın sırası, değişkenler ve bu çalışmanın test sonuçları](GEMINI_GENERAL_ACCESS_REPORT_UX.md).

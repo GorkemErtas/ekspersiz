@@ -1,4 +1,3 @@
-import 'package:mobile/features/inspection/models/inspection_labels.dart';
 import 'dart:io';
 
 import 'package:flutter/services.dart';
@@ -9,6 +8,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../../core/localization/app_locale_controller.dart';
 import '../models/damage_inspection.dart';
+import '../models/inspection_report_content.dart';
 import 'inspection_service.dart';
 
 class InspectionPdfService {
@@ -79,7 +79,7 @@ class InspectionPdfService {
     final document = pw.Document(
       theme: pw.ThemeData.withFont(base: regular, bold: bold),
     );
-    final noDamage = inspection.damageSeverity == 'NONE';
+    final content = InspectionReportContent(inspection);
     final report = inspection.report;
 
     document.addPage(
@@ -101,92 +101,107 @@ class InspectionPdfService {
           ],
         ),
         build: (_) => [
-          pw.SizedBox(height: 18),
+          pw.SizedBox(height: 10),
           pw.Text(
-            (noDamage
-                    ? 'Görünür Hasar Tespit Edilmedi'
-                    : 'Araç İnceleme Raporu')
-                .tr,
+            'Hasar Analiz Raporu'.tr,
             style: pw.TextStyle(font: bold, fontSize: 24, color: _ink),
           ),
           pw.SizedBox(height: 6),
           pw.Text('${'Rapor No'.tr}: EXP-${inspection.id}', style: _muted(10)),
-          pw.SizedBox(height: 20),
+          pw.SizedBox(height: 10),
           _infoGrid(inspection),
-          pw.SizedBox(height: 20),
-          _sectionTitle('İnceleme Fotoğrafı'.tr),
+          pw.SizedBox(height: 10),
+          _sectionTitle(content.title.tr),
+          for (final note in InspectionReportContent.uniqueText([
+            inspection.analysisMessage,
+            inspection.additionalPhotoGuidance,
+          ])) ...[
+            pw.SizedBox(height: 6),
+            pw.Text(
+              note.tr,
+              style: const pw.TextStyle(fontSize: 10, lineSpacing: 3),
+            ),
+          ],
+          if (content.noVisibleDamage) ...[
+            pw.SizedBox(height: 6),
+            pw.Text(
+              'İşlem Gerekmiyor'.tr,
+              style: const pw.TextStyle(fontSize: 10),
+            ),
+          ],
+          pw.SizedBox(height: 14),
+          if (content.hasPrice)
+            _priceCard(content)
+          else
+            pw.Text(
+              '${content.priceTitle.tr}: ${content.price.tr}',
+              style: _muted(10),
+            ),
+          for (final note in InspectionReportContent.uniqueText([
+            report?.priceInformation,
+            report?.priceSourceDescription,
+          ])) ...[pw.SizedBox(height: 6), pw.Text(note.tr, style: _muted(9))],
+          if (report == null) ...[
+            pw.SizedBox(height: 8),
+            pw.Text(
+              (inspection.isReportProcessing
+                      ? 'Rapor Hazırlanıyor'
+                      : 'Rapor Tamamlanamadı')
+                  .tr,
+              style: _muted(10),
+            ),
+            if (inspection.reportMessage?.trim().isNotEmpty == true)
+              pw.Text(inspection.reportMessage!, style: _muted(9)),
+          ],
+          if (content.findings.isNotEmpty) ...[
+            pw.SizedBox(height: 12),
+            _sectionTitle('Bulgular ve Onarım'.tr),
+            for (final finding in content.findings) ...[
+              pw.SizedBox(height: 12),
+              pw.Text(
+                finding.part.tr,
+                style: pw.TextStyle(font: bold, fontSize: 11, color: _ink),
+              ),
+              pw.SizedBox(height: 4),
+              pw.Text(
+                finding.damageTypes.map((t) => t.tr).join(' · '),
+                style: pw.TextStyle(fontSize: 10, color: _brand),
+              ),
+              for (final note in InspectionReportContent.uniqueText([
+                ...finding.observations,
+                ...finding.repairs,
+              ])) ...[
+                pw.SizedBox(height: 5),
+                pw.Text(
+                  note.tr,
+                  style: const pw.TextStyle(fontSize: 10, lineSpacing: 3),
+                ),
+              ],
+            ],
+          ],
+          if (content.narrative.isNotEmpty) ...[
+            pw.SizedBox(height: 12),
+            _sectionTitle('Rapor Notları'.tr),
+            for (final paragraph in content.narrative) ...[
+              pw.SizedBox(height: 6),
+              pw.Text(
+                paragraph.tr,
+                style: const pw.TextStyle(fontSize: 10, lineSpacing: 3),
+              ),
+            ],
+          ],
+          pw.SizedBox(height: 10),
+          pw.Text(
+            content.disclaimer.tr,
+            style: pw.TextStyle(fontSize: 9, color: _warning, lineSpacing: 3),
+          ),
+          pw.SizedBox(height: 12),
+          _sectionTitle('Analiz Fotoğrafı'.tr),
           pw.SizedBox(height: 8),
           pw.Container(
-            height: 245,
+            height: 140,
             width: double.infinity,
-            decoration: pw.BoxDecoration(
-              border: pw.Border.all(color: _border),
-              borderRadius: pw.BorderRadius.circular(10),
-            ),
-            child: pw.ClipRRect(
-              horizontalRadius: 10,
-              verticalRadius: 10,
-              child: pw.Image(pw.MemoryImage(imageBytes), fit: pw.BoxFit.cover),
-            ),
-          ),
-          pw.SizedBox(height: 20),
-          _resultCard(inspection, noDamage),
-          if (!noDamage && inspection.damageTypes.isNotEmpty) ...[
-            pw.SizedBox(height: 18),
-            _listSection(
-              'Tespit Edilen Hasarlar'.tr,
-              inspection.damageTypes.map(_damageLabel).toList(),
-            ),
-          ],
-          if (!noDamage && inspection.affectedParts.isNotEmpty) ...[
-            pw.SizedBox(height: 14),
-            _listSection(
-              'Etkilenen Parçalar'.tr,
-              inspection.affectedParts.map(_partLabel).toList(),
-            ),
-          ],
-          if (!noDamage && inspection.repairRecommendations.isNotEmpty) ...[
-            pw.SizedBox(height: 14),
-            _listSection(
-              'Onarım Önerileri'.tr,
-              inspection.repairRecommendations
-                  .map((item) => _repairLabel(item.recommendedAction))
-                  .toSet()
-                  .toList(),
-            ),
-          ],
-          if (report != null) ...[
-            pw.SizedBox(height: 18),
-            _sectionTitle('AI Rapor Özeti'.tr),
-            pw.SizedBox(height: 8),
-            _textCard(
-              [
-                report.summary,
-                report.damageDescription,
-                report.repairRecommendation,
-              ].where((text) => text.trim().isNotEmpty).join('\n\n'),
-            ),
-          ],
-          if (!noDamage &&
-              report != null &&
-              report.estimatedMaximumPrice > 0) ...[
-            pw.SizedBox(height: 14),
-            _priceCard(
-              report.estimatedMinimumPrice,
-              report.estimatedMaximumPrice,
-              report.currency,
-              inspectionOnly: inspection.isInspectionOnly,
-            ),
-          ],
-          pw.SizedBox(height: 18),
-          _sectionTitle('Bilgilendirme'.tr),
-          pw.SizedBox(height: 8),
-          _textCard(
-            report?.disclaimer.trim().isNotEmpty == true
-                ? report!.disclaimer
-                : 'Bu rapor yalnızca yüklenen fotoğraftaki görünür alanların yapay zekâ ile değerlendirilmesine dayanır. Mekanik kontrol veya profesyonel ekspertiz garantisi değildir.'
-                      .tr,
-            accent: _warning,
+            child: pw.Image(pw.MemoryImage(imageBytes), fit: pw.BoxFit.contain),
           ),
         ],
       ),
@@ -221,7 +236,7 @@ class InspectionPdfService {
         ],
       ),
       pw.Text(
-        'ARAÇ İNCELEME RAPORU'.tr,
+        'HASAR ANALİZ RAPORU'.tr,
         style: pw.TextStyle(
           fontSize: 9,
           fontWeight: pw.FontWeight.bold,
@@ -269,7 +284,7 @@ class InspectionPdfService {
 
   pw.Widget _cell(String text, {bool label = false}) => pw.Container(
     color: label ? _soft : null,
-    padding: const pw.EdgeInsets.all(9),
+    padding: const pw.EdgeInsets.all(6),
     child: pw.Text(
       text,
       style: pw.TextStyle(
@@ -278,68 +293,6 @@ class InspectionPdfService {
         color: _ink,
       ),
     ),
-  );
-
-  pw.Widget _resultCard(
-    DamageInspection inspection,
-    bool noDamage,
-  ) => pw.Container(
-    width: double.infinity,
-    padding: const pw.EdgeInsets.all(16),
-    decoration: pw.BoxDecoration(
-      color: noDamage ? _successSoft : _soft,
-      borderRadius: pw.BorderRadius.circular(10),
-      border: pw.Border.all(color: noDamage ? _success : _brand, width: 1),
-    ),
-    child: pw.Column(
-      crossAxisAlignment: pw.CrossAxisAlignment.start,
-      children: [
-        pw.Text(
-          _severityLabel(inspection.damageSeverity),
-          style: pw.TextStyle(
-            fontSize: 16,
-            fontWeight: pw.FontWeight.bold,
-            color: noDamage ? _success : _ink,
-          ),
-        ),
-        pw.SizedBox(height: 6),
-        pw.Text(
-          noDamage
-              ? 'Gönderilen görüntüde görünür hasar tespit edilmedi. Bu sonuç mekanik veya profesyonel ekspertiz garantisi değildir.'
-                    .tr
-              : (inspection.analysisMessage ?? 'Görsel analiz tamamlandı.').tr,
-          style: const pw.TextStyle(fontSize: 10, lineSpacing: 3),
-        ),
-      ],
-    ),
-  );
-
-  pw.Widget _listSection(String title, List<String> values) => pw.Column(
-    crossAxisAlignment: pw.CrossAxisAlignment.start,
-    children: [
-      _sectionTitle(title),
-      pw.SizedBox(height: 7),
-      ...values.map(
-        (value) => pw.Padding(
-          padding: const pw.EdgeInsets.only(bottom: 5),
-          child: pw.Row(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              pw.Text(
-                '• ',
-                style: pw.TextStyle(
-                  color: _brand,
-                  fontWeight: pw.FontWeight.bold,
-                ),
-              ),
-              pw.Expanded(
-                child: pw.Text(value, style: const pw.TextStyle(fontSize: 10)),
-              ),
-            ],
-          ),
-        ),
-      ),
-    ],
   );
 
   pw.Widget _sectionTitle(String value) => pw.Text(
@@ -351,28 +304,9 @@ class InspectionPdfService {
     ),
   );
 
-  pw.Widget _textCard(String value, {PdfColor? accent}) => pw.Container(
+  pw.Widget _priceCard(InspectionReportContent content) => pw.Container(
     width: double.infinity,
-    padding: const pw.EdgeInsets.all(13),
-    decoration: pw.BoxDecoration(
-      color: _soft,
-      borderRadius: pw.BorderRadius.circular(8),
-      border: pw.Border.all(color: accent ?? _brand, width: 1),
-    ),
-    child: pw.Text(
-      value,
-      style: const pw.TextStyle(fontSize: 9.5, lineSpacing: 3),
-    ),
-  );
-
-  pw.Widget _priceCard(
-    double minimum,
-    double maximum,
-    String currency, {
-    bool inspectionOnly = false,
-  }) => pw.Container(
-    width: double.infinity,
-    padding: const pw.EdgeInsets.all(14),
+    padding: const pw.EdgeInsets.all(10),
     decoration: pw.BoxDecoration(
       color: _successSoft,
       borderRadius: pw.BorderRadius.circular(8),
@@ -381,10 +315,7 @@ class InspectionPdfService {
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
         pw.Text(
-          (inspectionOnly
-                  ? 'Tahmini Fiziksel İnceleme Aralığı'
-                  : 'Tahmini Onarım Aralığı')
-              .tr,
+          content.priceTitle.tr,
           style: pw.TextStyle(
             fontSize: 10,
             fontWeight: pw.FontWeight.bold,
@@ -393,7 +324,7 @@ class InspectionPdfService {
         ),
         pw.SizedBox(height: 5),
         pw.Text(
-          '${_money(minimum)} - ${_money(maximum)} $currency',
+          content.price,
           style: pw.TextStyle(
             fontSize: 17,
             fontWeight: pw.FontWeight.bold,
@@ -409,74 +340,6 @@ class InspectionPdfService {
   static String _formatDate(DateTime? date) => date == null
       ? '-'
       : '${date.day.toString().padLeft(2, '0')}.${date.month.toString().padLeft(2, '0')}.${date.year}';
-  static String _money(double value) => value
-      .round()
-      .toString()
-      .replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (_) => '.');
-  static String _severityLabel(String? value) => (switch (value) {
-    'NONE' => 'Görünür Hasar Tespit Edilmedi',
-    'MINOR' => 'Hafif Seviye Hasar',
-    'MODERATE' => 'Orta Seviye Hasar',
-    'SEVERE' => 'Ağır Seviye Hasar',
-    _ => 'Hasar Seviyesi Belirsiz',
-  }).tr;
-  static String _damageLabel(String value) =>
-      InspectionLabels.label(value) ??
-      (switch (value) {
-        'SCRATCH' => 'Çizik',
-        'PAINT_DAMAGE' => 'Boya Hasarı',
-        'DENT' => 'Göçük',
-        'CRACK' => 'Çatlak',
-        'BROKEN_PART' => 'Kırık Parça',
-        'BROKEN_GLASS' => 'Kırık Cam',
-        'DEFORMATION' => 'Deformasyon',
-        _ => value,
-      }).tr;
-  static String _partLabel(String value) =>
-      InspectionLabels.label(value) ??
-      (switch (value) {
-        'FRONT_BUMPER' => 'Ön Tampon',
-        'REAR_BUMPER' => 'Arka Tampon',
-        'FRONT_DOOR' => 'Ön Kapı',
-        'REAR_DOOR' => 'Arka Kapı',
-        'FRONT_WHEEL' => 'Ön Tekerlek',
-        'REAR_WHEEL' => 'Arka Tekerlek',
-        'FRONT_WINDOW' => 'Ön Yan Cam',
-        'REAR_WINDOW' => 'Arka Yan Cam',
-        'HOOD' => 'Kaput',
-        'TRUNK' => 'Bagaj Kapağı',
-        'FENDER' => 'Çamurluk',
-        'QUARTER_PANEL' => 'Arka Çamurluk Paneli',
-        'ROCKER_PANEL' => 'Marşpiyel',
-        'GRILLE' => 'Ön Izgara',
-        'ROOF' => 'Tavan',
-        'WINDSHIELD' => 'Ön Cam',
-        'REAR_WINDSHIELD' => 'Arka Cam',
-        'HEADLIGHT' => 'Far',
-        'TAIL_LIGHT' => 'Arka Stop Lambası',
-        'MIRROR' => 'Yan Ayna',
-        'LICENSE_PLATE' => 'Plaka',
-        _ => value,
-      }).tr;
-  static String _repairLabel(String value) =>
-      InspectionLabels.label(value) ??
-      (switch (value) {
-        'NO_ACTION' => 'İşlem Gerekmiyor',
-        'POLISHING' => 'Pasta / Cila',
-        'PAINT_TOUCH_UP' => 'Lokal Boya Rötuşu',
-        'FULL_PAINTING' => 'Tam Boyama',
-        'PAINTLESS_DENT_REPAIR' => 'Boyasız Göçük Düzeltme',
-        'DENT_REPAIR' => 'Göçük Düzeltme',
-        'PLASTIC_REPAIR' => 'Plastik Onarımı',
-        'PART_REPAIR' => 'Parça Onarımı',
-        'PART_REPLACEMENT' => 'Parça Değişimi',
-        'GLASS_REPAIR' => 'Cam Onarımı',
-        'GLASS_REPLACEMENT' => 'Cam Değişimi',
-        'HEADLIGHT_REPAIR' => 'Far Onarımı',
-        'HEADLIGHT_REPLACEMENT' => 'Far Değişimi',
-        _ => value,
-      }).tr;
-
   static final _brand = PdfColor.fromHex('#7C3AED');
   static final _ink = PdfColor.fromHex('#17131F');
   static final _soft = PdfColor.fromHex('#F4F1F8');

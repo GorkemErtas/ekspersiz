@@ -1,6 +1,30 @@
 // Display labels for current enums and historical records. No model/class-ID mapping.
 class InspectionLabels {
   static const labels = <String, String>{
+    'UNKNOWN': 'Belirlenemeyen parça',
+    'NO_VISIBLE_DAMAGE': 'Görünür hasar yok',
+    'PAINT_DAMAGE': 'Boya hasarı',
+    'CRACK': 'Çatlak',
+    'BROKEN_GLASS': 'Kırık cam',
+    'DEFORMATION': 'Deformasyon',
+    'REAR_BUMPER': 'Arka tampon',
+    'REAR_DOOR': 'Arka kapı',
+    'REAR_WHEEL': 'Arka tekerlek',
+    'REAR_WINDOW': 'Arka kapı camı',
+    'REAR_WINDSHIELD': 'Arka cam',
+    'NO_ACTION': 'İşlem Gerekmiyor',
+    'POLISHING': 'Pasta / Cila',
+    'PAINT_TOUCH_UP': 'Lokal Boya Rötuşu',
+    'FULL_PAINTING': 'Tam Boyama',
+    'PAINTLESS_DENT_REPAIR': 'Boyasız Göçük Düzeltme',
+    'DENT_REPAIR': 'Göçük Düzeltme',
+    'PLASTIC_REPAIR': 'Plastik Onarımı',
+    'PART_REPAIR': 'Parça Onarımı',
+    'PART_REPLACEMENT': 'Parça Değişimi',
+    'GLASS_REPAIR': 'Cam Onarımı',
+    'GLASS_REPLACEMENT': 'Cam Değişimi',
+    'HEADLIGHT_REPAIR': 'Far Onarımı',
+    'HEADLIGHT_REPLACEMENT': 'Far Değişimi',
     'BROKEN_PART': 'Kırık parça',
     'Broken part': 'Kırık parça',
     'CORROSION': 'Korozyon',
@@ -63,4 +87,12 @@ class InspectionLabels {
   };
 
   static String? label(String? value) => labels[value];
+
+  static String severity(String? value) => switch (value) {
+    'NONE' => 'Görünür Hasar Tespit Edilmedi',
+    'MINOR' => 'Hafif Seviye Hasar',
+    'MODERATE' => 'Orta Seviye Hasar',
+    'SEVERE' => 'Ağır Seviye Hasar',
+    _ => 'Hasar Seviyesi Belirsiz',
+  };
 }
