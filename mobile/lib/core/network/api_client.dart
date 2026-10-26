@@ -9,21 +9,25 @@ import '../constants/api_constants.dart';
 import '../storage/token_storage.dart';
 import 'api_exception.dart';
 import '../auth/session_manager.dart';
+import '../workspace/workspace_session.dart';
 
 class ApiClient {
-  const ApiClient();
+  const ApiClient({this.workspace});
+
+  final WorkspaceType? workspace;
 
   static const Duration _requestTimeout = Duration(seconds: 30);
 
   static const Duration _analysisTimeout = Duration(seconds: 90);
 
   Future<dynamic> get(String path) async {
+    final scope = WorkspaceSession.capture(override: workspace);
     try {
       final response = await http
-          .get(_buildUri(path), headers: await _buildHeaders())
+          .get(_buildUri(path), headers: await _buildHeaders(scope: scope))
           .timeout(_requestTimeout);
 
-      return await _handleResponse(response);
+      return await _handleResponse(response, scope: scope, path: path);
     } on TimeoutException {
       throw ApiException(
         statusCode: 408,
@@ -38,14 +42,16 @@ class ApiClient {
   }
 
   Future<Uint8List> getBytes(String path) async {
+    final scope = WorkspaceSession.capture(override: workspace);
     try {
       final response = await http
-          .get(_buildUri(path), headers: await _buildHeaders())
+          .get(_buildUri(path), headers: await _buildHeaders(scope: scope))
           .timeout(_requestTimeout);
       if (response.statusCode >= 200 && response.statusCode < 300) {
+        _verifyWorkspaceResponse(path, scope, response);
         return response.bodyBytes;
       }
-      await _handleResponse(response);
+      await _handleResponse(response, scope: scope, path: path);
       throw const ApiException(message: 'Dosya indirilemedi.');
     } on TimeoutException {
       throw const ApiException(
@@ -67,14 +73,20 @@ class ApiClient {
     bool includeAuth = true,
     bool clearTokenOnUnauthorized = true,
   }) async {
+    final scope = WorkspaceSession.capture(override: workspace);
     try {
       final response = await http
           .post(
             _buildUri(path),
-            headers: await _buildHeaders(includeAuth: includeAuth),
+            headers: await _buildHeaders(
+              includeAuth: includeAuth,
+              scope: scope,
+            ),
             body: body == null ? null : jsonEncode(body),
           )
           .timeout(timeout ?? _requestTimeout);
+
+      WorkspaceSession.check(scope);
 
       // Password changes revoke every old token. The additive response header
       // keeps this device signed in; older servers can still return plain 204.
@@ -91,6 +103,8 @@ class ApiClient {
 
       return await _handleResponse(
         response,
+        scope: scope,
+        path: path,
         clearTokenOnUnauthorized: clearTokenOnUnauthorized,
       );
     } on TimeoutException {
@@ -113,15 +127,12 @@ class ApiClient {
     String fileFieldName = 'image',
     String contentType = 'image/jpeg',
   }) async {
+    final scope = WorkspaceSession.capture(override: workspace);
     try {
       final request = http.MultipartRequest('POST', _buildUri(path));
 
-      final token = await TokenStorage.getAccessToken();
-
-      request.headers.addAll({
-        'Accept': 'application/json',
-        if (token != null && token.isNotEmpty) 'Authorization': 'Bearer $token',
-      });
+      request.headers.addAll(await _buildHeaders(scope: scope));
+      request.headers.remove('Content-Type');
 
       final mediaType = _parseMediaType(contentType);
 
@@ -140,7 +151,7 @@ class ApiClient {
         streamedResponse,
       ).timeout(_requestTimeout);
 
-      return await _handleResponse(response);
+      return await _handleResponse(response, scope: scope, path: path);
     } on TimeoutException {
       throw ApiException(
         statusCode: 408,
@@ -155,16 +166,17 @@ class ApiClient {
   }
 
   Future<dynamic> put(String path, {required Map<String, dynamic> body}) async {
+    final scope = WorkspaceSession.capture(override: workspace);
     try {
       final response = await http
           .put(
             _buildUri(path),
-            headers: await _buildHeaders(),
+            headers: await _buildHeaders(scope: scope),
             body: jsonEncode(body),
           )
           .timeout(_requestTimeout);
 
-      return await _handleResponse(response);
+      return await _handleResponse(response, scope: scope, path: path);
     } on TimeoutException {
       throw ApiException(
         statusCode: 408,
@@ -179,12 +191,13 @@ class ApiClient {
   }
 
   Future<void> delete(String path) async {
+    final scope = WorkspaceSession.capture(override: workspace);
     try {
       final response = await http
-          .delete(_buildUri(path), headers: await _buildHeaders())
+          .delete(_buildUri(path), headers: await _buildHeaders(scope: scope))
           .timeout(_requestTimeout);
 
-      await _handleResponse(response);
+      await _handleResponse(response, scope: scope, path: path);
     } on TimeoutException {
       throw ApiException(
         statusCode: 408,
@@ -204,14 +217,19 @@ class ApiClient {
     return Uri.parse('${ApiConstants.baseUrl}$normalizedPath');
   }
 
-  Future<Map<String, String>> _buildHeaders({bool includeAuth = true}) async {
+  Future<Map<String, String>> _buildHeaders({
+    bool includeAuth = true,
+    required WorkspaceRequest scope,
+  }) async {
     String? token;
 
     if (includeAuth) {
       token = await TokenStorage.getAccessToken();
     }
 
+    WorkspaceSession.check(scope);
     return {
+      if (includeAuth && scope.type != null) 'X-Workspace': scope.type!.header,
       'Content-Type': 'application/json',
       'Accept': 'application/json',
       if (includeAuth && token != null && token.isNotEmpty)
@@ -231,8 +249,11 @@ class ApiClient {
 
   Future<dynamic> _handleResponse(
     http.Response response, {
+    required WorkspaceRequest scope,
+    required String path,
     bool clearTokenOnUnauthorized = true,
   }) async {
+    WorkspaceSession.check(scope);
     final hasBody = response.bodyBytes.isNotEmpty;
 
     dynamic decodedBody;
@@ -246,10 +267,16 @@ class ApiClient {
     }
 
     if (response.statusCode >= 200 && response.statusCode < 300) {
+      _verifyWorkspaceResponse(path, scope, response);
       return decodedBody;
     }
 
     if (response.statusCode == 403) {
+      if (decodedBody is Map &&
+          decodedBody['validationErrors'] is Map &&
+          decodedBody['validationErrors']['code'] == 'WORKSPACE_UNAVAILABLE') {
+        WorkspaceSession.revokeBusiness();
+      }
       SessionManager.invalidateImages();
     }
 
@@ -263,6 +290,27 @@ class ApiClient {
       statusCode: response.statusCode,
       message: _extractErrorMessage(response.statusCode, decodedBody),
     );
+  }
+
+  void _verifyWorkspaceResponse(
+    String path,
+    WorkspaceRequest scope,
+    http.Response response,
+  ) {
+    WorkspaceSession.check(scope);
+    final identityRequest =
+        path.startsWith('/auth/') ||
+        path.startsWith('/app/') ||
+        path == '/health';
+    if (scope.type != null &&
+        !identityRequest &&
+        response.headers['x-workspace'] != scope.type!.header) {
+      throw const ApiException(
+        statusCode: 503,
+        message:
+            'Sunucu seçilen çalışma alanını doğrulamadı. Lütfen daha sonra tekrar deneyin.',
+      );
+    }
   }
 
   String _extractErrorMessage(int statusCode, dynamic body) {

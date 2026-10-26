@@ -4,8 +4,10 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:mobile/core/auth/session_manager.dart';
+import 'package:mobile/core/workspace/workspace_session.dart';
 
 void initializeUiSession() {
+  WorkspaceSession.clear();
   SessionManager.invalidateImages(allowImages: true);
   FlutterSecureStorage.setMockInitialValues({'access_token': 'ui-test'});
 }
@@ -23,7 +25,11 @@ const uiVehicleJson = {
 http.Response uiJsonResponse(Object data) => http.Response(
   jsonEncode(data),
   200,
-  headers: {'content-type': 'application/json; charset=utf-8'},
+  headers: {
+    'content-type': 'application/json; charset=utf-8',
+    if (WorkspaceSession.state.value != null)
+      'x-workspace': WorkspaceSession.state.value!.type.header,
+  },
 );
 
 http.Client uiMockClient({

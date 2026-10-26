@@ -1,5 +1,6 @@
 import 'package:mobile/core/localization/app_text.dart';
 import 'package:flutter/material.dart';
+import '../../../core/workspace/workspace_session.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/theme_toggle_button.dart';
@@ -46,6 +47,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final BillingService _billingService = const BillingService();
   String? _verifiedSubscriptionPlan;
   CreditOverview? _credits;
+  bool get _companyWorkspace =>
+      WorkspaceSession.state.value?.isBusiness ??
+      (widget.businessAccount != null);
+  CreditAccount? get _activeCredits =>
+      _companyWorkspace ? _credits?.company : _credits?.personal;
   String get _currentSubscriptionPlan =>
       _verifiedSubscriptionPlan ?? widget.subscriptionPlan;
 
@@ -487,12 +493,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       _ActionProfileItem(
                         icon: Icons.workspace_premium_outlined,
                         title: 'Krediler ve Paketler',
-                        subtitle: _credits == null
+                        subtitle: _activeCredits == null
                             ? 'Kredi bakiyelerinizi ve araç kapasitenizi yönetin.'
-                            : '${widget.businessAccount != null ? 'Şirket' : 'Kişisel'}: '
-                                  '${(_credits!.company ?? _credits!.personal).available('ANALYSIS')} analiz · '
-                                  '${(_credits!.company ?? _credits!.personal).available('ASSISTANT')} asistan\n'
-                                  '${(_credits!.company ?? _credits!.personal).usedSlots} / ${(_credits!.company ?? _credits!.personal).totalSlots} araç slotu',
+                            : '${_companyWorkspace ? 'Şirket' : 'Kişisel'}: '
+                                  '${_activeCredits!.available('ANALYSIS')} analiz · '
+                                  '${_activeCredits!.available('ASSISTANT')} asistan\n'
+                                  '${_activeCredits!.usedSlots} / ${_activeCredits!.totalSlots} araç slotu',
                         onTap: _openSubscription,
                       ),
                       const Divider(height: 1, indent: 82),

@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/services.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
+import '../../../core/workspace/workspace_session.dart';
 
 class BillingPurchaseCancelled implements Exception {
   const BillingPurchaseCancelled();
@@ -19,9 +20,28 @@ class RevenueCatGateway {
   );
   static const _iosApiKey = String.fromEnvironment('REVENUECAT_IOS_PUBLIC_KEY');
 
+  static Future<void> _configuration = Future<void>.value();
+
   bool get supportsCurrentPlatform => Platform.isAndroid || Platform.isIOS;
 
-  Future<bool> configure(String appUserId) async {
+  Future<bool> configure(String appUserId) {
+    final scope = WorkspaceSession.capture();
+    final next = _configuration.then((_) async {
+      WorkspaceSession.check(scope);
+      final result = await _configure(appUserId);
+      WorkspaceSession.check(scope);
+      return result;
+    });
+    // Purchases has one native identity. Never let an older login finish after
+    // configuration for a newer user. A rejected caller must not poison the queue.
+    _configuration = next.then<void>(
+      (_) {},
+      onError: (Object error, StackTrace stack) {},
+    );
+    return next;
+  }
+
+  Future<bool> _configure(String appUserId) async {
     final apiKey = Platform.isAndroid ? _androidApiKey : _iosApiKey;
 
     if (!supportsCurrentPlatform || apiKey.trim().isEmpty) {

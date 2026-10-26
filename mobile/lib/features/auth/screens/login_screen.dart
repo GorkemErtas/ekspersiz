@@ -61,6 +61,7 @@ class _LoginScreenState extends State<LoginScreen> {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute<void>(
           builder: (_) => MainShell(
+            userId: authResponse.userId,
             fullName: authResponse.fullName,
             email: authResponse.email,
             subscriptionPlan: authResponse.subscriptionPlan,
@@ -104,6 +105,7 @@ class _LoginScreenState extends State<LoginScreen> {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute<void>(
           builder: (_) => MainShell(
+            userId: authResponse.userId,
             fullName: authResponse.fullName,
             email: authResponse.email,
             subscriptionPlan: authResponse.subscriptionPlan,
@@ -116,17 +118,11 @@ class _LoginScreenState extends State<LoginScreen> {
         return;
       }
 
-      final message = exception
-          .toString()
-          .replaceFirst('Exception: ', '');
+      final message = exception.toString().replaceFirst('Exception: ', '');
 
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
-        ..showSnackBar(
-          SnackBar(
-            content: AppText(message),
-          ),
-        );
+        ..showSnackBar(SnackBar(content: AppText(message)));
     } finally {
       if (mounted) {
         setState(() {

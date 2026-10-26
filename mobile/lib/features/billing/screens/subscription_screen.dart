@@ -3,6 +3,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../core/localization/app_text.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_state_view.dart';
+import '../../../core/workspace/workspace_session.dart';
 import '../models/billing_plan.dart';
 import '../models/credit_catalog.dart';
 import '../services/analysis_quota_service.dart';
@@ -38,7 +39,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
   static const _resources = ['ANALYSIS', 'ASSISTANT', 'SLOT'];
   static const _labels = ['Hasar analizi', 'AI Asistan', 'Araç slotları'];
   CreditAccount get _account =>
-      _company ? _credits!.company! : _credits!.personal;
+      _company ? _credits!.company! : _credits!.personal!;
 
   @override
   void initState() {
@@ -65,14 +66,23 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
       final billing = await widget.billingService.load();
       final credits = await widget.billingService.credits();
       if (!mounted) return;
+      final workspace = WorkspaceSession.state.value;
+      if (workspace != null &&
+          (workspace.isBusiness
+              ? credits.company == null
+              : credits.personal == null)) {
+        throw StateError('Seçili çalışma alanının bakiyesi alınamadı.');
+      }
       setState(() {
-        if (_credits == null && widget.preferCompany) {
+        if (WorkspaceSession.state.value != null) {
+          _company = WorkspaceSession.state.value!.isBusiness;
+        } else if (_credits == null && widget.preferCompany) {
           _company = credits.company != null;
         }
         _billing = billing;
         _credits = credits;
         _error = null;
-        if (credits.company == null) _company = false;
+        if (workspace == null && credits.company == null) _company = false;
       });
     } catch (e) {
       if (mounted) setState(() => _error = _message(e));
@@ -97,6 +107,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
     setState(() => _busy = true);
     try {
       final message = await action();
+      if (!mounted) return;
       await _load();
       _show(message);
     } on BillingPurchaseCancelled {
@@ -164,7 +175,8 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
                           padding: const EdgeInsets.only(bottom: 12),
                           child: AppText(_error!),
                         ),
-                      if (_credits!.company != null) ...[
+                      if (WorkspaceSession.state.value == null &&
+                          _credits!.company != null) ...[
                         SegmentedButton<bool>(
                           segments: const [
                             ButtonSegment(
@@ -244,7 +256,9 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
                       ))
                         _productCard(context, product),
                       const SizedBox(height: 20),
-                      if (_credits!.company == null || _credits!.company!.owner)
+                      if (WorkspaceSession.state.value?.role != 'MEMBER' &&
+                          (_credits!.company == null ||
+                              _credits!.company!.owner))
                         for (final plan in _billing!.overview.plans.where(
                           (p) => p.plan == 'BUSINESS',
                         ))

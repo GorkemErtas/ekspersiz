@@ -69,8 +69,8 @@ const onboardingSteps = [
     title: 'Kredilerin sende.\nEkibin de yanında.',
     description:
         'Analiz ve asistan için ayrı kredi bakiyelerini, paketleri '
-        've araç kapasiteni yönet. Kurumsal hesapta araçlar, analizler ve '
-        'şirket kredileri yetkilerin doğrultusunda ortak kullanılır.',
-    hint: 'Profil → Krediler ve Paketler · Uygulama Rehberi',
+        've araç kapasiteni yönet. Ana ekrandan kişisel ve şirket alanın '
+        'arasında geç; her alan kendi araçlarını ve kredilerini kullansın.',
+    hint: 'Ana ekran → Hesap değiştir · Profil → Krediler ve Paketler',
   ),
 ];

@@ -47,9 +47,11 @@ class CreditAccount {
 
 class CreditOverview {
   CreditOverview.fromJson(Map<String, dynamic> json)
-    : personal = CreditAccount.fromJson(
-        Map<String, dynamic>.from(json['personal'] as Map),
-      ),
+    : personal = json['personal'] is Map
+          ? CreditAccount.fromJson(
+              Map<String, dynamic>.from(json['personal'] as Map),
+            )
+          : null,
       company = json['company'] is Map
           ? CreditAccount.fromJson(
               Map<String, dynamic>.from(json['company'] as Map),
@@ -60,7 +62,7 @@ class CreditOverview {
             (v) => CreditProduct.fromJson(Map<String, dynamic>.from(v as Map)),
           )
           .toList();
-  final CreditAccount personal;
+  final CreditAccount? personal;
   final CreditAccount? company;
   final List<CreditProduct> products;
 }

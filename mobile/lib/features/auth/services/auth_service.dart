@@ -1,5 +1,6 @@
 import 'package:google_sign_in/google_sign_in.dart';
 import '../../../core/auth/session_manager.dart';
+import '../../../core/workspace/workspace_session.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/storage/token_storage.dart';
@@ -38,7 +39,14 @@ class AuthService {
         );
       }
 
+      WorkspaceSession.clear();
       await TokenStorage.saveAccessToken(authResponse.accessToken);
+      await WorkspaceSession.initialize(
+        userId: authResponse.userId,
+        businessId: authResponse.businessAccount?.id,
+        companyName: authResponse.businessAccount?.companyName,
+        role: authResponse.businessAccount?.role,
+      );
       try {
         await WelcomeCreditService.claim().timeout(const Duration(seconds: 15));
       } catch (_) {
@@ -104,7 +112,14 @@ class AuthService {
       );
     }
 
+    WorkspaceSession.clear();
     await TokenStorage.saveAccessToken(authResponse.accessToken);
+    await WorkspaceSession.initialize(
+      userId: authResponse.userId,
+      businessId: authResponse.businessAccount?.id,
+      companyName: authResponse.businessAccount?.companyName,
+      role: authResponse.businessAccount?.role,
+    );
     try {
       await WelcomeCreditService.claim().timeout(const Duration(seconds: 15));
     } catch (_) {
@@ -211,6 +226,12 @@ class AuthService {
         user.businessAccount?.role,
       );
     }
+    await WorkspaceSession.initialize(
+      userId: user.id,
+      businessId: user.businessAccount?.id,
+      companyName: user.businessAccount?.companyName,
+      role: user.businessAccount?.role,
+    );
     return user;
   }
 
