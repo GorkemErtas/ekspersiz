@@ -234,7 +234,7 @@ public class DamageInspectionService {
                         authenticatedEmail
                 );
 
-        List<DamageInspection> inspections = businessContextService.findMembership(user)
+        List<DamageInspection> inspections = businessContextService.findWorkspaceMembership(user)
                 .map(member -> inspectionRepository
                         .findAllByVehicleBusinessAccountIdOrderByCreatedAtDesc(
                                 member.getBusinessAccount().getId()))
@@ -1478,7 +1478,7 @@ public class DamageInspectionService {
     }
 
     private Vehicle findAccessibleVehicle(Long vehicleId, User user) {
-        if (businessContextService.findMembership(user).isPresent()) {
+        if (businessContextService.findWorkspaceMembership(user).isPresent()) {
             BusinessAccount businessAccount =
                     businessContextService.requireBusinessAccount(user);
             return vehicleRepository.findByIdAndBusinessAccountIdAndArchivedFalse(
@@ -1490,6 +1490,7 @@ public class DamageInspectionService {
         }
 
         return vehicleRepository.findByIdAndUserIdAndArchivedFalse(vehicleId, user.getId())
+                .filter(vehicle -> vehicle.getBusinessAccount() == null)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Araç bulunamadı. ID: " + vehicleId));
     }

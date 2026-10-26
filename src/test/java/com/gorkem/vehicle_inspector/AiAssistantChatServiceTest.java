@@ -15,8 +15,9 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 class AiAssistantChatServiceTest {
-    @Test
-    void creditModeReservesBeforePlannerReleasesFailuresAndReplaysCompletedResponse() throws Exception {
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(booleans = {false, true})
+    void creditModeReservesBeforePlannerReleasesFailuresAndReplaysCompletedResponse(boolean company) throws Exception {
         var client=mock(AiAssistantClient.class);
         var entitlement=mock(AiAssistantEntitlementService.class);
         var generation=mock(AiAssistantGenerationService.class);
@@ -27,14 +28,15 @@ class AiAssistantChatServiceTest {
         org.springframework.test.util.ReflectionTestUtils.setField(service,"credits",credits);
         org.springframework.test.util.ReflectionTestUtils.setField(service,"businessContext",context);
         when(context.requireUser(user.getEmail())).thenReturn(user);
+        when(context.isBusinessWorkspace(user)).thenReturn(company);
         var request=new AiAssistantChatRequest("Lastik basıncı?",null,List.of(),UUID.randomUUID());
-        when(credits.reserve(eq(user),eq(false),eq("ASSISTANT"),anyString(),anyString()))
+        when(credits.reserve(eq(user),eq(company),eq("ASSISTANT"),anyString(),anyString()))
                 .thenThrow(new com.gorkem.vehicle_inspector.exception.InsufficientAnalysisCreditException("No credits"));
         assertThrows(com.gorkem.vehicle_inspector.exception.InsufficientAnalysisCreditException.class,() -> service.chat(request,user.getEmail()));
         verifyNoInteractions(client,generation);
         var token=UUID.randomUUID();
         doReturn(new CreditWalletService.Reservation(token,false)).when(credits)
-                .reserve(eq(user),eq(false),eq("ASSISTANT"),anyString(),anyString());
+                .reserve(eq(user),eq(company),eq("ASSISTANT"),anyString(),anyString());
         when(entitlement.status(user.getEmail())).thenReturn(status(1));
         when(client.plan(anyString(),anyList(),isNull())).thenThrow(new IllegalStateException("provider unavailable"));
         assertThrows(IllegalStateException.class,() -> service.chat(request,user.getEmail()));
@@ -46,7 +48,7 @@ class AiAssistantChatServiceTest {
         assertTrue(result.quotaConsumed());
         var json=org.mockito.ArgumentCaptor.forClass(String.class);
         verify(credits).completeWithResponse(eq(user),eq(token),json.capture());
-        when(credits.reserve(eq(user),eq(false),eq("ASSISTANT"),anyString(),anyString()))
+        when(credits.reserve(eq(user),eq(company),eq("ASSISTANT"),anyString(),anyString()))
                 .thenReturn(new CreditWalletService.Reservation(token,true));
         when(credits.response(user,token)).thenReturn(json.getValue());
         clearInvocations(client,generation);

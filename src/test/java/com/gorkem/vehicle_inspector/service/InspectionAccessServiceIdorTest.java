@@ -38,7 +38,7 @@ class InspectionAccessServiceIdorTest {
         when(inspection.getId()).thenReturn(50L);
         when(inspection.getVehicle()).thenReturn(vehicle);
         when(vehicle.getUser()).thenReturn(owner);
-        when(businessContext.findMembership(requester)).thenReturn(Optional.empty());
+        when(businessContext.findWorkspaceMembership(requester)).thenReturn(Optional.empty());
         when(repository.findById(50L)).thenReturn(Optional.of(inspection));
 
         assertThrows(ResourceNotFoundException.class,
@@ -53,7 +53,7 @@ class InspectionAccessServiceIdorTest {
         when(owner.getId()).thenReturn(10L);
         when(inspection.getVehicle()).thenReturn(vehicle);
         when(vehicle.getUser()).thenReturn(owner);
-        when(businessContext.findMembership(owner)).thenReturn(Optional.empty());
+        when(businessContext.findWorkspaceMembership(owner)).thenReturn(Optional.empty());
         when(repository.findById(50L)).thenReturn(Optional.of(inspection));
 
         assertSame(inspection, accessService.requireInspection(50L, owner));
@@ -70,7 +70,7 @@ class InspectionAccessServiceIdorTest {
         when(inspection.getId()).thenReturn(50L);
         when(inspection.getVehicle()).thenReturn(vehicle);
         when(vehicle.getUser()).thenReturn(owner);
-        when(businessContext.findMembership(requester)).thenReturn(Optional.empty());
+        when(businessContext.findWorkspaceMembership(requester)).thenReturn(Optional.empty());
         when(repository.findByIdForUpdate(50L)).thenReturn(Optional.of(inspection));
 
         assertThrows(ResourceNotFoundException.class,

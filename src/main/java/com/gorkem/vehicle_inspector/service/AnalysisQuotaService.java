@@ -52,7 +52,7 @@ public class AnalysisQuotaService {
     public AnalysisQuotaResponse getQuota(String email) {
         User user = businessContext.requireUser(email);
         if (creditWallets != null) {
-            boolean company=businessContext.findMembership(user).isPresent();
+            boolean company=businessContext.findWorkspaceMembership(user).isPresent();
             var balance=creditWallets.account(user,company).balances().get("ANALYSIS");
             return new AnalysisQuotaResponse(company ? SubscriptionPlan.BUSINESS : SubscriptionPlan.FREE,
                     0, Math.toIntExact(balance.available()), balance.available(), balance.periodic(), balance.permanent());
@@ -60,7 +60,7 @@ public class AnalysisQuotaService {
         LocalDateTime start = monthStart();
         LocalDateTime end = start.plusMonths(1);
 
-        if (businessContext.findMembership(user).isPresent()) {
+        if (businessContext.findWorkspaceMembership(user).isPresent()) {
             BusinessAccount business =
                     businessContext.requireBusinessAccount(user);
 

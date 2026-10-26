@@ -24,7 +24,7 @@ public class AiAssistantToolService {
     public List<AiAssistantVehicleToolResponse> getMyVehicles(String email) {
         User user=businessContext.requireUser(email);
         List<Vehicle> result;
-        if (businessContext.findMembership(user).isPresent()) {
+        if (businessContext.findWorkspaceMembership(user).isPresent()) {
             var business=businessContext.requireBusinessAccount(user);
             result=vehicles.findAllByBusinessAccountIdAndArchivedFalseOrderByIdDesc(business.getId());
         } else result=vehicles.findAllByUserIdAndArchivedFalseOrderByIdDesc(user.getId());

@@ -79,7 +79,7 @@ class DamageInspectionServiceTest {
         inspection.setReportStatus(ReportStatus.PENDING);
 
         lenient().when(context.requireUser(actor.getEmail())).thenReturn(actor);
-        lenient().when(context.findMembership(actor)).thenReturn(Optional.of(
+        lenient().when(context.findWorkspaceMembership(actor)).thenReturn(Optional.of(
                 new BusinessMember(business, actor, BusinessRole.MEMBER)));
         lenient().when(context.requireBusinessAccount(actor)).thenReturn(business);
         lenient().when(inspections.findById(30L)).thenReturn(Optional.of(inspection));
@@ -134,7 +134,7 @@ class DamageInspectionServiceTest {
         when(context.requireUser(email)).thenReturn(actor);
         if (!company) {
             vehicle.assignToUser(actor);
-            when(context.findMembership(actor)).thenReturn(Optional.empty());
+            when(context.findWorkspaceMembership(actor)).thenReturn(Optional.empty());
         }
         var wallet = mock(CreditWalletService.class);
         var token = java.util.UUID.randomUUID();
@@ -289,7 +289,7 @@ class DamageInspectionServiceTest {
 
     @Test
     void personalHistoryUsesVehicleOwnership() {
-        when(context.findMembership(actor)).thenReturn(Optional.empty());
+        when(context.findWorkspaceMembership(actor)).thenReturn(Optional.empty());
         when(inspections.findAllByVehicleUserIdAndVehicleBusinessAccountIsNullOrderByCreatedAtDesc(actor.getId()))
                 .thenReturn(List.of());
         assertTrue(service.getMyInspections(actor.getEmail()).isEmpty());
@@ -298,7 +298,7 @@ class DamageInspectionServiceTest {
 
     @Test
     void outsiderCannotReadAnalyzeUploadOrRegenerateCompanyInspectionEvenIfCreator() {
-        when(context.findMembership(actor)).thenReturn(Optional.empty());
+        when(context.findWorkspaceMembership(actor)).thenReturn(Optional.empty());
         inspection.setUser(actor);
         assertThrows(ResourceNotFoundException.class, () -> service.getMyInspectionById(30L, actor.getEmail()));
         assertThrows(ResourceNotFoundException.class, () -> service.getInspectionImage(30L, actor.getEmail()));
@@ -328,7 +328,7 @@ class DamageInspectionServiceTest {
 
     @Test
     void personalAnalysisKeepsPersonalQuota() {
-        when(context.findMembership(actor)).thenReturn(Optional.empty());
+        when(context.findWorkspaceMembership(actor)).thenReturn(Optional.empty());
         vehicle.assignToUser(actor);
         successfulAnalysis();
 
@@ -841,6 +841,35 @@ class DamageInspectionServiceTest {
     private void successfulAnalysis() {
         when(ai.analyze(any(), any(), any())).thenReturn(minorAnalysisResponse());
         lenient().when(reports.generateReport(any())).thenReturn(report());
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void selectedWorkspaceAuthorizesTheVehicleAndChoosesOnlyItsCreditPool(boolean company) {
+        var memberships = mock(BusinessMemberRepository.class);
+        var subscriptions = mock(SubscriptionService.class);
+        var actualContext = new BusinessContextService(users, memberships, subscriptions);
+        when(users.findByEmail(actor.getEmail())).thenReturn(Optional.of(actor));
+        if (company) when(memberships.findByUserId(actor.getId())).thenReturn(Optional.of(new BusinessMember(business, actor, BusinessRole.MEMBER)));
+        if (!company) vehicle.assignToUser(actor);
+        var wallet = mock(CreditWalletService.class);
+        var token = java.util.UUID.randomUUID();
+        service = new DamageInspectionService(inspections, vehicles, actualContext,
+                new InspectionAccessService(inspections, actualContext), businesses, users, CLOCK,
+                storage, ai, reports, transactions, subscriptions);
+        ReflectionTestUtils.setField(service, "creditWallets", wallet);
+        when(wallet.reserve(eq(actor), eq(company), eq("ANALYSIS"), anyString(), anyString()))
+                .thenReturn(new CreditWalletService.Reservation(token, false));
+        successfulAnalysis();
+        WorkspaceResolverTest.request(company ? "BUSINESS" : "PERSONAL");
+        try {
+            assertEquals(ReportStatus.COMPLETED, service.analyzeInspection(30L, actor.getEmail()).getReportStatus());
+            verify(wallet).reserve(eq(actor), eq(company), eq("ANALYSIS"), anyString(), anyString());
+            verify(wallet).complete(actor, token);
+            verify(ai).analyze(Path.of("image.jpg"), Path.of("context-image.jpg"), null);
+        } finally {
+            org.springframework.web.context.request.RequestContextHolder.resetRequestAttributes();
+        }
     }
 
     @Test

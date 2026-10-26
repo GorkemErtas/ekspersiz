@@ -162,13 +162,15 @@ public class SecurityConfig {
                 List.of(
                         "Authorization",
                         "Content-Type",
-                        "Accept"
+                        "Accept",
+                        "X-Workspace"
                 )
         );
 
         configuration.setExposedHeaders(
                 List.of(
-                        "Authorization"
+                        "Authorization",
+                        "X-Workspace"
                 )
         );
 

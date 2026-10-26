@@ -29,22 +29,22 @@ public class NotificationService {
     @Transactional(readOnly = true)
     public List<NotificationResponse> list(String email, boolean unreadOnly) {
         User user = businessContext.requireUser(email);
-        List<AppNotification> result = unreadOnly
-                ? notifications.findTop100ByUserIdAndReadAtIsNullOrderByCreatedAtDesc(user.getId())
-                : notifications.findTop100ByUserIdOrderByCreatedAtDesc(user.getId());
+        var workspace = businessContext.workspace(user);
+        List<AppNotification> result = notifications.findVisible(user.getId(), workspace.businessId(), unreadOnly,
+                org.springframework.data.domain.PageRequest.of(0, 100));
         return result.stream().map(this::toResponse).toList();
     }
 
     @Transactional(readOnly = true)
     public UnreadCountResponse unreadCount(String email) {
         User user = businessContext.requireUser(email);
-        return new UnreadCountResponse(notifications.countByUserIdAndReadAtIsNull(user.getId()));
+        return new UnreadCountResponse(notifications.countVisibleUnread(user.getId(), businessContext.workspace(user).businessId()));
     }
 
     @Transactional
     public NotificationResponse markRead(Long id, String email) {
         User user = businessContext.requireUser(email);
-        AppNotification notification = notifications.findByIdAndUserId(id, user.getId())
+        AppNotification notification = notifications.findVisibleById(id, user.getId(), businessContext.workspace(user).businessId())
                 .orElseThrow(() -> new ResourceNotFoundException("Bildirim bulunamadı."));
         notification.markRead(LocalDateTime.now(clock));
         return toResponse(notifications.save(notification));
@@ -53,7 +53,7 @@ public class NotificationService {
     @Transactional
     public void markAllRead(String email) {
         User user = businessContext.requireUser(email);
-        notifications.markAllRead(user.getId(), LocalDateTime.now(clock));
+        notifications.markVisibleRead(user.getId(), businessContext.workspace(user).businessId(), LocalDateTime.now(clock));
     }
 
     private NotificationResponse toResponse(AppNotification notification) {

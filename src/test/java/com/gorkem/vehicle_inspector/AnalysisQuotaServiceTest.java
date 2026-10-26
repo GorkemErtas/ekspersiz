@@ -73,7 +73,7 @@ class AnalysisQuotaServiceTest {
 
     @Test
     void personalQuotaContainsOnlySubscriptionLimit() {
-        when(businessContext.findMembership(user))
+        when(businessContext.findWorkspaceMembership(user))
                 .thenReturn(Optional.empty());
 
         when(subscriptions.getEffectivePlan(user))
@@ -125,7 +125,7 @@ class AnalysisQuotaServiceTest {
                 10L
         );
 
-        when(businessContext.findMembership(user))
+        when(businessContext.findWorkspaceMembership(user))
                 .thenReturn(
                         Optional.of(
                                 new BusinessMember(

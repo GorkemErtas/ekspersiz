@@ -37,7 +37,7 @@ class VehicleAccessServiceTest {
     void personalUserShouldAccessOnlyOwnActiveVehicle() {
         User user = mock(User.class);
         when(user.getId()).thenReturn(1L);
-        when(businessContext.findMembership(user)).thenReturn(Optional.empty());
+        when(businessContext.findWorkspaceMembership(user)).thenReturn(Optional.empty());
         Vehicle vehicle = new Vehicle("35ABC123", "Honda", "City", 2022, 20_000, user);
         when(vehicles.findByIdAndUserIdAndArchivedFalse(5L, 1L))
                 .thenReturn(Optional.of(vehicle));
@@ -51,7 +51,7 @@ class VehicleAccessServiceTest {
         User user = mock(User.class);
         BusinessAccount company = new BusinessAccount("ABC Ekspertiz");
         ReflectionTestUtils.setField(company, "id", 10L);
-        when(businessContext.findMembership(user)).thenReturn(Optional.of(mock(BusinessMember.class)));
+        when(businessContext.findWorkspaceMembership(user)).thenReturn(Optional.of(mock(BusinessMember.class)));
         when(businessContext.requireBusinessAccount(user)).thenReturn(company);
         Vehicle vehicle = new Vehicle("35ABC123", "Honda", "City", 2022, 20_000, company);
         when(vehicles.findByIdAndBusinessAccountIdAndArchivedFalse(5L, 10L))
@@ -65,7 +65,7 @@ class VehicleAccessServiceTest {
     void userOutsideVehicleScopeShouldBeRejected() {
         User user = mock(User.class);
         when(user.getId()).thenReturn(2L);
-        when(businessContext.findMembership(user)).thenReturn(Optional.empty());
+        when(businessContext.findWorkspaceMembership(user)).thenReturn(Optional.empty());
         when(vehicles.findByIdAndUserIdAndArchivedFalse(5L, 2L)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class,
@@ -76,7 +76,7 @@ class VehicleAccessServiceTest {
     void archivedVehicleShouldRemainAvailableForHistoryButNotForChanges() {
         User user = mock(User.class);
         when(user.getId()).thenReturn(1L);
-        when(businessContext.findMembership(user)).thenReturn(Optional.empty());
+        when(businessContext.findWorkspaceMembership(user)).thenReturn(Optional.empty());
         Vehicle archived = new Vehicle("35ABC123", "Honda", "City", 2022, 20_000, user);
         archived.setArchived(true);
         when(vehicles.findByIdAndUserId(5L, 1L)).thenReturn(Optional.of(archived));

@@ -18,7 +18,7 @@ Flutter mobil uygulaması, Java/Spring Boot API'si ve Python/FastAPI AI servisin
 - **Araç yönetimi:** Araç profilleri, kilometre/bakım kayıtları, muayene ve bakım hatırlatmaları, birleşik araç geçmişi.
 - **AI Asistan:** Araç, bakım ve muayene soruları; uygulama bilgi tabanı; yetkili kullanıcının araç, hasar ve hatırlatma kayıtları; Türkçe sesli giriş.
 - **Entegrasyonlar:** Yakındaki servisler (Google Maps/Places), uygulama içi ve FCM bildirimleri, e-posta/Google ile giriş.
-- **Planlar:** FREE, PLUS, PRO ve BUSINESS; RevenueCat abonelikleri, FREE planın aylık hasar ve günlük asistan hakları, şirket üyeleri ve paylaşımlı kotalar.
+- **Çalışma alanları ve krediler:** Tek oturumla kişisel/şirket alanı seçimi; ayrı araçlar, raporlar ve kredi havuzları. Mevcut RevenueCat satın alma/abonelik kuralları ve şirket rolleri korunur.
 
 ## Sistem mimarisi
 
@@ -122,16 +122,22 @@ Fiyat hesaplaması yalnızca ML'in tespit ettiği hasar, önerilen işlem, araç
 | Veri | PostgreSQL, pgvector |
 | Dağıtım ve entegrasyon | Docker, Railway, Google Play, Google Places, Brevo |
 
-## Planlar
+## Çalışma alanları ve kullanım hakları
 
-| Plan | Araç | Aylık analiz | AI Asistan |
-| --- | ---: | ---: | --- |
-| FREE | 1 | 1 | 3 başarılı yanıt/ay |
-| PLUS | 3 | 5 | 3 başarılı yanıt/gün |
-| PRO | 10 | 10 | 5 başarılı yanıt/gün |
-| BUSINESS | 50 (şirket) | 100 (şirket) | 10 başarılı yanıt/gün (ortak) |
+Şirket sahibi ve üyeleri aynı oturumla **Kişisel Hesap** ve **Şirket Hesabı** arasında geçiş yapabilir.
+Araçlar, analiz geçmişi, asistan bağlamı, kredi havuzu ve araç kapasitesi aktif alana göre belirlenir.
+Şirkete katılmak kişisel araçları veya satın alınmış kredileri şirkete taşımaz.
 
-FREE planda **ayda 1 detaylı hasar analizi** ve **ayda 3 AI Asistan başarılı yanıtı** bulunur; Plus denemesi sunulmaz. Abonelik iptali, ödenmiş dönemin kalan haklarını hemen sona erdirmez. Hasar analizi ve AI Asistan kullanım kotaları ayrı yönetilir.
+Kişisel kullanım `user:{id}`, şirket kullanımı `business:{id}` cüzdanından karşılanır;
+yetersiz bakiyede diğer havuz kullanılmaz. Şirket üyeleri ortak kredileri kullanabilir,
+şirket adına satın alma yetkisi mevcut OWNER kuralına tabidir. Business sahibinin kişisel
+alanı ayrı kalır; Business aboneliği kişisel alana şirket kotası vermez.
+
+Mevcut kredi modelinde şirket aboneliği 10 ortak araç kapasitesi ve abonelik dönemi başına
+100 analiz / 200 asistan kredisi içerir. Kişisel kalıcı kredi/slotlar, uygun başlangıç
+kredileri ve önceki PLUS/PRO dönem hakları mevcut backend kurallarıyla yönetilir.
+[Güncel kredi sistemi](docs/billing/CREDIT_SYSTEM.md) ·
+[Workspace mimarisi, güvenlik ve yayın sırası](docs/architecture/PERSONAL_BUSINESS_WORKSPACES.md).
 
 ## Geliştirme ve test
 

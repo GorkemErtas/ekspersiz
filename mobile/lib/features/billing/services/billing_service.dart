@@ -1,6 +1,7 @@
 import 'package:purchases_flutter/purchases_flutter.dart';
 
 import '../../../core/network/api_client.dart';
+import '../../../core/workspace/workspace_session.dart';
 import '../models/billing_overview.dart';
 import '../models/billing_plan.dart';
 import '../models/credit_catalog.dart';
@@ -30,11 +31,14 @@ class BillingService {
   final RevenueCatGateway revenueCatGateway;
 
   Future<BillingPageData> load() async {
+    final scope = WorkspaceSession.capture();
     final overview = await getOverview();
+    WorkspaceSession.check(scope);
     final configured = await revenueCatGateway.configure(
       overview.status.billingCustomerId,
     );
 
+    WorkspaceSession.check(scope);
     if (!configured) {
       return BillingPageData(
         overview: overview,
@@ -47,6 +51,7 @@ class BillingService {
     // A purchase can be active in the store while a webhook is delayed or missed.
     final syncedOverview = await sync();
     final packages = await revenueCatGateway.getPackages();
+    WorkspaceSession.check(scope);
 
     return BillingPageData(
       overview: syncedOverview,
@@ -71,6 +76,7 @@ class BillingService {
     String currentPlan = 'FREE',
     String? currentProductId,
   }) async {
+    final scope = WorkspaceSession.capture();
     final packageIdentifier = plan.packageIdentifier;
 
     if (packageIdentifier == null) {
@@ -78,6 +84,7 @@ class BillingService {
     }
 
     final packages = await revenueCatGateway.getPackages();
+    WorkspaceSession.check(scope);
     final package = packages[packageIdentifier];
 
     if (package == null) {
@@ -95,6 +102,7 @@ class BillingService {
           : null,
     );
     try {
+      WorkspaceSession.check(scope);
       return await sync();
     } catch (_) {
       throw const BillingPurchasePending();
@@ -102,7 +110,9 @@ class BillingService {
   }
 
   Future<BillingOverview> restore() async {
+    final scope = WorkspaceSession.capture();
     await revenueCatGateway.restorePurchases();
+    WorkspaceSession.check(scope);
     return sync();
   }
 
@@ -112,18 +122,24 @@ class BillingService {
   }
 
   Future<bool> purchaseCredit(CreditProduct product) async {
+    final scope = WorkspaceSession.capture();
     final overview = await getOverview();
+    WorkspaceSession.check(scope);
     if (!await revenueCatGateway.configure(overview.status.billingCustomerId)) {
       throw StateError('Satın alma mağazası şu anda kullanılamıyor.');
     }
     final packages = await revenueCatGateway.getPackages();
+    WorkspaceSession.check(scope);
     final package = packages[product.id];
     if (package == null || package.storeProduct.identifier != product.id) {
       throw StateError('Bu paket mağazada henüz yayınlanmadı.');
     }
+    WorkspaceSession.check(scope);
     await apiClient.post('/credits/purchase-intents/${product.id}');
+    WorkspaceSession.check(scope);
     final transaction = await revenueCatGateway.purchaseConsumable(package);
     try {
+      WorkspaceSession.check(scope);
       await sync();
       final result = await apiClient.get(
         '/credits/purchases/${Uri.encodeComponent(transaction)}',

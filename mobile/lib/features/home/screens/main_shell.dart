@@ -5,6 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 
 import '../../../core/auth/session_manager.dart';
+import '../../../core/workspace/workspace_session.dart';
+import '../../../core/workspace/workspace_switcher.dart';
+import '../../auth/services/auth_service.dart';
 import '../../../core/notifications/push_notification_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_navigation_bar.dart';
@@ -23,23 +26,34 @@ class MainShell extends StatefulWidget {
     required this.email,
     required this.subscriptionPlan,
     this.businessAccount,
+    this.userId,
   });
 
   final String fullName;
   final String email;
   final String subscriptionPlan;
   final BusinessAccount? businessAccount;
+  final int? userId;
 
   @override
   State<MainShell> createState() => _MainShellState();
 }
 
-class _MainShellState extends State<MainShell> {
+class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
   static const double _desktopBreakpoint = 900;
 
   StreamSubscription<void>? _sessionSubscription;
 
   int _selectedIndex = 0;
+  Object _cacheEpoch = Object();
+  bool _workspaceReady = false;
+  bool _leavingSession = false;
+
+  BusinessAccount? get _activeBusiness => WorkspaceSession.state.value == null
+      ? _businessAccount
+      : WorkspaceSession.state.value!.isBusiness
+      ? _businessAccount
+      : null;
 
   late BusinessAccount? _businessAccount;
   late String _subscriptionPlan;
@@ -55,14 +69,17 @@ class _MainShellState extends State<MainShell> {
     final screen = switch (index) {
       0 => HomeScreen(
         fullName: widget.fullName,
-        subscriptionPlan: _subscriptionPlan,
-        businessAccount: _businessAccount,
+        subscriptionPlan:
+            _activeBusiness == null && _subscriptionPlan == 'BUSINESS'
+            ? 'FREE'
+            : _subscriptionPlan,
+        businessAccount: _activeBusiness,
         onOpenVehicles: () => _selectTab(1),
         onOpenInspections: () => _selectTab(2),
         onOpenProfile: () => _selectTab(3),
       ),
-      1 => VehicleListScreen(businessAccount: _businessAccount),
-      2 => InspectionHistoryScreen(businessAccount: _businessAccount),
+      1 => VehicleListScreen(businessAccount: _activeBusiness),
+      2 => InspectionHistoryScreen(businessAccount: _activeBusiness),
       3 => ProfileScreen(
         fullName: widget.fullName,
         email: widget.email,
@@ -92,11 +109,62 @@ class _MainShellState extends State<MainShell> {
     _screenCache = List<Widget?>.filled(4, null);
     _businessAccount = widget.businessAccount;
     _subscriptionPlan = widget.subscriptionPlan;
-    _buildScreen(0);
+    WorkspaceSession.state.addListener(_workspaceChanged);
+    WidgetsBinding.instance.addObserver(this);
+    _workspaceReady =
+        widget.userId == null ||
+        WorkspaceSession.state.value?.userId == widget.userId;
+    if (!_workspaceReady) _restoreWorkspace();
     _initializeDevicePermissions();
 
     _sessionSubscription = SessionManager.unauthorizedStream.listen((_) {
       _handleSessionExpired();
+    });
+  }
+
+  Future<void> _restoreWorkspace() async {
+    try {
+      await WorkspaceSession.initialize(
+        userId: widget.userId!,
+        businessId: _businessAccount?.id,
+        companyName: _businessAccount?.companyName,
+        role: _businessAccount?.role,
+      );
+      if (mounted) setState(() => _workspaceReady = true);
+    } catch (_) {
+      if (mounted) _handleSessionExpired();
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && widget.userId != null) {
+      // Server access checks remain authoritative while offline.
+      const AuthService().getCurrentUser().ignore();
+    }
+  }
+
+  void _workspaceChanged() {
+    if (!mounted) return;
+    final current = WorkspaceSession.state.value;
+    if (current == null ||
+        (widget.userId != null && current.userId != widget.userId)) {
+      if (widget.userId != null) _handleSessionExpired();
+      return;
+    }
+    setState(() {
+      _businessAccount = current.businessId == null
+          ? null
+          : BusinessAccount(
+              id: current.businessId!,
+              companyName: current.companyName ?? 'Şirket Hesabı',
+              role: current.role ?? 'MEMBER',
+            );
+      _cacheEpoch = Object();
+      _screenCache.fillRange(0, _screenCache.length, null);
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) Navigator.of(context).popUntil((route) => route.isFirst);
     });
   }
 
@@ -127,8 +195,18 @@ class _MainShellState extends State<MainShell> {
   }
 
   void _updateBusinessAccount(BusinessAccount businessAccount) {
+    final userId = widget.userId ?? WorkspaceSession.state.value?.userId;
+    if (userId != null) {
+      WorkspaceSession.initialize(
+        userId: userId,
+        businessId: businessAccount.id,
+        companyName: businessAccount.companyName,
+        role: businessAccount.role,
+      );
+    }
     setState(() {
       _businessAccount = businessAccount;
+      _cacheEpoch = Object();
       for (var index = 0; index < _screenCache.length; index++) {
         _screenCache[index] = null;
       }
@@ -142,6 +220,7 @@ class _MainShellState extends State<MainShell> {
 
     setState(() {
       _subscriptionPlan = subscriptionPlan;
+      _cacheEpoch = Object();
       for (var index = 0; index < _screenCache.length; index++) {
         _screenCache[index] = null;
       }
@@ -149,10 +228,11 @@ class _MainShellState extends State<MainShell> {
   }
 
   void _handleSessionExpired() {
-    if (!mounted) {
+    if (!mounted || _leavingSession) {
       return;
     }
 
+    _leavingSession = true;
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute<void>(builder: (_) => const LoginScreen()),
       (route) => false,
@@ -161,30 +241,49 @@ class _MainShellState extends State<MainShell> {
 
   @override
   void dispose() {
+    WorkspaceSession.state.removeListener(_workspaceChanged);
+    WidgetsBinding.instance.removeObserver(this);
     _sessionSubscription?.cancel();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isDesktop = constraints.maxWidth >= _desktopBreakpoint;
+    if (!_workspaceReady) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+    return KeyedSubtree(
+      key: ValueKey(_cacheEpoch),
+      child: Column(
+        children: [
+          const WorkspaceSwitcher(),
+          Expanded(
+            child: MediaQuery.removePadding(
+              context: context,
+              removeTop: WorkspaceSession.state.value?.businessId != null,
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final isDesktop = constraints.maxWidth >= _desktopBreakpoint;
 
-        if (isDesktop) {
-          return _DesktopShell(
-            selectedIndex: _selectedIndex,
-            onDestinationSelected: _selectTab,
-            screens: _screens,
-          );
-        }
+                  if (isDesktop) {
+                    return _DesktopShell(
+                      selectedIndex: _selectedIndex,
+                      onDestinationSelected: _selectTab,
+                      screens: _screens,
+                    );
+                  }
 
-        return _MobileShell(
-          selectedIndex: _selectedIndex,
-          onDestinationSelected: _selectTab,
-          screens: _screens,
-        );
-      },
+                  return _MobileShell(
+                    selectedIndex: _selectedIndex,
+                    onDestinationSelected: _selectTab,
+                    screens: _screens,
+                  );
+                },
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -175,7 +175,7 @@ public class AiAssistantEntitlementService {
     }
 
     private BusinessAccount businessAccount(User user) {
-        if (subscriptions == null || jdbc == null || !businessContext.isBusinessMember(user)) return null;
+        if (subscriptions == null || jdbc == null || !businessContext.isBusinessWorkspace(user)) return null;
         return businessContext.requireBusinessAccount(user);
     }
 
@@ -274,7 +274,7 @@ public class AiAssistantEntitlementService {
 
     private AiAssistantEntitlementResponse response(User user, AiAssistantAccess access, LocalDateTime now) {
         if (creditWallets!=null) {
-            boolean company=businessContext.isBusinessMember(user);
+            boolean company=businessContext.isBusinessWorkspace(user);
             var balance=creditWallets.account(user,company).balances().get("ASSISTANT");
             int available=Math.toIntExact(balance.available());
             boolean locked=access.getLockedUntil()!=null && access.getLockedUntil().isAfter(now);

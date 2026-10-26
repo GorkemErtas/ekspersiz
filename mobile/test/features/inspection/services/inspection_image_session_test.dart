@@ -7,6 +7,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:mobile/core/auth/session_manager.dart';
+import 'package:mobile/core/workspace/workspace_session.dart';
 import 'package:mobile/core/network/api_exception.dart';
 import 'package:mobile/core/storage/token_storage.dart';
 import 'package:mobile/features/auth/services/auth_service.dart';
@@ -27,7 +28,11 @@ void main() {
   http.Response json(Object data, [int code = 200]) => http.Response(
     jsonEncode(data),
     code,
-    headers: {'content-type': 'application/json'},
+    headers: {
+      'content-type': 'application/json',
+      if (WorkspaceSession.state.value != null)
+        'x-workspace': WorkspaceSession.state.value!.type.header,
+    },
   );
 
   http.Client client() => MockClient((request) async {
@@ -47,7 +52,14 @@ void main() {
     if (status != 200) return json({'message': 'Denied'}, status);
     if (request.url.path.endsWith('/image')) {
       downloads++;
-      return http.Response.bytes(photo, 200);
+      return http.Response.bytes(
+        photo,
+        200,
+        headers: {
+          if (WorkspaceSession.state.value != null)
+            'x-workspace': WorkspaceSession.state.value!.type.header,
+        },
+      );
     }
     return json({'id': 1, 'imagePath': 'image.png'});
   });
@@ -57,6 +69,7 @@ void main() {
     photo = data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
   });
   setUp(() async {
+    WorkspaceSession.clear();
     FlutterSecureStorage.setMockInitialValues({});
     await TokenStorage.saveAccessToken('user-a');
     cache = InspectionImageCache();

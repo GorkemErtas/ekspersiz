@@ -37,10 +37,12 @@ class NotificationServiceTest {
     @Test
     void markAllReadUpdatesEveryUnreadNotificationForCurrentUser() {
         when(businessContext.requireUser("user@example.com")).thenReturn(user);
+        when(businessContext.workspace(user)).thenReturn(new com.gorkem.vehicle_inspector.service.workspace.WorkspaceContext(
+                com.gorkem.vehicle_inspector.service.workspace.WorkspaceType.PERSONAL, 42L, null));
 
         service.markAllRead("user@example.com");
 
-        verify(notifications).markAllRead(
-                42L, LocalDateTime.of(2026, 9, 16, 9, 0));
+        verify(notifications).markVisibleRead(
+                42L, null, LocalDateTime.of(2026, 9, 16, 9, 0));
     }
 }

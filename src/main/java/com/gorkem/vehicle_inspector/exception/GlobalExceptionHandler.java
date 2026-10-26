@@ -237,6 +237,11 @@ public class GlobalExceptionHandler {
         );
     }
 
+    @ExceptionHandler(WorkspaceAccessDeniedException.class)
+    public ResponseEntity<ApiErrorResponse> handleWorkspaceAccess(WorkspaceAccessDeniedException exception) {
+        return buildResponse(HttpStatus.FORBIDDEN, exception.getMessage(), Map.of("code", "WORKSPACE_UNAVAILABLE"));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiErrorResponse>
     handleUnexpectedException(

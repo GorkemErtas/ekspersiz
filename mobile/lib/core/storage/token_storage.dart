@@ -1,6 +1,7 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../auth/session_manager.dart';
+import '../workspace/workspace_session.dart';
 
 class TokenStorage {
   TokenStorage._();
@@ -26,11 +27,13 @@ class TokenStorage {
   }
 
   static Future<void> deleteAccessToken() async {
+    WorkspaceSession.clear();
     SessionManager.invalidateImages(allowImages: false);
     await _storage.delete(key: _accessTokenKey);
   }
 
   static Future<void> clearAll() async {
+    WorkspaceSession.clear();
     SessionManager.invalidateImages(allowImages: false);
     await _storage.deleteAll();
   }
