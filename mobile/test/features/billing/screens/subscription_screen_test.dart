@@ -85,7 +85,10 @@ void main() {
     await tester.tap(find.text('Satın al').first);
     await tester.pumpAndSettle();
     expect(find.text('3 analiz kredisi'), findsOneWidget);
-    expect(find.textContaining('Ödemeniz doğrulanıyor'), findsWidgets);
+    expect(
+      find.textContaining('Satın alma için henüz kredi eklenmedi'),
+      findsWidgets,
+    );
     expect(find.textContaining('Satın alma doğrulandı'), findsNothing);
   });
   testWidgets(

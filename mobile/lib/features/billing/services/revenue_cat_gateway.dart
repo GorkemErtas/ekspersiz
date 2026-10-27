@@ -52,6 +52,11 @@ class RevenueCatGateway {
       final configuration = PurchasesConfiguration(apiKey)
         ..appUserID = appUserId;
       await Purchases.configure(configuration);
+      if (await Purchases.appUserID != appUserId) {
+        throw StateError(
+          'Satın alma hesabı doğrulanamadı. Yeniden giriş yapın.',
+        );
+      }
       return true;
     }
 
@@ -59,7 +64,19 @@ class RevenueCatGateway {
       await Purchases.logIn(appUserId);
     }
 
+    if (await Purchases.appUserID != appUserId) {
+      throw StateError('Satın alma hesabı doğrulanamadı. Yeniden giriş yapın.');
+    }
+
     return true;
+  }
+
+  // Store state may suppress a duplicate payment, but never grants an entitlement.
+  Future<bool> hasActiveSubscription(String productId) async {
+    final customer = await Purchases.getCustomerInfo();
+    return customer.activeSubscriptions.any(
+      (id) => id == productId || id.startsWith('$productId:'),
+    );
   }
 
   Future<Map<String, Package>> getPackages() async {

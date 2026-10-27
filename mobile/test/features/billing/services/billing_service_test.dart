@@ -142,6 +142,7 @@ void main() {
       expect(calls, [
         'GET /billing',
         'configure $_customerId',
+        'POST /billing/sync',
         'packages',
         'subscription purchase',
         'POST /billing/sync',
@@ -189,6 +190,30 @@ void main() {
     await expectLater(service.purchase(_businessPlan), throwsStateError);
     expect(calls, isNot(contains('subscription purchase')));
   });
+
+  test(
+    'store already owns Business while backend is delayed: no second payment',
+    () async {
+      gateway.activeSubscription = true;
+      final result = await service.purchase(_businessPlan);
+      expect(result.status.currentPlan, 'FREE');
+      expect(calls, [
+        'GET /billing',
+        'configure $_customerId',
+        'POST /billing/sync',
+      ]);
+      expect(calls, isNot(contains('subscription purchase')));
+    },
+  );
+
+  test(
+    'backend reconciliation failure prevents a new subscription payment',
+    () async {
+      api.failSync = true;
+      await expectLater(service.purchase(_businessPlan), throwsStateError);
+      expect(calls, isNot(contains('subscription purchase')));
+    },
+  );
 }
 
 class RecordingApi extends ApiClient {
@@ -240,6 +265,10 @@ class RecordingGateway extends RevenueCatGateway {
   Map<String, Package> packageMap = {_productId: _package};
   bool failPackages = false;
   void Function()? onSubscriptionPurchase;
+  bool activeSubscription = false;
+  @override
+  Future<bool> hasActiveSubscription(String productId) async =>
+      activeSubscription;
   @override
   Future<bool> configure(String appUserId) async {
     calls.add('configure $appUserId');
