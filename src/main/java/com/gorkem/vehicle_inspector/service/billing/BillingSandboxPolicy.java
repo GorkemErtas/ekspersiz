@@ -25,12 +25,26 @@ public class BillingSandboxPolicy {
     }
 
     public boolean allows(User user) {
-        return user != null && customers.contains(user.getBillingCustomerId());
+        return user != null && allowsCustomerId(user.getBillingCustomerId());
+    }
+
+    public boolean allowsCustomerId(String customerId) {
+        return customerId != null && customers.contains(customerId);
     }
 
     public boolean allowsPurchase(User user, String productId) {
         var product = CreditCatalog.find(productId);
-        // Shared company wallets and subscription entitlements remain production-only.
+        // Company consumables stay production-only. Test subscriptions use BusinessBillingPolicy.
         return allows(user) && product != null && !product.business();
+    }
+
+    /** Lifetime delivery budget per canonical tester; refunds and renewals never reset it. */
+    public long personalCreditLimit(String resource) {
+        return switch (resource) {
+            case "ANALYSIS" -> 100;
+            case "ASSISTANT" -> 200;
+            case "SLOT" -> 10;
+            default -> 0;
+        };
     }
 }

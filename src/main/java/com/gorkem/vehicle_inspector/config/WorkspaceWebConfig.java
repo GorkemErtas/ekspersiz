@@ -31,9 +31,10 @@ public class WorkspaceWebConfig implements WebMvcConfigurer {
                 if (auth != null && auth.isAuthenticated() && !(auth instanceof AnonymousAuthenticationToken)) {
                     long userId = auth.getPrincipal() instanceof AuthenticatedUser identity
                             ? identity.getUserId() : context.requireUser(auth.getName()).getId();
-                    var workspace = workspaces.resolve(userId,
-                            WorkspaceResolver.requestedType() == com.gorkem.vehicle_inspector.service.workspace.WorkspaceType.PERSONAL
-                                    ? java.util.Optional.empty() : members.findByUserId(userId));
+                    var membership = WorkspaceResolver.requestedType() == com.gorkem.vehicle_inspector.service.workspace.WorkspaceType.PERSONAL
+                            ? java.util.Optional.<com.gorkem.vehicle_inspector.entity.BusinessMember>empty() : members.findByUserId(userId);
+                    membership.ifPresent(member -> context.validateWorkspaceMembership(member.getUser(), member));
+                    var workspace = workspaces.resolve(userId, membership);
                     response.setHeader(WorkspaceResolver.HEADER, workspace.type().name());
                 }
                 return true;

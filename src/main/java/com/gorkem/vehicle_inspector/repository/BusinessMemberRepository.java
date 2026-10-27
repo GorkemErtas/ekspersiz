@@ -11,7 +11,7 @@ import java.util.Optional;
 public interface BusinessMemberRepository
         extends JpaRepository<BusinessMember, Long> {
 
-    @EntityGraph(attributePaths = "businessAccount")
+    @EntityGraph(attributePaths = {"businessAccount", "user"})
     Optional<BusinessMember> findByUserId(Long userId);
 
     List<BusinessMember> findByBusinessAccountId(

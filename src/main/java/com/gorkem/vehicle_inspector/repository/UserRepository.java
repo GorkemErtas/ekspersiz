@@ -21,6 +21,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByBillingCustomerId(String billingCustomerId);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select u from User u where u.billingCustomerId = :customerId")
+    Optional<User> findByBillingCustomerIdForUpdate(@Param("customerId") String customerId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select u from User u where u.id = :id")
     Optional<User> findByIdForUpdate(@Param("id") Long id);
 

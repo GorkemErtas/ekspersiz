@@ -128,7 +128,8 @@ public class RevenueCatClient {
         return new RevenueCatCustomer(
                 List.copyOf(subscriptions),
                 List.copyOf(purchases),
-                textOrNull(subscriber.path("management_url"))
+                textOrNull(subscriber.path("management_url")),
+                textOrNull(subscriber.path("original_app_user_id"))
         );
     }
 

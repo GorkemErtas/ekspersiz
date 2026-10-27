@@ -49,6 +49,7 @@ class BusinessInvitationServiceTest {
 
     @BeforeEach
     void setUp() {
+        lenient().when(userRepository.findByEmailForUpdate(anyString())).thenAnswer(i -> userRepository.findByEmail(i.getArgument(0)));
         service = new BusinessInvitationService(
                 userRepository,
                 businessMemberRepository,

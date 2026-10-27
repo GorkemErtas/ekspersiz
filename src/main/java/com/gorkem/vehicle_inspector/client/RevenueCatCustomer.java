@@ -5,6 +5,10 @@ import java.util.List;
 public record RevenueCatCustomer(
         List<RevenueCatSubscription> subscriptions,
         List<RevenueCatPurchase> purchases,
-        String managementUrl
+        String managementUrl,
+        String originalAppUserId
 ) {
+    public RevenueCatCustomer(List<RevenueCatSubscription> subscriptions, List<RevenueCatPurchase> purchases, String managementUrl) {
+        this(subscriptions, purchases, managementUrl, null);
+    }
 }

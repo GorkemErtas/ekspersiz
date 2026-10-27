@@ -12,6 +12,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class BusinessAccountService {
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.gorkem.vehicle_inspector.service.billing.BusinessBillingPolicy businessBilling;
 
     private final BusinessAccountRepository businessAccountRepository;
     private final BusinessMemberRepository businessMemberRepository;
@@ -37,7 +39,7 @@ public class BusinessAccountService {
             String email,
             CreateBusinessAccountRequest request
     ) {
-        User user = userRepository.findByEmail(
+        User user = userRepository.findByEmailForUpdate(
                         normalizeEmail(email)
                 )
                 .orElseThrow(() ->
@@ -62,7 +64,8 @@ public class BusinessAccountService {
 
         BusinessAccount businessAccount =
                 new BusinessAccount(
-                        request.companyName().trim()
+                        request.companyName().trim(),
+                        businessBilling != null && businessBilling.sandboxSubscription(user)
                 );
 
         BusinessAccount savedBusinessAccount =
@@ -90,7 +93,8 @@ public class BusinessAccountService {
         return new BusinessAccountResponse(
                 businessAccount.getId(),
                 businessAccount.getCompanyName(),
-                member.getRole()
+                member.getRole(),
+                businessAccount.isSandbox()
         );
     }
 

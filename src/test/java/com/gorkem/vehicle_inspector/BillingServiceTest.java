@@ -57,6 +57,8 @@ class BillingServiceTest {
 
         lenient().when(users.findByEmail("test@example.com"))
                 .thenReturn(Optional.of(user));
+        lenient().when(users.findByEmailForUpdate(anyString())).thenAnswer(i -> users.findByEmail(i.getArgument(0)));
+        lenient().when(users.findByBillingCustomerIdForUpdate(any())).thenAnswer(i -> users.findByBillingCustomerId(i.getArgument(0)));
         lenient().when(subscriptions.findByUserId(7L))
                 .thenReturn(Optional.empty());
         lenient().when(subscriptionService.getEffectivePlan(user))
@@ -305,7 +307,7 @@ class BillingServiceTest {
     }
 
     @Test
-    void sandboxSubscriptionCannotUpgradeEvenAnAuthorizedTester() {
+    void sandboxSubscriptionRequiresBusinessIsolationPolicyAndCanonicalOwnership() {
         var testSubscription = new RevenueCatSubscription("eksper_business_monthly", CLOCK.instant(),
                 CLOCK.instant().plusSeconds(3600), null, true, false, false, true, "play_store");
         when(revenueCatClient.getCustomer(user.getBillingCustomerId())).thenReturn(customer(testSubscription));
@@ -315,6 +317,100 @@ class BillingServiceTest {
         ReflectionTestUtils.setField(service, "sandboxPolicy", new com.gorkem.vehicle_inspector.service.billing.BillingSandboxPolicy(user.getBillingCustomerId()));
         service.sync(user.getEmail());
         assertEquals(SubscriptionPlan.FREE, user.getSubscriptionPlan());
+    }
+
+    private com.gorkem.vehicle_inspector.service.billing.BusinessBillingPolicy authorizeSandbox() {
+        var policy = mock(com.gorkem.vehicle_inspector.service.billing.BusinessBillingPolicy.class);
+        ReflectionTestUtils.setField(service, "businessBilling", policy);
+        ReflectionTestUtils.setField(service, "sandboxPolicy",
+                new com.gorkem.vehicle_inspector.service.billing.BillingSandboxPolicy(user.getBillingCustomerId()));
+        lenient().when(policy.allowsSandboxSubscription(user)).thenReturn(true);
+        return policy;
+    }
+
+    private RevenueCatSubscription sandboxBusiness(boolean renewing, boolean refunded, Instant end) {
+        return new RevenueCatSubscription("eksper_business_monthly:monthly", CLOCK.instant(), end,
+                null, renewing, false, refunded, true, "play_store");
+    }
+
+    @Test void authorizedSandboxBusinessIsVerifiedAndItsSourceIsPersisted() {
+        authorizeSandbox();
+        when(revenueCatClient.getCustomer(user.getBillingCustomerId())).thenReturn(new RevenueCatCustomer(
+                List.of(sandboxBusiness(true, false, CLOCK.instant().plusSeconds(3600))), List.of(), null, user.getBillingCustomerId()));
+        var result = service.sync(user.getEmail());
+        assertEquals(SubscriptionPlan.BUSINESS, result.status().currentPlan());
+        assertEquals("VERIFIED", result.status().verificationStatus());
+        var saved = ArgumentCaptor.forClass(BillingSubscription.class);
+        verify(subscriptions).save(saved.capture());
+        assertTrue(saved.getValue().isSandbox());
+        assertEquals(BillingSubscriptionStatus.ACTIVE, saved.getValue().getStatus());
+        verify(revenueCatClient, times(1)).getCustomer(user.getBillingCustomerId());
+    }
+
+    @Test void anotherCanonicalOwnerCannotShareSandboxSubscriptionThroughRevenueCatAliases() {
+        authorizeSandbox();
+        when(revenueCatClient.getCustomer(user.getBillingCustomerId())).thenReturn(new RevenueCatCustomer(
+                List.of(sandboxBusiness(true, false, CLOCK.instant().plusSeconds(3600))), List.of(), null,
+                java.util.UUID.randomUUID().toString()));
+        var result = service.sync(user.getEmail());
+        assertEquals(SubscriptionPlan.FREE, result.status().currentPlan());
+        assertEquals("SANDBOX_REJECTED", result.status().verificationStatus());
+    }
+
+    @Test void authorizedSandboxCannotReplaceAnyActiveProductionPlan() {
+        authorizeSandbox();
+        when(revenueCatClient.getCustomer(user.getBillingCustomerId())).thenReturn(new RevenueCatCustomer(List.of(
+                sandboxBusiness(true, false, CLOCK.instant().plusSeconds(7200)),
+                subscription("eksper_plus_monthly", true, false, false, CLOCK.instant().plusSeconds(3600))),
+                List.of(), null, user.getBillingCustomerId()));
+        var result = service.sync(user.getEmail());
+        assertEquals(SubscriptionPlan.PLUS, result.status().currentPlan());
+        assertEquals("VERIFIED", result.status().verificationStatus());
+    }
+
+    @Test void sandboxCancellationRetainsAccessButRefundExpiryAndUnboundedReceiptDoNot() {
+        authorizeSandbox();
+        when(revenueCatClient.getCustomer(user.getBillingCustomerId())).thenReturn(new RevenueCatCustomer(
+                List.of(sandboxBusiness(false, false, CLOCK.instant().plusSeconds(3600))), List.of(), null, user.getBillingCustomerId()));
+        assertEquals(SubscriptionPlan.BUSINESS, service.sync(user.getEmail()).status().currentPlan());
+        for (var receipt : List.of(sandboxBusiness(true, true, CLOCK.instant().plusSeconds(3600)),
+                sandboxBusiness(false, false, CLOCK.instant()), sandboxBusiness(true, false, null))) {
+            when(revenueCatClient.getCustomer(user.getBillingCustomerId())).thenReturn(new RevenueCatCustomer(
+                    List.of(receipt), List.of(), null, user.getBillingCustomerId()));
+            assertEquals(SubscriptionPlan.FREE, service.sync(user.getEmail()).status().currentPlan());
+        }
+    }
+
+    @Test void authorizedSandboxWebhookReverifiesOnceAndDuplicateDeliveryDoesNotGrantAgain() {
+        authorizeSandbox();
+        when(users.findByBillingCustomerId(user.getBillingCustomerId())).thenReturn(Optional.of(user));
+        when(webhookEvents.existsByProviderEventIdAndEnvironmentIn(eq("sandbox-renew"), any())).thenReturn(false, true);
+        when(revenueCatClient.getCustomer(user.getBillingCustomerId())).thenReturn(new RevenueCatCustomer(
+                List.of(sandboxBusiness(true, false, CLOCK.instant().plusSeconds(3600))), List.of(), null, user.getBillingCustomerId()));
+        String body = """
+                {"event":{"id":"sandbox-renew","type":"RENEWAL","environment":"SANDBOX","app_user_id":"%s"}}
+                """.formatted(user.getBillingCustomerId());
+        service.processRevenueCatWebhook("secret", null, body);
+        service.processRevenueCatWebhook("secret", null, body);
+        assertEquals(SubscriptionPlan.BUSINESS, user.getSubscriptionPlan());
+        verify(revenueCatClient, times(1)).getCustomer(user.getBillingCustomerId());
+        verify(webhookEvents, times(1)).save(any());
+    }
+
+    @Test void sandboxSubscriptionRevocationIsAppliedBySyncAndWebhook() {
+        var policy = authorizeSandbox();
+        when(policy.allowsSandboxSubscription(user)).thenReturn(false);
+        when(policy.sandboxSubscription(user)).thenReturn(true);
+        ReflectionTestUtils.setField(service, "sandboxPolicy", new com.gorkem.vehicle_inspector.service.billing.BillingSandboxPolicy(""));
+        when(users.findByBillingCustomerId(user.getBillingCustomerId())).thenReturn(Optional.of(user));
+        when(revenueCatClient.getCustomer(user.getBillingCustomerId())).thenReturn(new RevenueCatCustomer(
+                List.of(sandboxBusiness(true, false, CLOCK.instant().plusSeconds(3600))), List.of(), null, user.getBillingCustomerId()));
+        user.setSubscriptionPlan(SubscriptionPlan.BUSINESS);
+        service.processRevenueCatWebhook("secret", null, """
+                {"event":{"id":"revoked","type":"EXPIRATION","environment":"SANDBOX","app_user_id":"%s"}}
+                """.formatted(user.getBillingCustomerId()));
+        assertEquals(SubscriptionPlan.FREE, user.getSubscriptionPlan());
+        assertEquals("SANDBOX_REJECTED", service.sync(user.getEmail()).status().verificationStatus());
     }
 
     @Test

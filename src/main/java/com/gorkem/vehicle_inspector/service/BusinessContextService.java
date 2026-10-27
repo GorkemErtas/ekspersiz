@@ -17,6 +17,12 @@ import com.gorkem.vehicle_inspector.service.workspace.WorkspaceResolver;
 
 @Service
 public class BusinessContextService {
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.gorkem.vehicle_inspector.service.billing.BusinessBillingPolicy businessBilling;
+
+    public void validateWorkspaceMembership(User user, BusinessMember membership) {
+        if (businessBilling != null) businessBilling.requireCompanyAccess(user, membership.getBusinessAccount().getId());
+    }
 
     private final UserRepository userRepository;
     private final BusinessMemberRepository businessMemberRepository;
@@ -69,8 +75,10 @@ public class BusinessContextService {
     }
 
     private Optional<BusinessMember> workspaceMembership(User user) {
-        return WorkspaceResolver.requestedType() == com.gorkem.vehicle_inspector.service.workspace.WorkspaceType.PERSONAL
+        Optional<BusinessMember> membership = WorkspaceResolver.requestedType() == com.gorkem.vehicle_inspector.service.workspace.WorkspaceType.PERSONAL
                 ? Optional.empty() : findMembership(user);
+        membership.ifPresent(member -> validateWorkspaceMembership(user, member));
+        return membership;
     }
 
     @Transactional(readOnly = true)
@@ -93,6 +101,8 @@ public class BusinessContextService {
     public BusinessAccount requireBusinessAccount(User user) {
         BusinessAccount businessAccount = requireMembership(user)
                 .getBusinessAccount();
+
+        if (businessBilling != null) businessBilling.requireCompanyAccess(user, businessAccount.getId());
 
         BusinessMember owner = businessMemberRepository
                 .findByBusinessAccountIdAndRole(
@@ -117,6 +127,8 @@ public class BusinessContextService {
     public BusinessMember requireOwner(User user) {
         BusinessMember membership =
                 requireMembership(user);
+
+        validateWorkspaceMembership(user, membership);
 
         if (membership.getRole() != BusinessRole.OWNER) {
             throw new IllegalStateException(

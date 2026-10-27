@@ -15,6 +15,8 @@ import java.time.Clock;
 @Service
 public class SubscriptionService {
     @org.springframework.beans.factory.annotation.Autowired
+    private com.gorkem.vehicle_inspector.service.billing.BusinessBillingPolicy businessBilling;
+    @org.springframework.beans.factory.annotation.Autowired
     private CreditWalletService creditWallets;
 
     private static final int FREE_MONTHLY_ANALYSIS_LIMIT = 1;
@@ -47,6 +49,8 @@ public class SubscriptionService {
         if (plan == null || plan == SubscriptionPlan.FREE) {
             return SubscriptionPlan.FREE;
         }
+        if (businessBilling != null && businessBilling.sandboxSubscription(user)
+                && (!businessBilling.allowsSandboxSubscription(user) || user.getSubscriptionExpiresAt() == null)) return SubscriptionPlan.FREE;
         LocalDateTime expiresAt = user.getSubscriptionExpiresAt();
         return expiresAt != null && !expiresAt.isAfter(LocalDateTime.now(clock))
                 ? SubscriptionPlan.FREE : plan;

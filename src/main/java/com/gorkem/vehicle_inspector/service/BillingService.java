@@ -42,6 +42,12 @@ public class BillingService {
     @Autowired
     private BillingSandboxPolicy sandboxPolicy = new BillingSandboxPolicy("");
 
+    @Autowired
+    private com.gorkem.vehicle_inspector.service.billing.BusinessBillingPolicy businessBilling;
+
+    @Autowired
+    private org.springframework.jdbc.core.JdbcTemplate billingJdbc;
+
     private final UserRepository userRepository;
     private final BillingSubscriptionRepository subscriptionRepository;
     private final BillingWebhookEventRepository webhookEventRepository;
@@ -100,7 +106,8 @@ public class BillingService {
 
     @Transactional
     public BillingOverviewResponse sync(String email) {
-        User user = requireUser(email);
+        User user = userRepository.findByEmailForUpdate(email.trim().toLowerCase())
+                .orElseThrow(() -> new ResourceNotFoundException("Kullanıcı bulunamadı."));
         String verification = syncUser(user);
         return buildOverview(user, verification);
     }
@@ -123,6 +130,11 @@ public class BillingService {
             else throw new InvalidBillingWebhookException("Ödeme ortamı eksik veya geçersiz.");
         }
         boolean sandbox = "SANDBOX".equals(environment);
+        if (billingJdbc != null) {
+            billingJdbc.execute("SET LOCAL lock_timeout='3s'");
+            billingJdbc.queryForObject("SELECT pg_advisory_xact_lock(hashtextextended(?, 0))", Object.class,
+                    "billing-event:" + environment + ":" + eventId);
+        }
         if (webhookEventRepository.existsByProviderEventIdAndEnvironmentIn(eventId, List.of(environment, "LEGACY"))) return;
 
         String creditProduct = textOrNull(event.path("product_id"));
@@ -130,7 +142,7 @@ public class BillingService {
                 || (creditProduct != null && Set.of("analysis_1", "analysis_3", "analysis_10").contains(creditProduct));
         if (creditWallets != null && consumable && Set.of("NON_RENEWING_PURCHASE", "CANCELLATION").contains(eventType)) {
             // Only the exact authenticated provider customer may receive a consumable; never walk aliases.
-            User buyer=userRepository.findByBillingCustomerId(appUserId).orElse(null);
+            User buyer=userRepository.findByBillingCustomerIdForUpdate(appUserId).orElse(null);
             boolean refund = "CANCELLATION".equals(eventType);
             // Refunds must still reach sandbox tombstones after authorization removal/deletion.
             // They can never address production or unclassified historical rows.
@@ -145,8 +157,17 @@ public class BillingService {
             return;
         }
 
-        // No sandbox subscriptions, shared company entitlements or legacy credit fallback.
-        if (sandbox) return;
+        if (sandbox && !"TRANSFER".equals(eventType)) {
+            // Never authorize by aliases or subscriber attributes. A webhook is a signal;
+            // the canonical customer's current receipt is reverified via the secret API.
+            User buyer = userRepository.findByBillingCustomerIdForUpdate(appUserId).orElse(null);
+            if (buyer == null) return;
+            if (!sandboxPolicy.allows(buyer)
+                    && (businessBilling == null || !businessBilling.sandboxSubscription(buyer))) return;
+            syncUser(buyer); // Includes expiry/refund/revocation for previously authorized accounts.
+            webhookEventRepository.save(new BillingWebhookEvent(eventId, eventType, appUserId, LocalDateTime.now(clock), environment));
+            return;
+        }
 
         if (!"TEST".equals(eventType)) {
             List<User> users = findWebhookUsers(event);
@@ -187,9 +208,12 @@ public class BillingService {
         );
         Instant now = clock.instant();
 
+        boolean sandboxAllowed = businessBilling != null && businessBilling.allowsSandboxSubscription(user)
+                && billingCustomerId.equals(customer.originalAppUserId());
         Optional<SelectedSubscription> selected = customer.subscriptions()
                 .stream()
-                .filter(subscription -> !subscription.sandbox())
+                .filter(subscription -> !subscription.sandbox() || (sandboxAllowed
+                        && BillingProduct.fromProductId(subscription.productId()).orElse(null) == BillingProduct.BUSINESS))
                 .map(subscription -> BillingProduct
                         .fromProductId(subscription.productId())
                         .map(product -> new SelectedSubscription(
@@ -198,9 +222,10 @@ public class BillingService {
                         )))
                 .flatMap(Optional::stream)
                 .filter(item -> isActive(item.subscription(), now))
-                .max(Comparator.comparingInt(
-                        item -> item.product().getPlan().ordinal()
-                ));
+                // Any active real subscription wins over a test receipt, including legacy personal plans.
+                .max(Comparator.<SelectedSubscription, Boolean>comparing(item -> !item.subscription().sandbox())
+                        .thenComparingInt(item -> item.product().getPlan().ordinal())
+                        .thenComparing(item -> item.subscription().accessEndsAt()));
 
         BillingSubscription billingSubscription = subscriptionRepository
                 .findByUserId(user.getId())
@@ -223,6 +248,8 @@ public class BillingService {
 
         userRepository.save(user);
         subscriptionRepository.save(billingSubscription);
+        // Authorization and wallets use JDBC in this same transaction; expose the verified source before reading it.
+        subscriptionRepository.flush();
         if (creditWallets != null) {
             for (RevenueCatPurchase purchase : customer.purchases()) {
                 if (purchase.sandbox() && !purchase.refunded()
@@ -231,11 +258,10 @@ public class BillingService {
                         toLocalDateTime(purchase.purchasedAt()),purchase.refunded(),purchase.sandbox());
             }
         }
-        // Diagnostic only: rejected sandbox subscriptions never become entitlements
-        // or enter the production subscription/credit ledger.
         boolean sandboxRejected = customer.subscriptions().stream()
                 .anyMatch(subscription -> subscription.sandbox()
                         && isActive(subscription, now)
+                        && !(sandboxAllowed && BillingProduct.fromProductId(subscription.productId()).orElse(null) == BillingProduct.BUSINESS)
                         && BillingProduct.fromProductId(subscription.productId())
                             .map(product -> selected.isEmpty()
                                     || product.getPlan().ordinal() > selected.get().product().getPlan().ordinal())
@@ -308,12 +334,12 @@ public class BillingService {
             RevenueCatSubscription subscription,
             Instant now
     ) {
-        if (subscription.refunded()) {
+        if (subscription.refunded() || subscription.purchasedAt() == null) {
             return false;
         }
 
         Instant accessEndsAt = subscription.accessEndsAt();
-        return accessEndsAt == null || accessEndsAt.isAfter(now);
+        return accessEndsAt != null && accessEndsAt.isAfter(now);
     }
 
     private BillingOverviewResponse buildOverview(User user) {
@@ -399,8 +425,8 @@ public class BillingService {
         addCandidates(candidates, event.path("transferred_from"));
         addCandidates(candidates, event.path("transferred_to"));
 
-        return candidates.stream()
-                .map(userRepository::findByBillingCustomerId)
+        return candidates.stream().sorted()
+                .map(userRepository::findByBillingCustomerIdForUpdate)
                 .flatMap(Optional::stream)
                 .collect(
                         java.util.stream.Collectors.collectingAndThen(

@@ -11,6 +11,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class BusinessInvitationService {
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.gorkem.vehicle_inspector.service.billing.BusinessBillingPolicy businessBilling;
 
     private final UserRepository userRepository;
     private final BusinessMemberRepository businessMemberRepository;
@@ -82,6 +84,8 @@ public class BusinessInvitationService {
         BusinessAccount businessAccount =
                 ownerMembership.getBusinessAccount();
 
+        if (businessBilling != null) businessBilling.requireInvitation(owner, invitedUser, businessAccount.getId());
+
         String code = verificationCodeService.generate();
         String codeHash = verificationCodeService.hash(code);
 
@@ -117,7 +121,8 @@ public class BusinessInvitationService {
             String email,
             String code
     ) {
-        User user = findUser(email);
+        User user = userRepository.findByEmailForUpdate(email.trim().toLowerCase())
+                .orElseThrow(() -> new ResourceNotFoundException("Kullanıcı bulunamadı."));
 
         if (businessMemberRepository.existsByUserId(user.getId())) {
             throw new IllegalStateException(
@@ -156,6 +161,13 @@ public class BusinessInvitationService {
                         user,
                         BusinessRole.MEMBER
                 );
+
+        if (businessBilling != null) {
+            var owner = businessMemberRepository.findByBusinessAccountIdAndRole(
+                    invitation.getBusinessAccount().getId(), BusinessRole.OWNER)
+                    .orElseThrow(() -> new IllegalStateException("Şirket sahibi bulunamadı."));
+            businessBilling.requireInvitation(owner.getUser(), user, invitation.getBusinessAccount().getId());
+        }
 
         businessMemberRepository.save(member);
 

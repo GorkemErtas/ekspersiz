@@ -97,6 +97,20 @@ class ReminderNotificationSchedulerTest {
         verify(push, times(2)).send(any(AppNotification.class));
     }
 
+    @Test void sandboxReminderSkipsMembersWhoseTestAuthorizationWasRevoked() {
+        BusinessAccount business=new BusinessAccount("Isolated test",true);
+        ReflectionTestUtils.setField(business,"id",10L);
+        vehicle=new Vehicle("TEST01","Brand","Model",2024,0,business);
+        ReflectionTestUtils.setField(vehicle,"id",5L);
+        var policy=mock(com.gorkem.vehicle_inspector.service.billing.BusinessBillingPolicy.class);
+        ReflectionTestUtils.setField(scheduler,"businessBilling",policy);
+        when(policy.allowsCompanyAccess(user,10L)).thenReturn(false);
+        when(members.findByBusinessAccountId(10L)).thenReturn(List.of(new BusinessMember(business,user,BusinessRole.MEMBER)));
+        when(reminders.findAllByCompletedAtIsNull()).thenReturn(List.of(reminder(ReminderType.TIRE_CHECK,LocalDate.of(2026,9,23),null)));
+        scheduler.evaluateDueReminders();
+        verifyNoInteractions(notifications,push);
+    }
+
     private VehicleReminder reminder(ReminderType type, LocalDate date, Integer mileage) {
         VehicleReminder reminder = new VehicleReminder(vehicle, user, type,
                 null, date, mileage, null, LocalDateTime.of(2026, 9, 1, 10, 0));
