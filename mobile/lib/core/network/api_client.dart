@@ -272,7 +272,8 @@ class ApiClient {
     }
 
     if (response.statusCode == 403) {
-      if (decodedBody is Map &&
+      if (scope.type == WorkspaceType.business &&
+          decodedBody is Map &&
           decodedBody['validationErrors'] is Map &&
           decodedBody['validationErrors']['code'] == 'WORKSPACE_UNAVAILABLE') {
         WorkspaceSession.revokeBusiness();

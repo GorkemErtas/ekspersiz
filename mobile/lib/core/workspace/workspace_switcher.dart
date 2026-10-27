@@ -36,11 +36,18 @@ class _WorkspaceSwitcherState extends State<WorkspaceSwitcher> {
               ListTile(
                 leading: const Icon(Icons.business_outlined),
                 title: AppText(current.companyName ?? 'Şirket Hesabı'),
-                subtitle: const AppText('Ortak araçlar ve şirket kredileri'),
+                subtitle: AppText(
+                  current.businessAvailable
+                      ? 'Ortak araçlar ve şirket kredileri'
+                      : current.businessAccessMessage,
+                ),
+                enabled: current.businessAvailable,
                 trailing: current.isBusiness
                     ? const Icon(Icons.check_rounded)
                     : null,
-                onTap: () => Navigator.pop(context, WorkspaceType.business),
+                onTap: current.businessAvailable
+                    ? () => Navigator.pop(context, WorkspaceType.business)
+                    : null,
               ),
               const SizedBox(height: 12),
             ],

@@ -127,6 +127,8 @@ void main() {
             id: 12,
             companyName: 'ABC Ekspertiz',
             role: 'OWNER',
+            workspaceAvailable: true,
+            workspaceAccessStatus: 'ACTIVE',
           ),
         ),
       ),

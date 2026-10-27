@@ -105,7 +105,7 @@ class BusinessAccountServiceTest {
                 );
 
         verify(businessMemberRepository)
-                .save(memberCaptor.capture());
+                .saveAndFlush(memberCaptor.capture());
 
         BusinessMember savedMember =
                 memberCaptor.getValue();

@@ -19,6 +19,18 @@ jobs:
         working-directory: mobile
     steps:
       - uses: actions/checkout@v4
+      - name: Free runner disk space for Android native builds
+        shell: bash
+        run: |
+          df -h /
+          # This Android job does not use the runner's .NET, Haskell, Swift or CodeQL installations.
+          # Keep the Android SDK, Java, Flutter and all checkout files.
+          for directory in /usr/share/dotnet /usr/local/.ghcup /usr/share/swift /opt/hostedtoolcache/CodeQL; do
+            if [ -d "$directory" ]; then
+              sudo rm -rf -- "$directory"
+            fi
+          done
+          df -h /
       - uses: subosito/flutter-action@v2
         with:
           channel: stable

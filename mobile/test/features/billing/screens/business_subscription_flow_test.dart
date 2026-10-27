@@ -148,7 +148,15 @@ class Server {
           'fullName': 'Test',
           'email': 'test@example.com',
           'subscriptionPlan': plan,
-          'businessAccount': membership,
+          'businessAccount': membership == null
+              ? null
+              : {
+                  ...membership!,
+                  'workspaceAvailable': plan == 'BUSINESS',
+                  'workspaceAccessStatus': plan == 'BUSINESS'
+                      ? 'ACTIVE'
+                      : 'SUBSCRIPTION_EXPIRED',
+                },
         };
       }
     } else if (path == '/business-accounts') {
@@ -264,6 +272,8 @@ void main() {
           userId: 1,
           businessId: 7,
           role: 'OWNER',
+          businessAvailable: true,
+          businessAccessStatus: 'ACTIVE',
         );
         expect(
           WorkspaceSession.state.value!.isBusiness,
@@ -449,7 +459,8 @@ void main() {
         };
         await tap(tester, 'Şirketini oluştur');
         expect(WorkspaceSession.state.value!.isBusiness, isFalse);
-        expect(WorkspaceSession.state.value!.businessId, isNull);
+        expect(WorkspaceSession.state.value!.businessId, 7);
+        expect(WorkspaceSession.state.value!.businessAvailable, isFalse);
         expect(server.creates, 0);
       }, () => MockClient(server.handle));
     },

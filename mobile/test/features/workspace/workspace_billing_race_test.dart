@@ -53,6 +53,8 @@ void main() {
         userId: 1,
         businessId: 7,
         role: 'MEMBER',
+        businessAvailable: true,
+        businessAccessStatus: 'ACTIVE',
       );
       await WorkspaceSession.select(WorkspaceType.personal);
       final calls = <String>[];

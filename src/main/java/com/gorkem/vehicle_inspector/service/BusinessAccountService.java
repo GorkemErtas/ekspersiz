@@ -78,7 +78,7 @@ public class BusinessAccountService {
                         BusinessRole.OWNER
                 );
 
-        businessMemberRepository.save(owner);
+        businessMemberRepository.saveAndFlush(owner);
 
         return toResponse(
                 savedBusinessAccount,
@@ -94,7 +94,9 @@ public class BusinessAccountService {
                 businessAccount.getId(),
                 businessAccount.getCompanyName(),
                 member.getRole(),
-                businessAccount.isSandbox()
+                businessAccount.isSandbox(),
+                businessBilling == null ? com.gorkem.vehicle_inspector.service.workspace.BusinessWorkspaceAccess.UNKNOWN
+                        : businessBilling.workspaceAccess(member.getUser(), businessAccount.getId())
         );
     }
 

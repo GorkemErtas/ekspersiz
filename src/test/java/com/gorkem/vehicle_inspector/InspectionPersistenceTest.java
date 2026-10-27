@@ -128,6 +128,8 @@ class InspectionPersistenceTest {
         tx.executeWithoutResult(status -> {
             owner = users.save(new User("Owner", "owner@example.com", "hash"));
             owner.setSubscriptionPlan(SubscriptionPlan.BUSINESS);
+            owner.setSubscriptionStartedAt(NOW.minusDays(1));
+            owner.setSubscriptionExpiresAt(NOW.plusDays(29));
             member = users.save(new User("Member", "member@example.com", "hash"));
             personal = users.save(new User("Personal", "personal@example.com", "hash"));
             business = businesses.save(new BusinessAccount("Test Company"));
@@ -505,13 +507,7 @@ class InspectionPersistenceTest {
             pair.setContextImagePath("overview.jpg");
         });
 
-        assertEquals(
-                owner.getId(),
-                service.getMyInspectionById(
-                        created.getId(),
-                        member.getEmail()
-                ).getUserId()
-        );
+        assertEquals(owner.getId(), service.getMyInspectionById(created.getId(), member.getEmail()).getUserId());
 
         assertEquals(
                 owner.getId(),
@@ -583,13 +579,9 @@ class InspectionPersistenceTest {
                 )
         );
 
-        assertEquals(
-                owner.getId(),
-                service.getMyInspectionById(
-                        created.getId(),
-                        member.getEmail()
-                ).getUserId()
-        );
+        assertThrows(com.gorkem.vehicle_inspector.exception.WorkspaceAccessDeniedException.class,
+                () -> service.getMyInspectionById(created.getId(), member.getEmail()));
+        assertTrue(inspections.existsById(created.getId()));
     }
 
     @Test

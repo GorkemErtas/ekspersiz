@@ -3,6 +3,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../auth/session_manager.dart';
 import '../network/api_exception.dart';
+import 'business_workspace_access.dart';
 
 enum WorkspaceType {
   personal('PERSONAL'),
@@ -21,6 +22,9 @@ class WorkspaceState {
     this.companyName,
     this.role,
     this.subscriptionPlan,
+    this.businessAvailable = false,
+    this.businessAccessStatus = 'UNKNOWN',
+    this.businessSandbox = false,
   });
   final int userId;
   final WorkspaceType type;
@@ -28,7 +32,12 @@ class WorkspaceState {
   final String? companyName;
   final String? role;
   final String? subscriptionPlan;
+  final bool businessAvailable;
+  final String businessAccessStatus;
+  final bool businessSandbox;
   bool get isBusiness => type == WorkspaceType.business;
+  String get businessAccessMessage =>
+      businessWorkspaceAccessMessage(businessAccessStatus);
 }
 
 class WorkspaceRequest {
@@ -64,6 +73,9 @@ class WorkspaceSession {
     String? companyName,
     String? role,
     String? subscriptionPlan,
+    bool businessAvailable = false,
+    String businessAccessStatus = 'UNKNOWN',
+    bool businessSandbox = false,
   }) async {
     final ticket = _initialization = Object();
     final current = state.value;
@@ -73,7 +85,8 @@ class WorkspaceSession {
     WorkspaceType type;
     if (current?.userId == userId) {
       type = current!.type;
-      if (businessId == null ||
+      if (!businessAvailable ||
+          businessId == null ||
           (current.isBusiness && businessId != current.businessId)) {
         type = WorkspaceType.personal;
       }
@@ -90,7 +103,8 @@ class WorkspaceSession {
           message: 'Oturum değişti. Lütfen tekrar deneyin.',
         );
       }
-      type = preference == 'PERSONAL' || businessId == null
+      type =
+          preference == 'PERSONAL' || businessId == null || !businessAvailable
           ? WorkspaceType.personal
           : WorkspaceType.business;
     }
@@ -99,7 +113,10 @@ class WorkspaceSession {
         current?.type == type &&
         current?.businessId == businessId &&
         current?.companyName == companyName &&
-        current?.role == role;
+        current?.role == role &&
+        current?.businessAvailable == businessAvailable &&
+        current?.businessAccessStatus == businessAccessStatus &&
+        current?.businessSandbox == businessSandbox;
     if (sameWorkspace && current?.subscriptionPlan == plan) {
       return;
     }
@@ -110,6 +127,9 @@ class WorkspaceSession {
       companyName: companyName,
       role: role,
       subscriptionPlan: plan,
+      businessAvailable: businessAvailable,
+      businessAccessStatus: businessAccessStatus,
+      businessSandbox: businessSandbox,
     );
     if (sameWorkspace) {
       // Subscription metadata can refresh as the store sheet closes. It does
@@ -126,9 +146,11 @@ class WorkspaceSession {
   static Future<void> select(WorkspaceType type) async {
     final current = state.value;
     if (current == null ||
-        (type == WorkspaceType.business && current.businessId == null)) {
+        (type == WorkspaceType.business &&
+            (current.businessId == null || !current.businessAvailable))) {
       throw StateError('Şirket çalışma alanı kullanılamıyor.');
     }
+    _initialization = Object();
     if (current.type == type) return;
     _publish(
       WorkspaceState(
@@ -138,6 +160,9 @@ class WorkspaceSession {
         companyName: current.companyName,
         role: current.role,
         subscriptionPlan: current.subscriptionPlan,
+        businessAvailable: current.businessAvailable,
+        businessAccessStatus: current.businessAccessStatus,
+        businessSandbox: current.businessSandbox,
       ),
     );
     final published = capture();
@@ -146,13 +171,25 @@ class WorkspaceSession {
   }
 
   static void revokeBusiness() {
+    _initialization = Object();
     final current = state.value;
-    if (current == null) return;
+    if (current == null) {
+      _generation = Object();
+      return;
+    }
     _publish(
       WorkspaceState(
         userId: current.userId,
         type: WorkspaceType.personal,
+        businessId: current.businessId,
+        companyName: current.companyName,
+        role: current.role,
         subscriptionPlan: current.subscriptionPlan,
+        businessAvailable: false,
+        businessAccessStatus: current.businessAvailable
+            ? 'UNKNOWN'
+            : current.businessAccessStatus,
+        businessSandbox: current.businessSandbox,
       ),
     );
     _remember(current.userId, WorkspaceType.personal);
@@ -171,6 +208,7 @@ class WorkspaceSession {
   }
 
   static Future<void> _remember(int userId, WorkspaceType type) async {
+    if (state.value?.userId != userId || state.value?.type != type) return;
     try {
       await _storage.write(key: 'workspace:user:$userId', value: type.header);
     } catch (_) {

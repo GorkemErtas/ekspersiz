@@ -9,6 +9,11 @@ import com.gorkem.vehicle_inspector.security.AuthenticatedUser;
 import com.gorkem.vehicle_inspector.service.*;
 import com.gorkem.vehicle_inspector.service.workspace.WorkspaceResolver;
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+import com.gorkem.vehicle_inspector.service.workspace.BusinessWorkspaceAccess;
+import com.gorkem.vehicle_inspector.service.billing.BusinessBillingPolicy;
+import com.gorkem.vehicle_inspector.exception.WorkspaceAccessDeniedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -27,6 +32,7 @@ class WorkspaceHttpTest {
     User user;
     BusinessMember member;
     MockMvc mvc;
+    BusinessWorkspaceAccess access;
     static class Registry extends InterceptorRegistry {
         List<Object> values() { return getInterceptors(); }
     }
@@ -41,9 +47,19 @@ class WorkspaceHttpTest {
         when(users.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
         when(members.findByUserId(1L)).thenReturn(Optional.of(member));
         var context = new BusinessContextService(users, members, mock(SubscriptionService.class));
+        var policy = mock(BusinessBillingPolicy.class);
+        access = BusinessWorkspaceAccess.ACTIVE;
+        when(policy.workspaceAccess(any(), anyLong())).thenAnswer(i -> access);
+        doAnswer(i -> { if (access != BusinessWorkspaceAccess.ACTIVE) throw new WorkspaceAccessDeniedException(); return null; })
+                .when(policy).requireCompanyAccess(any(),anyLong());
+        ReflectionTestUtils.setField(context,"businessBilling",policy);
+        var plans = mock(SubscriptionService.class);
+        when(plans.getEffectivePlan(user)).thenReturn(SubscriptionPlan.FREE);
+        var auth = new AuthService(users,null,null,null,null,context,plans,null);
         var registry = new Registry();
         new WorkspaceWebConfig(context, members, new WorkspaceResolver()).addInterceptors(registry);
-        mvc = MockMvcBuilders.standaloneSetup(new WorkspaceController(context))
+        mvc = MockMvcBuilders.standaloneSetup(new WorkspaceController(context),
+                        new com.gorkem.vehicle_inspector.controller.AuthController(auth,null,null,null))
                 .defaultRequest(get("/").principal(new UsernamePasswordAuthenticationToken(
                         new AuthenticatedUser(user), null, List.of())))
                 .setControllerAdvice(new GlobalExceptionHandler())
@@ -71,5 +87,33 @@ class WorkspaceHttpTest {
                 .andExpect(status().isForbidden()).andExpect(jsonPath("$.validationErrors.code").value("WORKSPACE_UNAVAILABLE"));
         mvc.perform(get("/api/v1/workspace").header("X-Workspace", "PERSONAL"))
                 .andExpect(status().isOk());
+    }
+
+    @ParameterizedTest @EnumSource(BusinessRole.class)
+    void profileKeepsMembershipButExpiredOrRevokedWorkspaceStaysUnavailable(BusinessRole role) throws Exception {
+        ReflectionTestUtils.setField(member,"role",role);
+        for (var status : List.of(BusinessWorkspaceAccess.SUBSCRIPTION_EXPIRED, BusinessWorkspaceAccess.SUBSCRIPTION_INACTIVE,
+                BusinessWorkspaceAccess.SANDBOX_NOT_AUTHORIZED, BusinessWorkspaceAccess.ENVIRONMENT_MISMATCH,
+                BusinessWorkspaceAccess.OWNER_UNAVAILABLE)) {
+            access = status;
+            for (int refresh=0;refresh<2;refresh++) {
+                mvc.perform(get("/api/v1/auth/me").header("X-Workspace","PERSONAL"))
+                        .andExpect(status().isOk()).andExpect(jsonPath("$.businessAccount.id").value(7))
+                        .andExpect(jsonPath("$.businessAccount.role").value(role.name()))
+                        .andExpect(jsonPath("$.businessAccount.workspaceAvailable").value(false))
+                        .andExpect(jsonPath("$.businessAccount.workspaceAccessStatus").value(access.name()));
+            }
+            mvc.perform(get("/api/v1/workspace").header("X-Workspace","BUSINESS"))
+                    .andExpect(status().isForbidden()).andExpect(jsonPath("$.validationErrors.code").value("WORKSPACE_UNAVAILABLE"));
+            mvc.perform(get("/api/v1/workspace").header("X-Workspace","PERSONAL"))
+                    .andExpect(status().isOk()).andExpect(jsonPath("$.type").value("PERSONAL"));
+        }
+        access = BusinessWorkspaceAccess.ACTIVE;
+        mvc.perform(get("/api/v1/auth/me").header("X-Workspace","PERSONAL"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.subscriptionPlan").value("FREE"))
+                .andExpect(jsonPath("$.businessAccount.workspaceAvailable").value(true));
+        mvc.perform(get("/api/v1/workspace").header("X-Workspace","BUSINESS"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.businessId").value(7));
+        verify(members,never()).delete(any());
     }
 }
