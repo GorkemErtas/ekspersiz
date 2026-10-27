@@ -44,7 +44,7 @@ class BusinessSubscriptionFlowTest {
         when(users.findByEmailForUpdate(user.getEmail())).thenReturn(Optional.of(user));
         when(members.findByUserId(1L)).thenAnswer(i -> Optional.ofNullable(membership.get()));
         when(members.existsByUserId(1L)).thenAnswer(i -> membership.get() != null);
-        when(members.save(any())).thenAnswer(i -> { membership.set(i.getArgument(0)); return membership.get(); });
+        when(members.saveAndFlush(any())).thenAnswer(i -> { membership.set(i.getArgument(0)); return membership.get(); });
         when(companies.save(any())).thenAnswer(i -> {
             BusinessAccount company = i.getArgument(0);
             ReflectionTestUtils.setField(company, "id", 7L);
@@ -64,6 +64,7 @@ class BusinessSubscriptionFlowTest {
         var policy = mock(com.gorkem.vehicle_inspector.service.billing.BusinessBillingPolicy.class);
         when(policy.allowsSandboxSubscription(user)).thenReturn(true);
         when(policy.sandboxSubscription(user)).thenAnswer(i -> storedSubscription.get() != null && storedSubscription.get().isSandbox());
+        when(policy.workspaceAccess(eq(user),anyLong())).thenReturn(com.gorkem.vehicle_inspector.service.workspace.BusinessWorkspaceAccess.ACTIVE);
         for (Object component : List.of(plans, context, billing, business)) ReflectionTestUtils.setField(component,"businessBilling",policy);
         var auth = new AuthService(users, null, null, null, null, context, plans, null);
 
@@ -83,6 +84,7 @@ class BusinessSubscriptionFlowTest {
         assertEquals(BusinessRole.OWNER, refreshed.getBusinessAccount().role());
         assertEquals("Buyer's Company", refreshed.getBusinessAccount().companyName());
         assertEquals(sandbox, refreshed.getBusinessAccount().sandbox());
+        assertTrue(refreshed.getBusinessAccount().workspaceAvailable());
         assertEquals("user:1", context.workspace(user).accountId());
         select("BUSINESS");
         assertEquals("business:7", context.workspace(user).accountId());

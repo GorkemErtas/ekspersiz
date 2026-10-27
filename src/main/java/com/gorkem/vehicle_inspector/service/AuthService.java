@@ -227,7 +227,8 @@ public class AuthService {
                         member.getBusinessAccount().getId(),
                         member.getBusinessAccount().getCompanyName(),
                         member.getRole(),
-                        member.getBusinessAccount().isSandbox()
+                        member.getBusinessAccount().isSandbox(),
+                        businessContextService.workspaceAccess(user, member)
                 ))
                 .orElse(null);
     }

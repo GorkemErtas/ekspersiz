@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Optional;
 import com.gorkem.vehicle_inspector.service.workspace.WorkspaceContext;
 import com.gorkem.vehicle_inspector.service.workspace.WorkspaceResolver;
+import com.gorkem.vehicle_inspector.service.workspace.BusinessWorkspaceAccess;
 
 @Service
 public class BusinessContextService {
@@ -22,6 +23,12 @@ public class BusinessContextService {
 
     public void validateWorkspaceMembership(User user, BusinessMember membership) {
         if (businessBilling != null) businessBilling.requireCompanyAccess(user, membership.getBusinessAccount().getId());
+    }
+
+    @Transactional(readOnly = true)
+    public BusinessWorkspaceAccess workspaceAccess(User user, BusinessMember membership) {
+        return businessBilling == null ? BusinessWorkspaceAccess.UNKNOWN
+                : businessBilling.workspaceAccess(user, membership.getBusinessAccount().getId());
     }
 
     private final UserRepository userRepository;

@@ -2,6 +2,7 @@ package com.gorkem.vehicle_inspector.service.billing;
 
 import com.gorkem.vehicle_inspector.entity.User;
 import com.gorkem.vehicle_inspector.exception.WorkspaceAccessDeniedException;
+import com.gorkem.vehicle_inspector.service.workspace.BusinessWorkspaceAccess;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
@@ -49,20 +50,22 @@ public class BusinessBillingPolicy {
     }
 
     public boolean allowsCompanyAccess(User actor, long businessId) {
-        return allowsAccess(actor, company(businessId));
+        return workspaceAccess(actor, businessId) == BusinessWorkspaceAccess.ACTIVE;
     }
 
-    private boolean allowsAccess(User actor, Company company) {
-        return company.sandbox()
-                ? testers.allows(actor) && company.sandboxEntitlement() && company.active()
-                    && testers.allowsCustomerId(company.customerId())
-                : !company.sandboxEntitlement();
+    public BusinessWorkspaceAccess workspaceAccess(User actor, long businessId) {
+        var company = company(businessId);
+        if (company == null || company.customerId() == null) return BusinessWorkspaceAccess.OWNER_UNAVAILABLE;
+        if (company.sandbox() != company.sandboxEntitlement()) return BusinessWorkspaceAccess.ENVIRONMENT_MISMATCH;
+        if (company.sandbox() && (!testers.allows(actor) || !testers.allowsCustomerId(company.customerId())))
+            return BusinessWorkspaceAccess.SANDBOX_NOT_AUTHORIZED;
+        if (!company.active()) return company.expired()
+                ? BusinessWorkspaceAccess.SUBSCRIPTION_EXPIRED : BusinessWorkspaceAccess.SUBSCRIPTION_INACTIVE;
+        return BusinessWorkspaceAccess.ACTIVE;
     }
 
     public void requireActiveCompany(User actor, long businessId) {
-        var company = company(businessId);
-        if (!allowsAccess(actor, company)) throw new WorkspaceAccessDeniedException();
-        if (!company.active()) throw new IllegalStateException("Şirket aboneliği aktif değil.");
+        requireCompanyAccess(actor, businessId);
     }
 
     public void requireInvitation(User owner, User invited, long businessId) {
@@ -74,7 +77,7 @@ public class BusinessBillingPolicy {
 
     public boolean companyEntitlementActive(long businessId) {
         var company = company(businessId);
-        return company.active() && (company.sandbox()
+        return company != null && company.active() && (company.sandbox()
                 ? company.sandboxEntitlement() && testers.allowsCustomerId(company.customerId())
                 : !company.sandboxEntitlement());
     }
@@ -82,20 +85,23 @@ public class BusinessBillingPolicy {
     private Company company(long businessId) {
         var rows = jdbc.queryForList("""
                 SELECT b.sandbox, u.billing_customer_id, u.subscription_plan, u.subscription_expires_at,
-                       COALESCE(s.sandbox,FALSE) AS sandbox_entitlement
+                       s.status, s.current_period_ends_at, COALESCE(s.sandbox,FALSE) AS sandbox_entitlement
                 FROM business_accounts b LEFT JOIN business_members m ON m.business_account_id=b.id AND m.role='OWNER'
                 LEFT JOIN users u ON u.id=m.user_id LEFT JOIN billing_subscriptions s ON s.user_id=u.id
                 WHERE b.id=?
                 """, businessId);
-        if (rows.size() != 1) throw new WorkspaceAccessDeniedException();
+        if (rows.size() != 1) return null;
         var row = rows.getFirst();
         var expiry = (Timestamp) row.get("subscription_expires_at");
         boolean active = "BUSINESS".equals(row.get("subscription_plan")) && expiry != null
-                && expiry.toLocalDateTime().isAfter(LocalDateTime.now(clock));
+                && expiry.toLocalDateTime().isAfter(LocalDateTime.now(clock))
+                && (row.get("status") == null || java.util.Set.of("ACTIVE", "CANCELLED", "BILLING_ISSUE").contains(row.get("status")));
+        var periodEnd = expiry != null ? expiry : (Timestamp) row.get("current_period_ends_at");
+        boolean expired = periodEnd != null && !periodEnd.toLocalDateTime().isAfter(LocalDateTime.now(clock));
         return new Company(Boolean.TRUE.equals(row.get("sandbox")),
                 Boolean.TRUE.equals(row.get("sandbox_entitlement")),
-                (String) row.get("billing_customer_id"), active);
+                (String) row.get("billing_customer_id"), active, expired);
     }
 
-    private record Company(boolean sandbox, boolean sandboxEntitlement, String customerId, boolean active) {}
+    private record Company(boolean sandbox, boolean sandboxEntitlement, String customerId, boolean active, boolean expired) {}
 }

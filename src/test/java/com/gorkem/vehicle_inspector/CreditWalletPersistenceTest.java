@@ -6,6 +6,9 @@ import com.gorkem.vehicle_inspector.service.billing.CreditCatalog;
 import com.gorkem.vehicle_inspector.service.billing.BillingSandboxPolicy;
 import com.gorkem.vehicle_inspector.service.billing.BusinessBillingPolicy;
 import com.gorkem.vehicle_inspector.exception.WorkspaceAccessDeniedException;
+import com.gorkem.vehicle_inspector.service.workspace.BusinessWorkspaceAccess;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -159,6 +162,37 @@ class CreditWalletPersistenceTest {
         return new BusinessBillingPolicy(jdbc, testers, clock);
     }
 
+    @ParameterizedTest @ValueSource(booleans={false,true})
+    void workspaceAccessFollowsOwnerLifecycleAndRetainsPersonalAndCompanyData(boolean sandbox) {
+        buy(other,"eksper_analysis_5","personal-before-expiry");
+        var policy = new BusinessBillingPolicy(jdbc,new BillingSandboxPolicy(user.getBillingCustomerId()+","+other.getBillingCustomerId()),clock);
+        if (sandbox) testCompany(); else company();
+        jdbc.update("INSERT INTO vehicles(user_id,plate,brand,model,model_year,mileage,archived,primary_vehicle) VALUES (?,'PERSONAL01','Test','Car',2024,0,FALSE,FALSE)",other.getId());
+        jdbc.update("INSERT INTO vehicles(business_account_id,plate,brand,model,model_year,mileage,archived,primary_vehicle) VALUES (77,'COMPANY01','Test','Car',2024,0,FALSE,FALSE)");
+        assertEquals(BusinessWorkspaceAccess.ACTIVE,policy.workspaceAccess(user,77));
+        assertEquals(BusinessWorkspaceAccess.ACTIVE,policy.workspaceAccess(other,77)); // MEMBER is personally FREE.
+        if (!sandbox) jdbc.update("INSERT INTO billing_subscriptions(user_id,status,sandbox,auto_renewing,last_synced_at) VALUES (?,'CANCELLED',FALSE,FALSE,?)",user.getId(),now());
+        else jdbc.update("UPDATE billing_subscriptions SET status='CANCELLED',auto_renewing=FALSE WHERE user_id=?",user.getId());
+        assertEquals(BusinessWorkspaceAccess.ACTIVE,policy.workspaceAccess(other,77));
+        jdbc.update("UPDATE users SET subscription_expires_at=? WHERE id=?",now(),user.getId());
+        assertEquals(BusinessWorkspaceAccess.SUBSCRIPTION_EXPIRED,policy.workspaceAccess(user,77));
+        assertEquals(BusinessWorkspaceAccess.SUBSCRIPTION_EXPIRED,policy.workspaceAccess(other,77));
+        assertThrows(WorkspaceAccessDeniedException.class,() -> run(() -> service.reserve(other,true,"ANALYSIS","expired-owner","hash")));
+        // A member's personal paid plan cannot replace the company's owner entitlement.
+        jdbc.update("UPDATE users SET subscription_plan='BUSINESS',subscription_expires_at=? WHERE id=?",now().plusDays(30),other.getId());
+        assertEquals(BusinessWorkspaceAccess.SUBSCRIPTION_EXPIRED,policy.workspaceAccess(other,77));
+        assertEquals(5,balance(other,"ANALYSIS"));
+        assertEquals(2,jdbc.queryForObject("SELECT count(*) FROM business_members WHERE business_account_id=77",Integer.class));
+        assertEquals(2,jdbc.queryForObject("SELECT count(*) FROM vehicles WHERE plate IN ('PERSONAL01','COMPANY01')",Integer.class));
+        jdbc.update("UPDATE users SET subscription_expires_at=? WHERE id=?",now().plusDays(30),user.getId());
+        assertEquals(BusinessWorkspaceAccess.ACTIVE,policy.workspaceAccess(other,77));
+        jdbc.update("UPDATE users SET subscription_plan='FREE',subscription_expires_at=NULL WHERE id=?",user.getId());
+        jdbc.update("UPDATE billing_subscriptions SET status='EXPIRED',current_period_ends_at=? WHERE user_id=?",now().plusDays(30),user.getId());
+        assertEquals(BusinessWorkspaceAccess.SUBSCRIPTION_INACTIVE,policy.workspaceAccess(other,77)); // Refund before period end.
+        jdbc.update("UPDATE billing_subscriptions SET current_period_ends_at=? WHERE user_id=?",now().minusSeconds(1),user.getId());
+        assertEquals(BusinessWorkspaceAccess.SUBSCRIPTION_EXPIRED,policy.workspaceAccess(other,77));
+    }
+
     @Test void sandboxBusinessBudgetIsIsolatedAndNeverRefilledByAcceleratedRenewals() {
         buy(user,"eksper_analysis_5","personal-before-test");
         var policy = testCompany();
@@ -187,6 +221,8 @@ class CreditWalletPersistenceTest {
         testCompany();
         var reservation=inTx(() -> service.reserve(user,true,"ANALYSIS","in-flight","same"));
         var revoked=new BusinessBillingPolicy(jdbc,new BillingSandboxPolicy(""),clock);
+        assertEquals(BusinessWorkspaceAccess.SANDBOX_NOT_AUTHORIZED,revoked.workspaceAccess(user,77));
+        assertEquals(BusinessWorkspaceAccess.SANDBOX_NOT_AUTHORIZED,revoked.workspaceAccess(other,77));
         assertThrows(WorkspaceAccessDeniedException.class,() -> revoked.requireCompanyAccess(user,77));
         assertThrows(WorkspaceAccessDeniedException.class,() -> revoked.requireCompanyAccess(other,77));
         var plans=new com.gorkem.vehicle_inspector.service.SubscriptionService(
@@ -420,10 +456,9 @@ class CreditWalletPersistenceTest {
     @Test void companyExpiryPreservesPersonalCreditsAndCannotSpendCompanyFunds() {
         company();buy(other,"eksper_analysis_5","personal");run(() -> service.account(other,true));
         jdbc.update("UPDATE users SET subscription_expires_at=? WHERE id=?",now().minusSeconds(1),user.getId());
-        assertThrows(IllegalStateException.class,() -> inTx(() -> service.reserve(other,true,"ANALYSIS","expired","hash")));
-        assertFalse(inTx(() -> service.account(user,true).canPurchase()));
-        assertTrue(inTx(() -> service.account(user,true).owner()));
-        jdbc.update("DELETE FROM business_members WHERE user_id=?",other.getId());
+        assertThrows(WorkspaceAccessDeniedException.class,() -> inTx(() -> service.reserve(other,true,"ANALYSIS","expired","hash")));
+        assertThrows(WorkspaceAccessDeniedException.class,() -> inTx(() -> service.account(user,true)));
+        assertEquals(2,jdbc.queryForObject("SELECT count(*) FROM business_members WHERE business_account_id=77",Integer.class));
         assertEquals(5,balance(other,"ANALYSIS"));
     }
 
