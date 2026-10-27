@@ -49,7 +49,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
   CreditOverview? _credits;
   bool get _companyWorkspace =>
       WorkspaceSession.state.value?.isBusiness ??
-      (widget.businessAccount != null);
+      (widget.businessAccount?.workspaceAvailable == true);
+  bool get _businessAvailable =>
+      WorkspaceSession.state.value?.businessAvailable ??
+      widget.businessAccount?.workspaceAvailable ??
+      false;
+  String get _businessAccessMessage =>
+      WorkspaceSession.state.value?.businessAccessMessage ??
+      widget.businessAccount?.workspaceAccessMessage ??
+      '';
   CreditAccount? get _activeCredits =>
       _companyWorkspace ? _credits?.company : _credits?.personal;
   String get _currentSubscriptionPlan =>
@@ -371,7 +379,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final textTheme = Theme.of(context).textTheme;
     final canManageBusiness =
         _currentSubscriptionPlan == 'BUSINESS' &&
-        (widget.businessAccount == null || widget.businessAccount!.isOwner);
+        (widget.businessAccount == null ||
+            (widget.businessAccount!.isOwner && _businessAvailable));
     final canAcceptBusinessInvitation =
         _currentSubscriptionPlan != 'BUSINESS' &&
         widget.businessAccount == null;
@@ -466,6 +475,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         value: _subscriptionPlanLabel,
                       ),
                       if (widget.businessAccount != null) ...[
+                        _ProfileItem(
+                          icon: _businessAvailable
+                              ? Icons.check_circle_outline
+                              : Icons.lock_outline,
+                          title: 'Şirket erişimi',
+                          value: _businessAccessMessage,
+                        ),
                         const Divider(height: 1, indent: 82),
                         _ProfileItem(
                           icon: Icons.business_rounded,

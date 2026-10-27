@@ -9,7 +9,8 @@ class WorkspaceService {
     final scope = WorkspaceSession.capture();
     final current = WorkspaceSession.state.value;
     if (current == null ||
-        (type == WorkspaceType.business && current.businessId == null)) {
+        (type == WorkspaceType.business &&
+            (current.businessId == null || !current.businessAvailable))) {
       throw StateError('Şirket çalışma alanı kullanılamıyor.');
     }
     final result = await ApiClient(workspace: type).get('/workspace');

@@ -25,6 +25,8 @@ void main() {
     businessId: 7,
     companyName: 'Company',
     role: 'MEMBER',
+    businessAvailable: true,
+    businessAccessStatus: 'ACTIVE',
   );
   http.Response response(
     http.Request request,
@@ -92,6 +94,8 @@ void main() {
         userId: 1,
         businessId: 7,
         role: 'OWNER',
+        businessAvailable: true,
+        businessAccessStatus: 'ACTIVE',
         subscriptionPlan: 'BUSINESS',
       );
       expect(
@@ -210,7 +214,8 @@ void main() {
             throwsA(isA<ApiException>()),
           );
           expect(WorkspaceSession.state.value!.type, WorkspaceType.personal);
-          expect(WorkspaceSession.state.value!.businessId, isNull);
+          expect(WorkspaceSession.state.value!.businessId, 7);
+          expect(WorkspaceSession.state.value!.businessAvailable, isFalse);
           expect(await TokenStorage.getAccessToken(), 'token');
         },
         () => MockClient(

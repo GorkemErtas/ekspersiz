@@ -35,6 +35,8 @@ void main() {
           businessId: 7,
           companyName: 'Test Şirketi',
           role: 'MEMBER',
+          businessAvailable: true,
+          businessAccessStatus: 'ACTIVE',
         );
         await WorkspaceSession.select(WorkspaceType.personal);
         final calls = <String>[];
@@ -177,6 +179,8 @@ void main() {
           businessId: 7,
           companyName: 'New Company',
           role: 'OWNER',
+          businessAvailable: true,
+          businessAccessStatus: 'ACTIVE',
           subscriptionPlan: 'BUSINESS',
         );
         await tester.pumpAndSettle();
@@ -195,6 +199,8 @@ void main() {
           businessId: 7,
           companyName: 'New Company',
           role: 'MEMBER',
+          businessAvailable: true,
+          businessAccessStatus: 'ACTIVE',
           subscriptionPlan: 'FREE',
         );
         await tester.pumpAndSettle();
@@ -213,6 +219,8 @@ void main() {
         businessId: 7,
         companyName: 'Company',
         role: 'MEMBER',
+        businessAvailable: true,
+        businessAccessStatus: 'ACTIVE',
       );
       await WorkspaceSession.select(WorkspaceType.personal);
       await tester.pumpWidget(
@@ -239,6 +247,8 @@ void main() {
         businessId: 7,
         companyName: 'Company',
         role: 'MEMBER',
+        businessAvailable: true,
+        businessAccessStatus: 'ACTIVE',
       );
       await tester.pumpWidget(
         uiTestApp(
@@ -263,6 +273,8 @@ void main() {
       businessId: 7,
       companyName: 'Company',
       role: 'MEMBER',
+      businessAvailable: true,
+      businessAccessStatus: 'ACTIVE',
     );
     await tester.pumpWidget(
       uiTestApp(home: SubscriptionScreen(billingService: FakeBillingService())),

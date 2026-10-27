@@ -51,7 +51,7 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
   WorkspaceState? _lastWorkspace;
 
   BusinessAccount? get _activeBusiness => WorkspaceSession.state.value == null
-      ? _businessAccount
+      ? null
       : WorkspaceSession.state.value!.isBusiness
       ? _businessAccount
       : null;
@@ -131,10 +131,20 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
         businessId: _businessAccount?.id,
         companyName: _businessAccount?.companyName,
         role: _businessAccount?.role,
+        subscriptionPlan: _subscriptionPlan,
+        // Navigation arguments can outlive authorization. Only AuthService's
+        // fresh server response may enable Business in WorkspaceSession.
+        businessAvailable: false,
+        businessAccessStatus: 'UNKNOWN',
+        businessSandbox: _businessAccount?.sandbox ?? false,
       );
       if (mounted) setState(() => _workspaceReady = true);
     } catch (_) {
-      if (mounted) _handleSessionExpired();
+      // A newer profile/selection can supersede preference restoration. That
+      // is not an expired login; the session listener handles actual logout.
+      if (mounted && WorkspaceSession.state.value?.userId == widget.userId) {
+        setState(() => _workspaceReady = true);
+      }
     }
   }
 
@@ -170,6 +180,9 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
               id: current.businessId!,
               companyName: current.companyName ?? 'Şirket Hesabı',
               role: current.role ?? 'MEMBER',
+              sandbox: current.businessSandbox,
+              workspaceAvailable: current.businessAvailable,
+              workspaceAccessStatus: current.businessAccessStatus,
             );
       _cacheEpoch = Object();
       _screenCache.fillRange(0, _screenCache.length, null);
@@ -208,17 +221,19 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
   }
 
   void _updateBusinessAccount(BusinessAccount businessAccount) {
-    final userId = widget.userId ?? WorkspaceSession.state.value?.userId;
-    if (userId != null) {
-      WorkspaceSession.initialize(
-        userId: userId,
-        businessId: businessAccount.id,
-        companyName: businessAccount.companyName,
-        role: businessAccount.role,
-      );
-    }
+    // Company setup already refreshed the profile. A retained route result must
+    // not restore authorization after a later profile or 403 revoked it.
+    final current = WorkspaceSession.state.value;
+    if (current?.businessId != businessAccount.id) return;
     setState(() {
-      _businessAccount = businessAccount;
+      _businessAccount = BusinessAccount(
+        id: current!.businessId!,
+        companyName: current.companyName ?? '',
+        role: current.role ?? 'MEMBER',
+        sandbox: current.businessSandbox,
+        workspaceAvailable: current.businessAvailable,
+        workspaceAccessStatus: current.businessAccessStatus,
+      );
       _cacheEpoch = Object();
       for (var index = 0; index < _screenCache.length; index++) {
         _screenCache[index] = null;

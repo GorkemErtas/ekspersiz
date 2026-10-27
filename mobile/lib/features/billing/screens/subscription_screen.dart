@@ -176,6 +176,9 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
     final profile = await widget.authService.getCurrentUser();
     if (!mounted) return;
     if (profile.businessAccount != null) {
+      if (!profile.businessAccount!.workspaceAvailable) {
+        throw StateError(profile.businessAccount!.workspaceAccessMessage);
+      }
       await const WorkspaceService().select(WorkspaceType.business);
       return;
     }
@@ -600,6 +603,12 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
                   ),
                 ),
               ),
+            if (!active && status.status == 'EXPIRED') ...[
+              const SizedBox(height: 8),
+              const AppText(
+                'Business aboneliğiniz aktif değil. Kişisel araçlarınız ve kredileriniz korunur.',
+              ),
+            ],
           ],
         ),
       ),

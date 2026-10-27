@@ -12,6 +12,7 @@ class AuthService {
   const AuthService({this.apiClient = const ApiClient()});
 
   final ApiClient apiClient;
+  static int _profileRequest = 0;
 
   Future<AuthResponse> login({
     required String email,
@@ -47,6 +48,11 @@ class AuthService {
         companyName: authResponse.businessAccount?.companyName,
         role: authResponse.businessAccount?.role,
         subscriptionPlan: authResponse.subscriptionPlan,
+        businessAvailable:
+            authResponse.businessAccount?.workspaceAvailable == true,
+        businessAccessStatus:
+            authResponse.businessAccount?.workspaceAccessStatus ?? 'UNKNOWN',
+        businessSandbox: authResponse.businessAccount?.sandbox ?? false,
       );
       try {
         await WelcomeCreditService.claim().timeout(const Duration(seconds: 15));
@@ -121,6 +127,11 @@ class AuthService {
       companyName: authResponse.businessAccount?.companyName,
       role: authResponse.businessAccount?.role,
       subscriptionPlan: authResponse.subscriptionPlan,
+      businessAvailable:
+          authResponse.businessAccount?.workspaceAvailable == true,
+      businessAccessStatus:
+          authResponse.businessAccount?.workspaceAccessStatus ?? 'UNKNOWN',
+      businessSandbox: authResponse.businessAccount?.sandbox ?? false,
     );
     try {
       await WelcomeCreditService.claim().timeout(const Duration(seconds: 15));
@@ -213,6 +224,7 @@ class AuthService {
   }
 
   Future<UserProfile> getCurrentUser() async {
+    final request = ++_profileRequest;
     final workspace = WorkspaceSession.capture();
     final scope = SessionManager.imageScope.value;
     final response = await apiClient.get('/auth/me');
@@ -223,6 +235,12 @@ class AuthService {
 
     final user = UserProfile.fromJson(Map<String, dynamic>.from(response));
     WorkspaceSession.check(workspace);
+    if (request != _profileRequest) {
+      throw const ApiException(
+        statusCode: 409,
+        message: 'Daha güncel profil bilgisi alındı.',
+      );
+    }
     if (identical(scope, SessionManager.imageScope.value)) {
       SessionManager.updateImageUserScope(
         user.id,
@@ -236,6 +254,10 @@ class AuthService {
       companyName: user.businessAccount?.companyName,
       role: user.businessAccount?.role,
       subscriptionPlan: user.subscriptionPlan,
+      businessAvailable: user.businessAccount?.workspaceAvailable == true,
+      businessAccessStatus:
+          user.businessAccount?.workspaceAccessStatus ?? 'UNKNOWN',
+      businessSandbox: user.businessAccount?.sandbox ?? false,
     );
     return user;
   }

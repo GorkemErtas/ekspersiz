@@ -25,6 +25,7 @@ class RevenueCatGateway {
   bool get supportsCurrentPlatform => Platform.isAndroid || Platform.isIOS;
 
   Future<bool> configure(String appUserId) {
+    if (!supportsCurrentPlatform) return Future.value(false);
     final scope = WorkspaceSession.capture();
     final next = _configuration.then((_) async {
       WorkspaceSession.check(scope);
