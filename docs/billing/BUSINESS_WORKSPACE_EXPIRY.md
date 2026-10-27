@@ -134,6 +134,12 @@ geçici ağ hatası ve navigation cache senaryoları ayrıca doğrulanır.
 | Değişen Dart kaynak/testlerinde format | Değişiklik yok, başarılı |
 | `git diff --check` | Başarılı |
 
+PR #40 CI koşusunda analiz, Flutter testleri ve tüm backend kontrolleri geçti;
+Android APK adımı runner diski dolduğu için `No space left on device` ile durdu.
+Mobil CI akışına, yalnız Android işinde kullanılmayan hazır .NET/Haskell/Swift/CodeQL
+araçlarını temizleyip disk alanını raporlayan adım eklendi. Android SDK, Java,
+Flutter ve kaynak kod korunur; tam APK derleme kontrolü kaldırılmadı.
+
 Atlananlar mevcut `AiAssistantBusinessConcurrencyIT` ve
 `AiAssistantServiceConcurrencyIT`; Docker bulunamadığı için kendi
 `disabledWithoutDocker` koşullarıyla atlandılar. SQL/JPA ve yeni expiry
