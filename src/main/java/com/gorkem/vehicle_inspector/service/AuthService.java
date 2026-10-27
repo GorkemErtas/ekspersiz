@@ -226,7 +226,8 @@ public class AuthService {
                 .map(member -> new BusinessAccountResponse(
                         member.getBusinessAccount().getId(),
                         member.getBusinessAccount().getCompanyName(),
-                        member.getRole()
+                        member.getRole(),
+                        member.getBusinessAccount().isSandbox()
                 ))
                 .orElse(null);
     }

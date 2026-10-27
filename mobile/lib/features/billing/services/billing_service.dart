@@ -90,10 +90,21 @@ class BillingService {
       throw StateError('Satın alma mağazası şu anda kullanılamıyor.');
     }
     WorkspaceSession.check(scope);
-    // Recover an already paid subscription without opening a second payment.
-    if (overview.status.currentPlan == plan.plan) return sync();
-    currentPlan = overview.status.currentPlan;
-    currentProductId = overview.status.productId;
+    // One explicit reconciliation before opening a payment. No polling loop.
+    final verified = await sync();
+    WorkspaceSession.check(scope);
+    if (verified.status.currentPlan == plan.plan ||
+        verified.status.verificationStatus == 'SANDBOX_REJECTED') {
+      return verified;
+    }
+    if (plan.productId != null &&
+        await revenueCatGateway.hasActiveSubscription(plan.productId!)) {
+      WorkspaceSession.check(scope);
+      return verified;
+    }
+    WorkspaceSession.check(scope);
+    currentPlan = verified.status.currentPlan;
+    currentProductId = verified.status.productId;
     final packageIdentifier = plan.packageIdentifier;
 
     if (packageIdentifier == null) {

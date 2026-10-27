@@ -19,6 +19,8 @@ import java.util.Map;
 @Service
 public class FcmPushService {
     @org.springframework.beans.factory.annotation.Autowired
+    private com.gorkem.vehicle_inspector.service.billing.BusinessBillingPolicy businessBilling;
+    @org.springframework.beans.factory.annotation.Autowired
     private com.gorkem.vehicle_inspector.repository.BusinessMemberRepository memberships;
     private static final Logger log = LoggerFactory.getLogger(FcmPushService.class);
     private final DeviceTokenRepository tokens;
@@ -52,6 +54,8 @@ public class FcmPushService {
                 && memberships.findByUserId(notification.getUser().getId())
                     .filter(member -> member.getBusinessAccount().getId().equals(vehicle.getBusinessAccount().getId()))
                     .isEmpty()) return;
+        if (vehicle != null && vehicle.getBusinessAccount() != null && businessBilling != null
+                && !businessBilling.allowsCompanyAccess(notification.getUser(), vehicle.getBusinessAccount().getId())) return;
         Map<String, String> data = new HashMap<>();
         data.put("notificationId", notification.getId().toString());
         if (notification.getNavigationTarget() != null) {

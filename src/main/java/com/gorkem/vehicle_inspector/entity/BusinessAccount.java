@@ -19,6 +19,10 @@ public class BusinessAccount {
     )
     private String companyName;
 
+    // Immutable source boundary: an existing real company can never become a test company.
+    @Column(nullable = false, updatable = false)
+    private boolean sandbox;
+
     @Column(
             name = "created_at",
             nullable = false,
@@ -30,9 +34,16 @@ public class BusinessAccount {
     }
 
     public BusinessAccount(String companyName) {
+        this(companyName, false);
+    }
+
+    public BusinessAccount(String companyName, boolean sandbox) {
         this.companyName = companyName;
+        this.sandbox = sandbox;
         this.createdAt = LocalDateTime.now();
     }
+
+    public boolean isSandbox() { return sandbox; }
 
     public Long getId() {
         return id;

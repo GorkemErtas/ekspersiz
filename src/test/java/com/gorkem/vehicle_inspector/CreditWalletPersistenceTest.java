@@ -3,6 +3,9 @@ package com.gorkem.vehicle_inspector;
 import com.gorkem.vehicle_inspector.entity.User;
 import com.gorkem.vehicle_inspector.service.CreditWalletService;
 import com.gorkem.vehicle_inspector.service.billing.CreditCatalog;
+import com.gorkem.vehicle_inspector.service.billing.BillingSandboxPolicy;
+import com.gorkem.vehicle_inspector.service.billing.BusinessBillingPolicy;
+import com.gorkem.vehicle_inspector.exception.WorkspaceAccessDeniedException;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -39,7 +42,7 @@ class CreditWalletPersistenceTest {
         ds=new DriverManagerDataSource(url+"?currentSchema=credit_wallet_test,public",System.getProperty("credit.test.username","credit_test"),"");
         jdbc=new JdbcTemplate(ds);tx=new TransactionTemplate(new DataSourceTransactionManager(ds));
         // V1 is a pg_dump with explicit public names. Rewrite ONLY the isolated test schema.
-        for (int n=1;n<=17;n++) {
+        for (int n=1;n<=18;n++) {
             final int version=n;
             Path file;
             try(var paths=Files.list(Path.of("src/main/resources/db/migration"))) {
@@ -142,6 +145,154 @@ class CreditWalletPersistenceTest {
         jdbc.update("INSERT INTO business_accounts(id,company_name,created_at) VALUES (77,'Test',?)",now());
         jdbc.update("INSERT INTO business_members(business_account_id,user_id,role,joined_at) VALUES (77,?,'OWNER',?),(77,?,'MEMBER',?)",user.getId(),now(),other.getId(),now());
     }
+
+    BusinessBillingPolicy testCompany() {
+        user.setSubscriptionPlan(com.gorkem.vehicle_inspector.entity.SubscriptionPlan.BUSINESS);
+        user.setSubscriptionStartedAt(now());
+        user.setSubscriptionExpiresAt(now().plusMinutes(5));
+        jdbc.update("UPDATE users SET subscription_plan='BUSINESS',subscription_started_at=?,subscription_expires_at=? WHERE id=?",now(),now().plusMinutes(5),user.getId());
+        jdbc.update("INSERT INTO billing_subscriptions(user_id,product_id,status,store,auto_renewing,sandbox,current_period_started_at,current_period_ends_at,last_synced_at) VALUES (?,'eksper_business_monthly:monthly','ACTIVE','play_store',TRUE,TRUE,?,?,?)",user.getId(),now(),now().plusMinutes(5),now());
+        jdbc.update("INSERT INTO business_accounts(id,company_name,created_at,sandbox) VALUES (77,'Isolated test',?,TRUE)",now());
+        jdbc.update("INSERT INTO business_members(business_account_id,user_id,role,joined_at) VALUES (77,?,'OWNER',?),(77,?,'MEMBER',?)",user.getId(),now(),other.getId(),now());
+        var testers = new BillingSandboxPolicy(user.getBillingCustomerId()+","+other.getBillingCustomerId());
+        service = new CreditWalletService(jdbc, clock, testers);
+        return new BusinessBillingPolicy(jdbc, testers, clock);
+    }
+
+    @Test void sandboxBusinessBudgetIsIsolatedAndNeverRefilledByAcceleratedRenewals() {
+        buy(user,"eksper_analysis_5","personal-before-test");
+        var policy = testCompany();
+        assertTrue(policy.sandboxSubscription(user));
+        assertTrue(inTx(() -> service.account(user,true)).business());
+        assertEquals(3,inTx(() -> service.account(other,true).balances().get("ANALYSIS").available()));
+        assertEquals(10,inTx(() -> service.account(user,true).balances().get("ASSISTANT").available()));
+        for (int i=0;i<3;i++) {
+            final int operation=i;
+            run(() -> { var r=service.reserve(user,true,"ANALYSIS","test:"+operation,"same"); service.complete(user,r.token()); });
+        }
+        assertThrows(com.gorkem.vehicle_inspector.exception.InsufficientAnalysisCreditException.class,
+                () -> run(() -> service.reserve(user,true,"ANALYSIS","exhausted","same")));
+        for (int renewal=0;renewal<3;renewal++) {
+            clock.instant=clock.instant.plusSeconds(60);
+            jdbc.update("UPDATE users SET subscription_started_at=?,subscription_expires_at=? WHERE id=?",now(),now().plusMinutes(5),user.getId());
+            assertEquals(0,inTx(() -> service.account(user,true).balances().get("ANALYSIS").available()));
+        }
+        assertEquals(5,balance(user,"ANALYSIS"));
+        assertEquals(0,balance(other,"ANALYSIS"));
+        assertEquals(2,jdbc.queryForObject("SELECT count(*) FROM credit_events WHERE reason='SANDBOX_SUBSCRIPTION'",Integer.class));
+        assertEquals(0,jdbc.queryForObject("SELECT count(*) FROM credit_events WHERE reason='SUBSCRIPTION'",Integer.class));
+    }
+
+    @Test void removingTesterAuthorizationRevokesWorkspaceAndWalletBeforeAnyProviderSync() {
+        testCompany();
+        var reservation=inTx(() -> service.reserve(user,true,"ANALYSIS","in-flight","same"));
+        var revoked=new BusinessBillingPolicy(jdbc,new BillingSandboxPolicy(""),clock);
+        assertThrows(WorkspaceAccessDeniedException.class,() -> revoked.requireCompanyAccess(user,77));
+        assertThrows(WorkspaceAccessDeniedException.class,() -> revoked.requireCompanyAccess(other,77));
+        var plans=new com.gorkem.vehicle_inspector.service.SubscriptionService(
+                mock(com.gorkem.vehicle_inspector.repository.AnalysisUsageRepository.class),
+                mock(com.gorkem.vehicle_inspector.repository.VehicleRepository.class),clock);
+        ReflectionTestUtils.setField(plans,"businessBilling",revoked);
+        assertEquals(com.gorkem.vehicle_inspector.entity.SubscriptionPlan.FREE,plans.getEffectivePlan(user));
+        service=new CreditWalletService(jdbc,clock,new BillingSandboxPolicy(""));
+        assertThrows(WorkspaceAccessDeniedException.class,() -> run(() -> service.complete(user,reservation.token())));
+        run(() -> service.release(user,reservation.token())); // Safe release never needs active authorization.
+        assertTrue(inTx(() -> service.account(user,false)).canPurchase());
+    }
+
+    @Test void sandboxInvitationsAndExistingMembershipsCannotGiveRealUsersAccess() {
+        testCompany();
+        var ownerOnly=new BusinessBillingPolicy(jdbc,new BillingSandboxPolicy(user.getBillingCustomerId()),clock);
+        assertThrows(IllegalStateException.class,() -> ownerOnly.requireInvitation(user,other,77));
+        assertThrows(WorkspaceAccessDeniedException.class,() -> ownerOnly.requireCompanyAccess(other,77));
+        var both=new BusinessBillingPolicy(jdbc,new BillingSandboxPolicy(user.getBillingCustomerId()+","+other.getBillingCustomerId()),clock);
+        assertDoesNotThrow(() -> both.requireInvitation(user,other,77));
+        clock.instant=clock.instant.plusSeconds(301);
+        assertThrows(WorkspaceAccessDeniedException.class,() -> both.requireCompanyAccess(other,77));
+        assertThrows(WorkspaceAccessDeniedException.class,() -> both.requireInvitation(user,other,77));
+    }
+
+    @Test void sandboxEntitlementsCannotActivateRealCompaniesOrChangeTheirEnvironment() {
+        company();
+        var policy=new BusinessBillingPolicy(jdbc,new BillingSandboxPolicy(user.getBillingCustomerId()),clock);
+        assertFalse(policy.allowsSandboxSubscription(user));
+        assertThrows(org.springframework.dao.DataAccessException.class,
+                () -> jdbc.update("UPDATE business_accounts SET sandbox=TRUE WHERE id=77"));
+        jdbc.update("INSERT INTO billing_subscriptions(user_id,status,sandbox,auto_renewing,last_synced_at) VALUES (?,'ACTIVE',TRUE,TRUE,?)",user.getId(),now());
+        assertFalse(policy.companyEntitlementActive(77));
+        assertThrows(WorkspaceAccessDeniedException.class,() -> policy.requireCompanyAccess(other,77));
+        assertEquals(0,balance(user,"ANALYSIS"));
+    }
+
+    @Test void productionReceiptsAndPaidAddonsCannotEnterTestCompanyWallets() {
+        buy(user,"eksper_analysis_5","personal-real");
+        testCompany();
+        assertFalse(inTx(() -> service.account(user,true)).canPurchase());
+        assertThrows(IllegalStateException.class,() -> run(() -> service.preparePurchase(user,"eksper_analysis_5_business")));
+        jdbc.update("INSERT INTO credit_purchase_intents(id,customer_id,product_id,account_id,created_at,expires_at) VALUES (?,?,?,'business:77',?,?)",
+                UUID.randomUUID(),user.getBillingCustomerId(),"eksper_analysis_5_business",now(),now().plusDays(1));
+        run(() -> service.purchase(user,"eksper_analysis_5_business","foreign-real-wallet",now(),false,false));
+        assertEquals(3,inTx(() -> service.account(user,true).balances().get("ANALYSIS").available()));
+        assertEquals(5,balance(user,"ANALYSIS"));
+        assertEquals(0,jdbc.queryForObject("SELECT count(*) FROM credit_purchases WHERE transaction_id='foreign-real-wallet'",Integer.class));
+    }
+
+    @Test void concurrentSandboxConsumptionCannotExceedTheFixedBudget() throws Exception {
+        testCompany();
+        var pool=Executors.newFixedThreadPool(6); var gate=new CountDownLatch(1);
+        try {
+            List<Future<Boolean>> jobs=new ArrayList<>();
+            for(int i=0;i<6;i++) {
+                final int operation=i;
+                jobs.add(pool.submit(() -> { gate.await(); try {
+                    run(() -> { var r=service.reserve(user,true,"ANALYSIS","race-test:"+operation,"same"); service.complete(user,r.token()); });
+                    return true;
+                } catch(com.gorkem.vehicle_inspector.exception.InsufficientAnalysisCreditException exhausted) { return false; } }));
+            }
+            gate.countDown(); int successes=0;
+            for(var job:jobs) if(job.get(15,TimeUnit.SECONDS)) successes++;
+            assertEquals(3,successes);
+            assertEquals(0,inTx(() -> service.account(user,true).balances().get("ANALYSIS").available()));
+        } finally {pool.shutdownNow();}
+    }
+
+    @Test void personalSandboxConsumablesHaveAFiniteBudgetAndRefundsCannotResetIt() {
+        buy(user,"eksper_analysis_5","paid-before-test");
+        run(() -> service.preparePurchase(user,"eksper_analysis_20"));
+        for(int i=0;i<6;i++) {
+            final int transaction=i;
+            run(() -> service.purchase(user,"eksper_analysis_20","sandbox-capped:"+transaction,now(),false,true));
+        }
+        assertEquals(105,balance(user,"ANALYSIS"));
+        assertFalse(service.purchaseConfirmed(user,"sandbox-capped:5"));
+        run(() -> service.purchase(user,"eksper_analysis_20","sandbox-capped:0",now(),true,true));
+        run(() -> service.purchase(user,"eksper_analysis_20","sandbox-refund-bypass",now(),false,true));
+        assertEquals(85,balance(user,"ANALYSIS"));
+        assertFalse(service.purchaseConfirmed(user,"sandbox-refund-bypass"));
+        buy(user,"eksper_analysis_5","real-after-test-limit");
+        assertEquals(90,balance(user,"ANALYSIS"));
+    }
+
+    @Test void concurrentPersonalSandboxDeliveriesCannotExceedTheBudget() throws Exception {
+        run(() -> service.preparePurchase(user,"eksper_analysis_20"));
+        run(() -> service.preparePurchase(user,"eksper_analysis_5"));
+        for(int i=0;i<7;i++) {
+            final int transaction=i;
+            run(() -> service.purchase(user,transaction<4?"eksper_analysis_20":"eksper_analysis_5","budget-seed:"+transaction,now(),false,true));
+        }
+        assertEquals(95,balance(user,"ANALYSIS"));
+        var pool=Executors.newFixedThreadPool(2); var gate=new CountDownLatch(1);
+        try {
+            List<Future<?>> jobs=new ArrayList<>();
+            for(int i=0;i<2;i++) { final int transaction=i;
+                jobs.add(pool.submit(() -> { gate.await(); run(() -> service.purchase(user,"eksper_analysis_5","budget-race:"+transaction,now(),false,true)); return null; }));
+            }
+            gate.countDown(); for(var job:jobs) job.get(10,TimeUnit.SECONDS);
+            assertEquals(100,balance(user,"ANALYSIS"));
+            assertEquals(1,jdbc.queryForObject("SELECT count(*) FROM credit_purchases WHERE transaction_id LIKE 'budget-race:%'",Integer.class));
+        } finally { pool.shutdownNow(); }
+    }
+
 
     @AfterEach void clearWorkspaceRequest() {
         org.springframework.web.context.request.RequestContextHolder.resetRequestAttributes();
@@ -356,7 +507,9 @@ class CreditWalletPersistenceTest {
     @Test void authenticatedWebhookAndRevenueCatReconciliationRecoverOldPurchaseWithoutDoubleGrant() {
         var users=mock(com.gorkem.vehicle_inspector.repository.UserRepository.class);
         when(users.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
+        when(users.findByEmailForUpdate(user.getEmail())).thenReturn(Optional.of(user));
         when(users.findByBillingCustomerId(user.getBillingCustomerId())).thenReturn(Optional.of(user));
+        when(users.findByBillingCustomerIdForUpdate(user.getBillingCustomerId())).thenReturn(Optional.of(user));
         var subscriptions=mock(com.gorkem.vehicle_inspector.repository.BillingSubscriptionRepository.class);
         var events=mock(com.gorkem.vehicle_inspector.repository.BillingWebhookEventRepository.class);
         when(events.existsByProviderEventIdAndEnvironmentIn(anyString(),any())).thenAnswer(call -> {

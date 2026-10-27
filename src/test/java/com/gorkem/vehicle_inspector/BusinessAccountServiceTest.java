@@ -43,6 +43,7 @@ class BusinessAccountServiceTest {
 
     @BeforeEach
     void setUp() {
+        lenient().when(userRepository.findByEmailForUpdate(anyString())).thenAnswer(i -> userRepository.findByEmail(i.getArgument(0)));
         businessAccountService =
                 new BusinessAccountService(
                         businessAccountRepository,

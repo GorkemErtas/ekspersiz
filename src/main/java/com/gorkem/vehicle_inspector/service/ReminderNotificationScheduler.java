@@ -16,6 +16,8 @@ import java.util.List;
 
 @Service
 public class ReminderNotificationScheduler {
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.gorkem.vehicle_inspector.service.billing.BusinessBillingPolicy businessBilling;
     private static final List<Integer> DATE_THRESHOLDS = List.of(30, 7, 1, 0);
     private final VehicleReminderRepository reminders;
     private final BusinessMemberRepository members;
@@ -91,7 +93,9 @@ public class ReminderNotificationScheduler {
             return vehicle.getUser() == null ? List.of() : List.of(vehicle.getUser());
         }
         return members.findByBusinessAccountId(vehicle.getBusinessAccount().getId())
-                .stream().map(BusinessMember::getUser).toList();
+                .stream().map(BusinessMember::getUser)
+                .filter(user -> businessBilling == null || businessBilling.allowsCompanyAccess(user, vehicle.getBusinessAccount().getId()))
+                .toList();
     }
 
     private NotificationSeverity severity(long days) {

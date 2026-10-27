@@ -146,7 +146,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
     final confirmed = await widget.billingService.purchaseCredit(product);
     return confirmed
         ? 'Satın alma doğrulandı. Bakiyeniz güncellendi.'
-        : 'Ödemeniz doğrulanıyor. Krediler doğrulama tamamlanınca otomatik eklenecek.';
+        : 'Satın alma için henüz kredi eklenmedi. Tekrar ödeme yapmadan yeniden kontrol edin.';
   });
   Future<void> _subscribe(BillingPlan plan) => _perform(() async {
     final result = await widget.billingService.purchase(
@@ -169,7 +169,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
         : _verificationMessage(result.status.verificationStatus);
   });
   String _verificationMessage(String status) => status == 'SANDBOX_REJECTED'
-      ? 'Bu test satın alımı sandbox ortamında. Bu sunucu sandbox aboneliklerine Business hakkı vermez. Tekrar satın almayın.'
+      ? 'Bu test satın alımı sandbox ortamında. Bu hesap veya şirket için test yetkisi doğrulanamadı. Hesabın sunucuda yetkilendirildiğini kontrol edin. Tekrar satın almayın.'
       : 'Aktif Business aboneliği henüz sunucu tarafından doğrulanmadı. Tekrar ödeme yapmadan yeniden kontrol edin.';
 
   Future<void> _continueBusiness() async {
@@ -496,6 +496,8 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
         ? regular - price.amount
         : null;
     final active = status.currentPlan == 'BUSINESS';
+    final testSubscription = active && status.sandbox;
+    final rejected = status.verificationStatus == 'SANDBOX_REJECTED';
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(AppTheme.cardPadding),
@@ -503,23 +505,33 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             AppText(
-              'Business${active ? ' · Abonelik aktif' : ''}',
+              'Business${testSubscription
+                  ? ' · Test aboneliği aktif'
+                  : active
+                  ? ' · Abonelik aktif'
+                  : ''}',
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 8),
             AppText(
-              '${price?.label ?? 'Referans: 4.999,99 TL'} / ay',
+              testSubscription
+                  ? 'Mağaza lisans testi aboneliği'
+                  : '${price?.label ?? 'Referans: 4.999,99 TL'} / ay',
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 12),
-            const AppText(
-              '10 ortak araç slotu\nHer dönemde 100 analiz + 200 asistan kredisi\nÇalışan daveti ve ortak araç yönetimi',
+            AppText(
+              testSubscription
+                  ? 'İzole test şirketi · 10 araç slotu\nTest boyunca toplam 3 analiz + 10 asistan kredisi\nYalnızca yetkili test hesapları davet edilebilir.'
+                  : '10 ortak araç slotu\nHer dönemde 100 analiz + 200 asistan kredisi\nÇalışan daveti ve ortak araç yönetimi',
             ),
             const SizedBox(height: 8),
-            const AppText(
-              'Haklar şirketin tamamı içindir. Dönemlik krediler devretmez; ayrıca satın alınan krediler süresizdir.',
+            AppText(
+              testSubscription
+                  ? 'Test kredileri yenilemeyle tekrar verilmez. Test şirketlerinde ek paket satın alınamaz.'
+                  : 'Haklar şirketin tamamı içindir. Dönemlik krediler devretmez; ayrıca satın alınan krediler süresizdir.',
             ),
-            if (savings != null) ...[
+            if (savings != null && !testSubscription) ...[
               const SizedBox(height: 10),
               AppText(
                 '100 analiz × ${analysis!.format(analysis.amount)} = ${analysis.format(analysis.amount * 100)}',
@@ -576,11 +588,13 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
               SizedBox(
                 width: double.infinity,
                 child: FilledButton(
-                  onPressed: _busy || price == null
+                  onPressed: _busy || price == null || rejected
                       ? null
                       : () => _subscribe(plan),
                   child: AppText(
-                    price == null
+                    rejected
+                        ? 'Test hesabı yetkilendirmesini kontrol edin'
+                        : price == null
                         ? 'Mağazada henüz kullanılamıyor'
                         : 'Business’a geç',
                   ),

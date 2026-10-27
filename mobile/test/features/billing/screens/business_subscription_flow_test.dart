@@ -33,6 +33,8 @@ class Store extends RevenueCatGateway {
   Object? failure;
   int purchases = 0;
   @override
+  Future<bool> hasActiveSubscription(String productId) async => server.paid;
+  @override
   Future<bool> configure(String appUserId) async {
     expect(appUserId, 'canonical-backend-customer');
     return true;
@@ -60,6 +62,7 @@ class Store extends RevenueCatGateway {
 class Server {
   bool paid = false;
   bool sandbox = false;
+  bool authorizedSandbox = false;
   bool delayed = false;
   bool failCreate = false;
   bool denyWorkspace = false;
@@ -73,7 +76,8 @@ class Server {
   bool delaySync = false;
   final syncStarted = Completer<void>();
   final syncGate = Completer<void>();
-  String get plan => paid && !sandbox && !delayed ? 'BUSINESS' : 'FREE';
+  String get plan =>
+      paid && (!sandbox || authorizedSandbox) && !delayed ? 'BUSINESS' : 'FREE';
   Future<http.Response> handle(http.Request request) async {
     final path = request.url.path.replaceFirst('/api/v1', '');
     final area = request.headers['X-Workspace'];
@@ -92,7 +96,8 @@ class Server {
           'productId': plan == 'BUSINESS'
               ? 'eksper_business_monthly:monthly'
               : null,
-          'verificationStatus': sandbox && paid
+          'sandbox': sandbox && plan == 'BUSINESS',
+          'verificationStatus': sandbox && paid && !authorizedSandbox
               ? 'SANDBOX_REJECTED'
               : plan == 'BUSINESS'
               ? 'VERIFIED'
@@ -327,6 +332,35 @@ void main() {
       expect(WorkspaceSession.state.value!.isBusiness, isFalse);
     }, () => MockClient(server.handle));
   });
+
+  testWidgets(
+    'authorized sandbox subscription uses explicit company consent and verified workspace',
+    (tester) async {
+      final server = Server()
+        ..sandbox = true
+        ..authorizedSandbox = true;
+      final store = Store(server);
+      await http.runWithClient(() async {
+        await open(tester, store);
+        await tap(tester, 'Business’a geç');
+        expect(find.byType(BusinessManagementScreen), findsOneWidget);
+        expect(server.creates, 0);
+        await tester.enterText(
+          find.byType(TextFormField).first,
+          'Isolated test company',
+        );
+        await tap(tester, 'Şirketi Oluştur');
+        expect(server.creates, 1);
+        expect(WorkspaceSession.state.value!.isBusiness, isTrue);
+        expect(store.purchases, 1);
+        expect(find.text('Business · Test aboneliği aktif'), findsOneWidget);
+        expect(
+          find.textContaining('toplam 3 analiz + 10 asistan'),
+          findsOneWidget,
+        );
+      }, () => MockClient(server.handle));
+    },
+  );
 
   for (final failure in [
     const BillingPurchasePending(),

@@ -176,6 +176,98 @@ class InspectionPersistenceTest {
         assertTrue(pendingRegistrations.findByEmail("pending@example.com").isEmpty());
     }
 
+    private record BillingFixture(BillingService billing, BusinessAccountService business,
+                                  com.gorkem.vehicle_inspector.client.RevenueCatClient provider) {}
+
+    private BillingFixture billingFixture(boolean sandbox) {
+        var testers = new com.gorkem.vehicle_inspector.service.billing.BillingSandboxPolicy(sandbox ? personal.getBillingCustomerId() : "");
+        var policy = new com.gorkem.vehicle_inspector.service.billing.BusinessBillingPolicy(jdbc,testers,CLOCK);
+        var plans = new SubscriptionService(usages,vehicles,CLOCK);
+        org.springframework.test.util.ReflectionTestUtils.setField(plans,"businessBilling",policy);
+        var provider = mock(com.gorkem.vehicle_inspector.client.RevenueCatClient.class);
+        var billing = new BillingService(users,app.getBean(BillingSubscriptionRepository.class),
+                app.getBean(BillingWebhookEventRepository.class),plans,provider,
+                new com.gorkem.vehicle_inspector.service.billing.RevenueCatWebhookVerifier("verified-hook","",CLOCK),
+                new com.fasterxml.jackson.databind.ObjectMapper(),CLOCK);
+        org.springframework.test.util.ReflectionTestUtils.setField(billing,"businessBilling",policy);
+        org.springframework.test.util.ReflectionTestUtils.setField(billing,"sandboxPolicy",testers);
+        org.springframework.test.util.ReflectionTestUtils.setField(billing,"billingJdbc",jdbc);
+        var business = new BusinessAccountService(businesses,members,users,plans);
+        org.springframework.test.util.ReflectionTestUtils.setField(business,"businessBilling",policy);
+        return new BillingFixture(billing,business,provider);
+    }
+
+    private com.gorkem.vehicle_inspector.client.RevenueCatCustomer businessReceipt(boolean sandbox) {
+        return new com.gorkem.vehicle_inspector.client.RevenueCatCustomer(List.of(
+                new com.gorkem.vehicle_inspector.client.RevenueCatSubscription("eksper_business_monthly:monthly",
+                        CLOCK.instant(),CLOCK.instant().plusSeconds(3600),null,true,false,false,sandbox,"play_store")),
+                List.of(),null,personal.getBillingCustomerId());
+    }
+
+    @Test void verifiedSandboxSyncAndConcurrentCompanyConsentCreateOnlyOneIsolatedCompany() throws Exception {
+        var fixture = billingFixture(true);
+        when(fixture.provider().getCustomer(personal.getBillingCustomerId())).thenReturn(businessReceipt(true));
+        var status = tx.execute(s -> fixture.billing().sync(personal.getEmail())).status();
+        assertEquals(SubscriptionPlan.BUSINESS,status.currentPlan());
+        assertTrue(status.sandbox());
+        assertTrue(members.findByUserId(personal.getId()).isEmpty());
+        var pool = Executors.newFixedThreadPool(2); var gate = new CountDownLatch(1);
+        try {
+            List<Future<Boolean>> jobs = new java.util.ArrayList<>();
+            for(int i=0;i<2;i++) jobs.add(pool.submit(() -> { gate.await(); try {
+                tx.execute(s -> fixture.business().create(personal.getEmail(),
+                        new com.gorkem.vehicle_inspector.dto.request.CreateBusinessAccountRequest("Isolated company")));
+                return true;
+            } catch (IllegalStateException duplicate) { return false; } }));
+            gate.countDown(); int created=0;
+            for(var job:jobs) if(job.get(10,TimeUnit.SECONDS)) created++;
+            assertEquals(1,created);
+            assertTrue(members.findByUserId(personal.getId()).orElseThrow().getBusinessAccount().isSandbox());
+            assertEquals(1,jdbc.queryForObject("SELECT count(*) FROM business_accounts WHERE company_name='Isolated company'",Integer.class));
+        } finally { pool.shutdownNow(); }
+    }
+
+    @Test void concurrentSyncCannotResurrectAnOlderReceiptAfterExpiry() throws Exception {
+        var fixture = billingFixture(false);
+        var firstProvider = new CountDownLatch(1); var releaseProvider = new CountDownLatch(1);
+        var secondStarted = new CountDownLatch(1); var calls = new java.util.concurrent.atomic.AtomicInteger();
+        when(fixture.provider().getCustomer(personal.getBillingCustomerId())).thenAnswer(i -> {
+            if(calls.incrementAndGet()==1) { firstProvider.countDown(); assertTrue(releaseProvider.await(5,TimeUnit.SECONDS)); return businessReceipt(false); }
+            return new com.gorkem.vehicle_inspector.client.RevenueCatCustomer(List.of(),List.of(),null);
+        });
+        var pool=Executors.newFixedThreadPool(2);
+        try {
+            var first=pool.submit(() -> tx.execute(s -> fixture.billing().sync(personal.getEmail())));
+            assertTrue(firstProvider.await(5,TimeUnit.SECONDS));
+            var second=pool.submit(() -> { secondStarted.countDown(); return tx.execute(s -> fixture.billing().sync(personal.getEmail())); });
+            assertTrue(secondStarted.await(5,TimeUnit.SECONDS));
+            assertThrows(TimeoutException.class,() -> second.get(200,TimeUnit.MILLISECONDS));
+            assertEquals(1,calls.get());
+            releaseProvider.countDown();
+            first.get(10,TimeUnit.SECONDS); second.get(10,TimeUnit.SECONDS);
+            assertEquals(SubscriptionPlan.FREE,users.findById(personal.getId()).orElseThrow().getSubscriptionPlan());
+        } finally { releaseProvider.countDown(); pool.shutdownNow(); }
+    }
+
+    @Test void concurrentDuplicateWebhookCommitsOnlyOneVerifiedSubscriptionEvent() throws Exception {
+        var fixture=billingFixture(true);
+        when(fixture.provider().getCustomer(personal.getBillingCustomerId())).thenReturn(businessReceipt(true));
+        String event="""
+                {"event":{"id":"duplicate-business","type":"RENEWAL","environment":"SANDBOX","app_user_id":"%s"}}
+                """.formatted(personal.getBillingCustomerId());
+        var pool=Executors.newFixedThreadPool(2); var gate=new CountDownLatch(1);
+        try {
+            List<Future<?>> jobs=new java.util.ArrayList<>();
+            for(int i=0;i<2;i++) jobs.add(pool.submit(() -> { gate.await();
+                tx.executeWithoutResult(s -> fixture.billing().processRevenueCatWebhook("verified-hook",null,event)); return null;
+            }));
+            gate.countDown(); for(var job:jobs) job.get(10,TimeUnit.SECONDS);
+            verify(fixture.provider(),times(1)).getCustomer(personal.getBillingCustomerId());
+            assertEquals(1,jdbc.queryForObject("SELECT count(*) FROM billing_webhook_events WHERE provider_event_id='duplicate-business'",Integer.class));
+            assertEquals(SubscriptionPlan.BUSINESS,users.findById(personal.getId()).orElseThrow().getSubscriptionPlan());
+        } finally { pool.shutdownNow(); }
+    }
+
     @Test
     void accountDeletionRemovesPersonalVehicleAndInspectionData() {
         Long userId = personal.getId();
@@ -789,6 +881,10 @@ class InspectionPersistenceTest {
             AccountDeletionService.class
     })
     static class PersistenceConfig {
+        @Bean com.gorkem.vehicle_inspector.service.billing.BusinessBillingPolicy businessBillingPolicy(DataSource dataSource) {
+            return new com.gorkem.vehicle_inspector.service.billing.BusinessBillingPolicy(new JdbcTemplate(dataSource),
+                    new com.gorkem.vehicle_inspector.service.billing.BillingSandboxPolicy(""), CLOCK);
+        }
         // These existing fixtures deliberately exercise the legacy monthly-quota
         // compatibility path. Production requires CreditWalletService; the real
         // wallet SQL/concurrency is covered by CreditWalletPersistenceTest.

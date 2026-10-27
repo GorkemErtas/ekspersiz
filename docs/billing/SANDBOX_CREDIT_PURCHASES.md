@@ -30,18 +30,23 @@ Mevcut akış korunur:
 - E-posta, Play lisans test listesi, istemci bayrağı, RevenueCat subscriber
   attribute ve alias listesi bu yetkiyi vermez. Exact backend müşteri kimliği
   eşleşmelidir; izin hem billing hem cüzdan servisinde denetlenir.
-- İstisna **kişisel katalog kredileri** (analiz/asistan/slot) içindir.
-  Sandbox şirket kredileri ve sandbox abonelikler, izinli kullanıcı için de
-  kapalıdır. Böylece normal şirket üyeleri ortak havuz üzerinden ücretsiz
-  sandbox kredisine veya Business hakkına erişemez. Gerçek Business ve şirket
-  satın alımları mevcut kurallarıyla çalışır. Sandbox Business/şirket testi
-  gerekiyorsa ayrı ve izole bir tasarım gerekir; bu yama onu etkinleştirmez.
+- Kredi satın alma istisnası **kişisel katalog kredileri** (analiz/asistan/slot)
+  içindir; sandbox şirket consumable alımları kapalı kalır. 27 Ekim düzeltmesi
+  aynı listeyi sandbox Business aboneliğine de genişletir: yalnız doğrulanmış
+  canonical sahiplik ve kalıcı olarak izole test şirketi koşullarıyla.
+  [Business politikası ve yayın planı](PRODUCTION_BUSINESS_SANDBOX.md).
+  Yeni kişisel sandbox teslimleri canonical müşteri başına ömür boyu toplam
+  100 analiz, 200 asistan ve 10 slot ile sınırlıdır. Mevcut SANDBOX ledger
+  teslimleri sayılır; refund limiti geri açmaz. Eski bakiyeler ve gerçek ücretli
+  satın alımlar korunur. Limit aşımında test alımı kredilendirilmez.
 - Eski `BILLING_ALLOW_SANDBOX` artık okunmaz; `true` yapmak genel geçiş sağlamaz.
 - Listeden çıkarma yeni sandbox teslimlerini durdurur. Önceden teslim edilmiş
   bakiyeler topluca silinmez; gerçek alımlarla karışmış bakiyeye müdahale edilmez.
   Bu nedenle normal kullanıcı hesabını geçici olarak test hesabı yapmayın;
   ayrı test hesapları kullanın. Doğrulanmış sandbox iadeleri yetki kaldırıldıktan
   veya hesap silindikten sonra da sadece sandbox işlem kaydına uygulanır.
+  Bu paragraf kişisel consumable bakiyeleri içindir. Sandbox Business workspace
+  erişimi, davetler ve şirket kredisi tüketimi listeden çıkarmayla hemen kapanır.
 
 ## Kayıtlar, tekrar teslim ve migration
 

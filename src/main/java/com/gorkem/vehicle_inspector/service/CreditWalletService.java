@@ -4,6 +4,7 @@ import com.gorkem.vehicle_inspector.entity.User;
 import com.gorkem.vehicle_inspector.exception.InsufficientAnalysisCreditException;
 import com.gorkem.vehicle_inspector.service.billing.CreditCatalog;
 import com.gorkem.vehicle_inspector.service.billing.BillingSandboxPolicy;
+import com.gorkem.vehicle_inspector.service.billing.BusinessBillingPolicy;
 import com.gorkem.vehicle_inspector.service.workspace.WorkspaceResolver;
 import com.gorkem.vehicle_inspector.service.workspace.WorkspaceType;
 import com.gorkem.vehicle_inspector.exception.WorkspaceAccessDeniedException;
@@ -23,10 +24,14 @@ public class CreditWalletService {
     private final JdbcTemplate jdbc;
     private final Clock clock;
     private final BillingSandboxPolicy sandboxPolicy;
+    private final BusinessBillingPolicy businessBilling;
     public CreditWalletService(JdbcTemplate jdbc, Clock clock) { this(jdbc, clock, new BillingSandboxPolicy("")); }
-    @Autowired
     public CreditWalletService(JdbcTemplate jdbc, Clock clock, BillingSandboxPolicy sandboxPolicy) {
-        this.jdbc=jdbc; this.clock=clock; this.sandboxPolicy=sandboxPolicy;
+        this(jdbc, clock, sandboxPolicy, new BusinessBillingPolicy(jdbc, sandboxPolicy, clock));
+    }
+    @Autowired
+    public CreditWalletService(JdbcTemplate jdbc, Clock clock, BillingSandboxPolicy sandboxPolicy, BusinessBillingPolicy businessBilling) {
+        this.jdbc=jdbc; this.clock=clock; this.sandboxPolicy=sandboxPolicy; this.businessBilling=businessBilling;
     }
     public record Balance(long permanent, long periodic, long available, long debt, LocalDateTime periodEndsAt) {}
     public record Account(String id, boolean business, boolean canPurchase, boolean owner, Map<String,Balance> balances,
@@ -63,11 +68,8 @@ public class CreditWalletService {
         if (purchase && !"OWNER".equals(member.get("role")))
             throw new IllegalStateException("Şirket adına yalnızca şirket sahibi satın alabilir.");
         long id=number(member,"business_account_id");
-        var owners=jdbc.queryForList("SELECT u.subscription_plan,u.subscription_expires_at FROM users u JOIN business_members m ON m.user_id=u.id WHERE m.business_account_id=? AND m.role='OWNER'",id);
-        if (requireActive && (owners.isEmpty() || !"BUSINESS".equals(owners.getFirst().get("subscription_plan"))
-                || date(owners.getFirst().get("subscription_expires_at")) == null
-                || !date(owners.getFirst().get("subscription_expires_at")).isAfter(now())))
-            throw new IllegalStateException("Şirket aboneliği aktif değil.");
+        if (requireActive) businessBilling.requireActiveCompany(user, id);
+        else businessBilling.requireCompanyAccess(user, id);
         return "business:"+id;
     }
 
@@ -96,19 +98,25 @@ public class CreditWalletService {
         var end=date(owner.get("subscription_expires_at"));
         String plan=String.valueOf(owner.get("subscription_plan"));
         boolean eligible=company ? plan.equals("BUSINESS") : Set.of("PLUS","PRO").contains(plan);
+        if (company) eligible = eligible && businessBilling.companyEntitlementActive(id);
         if (!eligible || start==null || end==null || !end.isAfter(now())) {
             jdbc.update("UPDATE credit_wallets SET periodic=0 WHERE account_id=?",account);
             return;
         }
+        boolean sandbox = company && businessBilling.sandboxCompany(id);
         for (String resource:List.of("ANALYSIS","ASSISTANT")) {
             int amount=company ? (resource.equals("ANALYSIS")?100:200)
                     : resource.equals("ANALYSIS") ? (plan.equals("PRO")?10:5)
                     : (plan.equals("PRO")?5:3)*Math.max(1,(int)java.time.temporal.ChronoUnit.DAYS.between(start,end));
-            String key="period:"+account+":"+resource+":"+start.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS"));
-            int inserted=jdbc.update("INSERT INTO credit_events(event_key,account_id,resource,amount,reason) VALUES (?,?,?,?, 'SUBSCRIPTION') ON CONFLICT DO NOTHING",key,account,resource,amount);
+            // A fixed lifetime test budget, never replenished by accelerated sandbox renewals.
+            if (sandbox) amount=resource.equals("ANALYSIS")?BusinessBillingPolicy.SANDBOX_ANALYSES:BusinessBillingPolicy.SANDBOX_ASSISTANT;
+            String key=sandbox ? "sandbox-budget:"+account+":"+resource
+                    : "period:"+account+":"+resource+":"+start.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS"));
+            int inserted=jdbc.update("INSERT INTO credit_events(event_key,account_id,resource,amount,reason) VALUES (?,?,?,?,?) ON CONFLICT DO NOTHING",key,account,resource,amount,sandbox?"SANDBOX_SUBSCRIPTION":"SUBSCRIPTION");
             if (inserted>0) jdbc.update("UPDATE credit_wallets SET periodic=?,period_start=?,period_end=? WHERE account_id=? AND resource=? AND (period_start IS NULL OR period_start<=?)",amount,start,end,account,resource,start);
             // A grace extension changes expiry, never grants a second allocation.
-            jdbc.update("UPDATE credit_wallets SET period_end=? WHERE account_id=? AND resource=? AND period_start=?",end,account,resource,start);
+            if (sandbox) jdbc.update("UPDATE credit_wallets SET period_end=? WHERE account_id=? AND resource=?",end,account,resource);
+            else jdbc.update("UPDATE credit_wallets SET period_end=? WHERE account_id=? AND resource=? AND period_start=?",end,account,resource,start);
         }
     }
 
@@ -133,6 +141,7 @@ public class CreditWalletService {
         boolean canPurchase=owner;
         if (business) {
             try { resolve(user,true,false); } catch (IllegalStateException inactive) { canPurchase=false; }
+            if (businessBilling.sandboxCompany(Long.parseLong(id.substring("business:".length())))) canPurchase=false;
         }
         return new Account(id,business,canPurchase,owner,Map.copyOf(balances),used,base+balances.get("SLOT").available());
     }
@@ -147,8 +156,7 @@ public class CreditWalletService {
     @Transactional
     public void validateBusinessSlots(long businessId) {
         String account="business:"+businessId; lock(account);
-        Boolean active=jdbc.queryForObject("SELECT EXISTS(SELECT 1 FROM business_members m JOIN users u ON u.id=m.user_id WHERE m.business_account_id=? AND m.role='OWNER' AND u.subscription_plan='BUSINESS' AND u.subscription_expires_at>?)",Boolean.class,businessId,now());
-        if (!Boolean.TRUE.equals(active)) throw new IllegalStateException("Yeni şirket aracı eklemek için Business aboneliğinizi yenileyin.");
+        if (!businessBilling.companyEntitlementActive(businessId)) throw new IllegalStateException("Yeni şirket aracı eklemek için Business aboneliğinizi yenileyin.");
         long extras=jdbc.queryForObject("SELECT GREATEST(0,permanent-debt) FROM credit_wallets WHERE account_id=? AND resource='SLOT'",Long.class,account);
         long used=jdbc.queryForObject("SELECT COUNT(*) FROM vehicles WHERE business_account_id=? AND NOT archived",Long.class,businessId);
         if (used>=10+extras) throw new IllegalStateException("Şirket araç kapasitesi dolu ("+used+"/"+(10+extras)+"). Şirket sahibi ek araç slotu satın alabilir.");
@@ -272,6 +280,8 @@ public class CreditWalletService {
             throw new WorkspaceAccessDeniedException();
         }
         String account=resolve(user,product.business(),true);
+        if (product.business() && businessBilling.sandboxCompany(Long.parseLong(account.substring("business:".length()))))
+            throw new IllegalStateException("Test şirketlerinde ücretli ek paketler kullanılamaz. Sınırlı test kredilerini kullanın.");
         if (WorkspaceResolver.requestedType() != null) WorkspaceResolver.requireAccount(user.getId(), account);
         lock(account);
         UUID id=UUID.randomUUID();
@@ -330,8 +340,19 @@ public class CreditWalletService {
             if (intents.isEmpty()) return;
             account=(String)intents.getFirst().get("account_id");
         }
-        lock(account);
+        // Even a delayed production receipt cannot deliver real credits into an isolated test company.
+        if (account.startsWith("business:") && businessBilling.sandboxCompany(Long.parseLong(account.substring("business:".length())))) return;
         String resource=product==null?"ANALYSIS":product.resource(); int amount=product==null?legacy:product.quantity();
+        if (sandbox) {
+            // All free test delivery paths are finite, including the existing personal consumable path.
+            // Serialize different transactions for the same tester; refunded grants still spend the budget.
+            jdbc.queryForObject("SELECT pg_advisory_xact_lock(hashtextextended(?, 0))",Object.class,
+                    "sandbox-delivery:"+user.getBillingCustomerId());
+            long delivered=jdbc.queryForObject("SELECT COALESCE(SUM(quantity),0) FROM credit_purchases WHERE customer_id=? AND environment='SANDBOX' AND resource=?",
+                    Long.class,user.getBillingCustomerId(),resource);
+            if (delivered+amount> sandboxPolicy.personalCreditLimit(resource)) return;
+        }
+        lock(account);
         jdbc.update("INSERT INTO credit_purchases(transaction_id,customer_id,account_id,product_id,resource,quantity,environment) VALUES (?,?,?,?,?,?,?)",transactionId,user.ensureBillingCustomerId(),account,productId,resource,amount,environment);
         jdbc.update("UPDATE credit_wallets SET permanent=permanent+? WHERE account_id=? AND resource=?",amount,account,resource);
         event("purchase:"+environment+":"+transactionId,account,resource,amount,"PURCHASE");
