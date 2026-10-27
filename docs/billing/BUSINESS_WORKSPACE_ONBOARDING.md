@@ -1,5 +1,8 @@
 # Business satın alma ve şirket kurulumu
 
+Üyelik ve güncel çalışma alanı erişiminin ayrımı, abonelik bitişindeki 403 döngüsü
+ve ilgili yayın sırası için [Business workspace expiry düzeltmesine](BUSINESS_WORKSPACE_EXPIRY.md) bakın.
+
 26 Ekim 2026; incelenen master: `d8109f6`. Bu çalışma deploy, Railway değişikliği,
 gerçek satın alma veya master merge içermez.
 
