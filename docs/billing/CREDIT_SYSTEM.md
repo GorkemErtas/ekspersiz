@@ -74,10 +74,12 @@ timestamp davranışını lisans test hesabıyla doğrulayın.
 
 Sunucu ortamı: mevcut `REVENUECAT_SECRET_API_KEY`, `REVENUECAT_WEBHOOK_AUTHORIZATION`
 ve varsa webhook imza ayarı. Mobil derlemede `REVENUECAT_ANDROID_PUBLIC_KEY`.
-Secret anahtarları Flutter'a koymayın. Test ve üretim RevenueCat/Play ortamlarını
-ayırın. Üretim backend'inde yalnızca sunucu izin listesindeki kişisel sandbox kredi
-testleri desteklenir; sandbox abonelik ve şirket kredileri kapalıdır.
-Kurulum ve eski alımları uzlaştırma: [Sandbox kredi testleri](SANDBOX_CREDIT_PURCHASES.md).
+Secret anahtarları Flutter'a koymayın. Satın alma kaynak ortamını kalıcı olarak
+ayırın. Üretim backend'inde sunucu izin listesindeki kişisel sandbox kredi
+testleri ve izole sandbox Business şirketleri desteklenir. Sandbox şirket
+consumable alımları kapalıdır; Business test bütçesi yenilemeyle artmaz.
+Kurulum: [Sandbox kredi testleri](SANDBOX_CREDIT_PURCHASES.md),
+[Business test politikası](PRODUCTION_BUSINESS_SANDBOX.md).
 
 Webhook `NON_RENEWING_PURCHASE` ve `CANCELLATION` kayıtları doğrulanmış exact
 `app_user_id` için işlenir; alias listesindeki her hesaba kredi verilmez.

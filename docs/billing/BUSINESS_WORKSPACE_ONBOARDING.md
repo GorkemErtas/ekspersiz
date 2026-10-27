@@ -60,21 +60,21 @@ refund, renewal, expiration, intent ve idempotency kodu korunur.
 
 ## Sandbox sınırı ve güvenli test
 
-`BILLING_SANDBOX_CUSTOMER_IDS` yalnız mevcut kişisel consumable testleri içindir;
-Business aboneliğini veya şirket cüzdanını açmaz. Bu yamada genel sandbox izni,
-yeni ortam bayrağı veya production hak yazımı eklenmedi.
+Bu bölüm PR #38 sonrasındaki 27 Ekim düzeltmesiyle güncellenmiştir.
+`BILLING_SANDBOX_CUSTOMER_IDS` artık doğrulanmış sandbox Business aboneliğini de
+yalnız canonical kimlik, mevcut gerçek şirkete üye olmama ve izole test şirketi
+koşullarıyla destekler. Genel sandbox izni yoktur. Ayrıntılar:
+[Production Business sandbox politikası ve yayın planı](PRODUCTION_BUSINESS_SANDBOX.md).
 
 Yerel testler native ödeme/RevenueCat sınırlarını kontrollü taklit eder. Backend
 service testleri gerçek plan/şirket/auth/workspace zincirini çalıştırır; kredi
 testleri yalnız yerel disposable `credit_system_test` veritabanına bağlanır.
 Bu testler gerçek ödeme veya canlı webhook doğrulaması değildir.
 
-Gerçek sandbox Business E2E için ayrı test uygulaması, RevenueCat proje/anahtarları,
-backend ve disposable veritabanı gerekir. Production kullanıcıları/cüzdanları,
-anahtarları veya webhook endpoint'i paylaşılmamalıdır. Yalnız bu izolasyonun
-garanti edildiği ayrı test backend'inde sandbox kabulü tasarlanmalıdır; mevcut
-production backend bu kullanım için açılmamalıdır. Bu çalışma böyle bir ortam
-kurmaz veya yayınlamaz. [RevenueCat webhook ortamları](https://www.revenuecat.com/docs/integrations/webhooks).
+Lisans test hesapları aynı production backend ve webhook endpoint'ini kullanır.
+V18 şirket ortamını kalıcı ve değişmez tutar; test şirketi gerçek şirketlere veya
+kredi havuzlarına çevrilemez. Test kredileri yenilemeyle artmaz. Ayrı staging
+ortamı bu çözümün koşulu değildir.
 
 ## Manuel doğrulama
 
@@ -82,8 +82,9 @@ kurmaz veya yayınlamaz. [RevenueCat webhook ortamları](https://www.revenuecat.
   yetkili panelde karşılaştırın. Alias'ı tek başına doğrulama saymayın. Secret,
   JWT, ödeme token'ı, raw webhook veya kişisel veri loglamayın.
 - Mevcut işlemin SKU/base-plan, `is_sandbox`, purchase/expires/grace/refund ve
-  unsubscribe durumlarını kontrol edin. Sandbox ise FREE ve `SANDBOX_REJECTED`
-  beklenir. Tekrar satın alma yapmayın.
+  unsubscribe durumlarını kontrol edin. Yetkili ve doğru canonical kimliğe ait
+  sandbox Business için BUSINESS + `sandbox=true` + `VERIFIED`; diğer sandbox
+  aboneliklerde `SANDBOX_REJECTED` beklenir. Tekrar satın alma yapmayın.
 - Production işlemi zaten mevcutsa `/billing/sync` ardından BUSINESS bekleyin;
   webhook authorization, ortam filtresi, event ID ve teslim sonucunu panelde
   kontrol edin. Webhook başarısı tek başına güncel üyelik veya workspace değildir.
