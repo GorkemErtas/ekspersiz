@@ -15,7 +15,7 @@ export function useAction() {
     };
   }, []);
   async function run(action: () => Promise<unknown>, success?: () => void) {
-    if (pending.current) return;
+    if (pending.current || !mounted.current) return;
     Keyboard.dismiss();
     pending.current = true;
     setBusy(true);

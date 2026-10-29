@@ -172,6 +172,12 @@ export const typography = {
     fontFamily: fonts.medium,
     fontWeight: '700',
   },
+  titleSmall: {
+    fontSize: 14,
+    lineHeight: 20,
+    fontFamily: fonts.medium,
+    fontWeight: '700',
+  },
   bodyLarge: {
     fontSize: 16,
     lineHeight: 24,

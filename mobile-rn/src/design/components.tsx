@@ -7,7 +7,6 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
   TextInput,
   useWindowDimensions,
   View,
@@ -16,11 +15,15 @@ import {
   type TextProps,
   type ViewStyle,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from 'react-native-safe-area-context';
 import Animated, {
   Easing,
   FadeIn,
   ReduceMotion,
+  useReducedMotion,
 } from 'react-native-reanimated';
 import { useTheme } from './ThemeProvider';
 import {
@@ -34,6 +37,46 @@ import {
 } from './tokens';
 
 const glyphs = {
+  outward: 0xf0019,
+  crashRound: 0xf07eb,
+  pdfShare: 0xf826,
+  search: 0xf013d,
+  build: 0xef06,
+  location: 0xf193,
+  history: 0xf7ef,
+  more: 0xf8dc,
+  badge: 0xeeb8,
+  garage: 0xf0bf,
+  star: 0xf01d4,
+  speed: 0xf01b5,
+  crash: 0xf06e3,
+  findings: 0xf89f,
+  close: 0xf647,
+  premium: 0xf06a1,
+  forward: 0xf57a,
+  swap: 0xf01fa,
+  health: 0xf0f2,
+  carOutline: 0xefc6,
+  homeOutline: 0xf107,
+  reportOutline: 0xefae,
+  home: 0xf7f5,
+  car: 0xf6b3,
+  report: 0xf69b,
+  bell: 0xf237,
+  sparkles: 0xf596,
+  shield: 0xf379,
+  chevron: 0xf63b,
+  calendar: 0xf051f,
+  warning: 0xf02a0,
+  tools: 0xef06,
+  add: 0xf537,
+  edit: 0xf00d,
+  camera: 0xf29b,
+  gallery: 0xf29d,
+  map: 0xf1ae,
+  mic: 0xf8bd,
+  stop: 0xf01dc,
+  share: 0xf378,
   email: 0xf89b,
   lock: 0xf888,
   visible: 0xf4a1,
@@ -57,6 +100,54 @@ const glyphs = {
   delete: 0xf696,
 } as const;
 export type IconName = keyof typeof glyphs;
+export function IconButton({
+  label,
+  icon,
+  onPress,
+  disabled = false,
+  surface = false,
+  filled = false,
+  color,
+}: {
+  label: string;
+  icon: IconName;
+  onPress: () => void;
+  disabled?: boolean;
+  surface?: boolean;
+  filled?: boolean;
+  color?: string;
+}) {
+  const { colors } = useTheme();
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ disabled }}
+      disabled={disabled}
+      onPress={onPress}
+      style={({ pressed }) => ({
+        width: 48,
+        height: 48,
+        borderRadius: 16,
+        backgroundColor: filled
+          ? colors.primary
+          : surface
+            ? colors.surface
+            : 'transparent',
+        borderWidth: surface ? 1 : 0,
+        borderColor: colors.border,
+        alignItems: 'center',
+        justifyContent: 'center',
+        opacity: disabled ? 0.5 : pressed ? 0.75 : 1,
+      })}
+    >
+      <Icon
+        name={icon}
+        color={color ?? (filled ? colors.onPrimary : colors.text)}
+      />
+    </Pressable>
+  );
+}
 export function Icon({
   name,
   size = 22,
@@ -67,8 +158,9 @@ export function Icon({
   color?: string;
 }) {
   const { colors } = useTheme();
+  const reduce = useReducedMotion();
   return (
-    <Text
+    <Animated.Text
       accessible={false}
       importantForAccessibility="no"
       allowFontScaling={false}
@@ -81,10 +173,12 @@ export function Icon({
         textAlign: 'center',
         color: color ?? colors.text,
         includeFontPadding: false,
+        transitionProperty: 'color',
+        transitionDuration: reduce ? 0 : motion.theme,
       }}
     >
       {String.fromCodePoint(glyphs[name])}
-    </Text>
+    </Animated.Text>
   );
 }
 export function AppText({
@@ -93,8 +187,9 @@ export function AppText({
   ...props
 }: TextProps & { variant?: keyof typeof typography }) {
   const { colors } = useTheme();
+  const reduce = useReducedMotion();
   return (
-    <Text
+    <Animated.Text
       {...props}
       style={[
         typography[variant],
@@ -104,6 +199,8 @@ export function AppText({
               ? colors.secondaryText
               : colors.text,
           includeFontPadding: false,
+          transitionProperty: 'color',
+          transitionDuration: reduce ? 0 : motion.theme,
         },
         style,
       ]}
@@ -364,11 +461,14 @@ export function Card({
   style?: ViewStyle;
 }) {
   const { colors } = useTheme();
+  const reduce = useReducedMotion();
   return (
-    <View
+    <Animated.View
       style={[
         {
           backgroundColor: colors.surface,
+          transitionProperty: ['backgroundColor', 'borderColor'],
+          transitionDuration: reduce ? 0 : motion.theme,
           borderColor: colors.border,
           borderWidth: 1,
           borderRadius: radius.large,
@@ -378,7 +478,7 @@ export function Card({
       ]}
     >
       {children}
-    </View>
+    </Animated.View>
   );
 }
 
@@ -391,17 +491,18 @@ export function AuthShell({
 }) {
   const { colors, mode } = useTheme();
   const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   return (
     <SafeAreaView style={styles.flex}>
       <KeyboardAvoidingView
         style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={insets.top}
       >
         <ScrollView
           contentContainerStyle={styles.authScroll}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
-          automaticallyAdjustKeyboardInsets
         >
           <Animated.View
             entering={FadeIn.duration(motion.slow)

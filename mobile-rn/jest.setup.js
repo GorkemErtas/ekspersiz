@@ -8,7 +8,8 @@ jest.mock('react-native-reanimated', () => {
   };
   return {
     __esModule: true,
-    default: { View: native.View },
+    default: { View: native.View, Text: native.Text },
+    useReducedMotion: () => false,
     FadeIn: animation,
     Easing: native.Easing,
     ReduceMotion: { System: 'system' },

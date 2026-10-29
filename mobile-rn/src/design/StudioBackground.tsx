@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, useEffect } from 'react';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import Svg, {
   Defs,
@@ -9,6 +9,13 @@ import Svg, {
   Stop,
 } from 'react-native-svg';
 import { useTheme } from './ThemeProvider';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  useReducedMotion,
+  withTiming,
+} from 'react-native-reanimated';
+import { palettes, motion, type ThemeMode } from './tokens';
 
 function luminance(hex: string) {
   const channels = [1, 3, 5].map((index) => {
@@ -19,8 +26,12 @@ function luminance(hex: string) {
 }
 
 /** Direct translation of _StudioSurfacePainter; anchored outside navigation/keyboard. */
-export const StudioBackground = memo(function StudioBackground() {
-  const { colors } = useTheme();
+const BackgroundArt = memo(function BackgroundArt({
+  mode,
+}: {
+  mode: ThemeMode;
+}) {
+  const colors = palettes[mode];
   const { width, height } = useWindowDimensions();
   const span = Math.min(width, 600),
     depth = Math.min(height, 1000);
@@ -106,6 +117,31 @@ export const StudioBackground = memo(function StudioBackground() {
           strokeWidth={1}
         />
       </Svg>
+    </View>
+  );
+});
+// Crossfade only the painter; navigation and protected screens are never mounted twice.
+export const StudioBackground = memo(function StudioBackground() {
+  const { mode } = useTheme(),
+    reduce = useReducedMotion(),
+    progress = useSharedValue(mode === 'light' ? 1 : 0);
+  useEffect(() => {
+    progress.value = withTiming(mode === 'light' ? 1 : 0, {
+      duration: reduce ? 0 : motion.theme,
+    });
+  }, [mode, reduce, progress]);
+  const lightStyle = useAnimatedStyle(() => ({ opacity: progress.value }));
+  return (
+    <View
+      pointerEvents="none"
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+      style={StyleSheet.absoluteFill}
+    >
+      <BackgroundArt mode="dark" />
+      <Animated.View style={[StyleSheet.absoluteFill, lightStyle]}>
+        <BackgroundArt mode="light" />
+      </Animated.View>
     </View>
   );
 });
