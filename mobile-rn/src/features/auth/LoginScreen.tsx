@@ -26,7 +26,7 @@ export default function LoginScreen() {
     if (emailError(email) || !password) return;
     void run(
       () => login(email, password),
-      () => router.replace('/account'),
+      () => router.replace('/main'),
     );
   };
   return (
@@ -90,7 +90,7 @@ export default function LoginScreen() {
         icon="google"
         disabled={busy}
         onPress={() => {
-          void run(googleLogin, () => router.replace('/account'));
+          void run(googleLogin, () => router.replace('/main'));
         }}
       />
       <Gap size={12} />

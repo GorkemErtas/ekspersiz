@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, BackHandler, StyleSheet, View } from 'react-native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -11,6 +11,14 @@ import { StudioBackground } from '../src/design/StudioBackground';
 import { SnackbarProvider } from '../src/design/Snackbar';
 import { AppText, Button } from '../src/design/components';
 import { restoreSession } from '../src/features/auth/auth';
+import { BootReadyContext } from '../src/core/BootContext';
+import Guide from '../src/features/onboarding/Guide';
+import { native } from '../src/platform/native';
+import {
+  checkUpdate,
+  performUpdate,
+  type UpdateStatus,
+} from '../src/platform/update';
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({
@@ -41,6 +49,11 @@ function Navigation() {
   const state = useSession();
   const [restored, setRestored] = useState(false),
     [error, setError] = useState('');
+  const [boot, setBoot] = useState<'loading' | 'guide' | 'update'>('loading'),
+    [update, setUpdate] = useState<UpdateStatus>({
+      required: false,
+      immediate: false,
+    });
   const restore = useCallback(() => {
     void restoreSession()
       .then(() => setRestored(true))
@@ -53,7 +66,34 @@ function Navigation() {
           );
       });
   }, []);
-  useEffect(restore, [restore]);
+  const begin = useCallback(() => {
+    void (async () => {
+      const status = await checkUpdate();
+      setUpdate(status);
+      if (status.required) {
+        setBoot('update');
+        return;
+      }
+      if (!(await native().installationCompleted())) {
+        setBoot('guide');
+        return;
+      }
+      restore();
+    })().catch((reason) =>
+      setError(
+        reason instanceof Error ? reason.message : 'Uygulama başlatılamadı.',
+      ),
+    );
+  }, [restore]);
+  useEffect(begin, [begin]);
+  useEffect(() => {
+    if (boot !== 'update') return;
+    const listener = BackHandler.addEventListener(
+      'hardwareBackPress',
+      () => true,
+    );
+    return () => listener.remove();
+  }, [boot]);
   return (
     <>
       <StatusBar style={mode === 'dark' ? 'light' : 'dark'} />
@@ -62,25 +102,28 @@ function Navigation() {
         accessibilityElementsHidden={!restored}
         importantForAccessibility={restored ? 'auto' : 'no-hide-descendants'}
       >
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            contentStyle: { backgroundColor: 'transparent' },
-            animation: 'fade_from_bottom',
-          }}
-        >
-          <Stack.Screen name="index" />
-          <Stack.Protected guard={!state.profile}>
-            <Stack.Screen name="login" />
-            <Stack.Screen name="register" />
-            <Stack.Screen name="forgot-password" />
-            <Stack.Screen name="verify-email" />
-          </Stack.Protected>
-          <Stack.Protected guard={!!state.profile}>
-            <Stack.Screen name="account" />
-            <Stack.Screen name="change-password" />
-          </Stack.Protected>
-        </Stack>
+        <BootReadyContext.Provider value={restored}>
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              contentStyle: { backgroundColor: 'transparent' },
+              animation: 'fade_from_bottom',
+            }}
+          >
+            <Stack.Screen name="index" />
+            <Stack.Protected guard={restored && !state.profile}>
+              <Stack.Screen name="login" />
+              <Stack.Screen name="register" />
+              <Stack.Screen name="forgot-password" />
+              <Stack.Screen name="verify-email" />
+            </Stack.Protected>
+            <Stack.Protected guard={restored && !!state.profile}>
+              <Stack.Screen name="(app)" />
+              <Stack.Screen name="account" />
+              <Stack.Screen name="change-password" />
+            </Stack.Protected>
+          </Stack>
+        </BootReadyContext.Provider>
       </View>
       {!restored && (
         <View
@@ -94,18 +137,53 @@ function Navigation() {
             backgroundColor: colors.background,
             justifyContent: 'center',
             alignItems: 'center',
-            padding: 22,
+            padding: boot === 'guide' ? 0 : 22,
             gap: 22,
           }}
         >
-          {error ? (
+          {boot === 'guide' ? (
+            <Guide
+              onFinish={() => {
+                setBoot('loading');
+                void native()
+                  .completeInstallation()
+                  .then(restore)
+                  .catch((reason) =>
+                    setError(
+                      reason instanceof Error
+                        ? reason.message
+                        : 'Tercihiniz kaydedilemedi.',
+                    ),
+                  );
+              }}
+            />
+          ) : boot === 'update' ? (
+            <>
+              <AppText variant="headlineSmall">Güncelleme Gerekli</AppText>
+              <AppText>
+                EksperSiz’in bu sürümü artık desteklenmiyor. Devam etmek için
+                uygulamayı güncelleyin.
+              </AppText>
+              <Button
+                label="Güncelle"
+                onPress={() =>
+                  void performUpdate(update)
+                    .then(begin)
+                    .catch(() =>
+                      setError('Mağaza açılamadı. Bağlantınızı kontrol edin.'),
+                    )
+                }
+              />
+              {error && <AppText accessibilityRole="alert">{error}</AppText>}
+            </>
+          ) : error ? (
             <>
               <AppText accessibilityRole="alert">{error}</AppText>
               <Button
                 label="Tekrar Dene"
                 onPress={() => {
                   setError('');
-                  restore();
+                  begin();
                 }}
               />
             </>

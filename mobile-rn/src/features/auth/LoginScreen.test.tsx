@@ -44,7 +44,7 @@ test('pending login retains its label, disables actions, and blocks duplicate su
   await act(async () => {
     complete();
   });
-  expect(mockReplace).toHaveBeenCalledWith('/account');
+  expect(mockReplace).toHaveBeenCalledWith('/main');
 });
 test('registration and password recovery preserve separate navigation actions', async () => {
   await render(<LoginScreen />);
