@@ -1,0 +1,64 @@
+{
+  "threshold": 0.01,
+  "resize": false,
+  "crop": false,
+  "includesSystemChrome": true,
+  "cases": [
+    {
+      "case": "main-dark",
+      "width": 390,
+      "height": 844,
+      "fraction": 0.08639567383643212,
+      "passed": false
+    },
+    {
+      "case": "vehicles-dark",
+      "width": 390,
+      "height": 844,
+      "fraction": 0.04027220804471989,
+      "passed": false
+    },
+    {
+      "case": "history-dark",
+      "width": 390,
+      "height": 844,
+      "fraction": 0.03919066715275246,
+      "passed": false
+    },
+    {
+      "case": "profile-dark",
+      "width": 390,
+      "height": 844,
+      "fraction": 0.041988698505286186,
+      "passed": false
+    },
+    {
+      "case": "guide-dark",
+      "width": 390,
+      "height": 844,
+      "fraction": 0.06121035362741524,
+      "passed": false
+    },
+    {
+      "case": "result-dark",
+      "width": 390,
+      "height": 844,
+      "fraction": 0.08011605298335156,
+      "passed": false
+    },
+    {
+      "case": "main-light",
+      "width": 390,
+      "height": 844,
+      "fraction": 0.050170130027949934,
+      "passed": false
+    },
+    {
+      "case": "main-tablet-dark",
+      "width": 1024,
+      "height": 768,
+      "fraction": 0.026789347330729168,
+      "passed": false
+    }
+  ]
+}
