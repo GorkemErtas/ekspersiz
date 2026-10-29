@@ -1,0 +1,8 @@
+node_modules
+.expo
+package-lock.json
+assets
+coverage
+android
+ios
+visual-artifacts
