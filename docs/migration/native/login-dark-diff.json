@@ -1,0 +1,11 @@
+{
+  "referencePath": "visual-artifacts/native/flutter-login-dark.png",
+  "nativePath": "visual-artifacts/native/login-dark-after.png",
+  "width": 390,
+  "height": 844,
+  "mismatchedPixels": 15799,
+  "fraction": 0.04799793413537489,
+  "maximum": 0.01,
+  "passed": false,
+  "review": "A numeric pass still requires human review of typography, layout, state, motion, accessibility, and native-device behavior."
+}

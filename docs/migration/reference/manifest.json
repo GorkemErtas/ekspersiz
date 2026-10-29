@@ -1,0 +1,79 @@
+{
+  "provenance": "Real Flutter auth widgets; original Inter Regular/Medium assets and original Material icon font. No RN render used as a reference.",
+  "date": "2026-10-29",
+  "logicalViewport": {
+    "width": 390,
+    "height": 844
+  },
+  "devicePixelRatio": 1,
+  "fontScale": 1,
+  "safeArea": {
+    "top": 0,
+    "bottom": 0,
+    "left": 0,
+    "right": 0
+  },
+  "keyboardPixels": false,
+  "reducedMotion": true,
+  "nativeComparisonAccepted": false,
+  "assets": [
+    {
+      "path": "mobile/assets/fonts/Inter-Regular.ttf",
+      "sha256": "15b294b67f2f8bbc04d990023ef4aec66502b87dc9040d84abe5f896ccb693de"
+    },
+    {
+      "path": "mobile/assets/fonts/Inter-Medium.ttf",
+      "sha256": "36a36ff7ac46dc2aeceac3a80a87a67e7b844b8fc936699259aac8fba9bcf734"
+    }
+  ],
+  "captures": [
+    {
+      "screen": "login",
+      "theme": "dark",
+      "file": "login-dark-phone.png",
+      "sha256": "5d35c0313bf1e0df4ef32e2b346f64862f303cefe95d56ff79ab4dd7892f845a"
+    },
+    {
+      "screen": "login",
+      "theme": "light",
+      "file": "login-light-phone.png",
+      "sha256": "5c2c53b18349e8d4e931a27dc48b0aa525f668803bc6a33b86341610b85edc32"
+    },
+    {
+      "screen": "register",
+      "theme": "dark",
+      "file": "register-dark-phone.png",
+      "sha256": "5aa96d41a6f11939c47516f8887c3608567db0d9790b44318e2ce75718283fc4"
+    },
+    {
+      "screen": "register",
+      "theme": "light",
+      "file": "register-light-phone.png",
+      "sha256": "437f781ca3d90729b9fc199b7ac60737771eb82a6022a76f5843bfde8c6c7c9b"
+    },
+    {
+      "screen": "forgot-password",
+      "theme": "dark",
+      "file": "forgot-password-dark-phone.png",
+      "sha256": "6b79065ecb1e654cc24190c80c32327d8210971c0aa4f19e704cccb9228b2ebf"
+    },
+    {
+      "screen": "forgot-password",
+      "theme": "light",
+      "file": "forgot-password-light-phone.png",
+      "sha256": "6d81008636cbe424e4e4913c190fbe5387251a485a0ccc7d98d57df04819ec00"
+    },
+    {
+      "screen": "verify-email",
+      "theme": "dark",
+      "file": "verify-email-dark-phone.png",
+      "sha256": "96c2b58f07c4cc7ce84613631926bd6a52fc680b025902a8926aceba6d2e1c35"
+    },
+    {
+      "screen": "verify-email",
+      "theme": "light",
+      "file": "verify-email-light-phone.png",
+      "sha256": "2fe8c37297f4edd6eea03d494585f60f54999eda17a67546a16dfcd3cafb5fe4"
+    }
+  ]
+}

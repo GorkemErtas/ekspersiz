@@ -1,0 +1,2334 @@
+{
+  "generatedFrom": "Working tree; regenerate after Flutter changes. Hashes are source provenance, not a claim of parity.",
+  "screens": [
+    "mobile/lib/features/ai_assistant/screens/ai_assistant_screen.dart",
+    "mobile/lib/features/auth/screens/change_password_screen.dart",
+    "mobile/lib/features/auth/screens/email_verification_screen.dart",
+    "mobile/lib/features/auth/screens/forgot_password_screen.dart",
+    "mobile/lib/features/auth/screens/login_screen.dart",
+    "mobile/lib/features/auth/screens/register_screen.dart",
+    "mobile/lib/features/auth/screens/splash_screen.dart",
+    "mobile/lib/features/billing/screens/subscription_screen.dart",
+    "mobile/lib/features/business/screens/business_management_screen.dart",
+    "mobile/lib/features/home/screens/home_screen.dart",
+    "mobile/lib/features/home/screens/main_shell.dart",
+    "mobile/lib/features/inspection/screens/analyzing_screen.dart",
+    "mobile/lib/features/inspection/screens/create_inspection_screen.dart",
+    "mobile/lib/features/inspection/screens/damage_assessment_record_screen.dart",
+    "mobile/lib/features/inspection/screens/inspection_history_screen.dart",
+    "mobile/lib/features/inspection/screens/inspection_result_screen.dart",
+    "mobile/lib/features/inspection/screens/nearby_services_screen.dart",
+    "mobile/lib/features/inspection/screens/upload_damage_image_screen.dart",
+    "mobile/lib/features/notification/screens/notification_center_screen.dart",
+    "mobile/lib/features/onboarding/screens/onboarding_screen.dart",
+    "mobile/lib/features/profile/screens/profile_screen.dart",
+    "mobile/lib/features/vehicle/screens/add_vehicle_screen.dart",
+    "mobile/lib/features/vehicle/screens/maintenance_form_screen.dart",
+    "mobile/lib/features/vehicle/screens/reminder_form_screen.dart",
+    "mobile/lib/features/vehicle/screens/vehicle_detail_screen.dart",
+    "mobile/lib/features/vehicle/screens/vehicle_list_screen.dart"
+  ],
+  "models": [
+    "mobile/lib/features/ai_assistant/models/ai_assistant_models.dart",
+    "mobile/lib/features/auth/models/auth_response.dart",
+    "mobile/lib/features/auth/models/business_account.dart",
+    "mobile/lib/features/auth/models/user_profile.dart",
+    "mobile/lib/features/billing/models/analysis_quota.dart",
+    "mobile/lib/features/billing/models/billing_overview.dart",
+    "mobile/lib/features/billing/models/billing_plan.dart",
+    "mobile/lib/features/billing/models/billing_status.dart",
+    "mobile/lib/features/billing/models/credit_catalog.dart",
+    "mobile/lib/features/business/models/business_member.dart",
+    "mobile/lib/features/inspection/models/damage_assessment_record.dart",
+    "mobile/lib/features/inspection/models/damage_detection.dart",
+    "mobile/lib/features/inspection/models/damage_inspection.dart",
+    "mobile/lib/features/inspection/models/damage_repair_recommendation.dart",
+    "mobile/lib/features/inspection/models/image_quality_result.dart",
+    "mobile/lib/features/inspection/models/inspection_labels.dart",
+    "mobile/lib/features/inspection/models/inspection_report.dart",
+    "mobile/lib/features/inspection/models/inspection_report_content.dart",
+    "mobile/lib/features/inspection/models/nearby_service.dart",
+    "mobile/lib/features/inspection/models/visual_finding.dart",
+    "mobile/lib/features/notification/models/app_notification.dart",
+    "mobile/lib/features/onboarding/models/onboarding_step.dart",
+    "mobile/lib/features/vehicle/models/maintenance_record.dart",
+    "mobile/lib/features/vehicle/models/vehicle.dart",
+    "mobile/lib/features/vehicle/models/vehicle_catalog.dart",
+    "mobile/lib/features/vehicle/models/vehicle_history_item.dart",
+    "mobile/lib/features/vehicle/models/vehicle_overview.dart",
+    "mobile/lib/features/vehicle/models/vehicle_reminder.dart"
+  ],
+  "services": [
+    "mobile/lib/features/ai_assistant/services/ai_assistant_service.dart",
+    "mobile/lib/features/auth/services/auth_service.dart",
+    "mobile/lib/features/billing/services/analysis_quota_service.dart",
+    "mobile/lib/features/billing/services/billing_service.dart",
+    "mobile/lib/features/billing/services/revenue_cat_gateway.dart",
+    "mobile/lib/features/billing/services/welcome_credit_service.dart",
+    "mobile/lib/features/business/services/business_service.dart",
+    "mobile/lib/features/inspection/services/damage_analysis_availability.dart",
+    "mobile/lib/features/inspection/services/damage_assessment_record_pdf_service.dart",
+    "mobile/lib/features/inspection/services/damage_assessment_record_service.dart",
+    "mobile/lib/features/inspection/services/inspection_image_cache.dart",
+    "mobile/lib/features/inspection/services/inspection_image_optimizer.dart",
+    "mobile/lib/features/inspection/services/inspection_pdf_service.dart",
+    "mobile/lib/features/inspection/services/inspection_service.dart",
+    "mobile/lib/features/inspection/services/nearby_service_service.dart",
+    "mobile/lib/features/notification/services/notification_service.dart",
+    "mobile/lib/features/vehicle/services/vehicle_service.dart",
+    "mobile/lib/features/vehicle/services/vehicle_tracking_service.dart"
+  ],
+  "backendDtos": [
+    "src/main/java/com/gorkem/vehicle_inspector/dto/google/GooglePlacesTextSearchResponse.java",
+    "src/main/java/com/gorkem/vehicle_inspector/dto/llm/DamageContext.java",
+    "src/main/java/com/gorkem/vehicle_inspector/dto/llm/InspectionLlmRequest.java",
+    "src/main/java/com/gorkem/vehicle_inspector/dto/llm/InspectionPriceEstimateResult.java",
+    "src/main/java/com/gorkem/vehicle_inspector/dto/llm/LlmInspectionReportResult.java",
+    "src/main/java/com/gorkem/vehicle_inspector/dto/llm/NearbyServiceSearchResult.java",
+    "src/main/java/com/gorkem/vehicle_inspector/dto/llm/VehicleContext.java",
+    "src/main/java/com/gorkem/vehicle_inspector/dto/request/AcceptBusinessInvitationRequest.java",
+    "src/main/java/com/gorkem/vehicle_inspector/dto/request/AiAssistantChatRequest.java",
+    "src/main/java/com/gorkem/vehicle_inspector/dto/request/ChangePasswordRequest.java",
+    "src/main/java/com/gorkem/vehicle_inspector/dto/request/CreateBusinessAccountRequest.java",
+    "src/main/java/com/gorkem/vehicle_inspector/dto/request/CreateBusinessInvitationRequest.java",
+    "src/main/java/com/gorkem/vehicle_inspector/dto/request/CreateVehicleRequest.java",
+    "src/main/java/com/gorkem/vehicle_inspector/dto/request/DamageAssessmentRecordRequest.java",
+    "src/main/java/com/gorkem/vehicle_inspector/dto/request/DeviceTokenRequest.java",
+    "src/main/java/com/gorkem/vehicle_inspector/dto/request/ForgotPasswordRequest.java",
+    "src/main/java/com/gorkem/vehicle_inspector/dto/request/GoogleLoginRequest.java",
+    "src/main/java/com/gorkem/vehicle_inspector/dto/request/LoginRequest.java",
+    "src/main/java/com/gorkem/vehicle_inspector/dto/request/MaintenanceRequest.java",
+    "src/main/java/com/gorkem/vehicle_inspector/dto/request/RegisterRequest.java",
+    "src/main/java/com/gorkem/vehicle_inspector/dto/request/ReminderRequest.java",
+    "src/main/java/com/gorkem/vehicle_inspector/dto/request/ResendVerificationRequest.java",
+    "src/main/java/com/gorkem/vehicle_inspector/dto/request/ResetPasswordRequest.java",
+    "src/main/java/com/gorkem/vehicle_inspector/dto/request/UpdateVehicleRequest.java",
+    "src/main/java/com/gorkem/vehicle_inspector/dto/request/VehicleTrackingRequest.java",
+    "src/main/java/com/gorkem/vehicle_inspector/dto/request/VerifyEmailRequest.java",
+    "src/main/java/com/gorkem/vehicle_inspector/dto/response/AiAnalysisResponse.java",
+    "src/main/java/com/gorkem/vehicle_inspector/dto/response/AiAssistantChatResponse.java",
+    "src/main/java/com/gorkem/vehicle_inspector/dto/response/AiAssistantDamageToolResponse.java",
+    "src/main/java/com/gorkem/vehicle_inspector/dto/response/AiAssistantEntitlementResponse.java",
+    "src/main/java/com/gorkem/vehicle_inspector/dto/response/AiAssistantPlanResponse.java",
+    "src/main/java/com/gorkem/vehicle_inspector/dto/response/AiAssistantReminderToolResponse.java",
+    "src/main/java/com/gorkem/vehicle_inspector/dto/response/AiAssistantVehicleToolResponse.java",
+    "src/main/java/com/gorkem/vehicle_inspector/dto/response/AnalysisQuotaResponse.java",
+    "src/main/java/com/gorkem/vehicle_inspector/dto/response/AuthResponse.java",
+    "src/main/java/com/gorkem/vehicle_inspector/dto/response/BillingOverviewResponse.java",
+    "src/main/java/com/gorkem/vehicle_inspector/dto/response/BillingPlanResponse.java",
+    "src/main/java/com/gorkem/vehicle_inspector/dto/response/BillingStatusResponse.java",
+    "src/main/java/com/gorkem/vehicle_inspector/dto/response/BusinessAccountResponse.java",
+    "src/main/java/com/gorkem/vehicle_inspector/dto/response/BusinessMemberResponse.java",
+    "src/main/java/com/gorkem/vehicle_inspector/dto/response/DamageAssessmentRecordResponse.java",
+    "src/main/java/com/gorkem/vehicle_inspector/dto/response/DamageDetectionResponse.java",
+    "src/main/java/com/gorkem/vehicle_inspector/dto/response/DamageInspectionResponse.java",
+    "src/main/java/com/gorkem/vehicle_inspector/dto/response/DamageRepairRecommendationResponse.java",
+    "src/main/java/com/gorkem/vehicle_inspector/dto/response/ImageQualityResponse.java",
+    "src/main/java/com/gorkem/vehicle_inspector/dto/response/InspectionReportResponse.java",
+    "src/main/java/com/gorkem/vehicle_inspector/dto/response/MaintenanceResponse.java",
+    "src/main/java/com/gorkem/vehicle_inspector/dto/response/NearbyServiceResponse.java",
+    "src/main/java/com/gorkem/vehicle_inspector/dto/response/NotificationResponse.java",
+    "src/main/java/com/gorkem/vehicle_inspector/dto/response/PhotoAssessmentResponse.java",
+    "src/main/java/com/gorkem/vehicle_inspector/dto/response/ReminderResponse.java",
+    "src/main/java/com/gorkem/vehicle_inspector/dto/response/RepairRecommendationResponse.java",
+    "src/main/java/com/gorkem/vehicle_inspector/dto/response/UnreadCountResponse.java",
+    "src/main/java/com/gorkem/vehicle_inspector/dto/response/UserResponse.java",
+    "src/main/java/com/gorkem/vehicle_inspector/dto/response/VehicleHistoryItemResponse.java",
+    "src/main/java/com/gorkem/vehicle_inspector/dto/response/VehicleOverviewResponse.java",
+    "src/main/java/com/gorkem/vehicle_inspector/dto/response/VehicleResponse.java",
+    "src/main/java/com/gorkem/vehicle_inspector/dto/response/VisualFindingResponse.java"
+  ],
+  "tests": [
+    "mobile/test/core/auth/password_token_rotation_test.dart",
+    "mobile/test/core/theme/app_theme_test.dart",
+    "mobile/test/core/widgets/app_background_test.dart",
+    "mobile/test/core/widgets/button_hierarchy_test.dart",
+    "mobile/test/core/widgets/compact_layout_test.dart",
+    "mobile/test/core/widgets/modern_ui_test.dart",
+    "mobile/test/core/workspace/workspace_access_test.dart",
+    "mobile/test/core/workspace/workspace_session_test.dart",
+    "mobile/test/features/ai_assistant/ai_assistant_service_test.dart",
+    "mobile/test/features/ai_assistant/assistant_message_body_test.dart",
+    "mobile/test/features/auth/models/user_contract_test.dart",
+    "mobile/test/features/billing/screens/business_subscription_flow_test.dart",
+    "mobile/test/features/billing/screens/subscription_screen_test.dart",
+    "mobile/test/features/billing/services/billing_service_test.dart",
+    "mobile/test/features/billing/services/revenue_cat_gateway_test.dart",
+    "mobile/test/features/business/screens/business_management_screen_test.dart",
+    "mobile/test/features/compact_secondary_screens_test.dart",
+    "mobile/test/features/dashboard_and_chat_test.dart",
+    "mobile/test/features/inspection/models/inspection_report_content_test.dart",
+    "mobile/test/features/inspection/screens/hitl_result_test.dart",
+    "mobile/test/features/inspection/screens/inspection_report_states_test.dart",
+    "mobile/test/features/inspection/screens/inspection_result_screen_test.dart",
+    "mobile/test/features/inspection/screens/two_photo_flow_test.dart",
+    "mobile/test/features/inspection/screens/unified_analysis_flow_test.dart",
+    "mobile/test/features/inspection/services/inspection_image_cache_test.dart",
+    "mobile/test/features/inspection/services/inspection_image_optimizer_test.dart",
+    "mobile/test/features/inspection/services/inspection_image_session_test.dart",
+    "mobile/test/features/inspection/services/inspection_pdf_service_test.dart",
+    "mobile/test/features/onboarding/onboarding_offline_assets_test.dart",
+    "mobile/test/features/onboarding/onboarding_screen_test.dart",
+    "mobile/test/features/onboarding/onboarding_store_test.dart",
+    "mobile/test/features/onboarding/splash_onboarding_test.dart",
+    "mobile/test/features/onboarding/support/guide_test_fonts.dart",
+    "mobile/test/features/onboarding/support/memory_onboarding_store.dart",
+    "mobile/test/features/profile/screens/profile_screen_test.dart",
+    "mobile/test/features/responsive_screens_test.dart",
+    "mobile/test/features/vehicle/screens/reminder_form_screen_test.dart",
+    "mobile/test/features/workspace/workspace_billing_race_test.dart",
+    "mobile/test/features/workspace/workspace_expiry_navigation_test.dart",
+    "mobile/test/features/workspace/workspace_shell_test.dart",
+    "mobile/test/fixtures/inspection/48mp.jpg",
+    "mobile/test/fixtures/inspection/animated.png",
+    "mobile/test/fixtures/inspection/animated.webp",
+    "mobile/test/fixtures/inspection/generate.py",
+    "mobile/test/fixtures/inspection/orientation-1.jpg",
+    "mobile/test/fixtures/inspection/orientation-2.jpg",
+    "mobile/test/fixtures/inspection/orientation-3.jpg",
+    "mobile/test/fixtures/inspection/orientation-4.jpg",
+    "mobile/test/fixtures/inspection/orientation-5.jpg",
+    "mobile/test/fixtures/inspection/orientation-6.jpg",
+    "mobile/test/fixtures/inspection/orientation-7.jpg",
+    "mobile/test/fixtures/inspection/orientation-8.jpg",
+    "mobile/test/fixtures/inspection/still.webp",
+    "mobile/test/support/inspection_report_fixture.dart",
+    "mobile/test/support/ui_mock_api.dart",
+    "mobile/test/support/ui_test_app.dart"
+  ],
+  "records": [
+    {
+      "path": "mobile/lib/core/auth/session_manager.dart",
+      "sha256": "700e692e7445c01e9e9efbf27b21f28ad75522876dfc9c622f5497c36f6808d2",
+      "lines": 39
+    },
+    {
+      "path": "mobile/lib/core/constants/api_constants.dart",
+      "sha256": "b3e8d991e76233c069a663f33374301c92ab98d86564dc184fde4ca0fb794c7d",
+      "lines": 15
+    },
+    {
+      "path": "mobile/lib/core/localization/app_locale_controller.dart",
+      "sha256": "71930575913402266c6d6f2638211f37c577100d0cde797c8574ba5fab18ad26",
+      "lines": 13
+    },
+    {
+      "path": "mobile/lib/core/localization/app_text.dart",
+      "sha256": "f037593a9387cd0742c3002fe86cc89ebe510fdba81ad10c6f167952433119f6",
+      "lines": 61
+    },
+    {
+      "path": "mobile/lib/core/network/api_client.dart",
+      "sha256": "41e5cca15d8eb668a1910c072cb505676da6bfe57cff57d8c2ba497974abf953",
+      "lines": 343
+    },
+    {
+      "path": "mobile/lib/core/network/api_exception.dart",
+      "sha256": "dbbe5998f3c80dc4296c2939dee91bffbdf938a625990161a9323f0878f65486",
+      "lines": 10
+    },
+    {
+      "path": "mobile/lib/core/notifications/firebase_bootstrap.dart",
+      "sha256": "3d9e96d92d9620e4bb67eab066e3a819f4af27398c454fa1838a09f1ac343d8a",
+      "lines": 22
+    },
+    {
+      "path": "mobile/lib/core/notifications/push_notification_service.dart",
+      "sha256": "85f4d8cffe0e50a0eecb9524eda975c2dd1a2cdac94cb716eabdd72f4cb49744",
+      "lines": 99
+    },
+    {
+      "path": "mobile/lib/core/storage/token_storage.dart",
+      "sha256": "072b60aa9b19f18643ac6a882b5cdd635bdd6e97ee0c926ca8461a22bcfa481c",
+      "lines": 41
+    },
+    {
+      "path": "mobile/lib/core/theme/app_theme.dart",
+      "sha256": "9314ea96c398aa45c7bae9856f92a3b95e01338899e5ab830cdb0f65f55fd933",
+      "lines": 919
+    },
+    {
+      "path": "mobile/lib/core/theme/app_theme_controller.dart",
+      "sha256": "883c3b9cd8b0ebfded8332746ba0c775bae230d4f2f1c5e1826d04fb56bfc6a6",
+      "lines": 41
+    },
+    {
+      "path": "mobile/lib/core/update/app_update_service.dart",
+      "sha256": "2ce78734a955551feb8659058708165285e0c2ee1fd55b9ed691ace16dfd631b",
+      "lines": 116
+    },
+    {
+      "path": "mobile/lib/core/widgets/app_adaptive_columns.dart",
+      "sha256": "405c23f1b57362032c7e0ba98063a7bf5bcc6f460cc688b5a4f6eb4b0148fa31",
+      "lines": 41
+    },
+    {
+      "path": "mobile/lib/core/widgets/app_background.dart",
+      "sha256": "2478832366f89be659b2a0abd7b7425a742cfacb3b4ba29e16ee82e0e8e12eb9",
+      "lines": 148
+    },
+    {
+      "path": "mobile/lib/core/widgets/app_card.dart",
+      "sha256": "a2c978b4694e6d83fdc818b4c2944ecc501bedcb81edf4ed58f50c446139ad4c",
+      "lines": 58
+    },
+    {
+      "path": "mobile/lib/core/widgets/app_content.dart",
+      "sha256": "e0ed6ff16e8e97909b906f4642e4b753f3d3ae546cc6aca5450fee0b3ed79200",
+      "lines": 19
+    },
+    {
+      "path": "mobile/lib/core/widgets/app_icon_box.dart",
+      "sha256": "e3cc6224dad4939631ecf5a6ae1b2fd7fff73c050034f3e2faa8cea556465279",
+      "lines": 57
+    },
+    {
+      "path": "mobile/lib/core/widgets/app_loading_card.dart",
+      "sha256": "7ddbafc728e86bcf830762df79be3471f56b97ab44ce3199796adf12d971a066",
+      "lines": 52
+    },
+    {
+      "path": "mobile/lib/core/widgets/app_motion.dart",
+      "sha256": "4f70368b72b3134fd7739c0a3d8efbd5a6dd008d828bc9c5dc71837a4598e842",
+      "lines": 148
+    },
+    {
+      "path": "mobile/lib/core/widgets/app_navigation_bar.dart",
+      "sha256": "8e6a7952e6636dfbe51e1b433431b0cdbf266741e7da8ea849ee0c29bc5b2010",
+      "lines": 76
+    },
+    {
+      "path": "mobile/lib/core/widgets/app_page_header.dart",
+      "sha256": "688a9009b8d84819aa9f954843bb252a1da87344174bb93f9c3c46030de46d13",
+      "lines": 148
+    },
+    {
+      "path": "mobile/lib/core/widgets/app_section_header.dart",
+      "sha256": "f41c842db03cf5dd4d501d0c59f1dd1756e9d1cc79f4f0a988b89cde4f2e0974",
+      "lines": 90
+    },
+    {
+      "path": "mobile/lib/core/widgets/app_state_view.dart",
+      "sha256": "c4ec31a56ca01d751445640b9fa16ea0c3692ef312cc34e3796b6504d2163586",
+      "lines": 188
+    },
+    {
+      "path": "mobile/lib/core/widgets/app_status_badge.dart",
+      "sha256": "7f7d6439247c94cf77db8a3a6e9c6d3eab209092ae4be4f30b8d58f9e499e488",
+      "lines": 59
+    },
+    {
+      "path": "mobile/lib/core/widgets/auth_shell.dart",
+      "sha256": "071f22dd2df1e343ec55d0e281d6448bc6d9e7434ada1f5f8f28aecf7f799951",
+      "lines": 125
+    },
+    {
+      "path": "mobile/lib/core/widgets/coming_soon_screen.dart",
+      "sha256": "e43a65c7159a8a49d58170f7b8db307f03c4f2f05b17369e39a629e1c5561451",
+      "lines": 64
+    },
+    {
+      "path": "mobile/lib/core/widgets/primary_button.dart",
+      "sha256": "4e5e3ff1e5790df618bf1c1347d51ee4c0b78188c60a3c071fd097cfdb76a5b9",
+      "lines": 60
+    },
+    {
+      "path": "mobile/lib/core/widgets/section_title.dart",
+      "sha256": "bc2c2a18d9101e35a3e2f4d3a38a530cd7c8c66866f0c9e58f038f04a68b7358",
+      "lines": 44
+    },
+    {
+      "path": "mobile/lib/core/widgets/theme_toggle_button.dart",
+      "sha256": "686b92c03a860100ed317c28567e39f03350a3d4889f385bf682618126ac3499",
+      "lines": 65
+    },
+    {
+      "path": "mobile/lib/core/workspace/business_workspace_access.dart",
+      "sha256": "52e5dfb44e6971c496870e7b3ea555fff22e1092dd15b7c29ba2d905db541629",
+      "lines": 12
+    },
+    {
+      "path": "mobile/lib/core/workspace/workspace_service.dart",
+      "sha256": "ab78958fe726da09e4f3f4184d9209b99ee7f128a196ed6457cde928631a0df6",
+      "lines": 30
+    },
+    {
+      "path": "mobile/lib/core/workspace/workspace_session.dart",
+      "sha256": "faf42d78d82b9db7f66d9db2651ca1bba73a93c0739b03ac9197f5cad0dba1ba",
+      "lines": 219
+    },
+    {
+      "path": "mobile/lib/core/workspace/workspace_switcher.dart",
+      "sha256": "a3cbbf23caa1e3917e8c04ba92dd55bde3caf1d35d05f34c892cb2a993b083c8",
+      "lines": 133
+    },
+    {
+      "path": "mobile/lib/features/ai_assistant/models/ai_assistant_models.dart",
+      "sha256": "ddb14b6bd158925cbeecbf3c1a89e9349a73e1b316c4e34a424f92429fd47b57",
+      "lines": 86
+    },
+    {
+      "path": "mobile/lib/features/ai_assistant/screens/ai_assistant_screen.dart",
+      "sha256": "68565de60525b454ad78fbf44883152952fbed35ae393bf0df5f9323f79edca0",
+      "lines": 642,
+      "navigation": [
+        "screens/subscription_screen.dart';\r",
+        "push(\r",
+        "builder: (_) =>\r",
+        "builder: (context, constraints) {\r",
+        "builder(\r"
+      ]
+    },
+    {
+      "path": "mobile/lib/features/ai_assistant/services/ai_assistant_service.dart",
+      "sha256": "7b7925b050a5b58ebc15753b3eeb3a2dfa6d82eb7e60e844c1e54f99eb5b4f11",
+      "lines": 80,
+      "contractLines": [
+        {
+          "line": 14,
+          "text": "final data = await apiClient.get('/ai-assistant/entitlement');"
+        },
+        {
+          "line": 42,
+          "text": "final data = await apiClient.post("
+        },
+        {
+          "line": 50,
+          "text": "timeout: const Duration(seconds: 75),"
+        }
+      ]
+    },
+    {
+      "path": "mobile/lib/features/ai_assistant/widgets/assistant_message_body.dart",
+      "sha256": "9e331778f8353f4e6dafbb6588f394255f9eb3a7311266e23806c4f6489f82f5",
+      "lines": 74
+    },
+    {
+      "path": "mobile/lib/features/auth/models/auth_response.dart",
+      "sha256": "171e3bd2170dc0b07b289c2575cfb7112d078f27f7dcfa2a6d46cf51cd196176",
+      "lines": 41
+    },
+    {
+      "path": "mobile/lib/features/auth/models/business_account.dart",
+      "sha256": "1c386b721ed4363a02ded1f4b2f19e7f83340cd6e5f7de7afb3b755e72d8d788",
+      "lines": 41
+    },
+    {
+      "path": "mobile/lib/features/auth/models/user_profile.dart",
+      "sha256": "b293b27a028396153ee9e141777a2f9ef3f6899e54a1e4b38a369ae6a121471f",
+      "lines": 32
+    },
+    {
+      "path": "mobile/lib/features/auth/screens/change_password_screen.dart",
+      "sha256": "cc7ef991ac3d3f46af48cf8991cfe7cf86b8d337f911341a121e8afd6fe9661b",
+      "lines": 315,
+      "navigation": []
+    },
+    {
+      "path": "mobile/lib/features/auth/screens/email_verification_screen.dart",
+      "sha256": "55ac4e087e38aedb486503fdc6d65a99094c2943863b992d9ac2626294c93647",
+      "lines": 322,
+      "navigation": [
+        "screen.dart';\r",
+        "pushAndRemoveUntil(\r",
+        "builder: (_) => const LoginScreen()),\r",
+        "pushAndRemoveUntil(\r",
+        "builder: (_) => const LoginScreen(),\r"
+      ]
+    },
+    {
+      "path": "mobile/lib/features/auth/screens/forgot_password_screen.dart",
+      "sha256": "3f8298b40bed4ac251822a89f178ea9275ddcba50e956765ec376a974b6c6221",
+      "lines": 390,
+      "navigation": []
+    },
+    {
+      "path": "mobile/lib/features/auth/screens/login_screen.dart",
+      "sha256": "2c53e5e7bac94d02b0c784a30f3a91625b8443c59af3dbf555ac684d0ef1a655",
+      "lines": 328,
+      "navigation": [
+        "screens/main_shell.dart';\r",
+        "screen.dart';\r",
+        "screen.dart';\r",
+        "pushReplacement(\r",
+        "builder: (_) => MainShell(\r",
+        "pushReplacement(\r",
+        "builder: (_) => MainShell(\r",
+        "push(\r",
+        "builder: (_) => const ForgotPasswordScreen(),\r",
+        "push(\r",
+        "builder: (_) => const RegisterScreen(),\r"
+      ]
+    },
+    {
+      "path": "mobile/lib/features/auth/screens/register_screen.dart",
+      "sha256": "82c74ed1571151d288c835389e352688032e7d7e6b7afecc86ff8215f3e3b775",
+      "lines": 409,
+      "navigation": [
+        "screen.dart';\r",
+        "pushReplacement(\r",
+        "builder: (_) => EmailVerificationScreen(email: email),\r"
+      ]
+    },
+    {
+      "path": "mobile/lib/features/auth/screens/splash_screen.dart",
+      "sha256": "ed6618d05f2707be2c53e90323acd5995d1c7b75e9ab5b8c4441da344eade726",
+      "lines": 337,
+      "navigation": [
+        "screen.dart';\r",
+        "screens/main_shell.dart';\r",
+        "screens/onboarding_screen.dart';\r",
+        "builder: (dialogContext) => PopScope(\r",
+        "pushReplacement(\r",
+        "builder: (_) => MainShell(\r",
+        "pushReplacement(\r",
+        "builder: (_) => const LoginScreen()),\r",
+        "builder: (dialogContext) {\r"
+      ]
+    },
+    {
+      "path": "mobile/lib/features/auth/services/auth_service.dart",
+      "sha256": "185e3fda1bc5ee83385d197ef8f0cbfddd2777d94c673a23a08ee0426a737fcf",
+      "lines": 274,
+      "contractLines": [
+        {
+          "line": 22,
+          "text": "final response = await apiClient.post("
+        },
+        {
+          "line": 99,
+          "text": "final response = await apiClient.post("
+        },
+        {
+          "line": 150,
+          "text": "await apiClient.post("
+        },
+        {
+          "line": 166,
+          "text": "await apiClient.post("
+        },
+        {
+          "line": 175,
+          "text": "await apiClient.post("
+        },
+        {
+          "line": 184,
+          "text": "await apiClient.post("
+        },
+        {
+          "line": 198,
+          "text": "await apiClient.post("
+        },
+        {
+          "line": 216,
+          "text": "await apiClient.post("
+        },
+        {
+          "line": 230,
+          "text": "final response = await apiClient.get('/auth/me');"
+        },
+        {
+          "line": 266,
+          "text": "await apiClient.delete('/auth/account');"
+        }
+      ]
+    },
+    {
+      "path": "mobile/lib/features/billing/models/analysis_quota.dart",
+      "sha256": "8d65f9418e6000b415327e703a23341b0ccf8428bcf826f1f5862b2779b8d339",
+      "lines": 27
+    },
+    {
+      "path": "mobile/lib/features/billing/models/billing_overview.dart",
+      "sha256": "0f93b9c5153f30e0fe1fbd81a947a8f3dcfcdcf4e4f3eabb6b730bd1827f4a01",
+      "lines": 27
+    },
+    {
+      "path": "mobile/lib/features/billing/models/billing_plan.dart",
+      "sha256": "adcd9b8a6e934fc06ea80252f70631b936fac63d3fd468bd8f9dd0c3649b8ebc",
+      "lines": 41
+    },
+    {
+      "path": "mobile/lib/features/billing/models/billing_status.dart",
+      "sha256": "9e0d2eea294cf421578026359834613c761a5b4e1a195577c4e6e1caa08bbadb",
+      "lines": 50
+    },
+    {
+      "path": "mobile/lib/features/billing/models/credit_catalog.dart",
+      "sha256": "fd7c6ccf3b759200debe2afb42ee2debad8f29be3f067737f2a5daaac02274e4",
+      "lines": 101
+    },
+    {
+      "path": "mobile/lib/features/billing/screens/subscription_screen.dart",
+      "sha256": "d17d24bb84ceb17b033450d16392c90d7e0ff7e86b0b49185db29221917d35d1",
+      "lines": 637,
+      "navigation": [
+        "screens/business_management_screen.dart';\r",
+        "push<BusinessAccount>(\r",
+        "builder: (_) => BusinessManagementScreen(\r"
+      ]
+    },
+    {
+      "path": "mobile/lib/features/billing/services/analysis_quota_service.dart",
+      "sha256": "f6349a6f3256735988cb93bcd222dc866088069dd4575e89305e0ed90e7bfb1e",
+      "lines": 17,
+      "contractLines": [
+        {
+          "line": 10,
+          "text": "final response = await apiClient.get('/analysis-quota');"
+        }
+      ]
+    },
+    {
+      "path": "mobile/lib/features/billing/services/billing_service.dart",
+      "sha256": "2da2853b965ea2bdaa9d0910872ae7da2e78dfd2abc2d5d3ea5709963219b5e3",
+      "lines": 218,
+      "contractLines": [
+        {
+          "line": 157,
+          "text": "final data = await apiClient.get('/credits');"
+        },
+        {
+          "line": 175,
+          "text": "await apiClient.post('/credits/purchase-intents/${product.id}');"
+        },
+        {
+          "line": 181,
+          "text": "final result = await apiClient.get("
+        },
+        {
+          "line": 192,
+          "text": "final response = await apiClient.get('/billing');"
+        },
+        {
+          "line": 197,
+          "text": "final response = await apiClient.post('/billing/sync');"
+        }
+      ]
+    },
+    {
+      "path": "mobile/lib/features/billing/services/revenue_cat_gateway.dart",
+      "sha256": "15fd6967cd5eab620773421d9dd289ace56504a1f4ffae29fc18f2b138f77beb",
+      "lines": 157,
+      "contractLines": []
+    },
+    {
+      "path": "mobile/lib/features/billing/services/welcome_credit_service.dart",
+      "sha256": "45075043e300a66aa5166c87bc6d9c599ac740a821ceb3e1049eef0b9b51d4a4",
+      "lines": 33,
+      "contractLines": []
+    },
+    {
+      "path": "mobile/lib/features/business/models/business_member.dart",
+      "sha256": "a98613d5584b50b6d83d0494e86aa4927d5cd6a4adba0ce740bd8362caf10a69",
+      "lines": 26
+    },
+    {
+      "path": "mobile/lib/features/business/screens/business_management_screen.dart",
+      "sha256": "2cd7505f1b74287d41c74f02cdfc6e8428f97ec0af1a219e0d211b00f0fb5f51",
+      "lines": 658,
+      "navigation": [
+        "builder: (dialogContext) => AlertDialog(\r",
+        "builder: (context, snapshot) {\r"
+      ]
+    },
+    {
+      "path": "mobile/lib/features/business/services/business_service.dart",
+      "sha256": "725e4bc1809593dce0231533c814fe269308c963469a6e597a6662a58bd477a8",
+      "lines": 60,
+      "contractLines": [
+        {
+          "line": 12,
+          "text": "final response = await apiClient.post("
+        },
+        {
+          "line": 26,
+          "text": "await apiClient.post("
+        },
+        {
+          "line": 33,
+          "text": "await apiClient.post("
+        },
+        {
+          "line": 41,
+          "text": "final response = await apiClient.get('/business-members');"
+        },
+        {
+          "line": 56,
+          "text": "await apiClient.delete('/business-members/$membershipId');"
+        }
+      ]
+    },
+    {
+      "path": "mobile/lib/features/home/screens/home_screen.dart",
+      "sha256": "5a431c5628f2a79df9c15db49793016eac8022cb36a20b29611a96be79d63832",
+      "lines": 1379,
+      "navigation": [
+        "push_notification_service.dart';\r",
+        "screens/ai_assistant_screen.dart';\r",
+        "screens/vehicle_detail_screen.dart';\r",
+        "screens/create_inspection_screen.dart';\r",
+        "screens/inspection_result_screen.dart';\r",
+        "screens/notification_center_screen.dart';\r",
+        "push(\r",
+        "builder: (_) => VehicleDetailScreen(\r",
+        "push(\r",
+        "push(\r",
+        "push(_premiumRoute<void>(InspectionResultScreen(inspection: inspection)));\r",
+        "builder: (sheetContext) {\r",
+        "push<void>(\r",
+        "builder: (_) =>\r"
+      ]
+    },
+    {
+      "path": "mobile/lib/features/home/screens/main_shell.dart",
+      "sha256": "eacfd5880b26cd2a5b7b102625e9ff56b465662d65b1b304bf5c69a80950c351",
+      "lines": 437,
+      "navigation": [
+        "push_notification_service.dart';\r",
+        "screens/login_screen.dart';\r",
+        "screens/inspection_history_screen.dart';\r",
+        "screens/profile_screen.dart';\r",
+        "screens/vehicle_list_screen.dart';\r",
+        "screen.dart';\r",
+        "screenCache;\r",
+        "screenCache[index];\r",
+        "screen = switch (index) {\r",
+        "screenCache[index] = screen;\r",
+        "screen;\r",
+        "screens => List<Widget>.generate(\r",
+        "screenCache[index] != null\r",
+        "screenCache = List<Widget?>.filled(4, null);\r",
+        "screenCache.fillRange(0, _screenCache.length, null);\r",
+        "screenCache.length; index++) {\r",
+        "screenCache[index] = null;\r",
+        "screenCache.length; index++) {\r",
+        "screenCache[index] = null;\r",
+        "pushAndRemoveUntil(\r",
+        "builder: (_) => const LoginScreen()),\r",
+        "builder: (context, constraints) {\r",
+        "screens: _screens,\r",
+        "screens: _screens,\r",
+        "screens,\r",
+        "screens;\r",
+        "builder: (context) {\r",
+        "screens[selectedIndex];\r",
+        "screens,\r",
+        "screens;\r",
+        "builder: (context) {\r",
+        "screens[selectedIndex];\r"
+      ]
+    },
+    {
+      "path": "mobile/lib/features/inspection/models/damage_assessment_record.dart",
+      "sha256": "9faa8e997f0a954030fa71dbc923ca0ecf523e6cd31b9f950df6d4933dde0c1c",
+      "lines": 87
+    },
+    {
+      "path": "mobile/lib/features/inspection/models/damage_detection.dart",
+      "sha256": "9a8707d76a289363ea55e46e18ebe5a86782c2c83e80046147ac07d276ed16c6",
+      "lines": 36
+    },
+    {
+      "path": "mobile/lib/features/inspection/models/damage_inspection.dart",
+      "sha256": "b04c7d84cc9d6fbe339e96c8c13767634e75ff8409727b78c3e876b7d11b8737",
+      "lines": 254
+    },
+    {
+      "path": "mobile/lib/features/inspection/models/damage_repair_recommendation.dart",
+      "sha256": "5661c9ce75ea04088abffcd2d5e8d6262237907e5b83ed57b1407a1314257bf7",
+      "lines": 28
+    },
+    {
+      "path": "mobile/lib/features/inspection/models/image_quality_result.dart",
+      "sha256": "a59c0525ddf917b62ef64cc69a448aac8ed1fa4291ab8a9ea8d5054d9e620756",
+      "lines": 22
+    },
+    {
+      "path": "mobile/lib/features/inspection/models/inspection_labels.dart",
+      "sha256": "ad1fa3201cc6edabe1a9c23952e95715b1f37b28178a2934065dbfa7ebed40a5",
+      "lines": 99
+    },
+    {
+      "path": "mobile/lib/features/inspection/models/inspection_report.dart",
+      "sha256": "4873bb81e6dc0070800f50177a91c50ca8ceb02a0103e6495b3bdf7506b90872",
+      "lines": 50
+    },
+    {
+      "path": "mobile/lib/features/inspection/models/inspection_report_content.dart",
+      "sha256": "454a354e9c9ba53a4f56c95e495de51da2391a82fc5362515451fec8906435f9",
+      "lines": 213
+    },
+    {
+      "path": "mobile/lib/features/inspection/models/nearby_service.dart",
+      "sha256": "0f8d0533a9a635efd7f5405f859a07853831e792b101e95fc90e8af2cd73295f",
+      "lines": 95
+    },
+    {
+      "path": "mobile/lib/features/inspection/models/visual_finding.dart",
+      "sha256": "80ac6fa61f68d7cc8a8e0d6897535457c3b2ef60fa3ba7f104176f3e892fb624",
+      "lines": 28
+    },
+    {
+      "path": "mobile/lib/features/inspection/screens/analyzing_screen.dart",
+      "sha256": "a39ee47f50c44e2df825f374650236014b38a8c16a4f4598a63197d83d2d8634",
+      "lines": 752,
+      "navigation": [
+        "screen.dart';\r",
+        "screen.dart';\r",
+        "screen.dart';\r",
+        "screens/subscription_screen.dart';\r",
+        "pushReplacement(\r",
+        "builder: (_) => InspectionResultScreen(\r",
+        "pushReplacement(\r",
+        "builder: (_) => const CreateInspectionScreen(),\r",
+        "pushReplacement(\r",
+        "builder: (_) => UploadDamageImageScreen(\r",
+        "push(\r",
+        "builder: (_) => const SubscriptionScreen(\r"
+      ]
+    },
+    {
+      "path": "mobile/lib/features/inspection/screens/create_inspection_screen.dart",
+      "sha256": "4e5479f1dc623ed3e59734a37950e0ee269f90a7325e857ebbc3d97fccb749e3",
+      "lines": 765,
+      "navigation": [
+        "screens/subscription_screen.dart';",
+        "screen.dart';",
+        "push<DamageInspection>(",
+        "builder: (_) => UploadDamageImageScreen(inspection: inspection),",
+        "builder: (dialogContext) => AlertDialog(",
+        "push<void>(",
+        "builder: (_) => const SubscriptionScreen(preferCompany: true),",
+        "builder: (context, snapshot) {",
+        "builder: (context, snapshot) => Padding("
+      ]
+    },
+    {
+      "path": "mobile/lib/features/inspection/screens/damage_assessment_record_screen.dart",
+      "sha256": "d709c02a4dc03e92b731e5f453a185be87a893b75abf09f8d8e04c28b6c3b5b2",
+      "lines": 450,
+      "navigation": [
+        "builder: (dialogContext) => AlertDialog(\r"
+      ]
+    },
+    {
+      "path": "mobile/lib/features/inspection/screens/inspection_history_screen.dart",
+      "sha256": "f5f18fe558076af092d1e731a8fd983579472f34e6f178af9f9d25a2fcd853d2",
+      "lines": 520,
+      "navigation": [
+        "screen.dart';\r",
+        "push(\r",
+        "builder: (_) => InspectionResultScreen(inspection: inspection),\r",
+        "builder: (context, snapshot) {\r"
+      ]
+    },
+    {
+      "path": "mobile/lib/features/inspection/screens/inspection_result_screen.dart",
+      "sha256": "da71830d3ecd857d90933a1af9174392a6731ee58c51b4525974ff21b9447760",
+      "lines": 954,
+      "navigation": [
+        "screen.dart';\r",
+        "screen.dart';\r",
+        "screens/subscription_screen.dart';\r",
+        "screen.\r",
+        "screen card build).\r",
+        "push<void>(\r",
+        "builder: (_) => const SubscriptionScreen()),\r",
+        "push(\r",
+        "builder: (context) => NearbyServicesScreen(\r",
+        "push(\r",
+        "builder: (context) =>\r",
+        "builder: (buttonContext) => IconButton(\r",
+        "screen/session RAM policy.\r",
+        "builder: (context, snapshot) {\r",
+        "builder: (context, constraints) {\r"
+      ]
+    },
+    {
+      "path": "mobile/lib/features/inspection/screens/nearby_services_screen.dart",
+      "sha256": "67cd8428ece6ffa0441dd6117046f2cf056523a3d3bc7e39e22f1078b041d0b2",
+      "lines": 595,
+      "navigation": []
+    },
+    {
+      "path": "mobile/lib/features/inspection/screens/upload_damage_image_screen.dart",
+      "sha256": "596bd7c21473e04399857ffb824a13d99d8437f17e13e9b50bec5479ef735794",
+      "lines": 842,
+      "navigation": [
+        "screen.dart';\r",
+        "pushReplacement(\r",
+        "builder: (_) => AnalyzingScreen(\r",
+        "builder: (context) {\r"
+      ]
+    },
+    {
+      "path": "mobile/lib/features/inspection/services/damage_analysis_availability.dart",
+      "sha256": "f3d29cd88e47852ed783d1f4d064b769a76685abfa85b5fddfc40b723734a2d4",
+      "lines": 10,
+      "contractLines": []
+    },
+    {
+      "path": "mobile/lib/features/inspection/services/damage_assessment_record_pdf_service.dart",
+      "sha256": "7fce1fd49bd6f21f97440ecf53c855dfa308364ee451568e2bcd7378aec49fdc",
+      "lines": 394,
+      "contractLines": []
+    },
+    {
+      "path": "mobile/lib/features/inspection/services/damage_assessment_record_service.dart",
+      "sha256": "8367f3af35c9987eb5b50a93e0114747d9c0939a55264ec3f9418a0745649a18",
+      "lines": 104,
+      "contractLines": [
+        {
+          "line": 13,
+          "text": "await apiClient.get('/inspections/$inspectionId/damage-record');"
+        },
+        {
+          "line": 30,
+          "text": "final response = await apiClient.post("
+        },
+        {
+          "line": 53,
+          "text": "final response = await apiClient.put("
+        },
+        {
+          "line": 68,
+          "text": "final response = await apiClient.post("
+        }
+      ]
+    },
+    {
+      "path": "mobile/lib/features/inspection/services/inspection_image_cache.dart",
+      "sha256": "2bcc481f289bce02e1edcde28e29c80e8b040cc22301281b72de38ed26c809de",
+      "lines": 237,
+      "contractLines": []
+    },
+    {
+      "path": "mobile/lib/features/inspection/services/inspection_image_optimizer.dart",
+      "sha256": "5fd0e0a9255a110f7551050d81b99d2edd0946d4265f824c1efb9417c8fd99c3",
+      "lines": 136,
+      "contractLines": []
+    },
+    {
+      "path": "mobile/lib/features/inspection/services/inspection_pdf_service.dart",
+      "sha256": "ce179a576b37fbd51775e6d3ffd0273f9df9d15c8213a87a8acc71005c2154a0",
+      "lines": 351,
+      "contractLines": []
+    },
+    {
+      "path": "mobile/lib/features/inspection/services/inspection_service.dart",
+      "sha256": "c0096d712f159e127d945671a8455c50f468edd711bacbfb6128330aa6f9e62c",
+      "lines": 180,
+      "contractLines": [
+        {
+          "line": 31,
+          "text": "final response = await apiClient.post("
+        },
+        {
+          "line": 43,
+          "text": "final response = await apiClient.get('/inspections');"
+        },
+        {
+          "line": 59,
+          "text": "final response = await apiClient.get('/inspections/$inspectionId');"
+        },
+        {
+          "line": 73,
+          "text": "final response = await apiClient.postMultipart("
+        },
+        {
+          "line": 77,
+          "text": "fileFieldName: 'image',"
+        },
+        {
+          "line": 102,
+          "text": "final response = await apiClient.postMultipart("
+        },
+        {
+          "line": 106,
+          "text": "fileFieldName: 'image',"
+        },
+        {
+          "line": 123,
+          "text": "final response = await apiClient.post("
+        },
+        {
+          "line": 126,
+          "text": "timeout: _analysisTimeout,"
+        },
+        {
+          "line": 146,
+          "text": "download: () => apiClient.getBytes('/inspections/$inspectionId/image'),"
+        },
+        {
+          "line": 151,
+          "text": "final response = await apiClient.post("
+        },
+        {
+          "line": 153,
+          "text": "timeout: _analysisTimeout,"
+        },
+        {
+          "line": 164,
+          "text": "final response = await apiClient.post("
+        },
+        {
+          "line": 166,
+          "text": "timeout: _analysisTimeout,"
+        }
+      ]
+    },
+    {
+      "path": "mobile/lib/features/inspection/services/nearby_service_service.dart",
+      "sha256": "a16281094615ab08cf2cf269f157a71a802e0291a633144d06affccf4a4c2edd",
+      "lines": 28,
+      "contractLines": [
+        {
+          "line": 11,
+          "text": "final response = await apiClient.get("
+        }
+      ]
+    },
+    {
+      "path": "mobile/lib/features/notification/models/app_notification.dart",
+      "sha256": "cdd09c129ee4bbe6dbb12698ff4d9f7309779037c1569ee543e3ae6f761c4bc2",
+      "lines": 37
+    },
+    {
+      "path": "mobile/lib/features/notification/screens/notification_center_screen.dart",
+      "sha256": "688c317e686246aab49e3a418e80875b69ca8075ad21b7f7b373f47504653a5b",
+      "lines": 197,
+      "navigation": [
+        "screens/vehicle_detail_screen.dart';\r",
+        "push<void>(\r",
+        "builder: (_) => VehicleDetailScreen(\r"
+      ]
+    },
+    {
+      "path": "mobile/lib/features/notification/services/notification_service.dart",
+      "sha256": "42b7ccc9e9ea45608f3b0ef6f34ce668325602b19983bfab70f43a44789fb492",
+      "lines": 43,
+      "contractLines": [
+        {
+          "line": 12,
+          "text": "final response = await apiClient.get("
+        },
+        {
+          "line": 27,
+          "text": "final response = await apiClient.get('/notifications/unread-count');"
+        },
+        {
+          "line": 33,
+          "text": "final response = await apiClient.put("
+        },
+        {
+          "line": 41,
+          "text": "apiClient.put('/notifications/read-all', body: const {});"
+        }
+      ]
+    },
+    {
+      "path": "mobile/lib/features/onboarding/data/onboarding_store.dart",
+      "sha256": "cafb166b7e206eaa004b5c5fadd141973a75f17490b26f6beab31fc5d47cf2cd",
+      "lines": 53
+    },
+    {
+      "path": "mobile/lib/features/onboarding/models/onboarding_step.dart",
+      "sha256": "4c30bdf834d5b95efd28308054adeeb638c6fc6f163759979501b6d6a15d5beb",
+      "lines": 77
+    },
+    {
+      "path": "mobile/lib/features/onboarding/screens/onboarding_screen.dart",
+      "sha256": "66f47c3d99a252d9fad38e36ab38b12beeea89cbad2a1139a886e1c05b236661",
+      "lines": 377,
+      "navigation": [
+        "builder(\r",
+        "builder: (context, constraints) {\r"
+      ]
+    },
+    {
+      "path": "mobile/lib/features/onboarding/widgets/guide_artwork.dart",
+      "sha256": "5e3281b8b0cf9ca595c1d95007e5c32409b25c4e0d6c45bb22872c8c4954ba16",
+      "lines": 662
+    },
+    {
+      "path": "mobile/lib/features/profile/screens/profile_screen.dart",
+      "sha256": "688ccc654a06c862088b15deed891dd67a2316dfa7ab18b36406d8927454c975",
+      "lines": 756,
+      "navigation": [
+        "push_notification_service.dart';\r",
+        "screens/change_password_screen.dart';\r",
+        "screens/login_screen.dart';\r",
+        "screens/business_management_screen.dart';\r",
+        "screens/subscription_screen.dart';\r",
+        "screens/onboarding_screen.dart';\r",
+        "push<bool>(\r",
+        "builder: (_) => const ChangePasswordScreen()),\r",
+        "push<void>(\r",
+        "builder: (_) => const SubscriptionScreen()),\r",
+        "screen already shows billing errors. The next session\r",
+        "push<BusinessAccount>(\r",
+        "builder: (_) => BusinessManagementScreen(\r",
+        "builder: (dialogContext) {\r",
+        "pushAndRemoveUntil(\r",
+        "builder: (_) => const LoginScreen()),\r",
+        "builder: (dialogContext) {\r",
+        "pushAndRemoveUntil(\r",
+        "builder: (_) => const LoginScreen()),\r",
+        "push<void>(\r",
+        "builder: (_) => const OnboardingScreen.replay(),\r"
+      ]
+    },
+    {
+      "path": "mobile/lib/features/vehicle/models/maintenance_record.dart",
+      "sha256": "9064e3fa1a4b550635e57532d4fccdc871450895ee47c880c3f2ec79416060f9",
+      "lines": 45
+    },
+    {
+      "path": "mobile/lib/features/vehicle/models/vehicle.dart",
+      "sha256": "42401ed2efee85936ab6cafcb2f65ca72f74b05e8382a7247b2765dc5a889167",
+      "lines": 40
+    },
+    {
+      "path": "mobile/lib/features/vehicle/models/vehicle_catalog.dart",
+      "sha256": "f25946a578c2a0b1b93661a1b165e6cb2cb17c4a51bdb0d674457c58cecd32b9",
+      "lines": 39
+    },
+    {
+      "path": "mobile/lib/features/vehicle/models/vehicle_history_item.dart",
+      "sha256": "5a105238a6311d8a630f6941061a316654fbf1896836c1fb232de046b5a1b448",
+      "lines": 20
+    },
+    {
+      "path": "mobile/lib/features/vehicle/models/vehicle_overview.dart",
+      "sha256": "3e31cdb0bb801d3bbefcdf26829289e6b0b0ee33162866f3836aab2378a6d299",
+      "lines": 50
+    },
+    {
+      "path": "mobile/lib/features/vehicle/models/vehicle_reminder.dart",
+      "sha256": "aa56ae8382127f1f00aa89903abe3373f2c4be3b711bcae4f3a04e2946306260",
+      "lines": 51
+    },
+    {
+      "path": "mobile/lib/features/vehicle/screens/add_vehicle_screen.dart",
+      "sha256": "2a48860d900d3eb067a8476bd1c720d53d1e18bf139f6c20af695f61c31d234b",
+      "lines": 967,
+      "navigation": [
+        "builder: (context, constraints) {\r"
+      ]
+    },
+    {
+      "path": "mobile/lib/features/vehicle/screens/maintenance_form_screen.dart",
+      "sha256": "5f0d67a91b721642a0b884df6285bb4fdcca51b6205e243224cf9f1ac76a313e",
+      "lines": 290,
+      "navigation": []
+    },
+    {
+      "path": "mobile/lib/features/vehicle/screens/reminder_form_screen.dart",
+      "sha256": "4c072047b90fc7776a29ada04902ceb7caa72285dd2c05d32e0d85e6f73a61bf",
+      "lines": 362,
+      "navigation": []
+    },
+    {
+      "path": "mobile/lib/features/vehicle/screens/vehicle_detail_screen.dart",
+      "sha256": "08eb34487331d0af70cdf7415529d91f978aef462841664c7e15a88738cf7105",
+      "lines": 541,
+      "navigation": [
+        "screens/create_inspection_screen.dart';\r",
+        "screen.dart';\r",
+        "screen.dart';\r",
+        "screen.dart';\r",
+        "push<Vehicle>(\r",
+        "builder: (_) => AddVehicleScreen(\r",
+        "push(\r",
+        "builder: (_) => MaintenanceFormScreen(\r",
+        "push(\r",
+        "builder: (_) =>\r",
+        "builder: (c) => AlertDialog(\r",
+        "push(\r",
+        "builder: (_) => CreateInspectionScreen(\r"
+      ]
+    },
+    {
+      "path": "mobile/lib/features/vehicle/screens/vehicle_list_screen.dart",
+      "sha256": "10dfa42f3ff4a93827beb61c52faf3616864bbad85ed65dd7f541b631fef5626",
+      "lines": 682,
+      "navigation": [
+        "screens/subscription_screen.dart';\r",
+        "screen.dart';\r",
+        "screen.dart';\r",
+        "push<void>(\r",
+        "builder: (_) =>\r",
+        "push<Vehicle>(\r",
+        "builder: (_) =>\r",
+        "push<Vehicle>(\r",
+        "builder: (_) => AddVehicleScreen(\r",
+        "push<void>(\r",
+        "builder: (_) => VehicleDetailScreen(\r",
+        "builder: (dialogContext) {\r",
+        "builder: (context, snapshot) {\r"
+      ]
+    },
+    {
+      "path": "mobile/lib/features/vehicle/services/vehicle_service.dart",
+      "sha256": "11402872ea3eaa835d31a5b209dd2d9c26418086e1017d8c4e0e6b48e763f745",
+      "lines": 113,
+      "contractLines": [
+        {
+          "line": 10,
+          "text": "final response = await apiClient.get('/vehicles');"
+        },
+        {
+          "line": 26,
+          "text": "final response = await apiClient.get('/vehicles/$vehicleId');"
+        },
+        {
+          "line": 43,
+          "text": "final response = await apiClient.post("
+        },
+        {
+          "line": 74,
+          "text": "final response = await apiClient.put("
+        },
+        {
+          "line": 97,
+          "text": "final response = await apiClient.put("
+        },
+        {
+          "line": 110,
+          "text": "await apiClient.delete('/vehicles/$vehicleId');"
+        }
+      ]
+    },
+    {
+      "path": "mobile/lib/features/vehicle/services/vehicle_tracking_service.dart",
+      "sha256": "60cd67882e6449d5c900a958b8bf30eb22dc8beaf175cf1829d6692338a27a94",
+      "lines": 115,
+      "contractLines": [
+        {
+          "line": 14,
+          "text": "await apiClient.get('/vehicles/$vehicleId/overview') as Map,"
+        },
+        {
+          "line": 20,
+          "text": "await apiClient.get('/vehicles/$vehicleId/maintenance') as List;"
+        },
+        {
+          "line": 34,
+          "text": "await apiClient.post('/vehicles/$vehicleId/maintenance', body: body)"
+        },
+        {
+          "line": 45,
+          "text": "await apiClient.put("
+        },
+        {
+          "line": 54,
+          "text": "apiClient.delete('/vehicles/$vehicleId/maintenance/$recordId');"
+        },
+        {
+          "line": 57,
+          "text": "final data = await apiClient.get('/vehicles/$vehicleId/reminders') as List;"
+        },
+        {
+          "line": 70,
+          "text": "await apiClient.post('/vehicles/$vehicleId/reminders', body: body) as Map,"
+        },
+        {
+          "line": 80,
+          "text": "await apiClient.put("
+        },
+        {
+          "line": 94,
+          "text": "await apiClient.put("
+        },
+        {
+          "line": 103,
+          "text": "apiClient.delete('/vehicles/$vehicleId/reminders/$reminderId');"
+        },
+        {
+          "line": 106,
+          "text": "final data = await apiClient.get('/vehicles/$vehicleId/history') as List;"
+        }
+      ]
+    },
+    {
+      "path": "mobile/lib/firebase_options.dart",
+      "sha256": "881631ee0b20b8fa46f81578da9d460b4cc494b68f85d30cf00ae729c1ce4766",
+      "lines": 89
+    },
+    {
+      "path": "mobile/lib/main.dart",
+      "sha256": "2d5fb6ba9a4eadcea067af75aedc20ef34f28b16b32b6bac0ca0e1d1869af4c9",
+      "lines": 46
+    },
+    {
+      "path": "mobile/test/core/auth/password_token_rotation_test.dart",
+      "sha256": "0ecb21d84c8dc57f360631f8198f6044a2843c839757e48e17d030424fbc34b9",
+      "lines": 61
+    },
+    {
+      "path": "mobile/test/core/theme/app_theme_test.dart",
+      "sha256": "c3740e363894fbf9178f1d69c1ad014e37cf089cd2f8b0742ca3ac11a8855fcd",
+      "lines": 64
+    },
+    {
+      "path": "mobile/test/core/widgets/app_background_test.dart",
+      "sha256": "1bf78efb5d2282cdf2db3ad4a979d90aa9040140ffffbef3bccab077ad348bb9",
+      "lines": 171
+    },
+    {
+      "path": "mobile/test/core/widgets/button_hierarchy_test.dart",
+      "sha256": "662edc804878114abbc8692da3a8391d6805d71f93f4395a9e6da0176195cc56",
+      "lines": 129
+    },
+    {
+      "path": "mobile/test/core/widgets/compact_layout_test.dart",
+      "sha256": "39ee671d6b4438de14faefb7914411a20c555772e130d3f87b4c8959433f74b0",
+      "lines": 140
+    },
+    {
+      "path": "mobile/test/core/widgets/modern_ui_test.dart",
+      "sha256": "b6fac839af4759390ac5fdfba818db207ef99cfed632e43e1046a3cf8dfda24f",
+      "lines": 270
+    },
+    {
+      "path": "mobile/test/core/workspace/workspace_access_test.dart",
+      "sha256": "bc67c54642f3fa46c425ab330a908fbf4b6a1058d932701432308b48fb209272",
+      "lines": 283
+    },
+    {
+      "path": "mobile/test/core/workspace/workspace_session_test.dart",
+      "sha256": "dbc427cc6d4cf62473262657540c537a871df3c67746e848f012ce100d7aa8d6",
+      "lines": 245
+    },
+    {
+      "path": "mobile/test/features/ai_assistant/ai_assistant_service_test.dart",
+      "sha256": "337303c0fab78ffc546e11341c151a37dfe84a931d3bc28f6374b25c5df7801b",
+      "lines": 100
+    },
+    {
+      "path": "mobile/test/features/ai_assistant/assistant_message_body_test.dart",
+      "sha256": "4d8ddb47c2188cd41a3d95d4ab36d24ec1d609527e0f5dcb093dc203628cd8f6",
+      "lines": 111
+    },
+    {
+      "path": "mobile/test/features/auth/models/user_contract_test.dart",
+      "sha256": "3fae7ab921cebe74c309a9f2de1d644fccbafda5537890795a5415e8a653e20a",
+      "lines": 74
+    },
+    {
+      "path": "mobile/test/features/billing/screens/business_subscription_flow_test.dart",
+      "sha256": "fffb0eb0e8b081e48f118c26e537fc999d8cd877d0620b28491d688fd982147f",
+      "lines": 513,
+      "navigation": [
+        "screens/subscription_screen.dart';\r",
+        "screens/business_management_screen.dart';\r"
+      ]
+    },
+    {
+      "path": "mobile/test/features/billing/screens/subscription_screen_test.dart",
+      "sha256": "b736278457e7428de0a027c1c402e6efcaf09495b456cca7e67ace523ec5b627",
+      "lines": 278,
+      "navigation": [
+        "screens/subscription_screen.dart';\r",
+        "builder: (context, child) => MediaQuery(\r"
+      ]
+    },
+    {
+      "path": "mobile/test/features/billing/services/billing_service_test.dart",
+      "sha256": "6fc2b24f31cd15598290a2304483f4f0be559b808329b0beb9b8f5f5c10328d6",
+      "lines": 306,
+      "contractLines": []
+    },
+    {
+      "path": "mobile/test/features/billing/services/revenue_cat_gateway_test.dart",
+      "sha256": "a867aebbf55a8019ec92b91650989db6a16f19b2571d17883d26fd3ab64f063f",
+      "lines": 58,
+      "contractLines": []
+    },
+    {
+      "path": "mobile/test/features/business/screens/business_management_screen_test.dart",
+      "sha256": "d1755f8805ae1fbe7ca7239d0f96d46fea34f7b7628b8e7cf0b7e76dff92b820",
+      "lines": 119,
+      "navigation": [
+        "screens/business_management_screen.dart';"
+      ]
+    },
+    {
+      "path": "mobile/test/features/compact_secondary_screens_test.dart",
+      "sha256": "de066d4dafd3ec6d4fe8b16f095d36b8fc8e044d8c7cfa327344a249cdd3025d",
+      "lines": 185
+    },
+    {
+      "path": "mobile/test/features/dashboard_and_chat_test.dart",
+      "sha256": "584893f845befe9558fc5760319b02d5324f276fc25aafc58c98039a9b76dae5",
+      "lines": 230
+    },
+    {
+      "path": "mobile/test/features/inspection/models/inspection_report_content_test.dart",
+      "sha256": "37550f44988649e4cda5be1591f3181f94677963d5ea9e67325c4ce1035b019d",
+      "lines": 142
+    },
+    {
+      "path": "mobile/test/features/inspection/screens/hitl_result_test.dart",
+      "sha256": "2251e944bd748c7f4cc0ed7df44d3b52927ecfb9cf53cd7ec8620ae5167b7d5f",
+      "lines": 85,
+      "navigation": [
+        "screens/inspection_result_screen.dart';"
+      ]
+    },
+    {
+      "path": "mobile/test/features/inspection/screens/inspection_report_states_test.dart",
+      "sha256": "e4884fde982eaaf11ec7d26f38f017c13e5629af6498483ba994db89f059605c",
+      "lines": 179,
+      "navigation": [
+        "screens/inspection_result_screen.dart';\r"
+      ]
+    },
+    {
+      "path": "mobile/test/features/inspection/screens/inspection_result_screen_test.dart",
+      "sha256": "ce9a58fc5b84717c3194f87d6a57ba51f975e4dfabd0347b2132cd1e368fff02",
+      "lines": 383,
+      "navigation": [
+        "screens/inspection_result_screen.dart';\r"
+      ]
+    },
+    {
+      "path": "mobile/test/features/inspection/screens/two_photo_flow_test.dart",
+      "sha256": "88584ba68106afcf6e73b6632ad0914ab8e6bd2ebde46a3eabbb6e3703e9dfaa",
+      "lines": 234,
+      "navigation": [
+        "screens/upload_damage_image_screen.dart';",
+        "screens/inspection_result_screen.dart';"
+      ]
+    },
+    {
+      "path": "mobile/test/features/inspection/screens/unified_analysis_flow_test.dart",
+      "sha256": "9a5ac02601c9e2783fcd4a2988fdc5b99ae47b554b3f0d53dc0b33f3db571577",
+      "lines": 418,
+      "navigation": [
+        "screens/analyzing_screen.dart';\r",
+        "screens/inspection_result_screen.dart';\r",
+        "screen shows real analysis/report stages then combined results: $brightness',\r",
+        "screen = tester.widget<InspectionResultScreen>(\r",
+        "screen.inspection.damageTypes, ['SCRATCH']);\r",
+        "screen.inspection.damageSeverity, 'MINOR');\r",
+        "screen.inspection.affectedParts, ['FRONT_BUMPER']);\r",
+        "screen.inspection.repairRecommendations, hasLength(1));\r",
+        "screen.inspection.report!.estimatedMinimumPrice, 1000);\r",
+        "screen stops reads and ignores late completion',\r"
+      ]
+    },
+    {
+      "path": "mobile/test/features/inspection/services/inspection_image_cache_test.dart",
+      "sha256": "858e5c946211bc31a605631e4e13d172d1d4742d503f228a46723c42316234d9",
+      "lines": 404,
+      "contractLines": []
+    },
+    {
+      "path": "mobile/test/features/inspection/services/inspection_image_optimizer_test.dart",
+      "sha256": "436eae9457aa5675063a1d6e0900f7c39000012331cf2c78f8c166b35d1f17e5",
+      "lines": 135,
+      "contractLines": []
+    },
+    {
+      "path": "mobile/test/features/inspection/services/inspection_image_session_test.dart",
+      "sha256": "9d12c56538cfce955efe1c7aa7c8cc4609b83da00dfcc1bb0a8c76f3d481cec7",
+      "lines": 228,
+      "contractLines": []
+    },
+    {
+      "path": "mobile/test/features/inspection/services/inspection_pdf_service_test.dart",
+      "sha256": "f1f8e7c7c58c8c7432cda44d37f3e870fc61fa00c83832540166e16da2292aae",
+      "lines": 80,
+      "contractLines": []
+    },
+    {
+      "path": "mobile/test/features/onboarding/onboarding_offline_assets_test.dart",
+      "sha256": "2b489d3c7d1078e424e366204772074d0db2ba9d4bf542d3d7043fc7e9b15f28",
+      "lines": 36
+    },
+    {
+      "path": "mobile/test/features/onboarding/onboarding_screen_test.dart",
+      "sha256": "7901f36530c3dbe2e080d5dcc82412b0a46d3d08b1495e0b38db2908f879d742",
+      "lines": 285
+    },
+    {
+      "path": "mobile/test/features/onboarding/onboarding_store_test.dart",
+      "sha256": "56fc3b1a012daa202c685714d9a0f3d9420c659b33738bc6a7ab11d1d36b09a6",
+      "lines": 96
+    },
+    {
+      "path": "mobile/test/features/onboarding/splash_onboarding_test.dart",
+      "sha256": "e41c128b1e6c5483f45a69639176b5d07472c68df624943ac2cf707ae44b0c58",
+      "lines": 290
+    },
+    {
+      "path": "mobile/test/features/onboarding/support/guide_test_fonts.dart",
+      "sha256": "ced9af32de189cbeeab6a6b0221ac7ee5da106375e7e655e484be1dccec10ca7",
+      "lines": 42
+    },
+    {
+      "path": "mobile/test/features/onboarding/support/memory_onboarding_store.dart",
+      "sha256": "f52a30bc4326c865ef1e80ceab151db37b6430b2bb51d236fc5fd531e11257d2",
+      "lines": 26
+    },
+    {
+      "path": "mobile/test/features/profile/screens/profile_screen_test.dart",
+      "sha256": "842b7b762662b47f5e84bbf21ea4687d38f03a6a42dafa71cb0b1a244e5c5837",
+      "lines": 146,
+      "navigation": [
+        "screens/profile_screen.dart';\r"
+      ]
+    },
+    {
+      "path": "mobile/test/features/responsive_screens_test.dart",
+      "sha256": "8cbf7887a81d59bbc4bcdead6598860b4d10632de954a79473a4dbeade1dd532",
+      "lines": 262
+    },
+    {
+      "path": "mobile/test/features/vehicle/screens/reminder_form_screen_test.dart",
+      "sha256": "8f972b85b7001f35015615f21ce2975ae928f00be25dc5a80191bd9355625540",
+      "lines": 85,
+      "navigation": [
+        "screens/reminder_form_screen.dart';\r"
+      ]
+    },
+    {
+      "path": "mobile/test/features/workspace/workspace_billing_race_test.dart",
+      "sha256": "948fd2216422839939ad38137431b5adac3021644e40c5ccbee5cf842f5fa65b",
+      "lines": 109
+    },
+    {
+      "path": "mobile/test/features/workspace/workspace_expiry_navigation_test.dart",
+      "sha256": "de461d3bfd4473bb51791ba76b8e545d7cf08d81da7b819de48069a63769950c",
+      "lines": 187
+    },
+    {
+      "path": "mobile/test/features/workspace/workspace_shell_test.dart",
+      "sha256": "524999bafed7a5df6c1950be04568223f13fe26853cdfa79a2fe116b87051143",
+      "lines": 290
+    },
+    {
+      "path": "mobile/test/fixtures/inspection/48mp.jpg",
+      "sha256": "178872947ab8afd7c083924ae7d0e042d7ef5317023af06bf9ea045371a034bd",
+      "lines": 11604
+    },
+    {
+      "path": "mobile/test/fixtures/inspection/animated.png",
+      "sha256": "b2f94a179c591da8a09b12e07b327356bebe8ea112339eae64bdfba8ff41f68c",
+      "lines": 5
+    },
+    {
+      "path": "mobile/test/fixtures/inspection/animated.webp",
+      "sha256": "0f13133dde6be747003168bbaf7952ba63e5d384b0c0951646ad5ee3d63ce554",
+      "lines": 11
+    },
+    {
+      "path": "mobile/test/fixtures/inspection/generate.py",
+      "sha256": "8ce77b3c77583f83331a970bb0705de32ed2ad3dc8aa08a5822d9e9c13d66f5f",
+      "lines": 21
+    },
+    {
+      "path": "mobile/test/fixtures/inspection/orientation-1.jpg",
+      "sha256": "d3fc971d9c64001b5277ad0afa3d410ca4bdac54e791778846017918ebd27cb8",
+      "lines": 825
+    },
+    {
+      "path": "mobile/test/fixtures/inspection/orientation-2.jpg",
+      "sha256": "662aea5becd3504869bb4dad1c3ff0b081103055a7b85144a2dad71ca85c6c47",
+      "lines": 825
+    },
+    {
+      "path": "mobile/test/fixtures/inspection/orientation-3.jpg",
+      "sha256": "6cdf911a246255f5e3e0f1e41fa11a5776f754defca4d9e747d0da166aaa061b",
+      "lines": 825
+    },
+    {
+      "path": "mobile/test/fixtures/inspection/orientation-4.jpg",
+      "sha256": "fb0ea8b0b55436fd004ecafeac31defff129e6fbfd3d873c3a5ccc7189ea1b25",
+      "lines": 825
+    },
+    {
+      "path": "mobile/test/fixtures/inspection/orientation-5.jpg",
+      "sha256": "7ceb9ebc9fb4b045af027b802e76f6d615b129b9bef3adefad87f7dc9f4b9f65",
+      "lines": 825
+    },
+    {
+      "path": "mobile/test/fixtures/inspection/orientation-6.jpg",
+      "sha256": "3bf6cfd248e4c75ffd02b16ac6e75939cb11eadcd5829cbd788890cc8b8ad759",
+      "lines": 825
+    },
+    {
+      "path": "mobile/test/fixtures/inspection/orientation-7.jpg",
+      "sha256": "bc761777ad050ffa42f83ef240481bfa423f33af3e7054c546e7529f1ffcca5e",
+      "lines": 825
+    },
+    {
+      "path": "mobile/test/fixtures/inspection/orientation-8.jpg",
+      "sha256": "d0e846d1fd0f6056b36ba355c939429df5b5f13c38e25bb694d97164f5d1368b",
+      "lines": 825
+    },
+    {
+      "path": "mobile/test/fixtures/inspection/still.webp",
+      "sha256": "d00757b1c1a2e471966cd0b239a903bc848ac50ae2079611ce0a4034e15f9d83",
+      "lines": 3
+    },
+    {
+      "path": "mobile/test/support/inspection_report_fixture.dart",
+      "sha256": "2245827676d8c53586cce25063f065113f37807193f8d223669edab307a354d5",
+      "lines": 60
+    },
+    {
+      "path": "mobile/test/support/ui_mock_api.dart",
+      "sha256": "327094aa55e0c61aa96a1726e31a395d0c2fdb1a1b7f0ef350ff02e86fc6ea32",
+      "lines": 70
+    },
+    {
+      "path": "mobile/test/support/ui_test_app.dart",
+      "sha256": "9904bd23bbd2172a7186ccd2a8693b35f1a7882e058582ff09eacf585463316f",
+      "lines": 101
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/controller/AiAssistantController.java",
+      "sha256": "0188371c532744ee5b300ae2bee2124caf04b742b984c7f7fe7ce1533e411668",
+      "lines": 36,
+      "contractLines": [
+        {
+          "line": 13,
+          "text": "@RequestMapping(\"/api/v1/ai-assistant\")"
+        },
+        {
+          "line": 24,
+          "text": "@PostMapping(\"/chat\")"
+        },
+        {
+          "line": 30,
+          "text": "@GetMapping(\"/entitlement\")"
+        }
+      ]
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/controller/AnalysisQuotaController.java",
+      "sha256": "71750a05e45a769d501055f9e32f85972c2842ec3cb285340709f3e36c83aa63",
+      "lines": 31,
+      "contractLines": [
+        {
+          "line": 11,
+          "text": "@RequestMapping(\"/api/v1/analysis-quota\")"
+        },
+        {
+          "line": 22,
+          "text": "@GetMapping"
+        }
+      ]
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/controller/AppVersionController.java",
+      "sha256": "c382f66347fb4dc53e24fcaf9ab5c0ade0d888f2da2d2a8afb30798da774d972",
+      "lines": 28,
+      "contractLines": [
+        {
+          "line": 9,
+          "text": "@RequestMapping(\"/api/v1/app\")"
+        },
+        {
+          "line": 20,
+          "text": "@GetMapping(\"/version\")"
+        }
+      ]
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/controller/AuthController.java",
+      "sha256": "b0f7a6c2083f76514d82d8445efcdc0afc4c0578194ec3b545ef86c722d63a29",
+      "lines": 153,
+      "contractLines": [
+        {
+          "line": 25,
+          "text": "@RequestMapping(\"/api/v1/auth\")"
+        },
+        {
+          "line": 47,
+          "text": "@PostMapping(\"/register\")"
+        },
+        {
+          "line": 59,
+          "text": "@PostMapping(\"/verify-email\")"
+        },
+        {
+          "line": 69,
+          "text": "@PostMapping(\"/resend-verification\")"
+        },
+        {
+          "line": 79,
+          "text": "@PostMapping(\"/login\")"
+        },
+        {
+          "line": 89,
+          "text": "@PostMapping(\"/google\")"
+        },
+        {
+          "line": 98,
+          "text": "@PostMapping(\"/forgot-password\")"
+        },
+        {
+          "line": 108,
+          "text": "@PostMapping(\"/reset-password\")"
+        },
+        {
+          "line": 118,
+          "text": "@PostMapping(\"/change-password\")"
+        },
+        {
+          "line": 132,
+          "text": "@GetMapping(\"/me\")"
+        },
+        {
+          "line": 142,
+          "text": "@DeleteMapping(\"/account\")"
+        }
+      ]
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/controller/BillingController.java",
+      "sha256": "48a8ef44eb08f7a9d28682a63a2bf87da05610036dc52b1a97a97468e2122be9",
+      "lines": 59,
+      "contractLines": [
+        {
+          "line": 11,
+          "text": "@RequestMapping(\"/api/v1/billing\")"
+        },
+        {
+          "line": 20,
+          "text": "@GetMapping"
+        },
+        {
+          "line": 29,
+          "text": "@PostMapping(\"/sync\")"
+        },
+        {
+          "line": 38,
+          "text": "@PostMapping(\"/revenuecat/webhook\")"
+        }
+      ]
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/controller/BusinessAccountController.java",
+      "sha256": "6d26ddd179a3a2fad7042753a5d039e1a20e2ea63f7b06fb930177134ab4fa18",
+      "lines": 39,
+      "contractLines": [
+        {
+          "line": 13,
+          "text": "@RequestMapping(\"/api/v1/business-accounts\")"
+        },
+        {
+          "line": 24,
+          "text": "@PostMapping"
+        }
+      ]
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/controller/BusinessInvitationController.java",
+      "sha256": "597db98dea21d97007b8e953fa7d03a478f7f78f25aa85f984defcca7e411e10",
+      "lines": 59,
+      "contractLines": [
+        {
+          "line": 14,
+          "text": "@RequestMapping(\"/api/v1/business-invitations\")"
+        },
+        {
+          "line": 29,
+          "text": "@PostMapping"
+        },
+        {
+          "line": 44,
+          "text": "@PostMapping(\"/accept\")"
+        }
+      ]
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/controller/BusinessMemberController.java",
+      "sha256": "c0c9dc1f0f1ecb80ad76c1a18e2aa32120b636e959d8d8cf7810c0d7588c98c7",
+      "lines": 49,
+      "contractLines": [
+        {
+          "line": 16,
+          "text": "@RequestMapping(\"/api/v1/business-members\")"
+        },
+        {
+          "line": 27,
+          "text": "@GetMapping"
+        },
+        {
+          "line": 36,
+          "text": "@DeleteMapping(\"/{membershipId}\")"
+        }
+      ]
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/controller/CreditController.java",
+      "sha256": "d040efa6eaa24752dfc12c00bc8ce648853cfde6d8fa6138975a8bcf63d2df39",
+      "lines": 26,
+      "contractLines": [
+        {
+          "line": 10,
+          "text": "@RequestMapping(\"/api/v1/credits\")"
+        },
+        {
+          "line": 15,
+          "text": "@GetMapping"
+        },
+        {
+          "line": 17,
+          "text": "@PostMapping(\"/purchase-intents/{productId}\")"
+        },
+        {
+          "line": 21,
+          "text": "@GetMapping(\"/purchases/{transaction}\")"
+        }
+      ]
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/controller/DamageAssessmentRecordController.java",
+      "sha256": "80e148c6efcb7785be5dbaff7965f2bee0c1b196159a55006c0e1d4e057c6eba",
+      "lines": 70,
+      "contractLines": [
+        {
+          "line": 13,
+          "text": "@RequestMapping(\"/api/v1/inspections/{inspectionId}/damage-record\")"
+        },
+        {
+          "line": 24,
+          "text": "@GetMapping"
+        },
+        {
+          "line": 32,
+          "text": "@PostMapping"
+        },
+        {
+          "line": 46,
+          "text": "@PutMapping"
+        },
+        {
+          "line": 59,
+          "text": "@PostMapping(\"/finalize\")"
+        }
+      ]
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/controller/DamageInspectionController.java",
+      "sha256": "b205f1740edae70dbf22bdaa63a787b2af34e828a8c65d11258aa7e12c16c781",
+      "lines": 269,
+      "contractLines": [
+        {
+          "line": 25,
+          "text": "@RequestMapping(\"/api/v1/inspections\")"
+        },
+        {
+          "line": 39,
+          "text": "@PostMapping"
+        },
+        {
+          "line": 62,
+          "text": "@GetMapping"
+        },
+        {
+          "line": 73,
+          "text": "@GetMapping(\"/{inspectionId}/image\")"
+        },
+        {
+          "line": 134,
+          "text": "@GetMapping(\"/{inspectionId}\")"
+        },
+        {
+          "line": 148,
+          "text": "@PostMapping("
+        },
+        {
+          "line": 168,
+          "text": "@PostMapping("
+        },
+        {
+          "line": 189,
+          "text": "@PostMapping(\"/{inspectionId}/analyze\")"
+        },
+        {
+          "line": 214,
+          "text": "@PostMapping(\"/{inspectionId}/image-quality\")"
+        },
+        {
+          "line": 227,
+          "text": "@PostMapping(\"/{inspectionId}/context-image-quality\")"
+        },
+        {
+          "line": 241,
+          "text": "@PostMapping(\"/{inspectionId}/report\")"
+        },
+        {
+          "line": 255,
+          "text": "@GetMapping(\"/{inspectionId}/nearby-services\")"
+        }
+      ]
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/controller/HealthController.java",
+      "sha256": "c0e82cd039f25d44845c5b210ffc40095596584875ff705e38365200e82168de",
+      "lines": 26,
+      "contractLines": [
+        {
+          "line": 12,
+          "text": "@RequestMapping(\"/api/v1/health\")"
+        },
+        {
+          "line": 15,
+          "text": "@GetMapping"
+        }
+      ]
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/controller/NotificationController.java",
+      "sha256": "0f4870fc9dead1658c05555ad8a30ed39586cff0bc98232ebf14e56b2c138ab6",
+      "lines": 65,
+      "contractLines": [
+        {
+          "line": 16,
+          "text": "@RequestMapping(\"/api/v1/notifications\")"
+        },
+        {
+          "line": 27,
+          "text": "@GetMapping"
+        },
+        {
+          "line": 34,
+          "text": "@GetMapping(\"/unread-count\")"
+        },
+        {
+          "line": 39,
+          "text": "@PutMapping(\"/{id}/read\")"
+        },
+        {
+          "line": 45,
+          "text": "@PutMapping(\"/read-all\")"
+        },
+        {
+          "line": 51,
+          "text": "@PostMapping(\"/devices\")"
+        },
+        {
+          "line": 58,
+          "text": "@DeleteMapping(\"/devices\")"
+        }
+      ]
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/controller/VehicleController.java",
+      "sha256": "c763e8cd67caa1d55479ca81b36679ec2ea738ae12f1b12f716f5270c1b65ad8",
+      "lines": 84,
+      "contractLines": [
+        {
+          "line": 16,
+          "text": "@RequestMapping(\"/api/v1/vehicles\")"
+        },
+        {
+          "line": 25,
+          "text": "@PostMapping"
+        },
+        {
+          "line": 35,
+          "text": "@GetMapping"
+        },
+        {
+          "line": 44,
+          "text": "@GetMapping(\"/{id}\")"
+        },
+        {
+          "line": 54,
+          "text": "@PutMapping(\"/{id}\")"
+        },
+        {
+          "line": 65,
+          "text": "@PutMapping(\"/{id}/primary\")"
+        },
+        {
+          "line": 75,
+          "text": "@DeleteMapping(\"/{id}\")"
+        }
+      ]
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/controller/VehicleTrackingController.java",
+      "sha256": "6613df668c8687db8be76c5c3cc7dcb8f59881f05b6832203f84560f72fb1905",
+      "lines": 98,
+      "contractLines": [
+        {
+          "line": 18,
+          "text": "@RequestMapping(\"/api/v1/vehicles/{vehicleId}\")"
+        },
+        {
+          "line": 30,
+          "text": "@GetMapping(\"/maintenance\")"
+        },
+        {
+          "line": 35,
+          "text": "@PostMapping(\"/maintenance\")"
+        },
+        {
+          "line": 42,
+          "text": "@PutMapping(\"/maintenance/{recordId}\")"
+        },
+        {
+          "line": 49,
+          "text": "@DeleteMapping(\"/maintenance/{recordId}\")"
+        },
+        {
+          "line": 56,
+          "text": "@GetMapping(\"/reminders\")"
+        },
+        {
+          "line": 61,
+          "text": "@PostMapping(\"/reminders\")"
+        },
+        {
+          "line": 68,
+          "text": "@PutMapping(\"/reminders/{reminderId}\")"
+        },
+        {
+          "line": 75,
+          "text": "@PutMapping(\"/reminders/{reminderId}/completion\")"
+        },
+        {
+          "line": 81,
+          "text": "@DeleteMapping(\"/reminders/{reminderId}\")"
+        },
+        {
+          "line": 88,
+          "text": "@GetMapping(\"/overview\")"
+        },
+        {
+          "line": 93,
+          "text": "@GetMapping(\"/history\")"
+        }
+      ]
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/controller/WelcomeCreditController.java",
+      "sha256": "28f09918f0c2269e9acff236842d777e99d257269e63bec6f809cfa45cdedc8f",
+      "lines": 24,
+      "contractLines": [
+        {
+          "line": 10,
+          "text": "@RequestMapping(\"/api/v1/credits/welcome\")"
+        },
+        {
+          "line": 17,
+          "text": "@PostMapping(\"/challenge\")"
+        },
+        {
+          "line": 19,
+          "text": "@PostMapping(\"/claim\")"
+        }
+      ]
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/controller/WorkspaceController.java",
+      "sha256": "453babd74b56bba07a68e68a040f1adcb56f8b0869b68acdc3eb79a0f131f351",
+      "lines": 19,
+      "contractLines": [
+        {
+          "line": 14,
+          "text": "@GetMapping(\"/api/v1/workspace\")"
+        }
+      ]
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/dto/google/GooglePlacesTextSearchResponse.java",
+      "sha256": "20ad7de49a82391d240bfd662350765e1e1a5bb6d14050cc362b9d2d8fdb130b",
+      "lines": 49
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/dto/llm/DamageContext.java",
+      "sha256": "b28d7b6accd941dbbe7b4019929844fc775c9d90ba53d00f8bdc5611886be8f8",
+      "lines": 15
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/dto/llm/InspectionLlmRequest.java",
+      "sha256": "3439e582eaba31b611ca5e26c2ac808837e9334a011340a96dbe9e612da5263e",
+      "lines": 24
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/dto/llm/InspectionPriceEstimateResult.java",
+      "sha256": "8396880a60db066b96ff92d05a5fe55910570dc77962f05831f6b224b2042f78",
+      "lines": 17
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/dto/llm/LlmInspectionReportResult.java",
+      "sha256": "895880b0838963566dd7e1b2dfada0970dbd34bb953ed9be25c9d9c8341f89a7",
+      "lines": 29
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/dto/llm/NearbyServiceSearchResult.java",
+      "sha256": "a8cb05205ffab481bbb7fa9fc4b5cb893eafccae053c74a654bf2c9a4ddd6086",
+      "lines": 11
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/dto/llm/VehicleContext.java",
+      "sha256": "9d3ce4a59108071e9edbdf4a5369a409f764555a35c2df0b8338f43f2183b62b",
+      "lines": 9
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/dto/request/AcceptBusinessInvitationRequest.java",
+      "sha256": "b2f0d60d6a01dadd3f62477d2e852f837441ee2030a9ad4af7f7834fe350952d",
+      "lines": 16
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/dto/request/AiAssistantChatRequest.java",
+      "sha256": "cf469859e261b23e06c98e1cd3a0f376971bb382f3e67a97eba796a47a72a0b3",
+      "lines": 20
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/dto/request/ChangePasswordRequest.java",
+      "sha256": "c0a9afcfb36abadff66c2d4d0303d046ae18db9e55b279ef9ccbc6ab42ffc1b4",
+      "lines": 46
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/dto/request/CreateBusinessAccountRequest.java",
+      "sha256": "bbcb459588e76a5c4a4f62743286382e5eb6e5143a11fae1238d24b96a006f6c",
+      "lines": 16
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/dto/request/CreateBusinessInvitationRequest.java",
+      "sha256": "9d4be6a0db00190906880a3fd49671d889f0694d09b144960414642ccdce4510",
+      "lines": 13
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/dto/request/CreateVehicleRequest.java",
+      "sha256": "c70a3ef8b15606fda3e490f4c5e7daada4affba39950a998f278dd751ac638f3",
+      "lines": 85
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/dto/request/DamageAssessmentRecordRequest.java",
+      "sha256": "e7fdfc159a2e64742fc1de56c366e605fedf38bd3489020e971d8fd46bbd25c6",
+      "lines": 18
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/dto/request/DeviceTokenRequest.java",
+      "sha256": "bfa564ac5edc094f02a3bfb4d179654770c3083ee3e618db786f2ff3150b5f7e",
+      "lines": 13
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/dto/request/ForgotPasswordRequest.java",
+      "sha256": "520309ec1bcda5d7fa03a2a39226cc19b2b20fe9878d29d5a84fd90443795705",
+      "lines": 19
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/dto/request/GoogleLoginRequest.java",
+      "sha256": "00a28fe080e7d990da53e85be47d5d7e1e629f87b930e2b975024fc17e7d6739",
+      "lines": 17
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/dto/request/LoginRequest.java",
+      "sha256": "8e66d3437bee9472daf359dc17251a4fb4487ce5aee4be1a92047791a9efb3f2",
+      "lines": 30
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/dto/request/MaintenanceRequest.java",
+      "sha256": "9f76914bf0b0648604bd11dfefb0cdfa2f4f7ef2bec1e20b7b7acd25f5ed6e87",
+      "lines": 26
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/dto/request/RegisterRequest.java",
+      "sha256": "7590aee0010eca24a75b819654aad4f89e4acce36fda59bf924c0f5e48a77b81",
+      "lines": 56
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/dto/request/ReminderRequest.java",
+      "sha256": "80d581ca5ebc8ce74d1d8672717b8404636d782bd859c0aba47773519ec161a2",
+      "lines": 25
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/dto/request/ResendVerificationRequest.java",
+      "sha256": "60e92734592fb4e9c255300c6ef3c45df27db181b5b9449a336777d6f757f305",
+      "lines": 20
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/dto/request/ResetPasswordRequest.java",
+      "sha256": "6f66eff7ebf873395a13398c0e78de20b5cd4a80c7dc03bfa4d00b93afcc0e4d",
+      "lines": 55
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/dto/request/UpdateVehicleRequest.java",
+      "sha256": "5aa38e8970dea9c9bee250b1c777a6a848480e24046f94961d8a840a253f76b3",
+      "lines": 84
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/dto/request/VehicleTrackingRequest.java",
+      "sha256": "062b28a8ce5b81ecba7277a528bacb97a26da842ec2e47eb6eef44dcc18f9c08",
+      "lines": 58
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/dto/request/VerifyEmailRequest.java",
+      "sha256": "86d2312201c137dc42c2119a4059c4f725e2c4fa2699b3fd202269b10fc730c2",
+      "lines": 36
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/dto/response/AiAnalysisResponse.java",
+      "sha256": "406e3898753ffcf1c66f0189bf169e601755a7d8b61c615370a17fa9017746e9",
+      "lines": 126
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/dto/response/AiAssistantChatResponse.java",
+      "sha256": "317bdaa7c6e9b58fadc098e8a60460e722310ce80cdf06845d6c54c9d1eb60fe",
+      "lines": 15
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/dto/response/AiAssistantDamageToolResponse.java",
+      "sha256": "857e398acee2ac43d8963e852a69d83364f77aef6045436c11dd033956222104",
+      "lines": 13
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/dto/response/AiAssistantEntitlementResponse.java",
+      "sha256": "2cacfec48cff9ed85981b0400a2231f02827df8d8847bb3e441c47cc5a50e268",
+      "lines": 18
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/dto/response/AiAssistantPlanResponse.java",
+      "sha256": "8ea5f7c8150b0617ddcf078e69d9c863894574636b6b8591ec19483116264d79",
+      "lines": 26
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/dto/response/AiAssistantReminderToolResponse.java",
+      "sha256": "98ffd690ef79ad61263faed45eb7bd5b46a0274b7ba2682c13c878422c84fe73",
+      "lines": 5
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/dto/response/AiAssistantVehicleToolResponse.java",
+      "sha256": "1c3c899a571d0e9dba54f40e894dbe4949605b80788a2456b5c3aecc9a5812e3",
+      "lines": 4
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/dto/response/AnalysisQuotaResponse.java",
+      "sha256": "e7f5c0113ac5e86e102ea438ac4fc4f9b1ad18dc83ebfbba33ac7143d065cded",
+      "lines": 14
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/dto/response/AuthResponse.java",
+      "sha256": "fdcf4e53d87aa594f1560a4025d12a05a1c4f1207952c41ce500131adca23ea6",
+      "lines": 69
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/dto/response/BillingOverviewResponse.java",
+      "sha256": "bf139ca01c52249fa85819813789becb3df86916073d670f1c21792cf81807c7",
+      "lines": 10
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/dto/response/BillingPlanResponse.java",
+      "sha256": "32c27d0e5dc093b35663801248c64350820db52d653ac85082720ec99a8f06af",
+      "lines": 20
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/dto/response/BillingStatusResponse.java",
+      "sha256": "2e91e3a5851711dc4666ebd8a209386357ea86085abff42de5246e28584521c6",
+      "lines": 21
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/dto/response/BusinessAccountResponse.java",
+      "sha256": "2711b7b38e38ece6c6d53af10119f8046d18f6741151a65209b4a16e58c073c0",
+      "lines": 26
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/dto/response/BusinessMemberResponse.java",
+      "sha256": "dd4a9a64340ae02c8cfdf8f2d5fb7fc0fb9f3ff62345d468d6fbba4830233433",
+      "lines": 13
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/dto/response/DamageAssessmentRecordResponse.java",
+      "sha256": "e885478c2f19503e6870017d4163018391c4bfef174d6abc817106eb9cc2c9d8",
+      "lines": 26
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/dto/response/DamageDetectionResponse.java",
+      "sha256": "dbef2e85dd46edda19c6ba9a54235fd181c3c5fc5ee938ac914170f6f88e149a",
+      "lines": 67
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/dto/response/DamageInspectionResponse.java",
+      "sha256": "375b87bf5b8db5ea65790dcc2beb63ee8a0a8612cf31f0f2600e1ce1875c9bfb",
+      "lines": 224
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/dto/response/DamageRepairRecommendationResponse.java",
+      "sha256": "66d0901f82ef37a53d4368dbe80d49dc183dd00efdba141688cda1308b5c990f",
+      "lines": 15
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/dto/response/ImageQualityResponse.java",
+      "sha256": "83f80d9871e9b2d149aa27dccab547a063be4e34d712d5dffd653aa6ee9b54c3",
+      "lines": 9
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/dto/response/InspectionReportResponse.java",
+      "sha256": "a8e85584a99565d4eb568b5f2847303fe8cd878aae3f4aa145c7651fa2f69fda",
+      "lines": 31
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/dto/response/MaintenanceResponse.java",
+      "sha256": "9a77dc20fc4576f4778723661816c66c26d8843e9bbb771b973fb324ec86d461",
+      "lines": 16
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/dto/response/NearbyServiceResponse.java",
+      "sha256": "1d42ca113a23b7dbb2fba88e359299cf02f189c2e948215519b61df4d3e6cf81",
+      "lines": 26
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/dto/response/NotificationResponse.java",
+      "sha256": "c47cdc01abbbf220c6583f77b72c380ece375300ccda329af4984c840cf15494",
+      "lines": 20
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/dto/response/PhotoAssessmentResponse.java",
+      "sha256": "5cceb59f59edcc38835ad6d35930483893be0129e09afa2b0e35b08e814a05b5",
+      "lines": 5
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/dto/response/ReminderResponse.java",
+      "sha256": "081f539915008eae80c06aecf1c99d543a39b80bed6da0931a23d2506b318e1f",
+      "lines": 15
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/dto/response/RepairRecommendationResponse.java",
+      "sha256": "5011a769ee422830b25954a3ca26f64121542c054a00983954b6cf9ad993bf8e",
+      "lines": 59
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/dto/response/UnreadCountResponse.java",
+      "sha256": "be48d27625463235456aadf6fc3b70ad9af3d6c5662c80d6e4f8ec09fb3f39db",
+      "lines": 5
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/dto/response/UserResponse.java",
+      "sha256": "26a64d89407353cd2248d0c26fd266b0f23335465ad2a1d8030b079ad73e4126",
+      "lines": 66
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/dto/response/VehicleHistoryItemResponse.java",
+      "sha256": "3db4f94e3a2c7c03da8b3fcd2f9ecc9faacbd1d23002bbf9811c8a88ef793d3b",
+      "lines": 9
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/dto/response/VehicleOverviewResponse.java",
+      "sha256": "3135009e8891d78bf8cbe7d67c4d7da6e25b286931ad6a533a8c2d4b91595e87",
+      "lines": 16
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/dto/response/VehicleResponse.java",
+      "sha256": "f2f9c7fb56322203d091178a7c5721ff7d63d0ee0feb25efae450ac305e8018d",
+      "lines": 74
+    },
+    {
+      "path": "src/main/java/com/gorkem/vehicle_inspector/dto/response/VisualFindingResponse.java",
+      "sha256": "6e695437ed1e5ddc4f5277242351a2a152e122a3629484684857b7d3e295e1f5",
+      "lines": 10
+    }
+  ]
+}
