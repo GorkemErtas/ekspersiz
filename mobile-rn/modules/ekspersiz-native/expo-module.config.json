@@ -1,0 +1,7 @@
+{
+  "platforms": ["apple", "android"],
+  "apple": { "modules": ["EkspersizNativeModule"] },
+  "android": {
+    "modules": ["expo.modules.ekspersiznative.EkspersizNativeModule"]
+  }
+}

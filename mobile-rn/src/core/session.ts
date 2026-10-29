@@ -205,5 +205,9 @@ export class Session {
       },
       true,
     );
+    if (profile)
+      void this.write(() =>
+        this.storage.set(`workspace.user.${profile.id}`, 'PERSONAL'),
+      ).catch(() => undefined);
   }
 }

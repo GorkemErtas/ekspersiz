@@ -1,5 +1,6 @@
 import { isRecord, type Workspace } from './contracts';
 import { Session, StaleSessionError } from './session';
+import { clearProtectedMedia } from './protectedResources';
 
 export class ApiError extends Error {
   constructor(
@@ -18,6 +19,7 @@ interface RequestOptions {
   workspace?: Workspace;
   timeout?: number;
   signal?: AbortSignal;
+  binary?: boolean;
 }
 
 /** No automatic retries: mutations may consume credits or start paid analysis. */
@@ -87,6 +89,52 @@ export class Api {
         signal: controller.signal,
       });
       this.session.check(snapshot.generation);
+      if (response.ok && options.binary) {
+        if (auth && response.headers.get('x-workspace') !== workspace)
+          throw new ApiError(
+            503,
+            'Sunucu seçilen çalışma alanını doğrulamadı.',
+          );
+        const limit = 10 * 1024 * 1024;
+        if (Number(response.headers.get('content-length')) > limit)
+          throw new ApiError(413, 'Görsel çok büyük.');
+        if (response.body?.getReader) {
+          const reader = response.body.getReader(),
+            chunks: Uint8Array[] = [];
+          let total = 0;
+          try {
+            while (true) {
+              const part = await reader.read();
+              this.session.check(snapshot.generation);
+              if (part.done) break;
+              total += part.value.byteLength;
+              if (total > limit) throw new ApiError(413, 'Görsel çok büyük.');
+              chunks.push(part.value);
+            }
+          } catch (error) {
+            try {
+              await reader.cancel();
+            } catch {
+              /* The request may already have been aborted on a scope change. */
+            }
+            throw error;
+          } finally {
+            reader.releaseLock();
+          }
+          const bytes = new Uint8Array(total);
+          let offset = 0;
+          for (const chunk of chunks) {
+            bytes.set(chunk, offset);
+            offset += chunk.byteLength;
+          }
+          return bytes.buffer as T;
+        }
+        const bytes = await response.arrayBuffer();
+        this.session.check(snapshot.generation);
+        if (bytes.byteLength > limit)
+          throw new ApiError(413, 'Görsel çok büyük.');
+        return bytes as T;
+      }
       const raw = await response.text();
       this.session.check(snapshot.generation);
       let body: unknown;
@@ -114,6 +162,7 @@ export class Api {
             throw new StaleSessionError();
           await this.session.logout();
         }
+        if (auth && response.status === 403) clearProtectedMedia();
         const message = isRecord(body)
           ? (body.message ?? body.detail ?? body.error)
           : undefined;

@@ -1,0 +1,171 @@
+{
+  "profile": {
+    "id": 7,
+    "fullName": "Deniz Yılmaz",
+    "email": "deniz@example.com",
+    "subscriptionPlan": "FREE",
+    "businessAccount": null
+  },
+  "vehicle": {
+    "id": 1,
+    "plate": "34ABC123",
+    "brand": "Toyota",
+    "model": "Corolla",
+    "modelYear": 2021,
+    "mileage": 45200,
+    "primaryVehicle": true,
+    "notes": "Düzenli bakım takibi"
+  },
+  "maintenance": {
+    "id": 1,
+    "maintenanceType": "ENGINE_OIL",
+    "maintenanceDate": "2026-09-15",
+    "mileage": 44000,
+    "cost": 2500,
+    "note": "Motor yağı ve filtre değişimi",
+    "nextRecommendedDate": "2027-09-15",
+    "nextRecommendedMileage": 59000,
+    "intervalMonths": 12,
+    "intervalMileage": 15000,
+    "createdByName": "Deniz Yılmaz"
+  },
+  "reminder": {
+    "id": 1,
+    "reminderType": "TRAFFIC_INSURANCE",
+    "title": "Trafik sigortası",
+    "dueDate": "2026-11-15",
+    "dueMileage": null,
+    "note": "Poliçe yenileme",
+    "status": "UPCOMING",
+    "daysRemaining": 17,
+    "mileageRemaining": null
+  },
+  "inspection": {
+    "id": 1,
+    "vehicleId": 1,
+    "vehiclePlate": "34ABC123",
+    "vehicleBrand": "Toyota",
+    "vehicleModel": "Corolla",
+    "vehicleModelYear": 2021,
+    "vehicleMileage": 45200,
+    "userId": 7,
+    "imagePath": "fixture/photo.jpg",
+    "contextImagePath": "fixture/context.jpg",
+    "schemaVersion": "hitl-v1",
+    "modelVersion": "visual-test",
+    "status": "COMPLETED",
+    "reportStatus": "COMPLETED",
+    "damageSeverity": "MINOR",
+    "damageTypes": ["SCRATCH"],
+    "affectedParts": ["FRONT_BUMPER"],
+    "repairRecommendations": [
+      {
+        "damageType": "SCRATCH",
+        "recommendedAction": "PROFESSIONAL_INSPECTION",
+        "partReplacementRequired": null,
+        "affectedParts": ["FRONT_BUMPER"]
+      }
+    ],
+    "confidenceScore": 0.91,
+    "analysisMessage": "Ön tamponda yüzeysel çizik görülüyor. Kesin işlem fiziksel incelemeyle belirlenir.",
+    "createdAt": "2026-10-29T10:30:00",
+    "completedAt": "2026-10-29T10:31:00",
+    "detections": [],
+    "visualFindings": [
+      {
+        "damageType": "SCRATCH",
+        "affectedPart": "FRONT_BUMPER",
+        "severity": "MINOR",
+        "description": "Ön tamponun görünen bölümünde yüzeysel çizikler bulunuyor.",
+        "repairNotes": "Yüzey ve boya kalınlığı fiziksel incelemeyle kontrol edilmelidir.",
+        "replacementAssessment": "NOT_INDICATED"
+      }
+    ],
+    "report": {
+      "title": "Hasar Analiz Raporu",
+      "summary": "Görünür yüzeysel çizikler değerlendirilmiştir.",
+      "damageDescription": "Mekanik veya görünmeyen alanlar bu değerlendirmenin dışındadır.",
+      "repairRecommendation": "İşlem öncesinde uzman incelemesi alın.",
+      "estimatedMinimumPrice": 750,
+      "estimatedMaximumPrice": 1500,
+      "currency": "TRY",
+      "priceInformation": "Bu aralık fiziksel inceleme içindir.",
+      "priceSourceDescription": "Yerel servis inceleme aralığı; bağlayıcı teklif değildir.",
+      "disclaimer": "Bu ön değerlendirme profesyonel ekspertiz yerine geçmez."
+    },
+    "locationCity": "İstanbul",
+    "locationLatitude": 41.0082,
+    "locationLongitude": 28.9784
+  },
+  "billing": {
+    "status": {
+      "billingCustomerId": "visual_fixture_7",
+      "currentPlan": "FREE",
+      "status": "NONE",
+      "autoRenewing": false,
+      "sandbox": false,
+      "verificationStatus": "NOT_CONFIGURED"
+    },
+    "plans": [
+      {
+        "plan": "BUSINESS",
+        "title": "Business",
+        "description": "Şirketinizin araçlarını ve ekip üyelerini birlikte yönetin.",
+        "productId": "business_monthly",
+        "packageIdentifier": "business_monthly",
+        "fallbackMonthlyPrice": 999,
+        "currency": "TRY",
+        "highlighted": true,
+        "features": [
+          "Ortak şirket çalışma alanı",
+          "Ekip üyeleri ve şirket araçları"
+        ]
+      }
+    ]
+  },
+  "credits": {
+    "personal": {
+      "canPurchase": true,
+      "owner": true,
+      "usedSlots": 1,
+      "totalSlots": 3,
+      "balances": {
+        "ANALYSIS": { "available": 5, "periodic": 0 },
+        "ASSISTANT": { "available": 10, "periodic": 0 }
+      }
+    },
+    "company": null,
+    "products": [
+      {
+        "productId": "analysis_10",
+        "resource": "ANALYSIS",
+        "quantity": 10,
+        "business": false,
+        "referencePrice": 250
+      },
+      {
+        "productId": "assistant_20",
+        "resource": "ASSISTANT",
+        "quantity": 20,
+        "business": false,
+        "referencePrice": 100
+      },
+      {
+        "productId": "vehicle_slot_1",
+        "resource": "SLOT",
+        "quantity": 1,
+        "business": false,
+        "referencePrice": 50
+      }
+    ]
+  },
+  "assistant": {
+    "status": "ACTIVE",
+    "canAsk": true,
+    "dailyLimit": 10,
+    "usedToday": 0,
+    "remainingToday": 10,
+    "outOfScopeAttemptsToday": 0,
+    "quotaPeriod": "CREDIT"
+  }
+}

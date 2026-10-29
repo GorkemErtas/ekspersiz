@@ -3,6 +3,7 @@ import * as SecureStore from 'expo-secure-store';
 import { useSyncExternalStore } from 'react';
 import { Api } from './api';
 import { Session } from './session';
+import { clearProtectedResources } from './protectedResources';
 
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -19,6 +20,7 @@ export const session = new Session(
   () => {
     void queryClient.cancelQueries();
     queryClient.clear();
+    clearProtectedResources();
   },
 );
 export const api = new Api(
