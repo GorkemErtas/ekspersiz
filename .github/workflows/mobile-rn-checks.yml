@@ -67,6 +67,18 @@ jobs:
         working-directory: mobile-rn
     steps:
       - uses: actions/checkout@v4
+      - name: Free runner disk space for Android native builds
+        shell: bash
+        run: |
+          df -h /
+          # This Android job does not use .NET, Haskell, Swift or CodeQL.
+          # Preserve the Android SDK, Java, Node and all checkout files.
+          for directory in /usr/share/dotnet /usr/local/.ghcup /usr/share/swift /opt/hostedtoolcache/CodeQL; do
+            if [ -d "$directory" ]; then
+              sudo rm -rf -- "$directory"
+            fi
+          done
+          df -h /
       - uses: actions/setup-node@v4
         with:
           node-version-file: mobile-rn/.nvmrc
