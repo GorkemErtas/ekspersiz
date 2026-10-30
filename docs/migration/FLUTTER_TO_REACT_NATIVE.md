@@ -1,0 +1,80 @@
+# Flutter → React Native / Expo migration
+
+Tarih: 29 Ekim 2026. Branch: `migration/flutter-to-expo`.
+
+**Durum:** önceki dokümanda bekleyen istemci akışları gerçek API ve native SDK bağlantılarıyla uygulandı. Android development APK derlendi ve ana native akışlar test edildi. Üretime geçiş tamamlanmış sayılmaz: iOS native derlemesi, gerçek mağaza/FCM/Play doğrulaması, tüm ekran/durumların görsel kabulü ve bağımlılık güvenlik bulguları aşağıda açıkça ayrılmıştır. Production build yapılandırması engelli kalır. Flutter ve backend kaynakları korunur; production deploy veya master merge bu çalışmanın parçası değildir.
+
+Çalıştırma, SDK kurulumu, ortam değişkenleri, Android/iOS ve test komutları: **[mobile-rn/README.md](../../mobile-rn/README.md)**. Görsel kanıt ve sınırlamalar: **[VISUAL_PARITY.md](VISUAL_PARITY.md)**.
+
+## Referans ve mimari
+
+Flutter uygulaması görsel ve davranışsal referanstır. `flutter-inventory.json`, 26 ekran, 28 domain model, 18 feature service, 56 test/support/fixture ve 58 backend DTO kaydını kaynak SHA-256 değerleriyle indeksler. Envanter kaynak okumalarının yerine geçmez. Flutter kaynakları değiştiğinde `npm run audit:flutter` ile yenilenebilir.
+
+| Alan          | Uygulama                                                                                                                                                                                                                   |
+| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| İzolasyon     | Yeni uygulama `mobile-rn/`; development kimliği `com.gorkem.ekspersiz.dev`. Flutter/backend koduna bağımlı runtime yok                                                                                                     |
+| Teknoloji     | Expo SDK 58, React Native 0.88.1, React 19.3, strict TypeScript 6, Expo Router native stack                                                                                                                                |
+| Tasarım       | Flutter renk/boşluk/tipografi/radius/gradient token’ları; orijinal Inter, Material Icons, logo ve rehber çizimleri. Native bileşenler ve Reanimated; 420ms arka plan/metin/kart tema geçişi, sistem reduced-motion desteği |
+| Veri          | TanStack Query; kullanıcı/çalışma alanı/şirket/generation ile özel query anahtarları; ücretli mutation’larda otomatik retry yok                                                                                            |
+| Oturum        | SecureStore, sıralı storage yazımları, generation/AbortController korumaları, sunucudan doğrulanan workspace geçişi                                                                                                        |
+| Native modül  | Kotlin/Swift kurulum işareti ve sınırlı fotoğraf hazırlama; Android gerçek ANDROID_ID, Standard Play Integrity ve immediate update                                                                                         |
+| Test taşıması | `visual/fixture-server.mjs` açıkça sentetik, yalnızca loopback’e bağlı test sunucusu. Uygulama production kodu fixture import etmez                                                                                        |
+
+## Özellik durumu
+
+“Uygulandı”, çalışma kodu ve bağlantıların bulunduğunu belirtir; harici servisin bu ortamda canlı doğrulandığı anlamına gelmez.
+
+| Akış              | Uygulanan davranış                                                                                                                                                                                                 | Kalan doğrulama                                                                             |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------- |
+| Auth              | E-posta/Google giriş, kayıt, doğrulama, tekrar kod, şifre sıfırlama/değiştirme, token rotation, hesap silme/çıkış                                                                                                  | Gerçek e-posta teslimi ve development OAuth hesabıyla cihaz testi                           |
+| Onboarding        | Orijinal adımlar ve dark/light çizimler; ilk kurulumda no-backup atomik işaret; Profil’den tekrar açma                                                                                                             | iOS native kurulum/yeniden kurulum testi                                                    |
+| MainShell/Home    | Dört korunmuş sekme, geniş ekranda rail, scope değişiminde özel navigasyon reseti, foreground yenileme, okunmamış badge, ana araç seçimi                                                                           | Tam responsive/ekran okuyucu kabul matrisi                                                  |
+| Araçlar           | Gerçek katalog, ekle/düzenle/kaldır, ana araç, isteğe bağlı arama, slot bilgisi, detay/overview/geçmiş bağlantıları                                                                                                | Gerçek staging filolarıyla geniş veri testi                                                 |
+| Bakım/hatırlatıcı | Oluştur/düzenle/sil, tür/tekrar, tamamla, kilometre, yerel tarih/saat, ilk muayene ve sigorta tarih dalları                                                                                                        | Gerçek zamanlı hatırlatıcı teslimi                                                          |
+| Analiz oluşturma  | Araç/şehir/GPS, izin/hata durumları, sınırlı ve iptal edilen GPS aboneliği, quota/availability                                                                                                                     | Gerçek cihaz izin reddi/konum sağlayıcısı matrisi                                           |
+| Fotoğraf yükleme  | Genel görünüm + yakın plan, kamera/sistem galeri, farklı fotoğraf kontrolü, EXIF dönüş/silme, sınırlı native decode/JPEG. Expo 58 `File` multipart kullanılır; önce detail sonra context yüklenir                  | Gerçek kamera/format/cihaz çeşitliliği ve iOS codec doğrulaması                             |
+| Analiz işi        | Yalnızca açık kullanıcı eylemiyle tek ücretli POST, mevcut durum GET’i, devam eden işi paylaşma, durum polling’i, kayıp yanıtı GET ile kurtarma, iptal                                                             | Gerçek AI sağlayıcısının uzun iş/bağlantı kaybı testi                                       |
+| Geçmiş/sonuç      | Tamamlanan workspace raporları, structured findings, şiddet, HITL/fiziksel inceleme maliyeti, ek fotoğraf, legacy rapor, manuel regenerate, yakın servis/tutanak                                                   | Tüm gerçek model çıktı varyantları ve offline durumları                                     |
+| Tutanak           | Taslak oluştur/güncelle, onayla kesinleştir, salt okunur durum, sunucu snapshot ve SHA-256 kontrolü                                                                                                                | Gerçek staging kaydının değiştirilmezlik entegrasyonu                                       |
+| PDF               | A4, orijinal Roboto Türkçe fontları/logo, korumalı fotoğraf, çok sayfa/sayfa numarası, başlığın içerikle tutulması, native paylaşım, sınırlı özel dosya cache’i. Tutanak metni yalnızca immutable snapshot’tan     | Flutter PDF ile tüm uzun belge varyantlarının görsel kabulü; iOS paylaşımı                  |
+| Yakın servisler   | Backend Places sonucu, Flutter’ın 12 kurallı dark Google Maps stili, marker/seçili panel/yol tarifi. Anahtarsız ortamda liste ve haritada açma                                                                     | Android/iOS development Maps anahtarıyla gerçek tile ve attribution kontrolü                |
+| Asistan           | Gerçek entitlement, araç/genel bağlam, son altı mesaj, sınırlı UTF-16 history, güvenli web bağlantıları, Markdown, Türkçe native STT, iptal, aynı başarısız payload için aynı request ID                           | Gerçek AI ve Türkçe tanıma sağlayıcısı/iOS izinleri                                         |
+| RevenueCat        | Gerçek native offering/package/fiyat, backend billingCustomerId, SKU eşleştirme, satın al/restore/sync, legacy Plus/Pro dönem hakları, Business geçiş/yenileme, active SKU ile çift abonelik engeli, sandbox reddi | Gerçek Play/StoreKit sandbox ve backend webhook/ledger testi                                |
+| Bekleyen ödeme    | Kullanıcı + workspace + şirket ile şifreli kalıcı journal; intent ödemeden önce; belirsiz sonuçta aynı SKU tekrar tahsil edilmez; native transaction’la uzlaştırma; yalnızca sunucu onayı başarı verir             | Pending/family approval, tüketilen kredi ürünü ve uygulama kapanmasıyla gerçek mağaza testi |
+| Business          | Şirket oluştur, e-posta daveti, kodla katıl, üyeler/üyeyi kaldır, OWNER/MEMBER yetkileri, kişisel/şirket alanı ve erişim süresi dolması                                                                            | Gerçek iki hesap ve aktif/pasif abonelik matrisi                                            |
+| Bildirimler/FCM   | Liste/okunmamış/tekil okundu/tümü okundu, araç bağlantısı; gerçek FCM token POST/DELETE/refresh; Android 13+ izin, iOS APNs bekleme, foreground/background/initial açılış                                          | Development Firebase/APNs yapılandırması ve gerçek mesaj teslimi                            |
+| Play update       | Backend minimum build, native immediate update veya mağaza fallback, zorunlu durumda geri engeli                                                                                                                   | Play’den dağıtılan development/test sürümü                                                  |
+| Başlangıç kredisi | Native ANDROID_ID + backend challenge/requestHash + gerçek Standard Integrity token + backend claim; sahte cihaz kanıtı yok                                                                                        | Uygun Play track, proje ve sunucu politikası. Mevcut Flutter politikası gibi Android’e özgü |
+| Navigasyon/profil | Tüm feature route’ları, profil işlemleri, rehber/şifre/mağaza/şirket bağlantıları, eski `/account` yönlendirmesi, geçersiz route/error fallback                                                                    | iOS gesture/back ve tüm cihaz ekran okuyucu sırası                                          |
+
+## Oturum, ödeme ve medya sınırları
+
+- Authenticated istekler `X-Workspace` taşır; identity dışındaki başarılı yanıtın scope echo’su doğrulanır. `/workspace`, kullanıcı/alan/şirket eşleşmeden UI alanını değiştirmez.
+- Membership veya `subscriptionPlan == BUSINESS` tek başına erişim vermez. `workspaceAvailable` ve `workspaceAccessStatus == ACTIVE` gerekir. Sunucu kararı yetkilidir.
+- `WORKSPACE_UNAVAILABLE` yalnızca Business seçimini/erişimini iptal eder; üyelik ve kişisel oturum tutulur. Genel bir 403 üyeliği silmez. Geç gelen 401 eski token ile yeni hesabı kapatamaz.
+- Scope/hesap değişimi istekleri iptal eder, query/private navigation ve kayıtlı özel kaynakları temizler. Görsel URI’leri generation/epoch ile denetlenir; disk cache paylaşımı yapılmaz.
+- Fotoğraf girişi en çok 40 MiB / 64 MP; minimum kenar 256, JPEG/PNG/static WebP. Animasyonlu/bozuk içerik reddedilir; sampled decode, tüm EXIF yönleri, beyaz alpha zemin, en çok 2048px JPEG ve 10 MiB çıktı. Binary indirme en çok 10 MiB; özel görsel cache’i 6 dosya/12 MiB, PDF cache’i 3 dosya ile sınırlıdır.
+- Ücretli analiz POST’u otomatik tekrarlanmaz. Poll ilk GET’ten önce tamamlanırsa eski GET ikinci analiz başlatamaz. İptal mesajı ücretin iade edildiğini iddia etmez.
+- SDK entitlement’ı, mağaza ekranının kapanması veya yerel bakiye erişim/kredi vermez. Billing sync ve backend transaction confirmation gerekir. Sonucu bilinmeyen journal kaydı gerçek işlem araştırılmadan silinmemelidir; bu durumda aynı SKU bilinçli olarak engellenebilir.
+- PDF tüm dış metni düz metin olarak işler; uzaktan HTML/asset yüklemez. Kesinleştirilmiş tutanak checksum’u snapshot metnini doğrular; yetkili eksper/dijital imza iddiası yapılmaz. Mevcut hukuki uyarı korunur.
+- Development Firebase/Maps/OAuth/mağaza girdileri README’de açıklanır. Service account, özel imza anahtarı veya backend model anahtarı uygulamaya gömülmez. Geniş Android galeri/depolama izinleri engellenir; sistem seçicisi yalnızca seçilen görseli verir.
+
+## Doğrulama kaydı
+
+Son otomatik komutların kesin sonuçları [VALIDATION.md](VALIDATION.md) içinde tutulur.
+
+Bu çalışma sırasında iki Android x86_64 native derlemesi başarılı oldu. Son derleme, kullanılmayan native paketler kaldırıldıktan ve storage izinleri engellendikten sonra **9 dakika 43 saniyede, 683 task** ile geçti. Kotlin özel modül gerçekten derlendi; TS/bundle kontrolü native derleme yerine sayılmadı.
+
+API 36 emülatöründe gerçek native arayüzle doğrulananlar: ana sekmeler/rehber/rapor; klavye açıkken asistan gönderme ve Markdown yanıtı; GPS konumu ve analiz kaydı; sistem galerisinden farklı iki PNG, native JPEG hazırlama, detail → context multipart yükleme, tek analiz POST’u ve sonuç; taslak → FINALIZED, 64 karakter SHA-256/snapshot ve native tutanak PDF paylaşımı; rapor PDF’sinin Android yazdırma önizlemesinde Türkçe içerik ve iki sayfa. **Backend yanıtları bu testlerde açık sentetik fixture taşımasıdır; gerçek AI/mağaza/FCM başarısı değildir.**
+
+Flutter native referansları gerçek Flutter widget’larını aynı API 36 emülatöründe çalıştırır. Flutter debug build çıktı dosyası referans hedefiyle üretildiği için normal Flutter APK’sını kullanmadan önce varsayılan hedefle yeniden derleyin; Flutter kaynakları değiştirilmedi.
+
+## Açık kalan kabul/ortam işleri
+
+1. **iOS native derlemesi ve cihaz testi:** Windows ortamında yapılmadı. Swift, APNs, Google Maps, STT, StoreKit ve VoiceOver macOS/Xcode üzerinde doğrulanmalı.
+2. **Gerçek staging entegrasyonları:** Google/e-posta, AI, iki Business hesabı, RevenueCat test mağazası/webhook/ledger, FCM/APNs teslimi, Play Integrity ve Play immediate update; uygun geliştirme yapılandırması/hesapları gerektirir. Gerçek ödeme veya ücretli AI çağrısı yapılmadı.
+3. **Görsel kabul:** Ana native ekranlar karşılaştırıldı ve büyük yerleşim farkları düzeltildi. Tüm 26 ekranın loading/error/empty/keyboard, büyük yazı, tablet, reduced-motion ve ekran okuyucu matrisi bitmiş sayılmaz. 1% otomatik pixel eşiği görsel kabul yerine geçirilmez; kullanıcının küçük sapma toleransı ayrıca değerlendirilir.
+4. **Bağımlılık güvenliği:** Son kayıt 18 bulgu (**15 low, 3 high**). gRPC override `1.13.6` ile ilgili Firebase zinciri giderildi. Kalan high zinciri Expo CLI → Zod’dur; SDK uyumunu bozacak zorunlu Zod major override/downgrade uygulanmadı. Tüm bağımlılık ağacı temiz değildir. [Zod advisory](https://github.com/advisories/GHSA-mrhx-c7xc-m3w5), [gRPC advisory](https://github.com/advisories/GHSA-m9gg-hp2v-232j).
+5. **Release performansı ve backend regresyonu:** Yazılım emülatöründeki debug ekran testleri FPS/üretim performansı kanıtı değildir. Backend kaynakları değiştirilmedi; bu çalışmada backend regresyon paketi çalıştırılmadı. Fiziksel ARM64 ve iOS release profillemesi ayrıca gerekir.
+
+Business-only web uygulaması kapsam dışıdır. Bu branch’in publish edilmesi production uygulaması yayımlamak veya master’a geçiş onayı değildir.
