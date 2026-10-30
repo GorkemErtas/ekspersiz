@@ -28,27 +28,27 @@ async function playUpdateInfo() {
 }
 export async function checkUpdate(): Promise<UpdateStatus> {
   if (Platform.OS !== 'android') return { required: false, immediate: false };
-  let backendRequired = false;
-  try {
-    const result = await api.request<{ minimumAndroidBuild: number }>(
-      '/app/version',
-      { auth: false, timeout: 5000 },
-    );
-    backendRequired =
-      Number.isFinite(result.minimumAndroidBuild) &&
-      Number(nativeBuildVersion) < result.minimumAndroidBuild;
-  } catch {
-    /* Same offline fallback as Flutter. */
-  }
-  try {
-    const update = await playUpdateInfo();
+  // Independent policy and Play checks share the startup deadline, rather than
+  // adding two five-second waits when a network/store service is unavailable.
+  const [backend, play] = await Promise.allSettled([
+    api.request<{ minimumAndroidBuild: number }>('/app/version', {
+      auth: false,
+      timeout: 5000,
+    }),
+    playUpdateInfo(),
+  ]);
+  const backendRequired =
+    backend.status === 'fulfilled' &&
+    Number.isFinite(backend.value.minimumAndroidBuild) &&
+    Number(nativeBuildVersion) < backend.value.minimumAndroidBuild;
+  if (play.status === 'fulfilled') {
+    const update = play.value;
     return {
       required: backendRequired || update.available || update.inProgress,
       immediate: update.immediateAllowed || update.inProgress,
     };
-  } catch {
-    return { required: backendRequired, immediate: false };
   }
+  return { required: backendRequired, immediate: false };
 }
 export async function performUpdate(status: UpdateStatus) {
   if (status.immediate) {

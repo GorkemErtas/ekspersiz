@@ -4,6 +4,8 @@ import { useSyncExternalStore } from 'react';
 import { Api } from './api';
 import { Session } from './session';
 import { clearProtectedResources } from './protectedResources';
+import Constants from 'expo-constants';
+import { apiBaseUrl } from './environment';
 
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -24,7 +26,10 @@ export const session = new Session(
   },
 );
 export const api = new Api(
-  process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://10.0.2.2:8080/api/v1',
+  apiBaseUrl(
+    process.env.EXPO_PUBLIC_API_BASE_URL,
+    Constants.expoConfig?.extra?.appVariant,
+  ),
   session,
 );
 export const useSession = () =>

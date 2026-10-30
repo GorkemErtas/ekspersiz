@@ -2,7 +2,10 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 
-export function checkManifest(xml) {
+export function checkManifest(
+  xml,
+  { release = false, production = false, versionCode } = {},
+) {
   const permissions = new Set(
     [...xml.matchAll(/<uses-permission\b[^>]*android:name="([^"]+)"[^>]*>/g)]
       .filter(([entry]) => !entry.includes('tools:node="remove"'))
@@ -35,6 +38,64 @@ export function checkManifest(xml) {
       !permissions.has(`android.permission.${name}`),
       `Broad storage/media permission present: ${name}`,
     );
+  if (release) {
+    const application = xml.match(/<application\b[^>]*>/s)?.[0];
+    assert.ok(application, 'Application missing from merged release manifest');
+    assert.ok(
+      !application.includes('android:debuggable="true"'),
+      'Release application is debuggable',
+    );
+    assert.ok(
+      !xml.includes('DevLauncherActivity'),
+      'Development launcher leaked into release',
+    );
+    assert.ok(
+      !permissions.has('android.permission.SYSTEM_ALERT_WINDOW'),
+      'Development overlay permission leaked into release',
+    );
+    if (production) {
+      const manifest = xml.match(/<manifest\b[^>]*>/s)?.[0] ?? '';
+      assert.match(
+        manifest,
+        /package="com\.gorkem\.ekspersiz"/,
+        'Production must update the existing Play package',
+      );
+      assert.ok(
+        application.includes('android:usesCleartextTraffic="false"'),
+        'Production cleartext traffic must be disabled',
+      );
+      assert.ok(
+        application.includes('android:allowBackup="false"'),
+        'Production private application backup must be disabled',
+      );
+      assert.ok(
+        xml.includes('com.google.firebase.MESSAGING_EVENT'),
+        'Production FCM service missing',
+      );
+      assert.ok(
+        [...xml.matchAll(/<meta-data\b[^>]*>/g)].some(
+          ([entry]) =>
+            entry.includes(
+              'android:name="firebase_messaging_auto_init_enabled"',
+            ) && entry.includes('android:value="false"'),
+        ),
+        'Production FCM must remain disabled until authenticated registration',
+      );
+      assert.ok(
+        xml.includes('com.google.android.geo.API_KEY'),
+        'Production Maps configuration missing',
+      );
+      assert.ok(
+        !xml.includes('ekspersiz-dev') && !xml.includes('exp+ekspersiz'),
+        'Development URL scheme leaked into production',
+      );
+      if (versionCode !== undefined)
+        assert.ok(
+          manifest.includes(`android:versionCode="${versionCode}"`),
+          'Production manifest versionCode differs from the verified release input',
+        );
+    }
+  }
 }
 export function checkSplashResources(base, api33) {
   assert.ok(
@@ -67,7 +128,9 @@ if (
   const path =
     process.argv[2] ??
     'android/app/build/intermediates/merged_manifests/debug/processDebugManifest/AndroidManifest.xml';
-  checkManifest(readFileSync(path, 'utf8'));
+  checkManifest(readFileSync(path, 'utf8'), {
+    release: process.argv.includes('--release'),
+  });
   checkSplashResources(
     readFileSync('android/app/src/main/res/values/styles.xml', 'utf8'),
     readFileSync('android/app/src/main/res/values-v33/styles.xml', 'utf8'),

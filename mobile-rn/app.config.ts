@@ -1,6 +1,20 @@
 import type { ExpoConfig } from 'expo/config';
+import {
+  androidReleaseConfig,
+  productionPackage,
+} from './config/androidRelease.cjs';
 
+if (
+  process.env.APP_VARIANT &&
+  !['development', 'production'].includes(process.env.APP_VARIANT)
+)
+  throw new Error('APP_VARIANT must be development or production.');
 const production = process.env.APP_VARIANT === 'production';
+const release = production
+  ? androidReleaseConfig(process.env, __dirname)
+  : undefined;
+const optimizedRelease =
+  production || process.env.ANDROID_RELEASE_OPTIMIZE === '1';
 for (const [name, value, prefix] of [
   [
     'EXPO_PUBLIC_REVENUECAT_ANDROID_PUBLIC_KEY',
@@ -18,33 +32,30 @@ for (const [name, value, prefix] of [
       `${name} must be a platform public RevenueCat SDK key. Never bundle a secret API key.`,
     );
 }
-// Release configuration remains a deliberate future step after parity review.
-if (production)
-  throw new Error(
-    'Production builds require the completed migration and Play signing/version review. See docs/migration/FLUTTER_TO_REACT_NATIVE.md.',
-  );
-
 const config: ExpoConfig = {
-  name: 'EksperSiz Dev',
+  name: production ? 'EksperSiz' : 'EksperSiz Dev',
   slug: 'ekspersiz-mobile',
-  version: '1.0.0',
-  scheme: 'ekspersiz-dev',
+  version: release?.versionName ?? '1.0.0',
+  scheme: production ? 'ekspersiz' : 'ekspersiz-dev',
   orientation: 'default',
   userInterfaceStyle: 'automatic',
   icon: './assets/images/ekspersiz_logo.png',
   android: {
-    package: 'com.gorkem.ekspersiz.dev',
+    package: production ? productionPackage : 'com.gorkem.ekspersiz.dev',
+    allowBackup: !production,
     permissions: [
       'android.permission.RECORD_AUDIO',
       'android.permission.POST_NOTIFICATIONS',
     ],
-    versionCode: Number(process.env.ANDROID_VERSION_CODE ?? 52),
+    versionCode:
+      release?.versionCode ?? Number(process.env.ANDROID_VERSION_CODE ?? 52),
     blockedPermissions: [
       'android.permission.READ_EXTERNAL_STORAGE',
       'android.permission.WRITE_EXTERNAL_STORAGE',
       'android.permission.READ_MEDIA_IMAGES',
       'android.permission.READ_MEDIA_VIDEO',
       'android.permission.READ_MEDIA_VISUAL_USER_SELECTED',
+      ...(optimizedRelease ? ['android.permission.SYSTEM_ALERT_WINDOW'] : []),
     ],
     ...(process.env.GOOGLE_SERVICES_FILE
       ? { googleServicesFile: process.env.GOOGLE_SERVICES_FILE }
@@ -67,6 +78,7 @@ const config: ExpoConfig = {
     },
   },
   plugins: [
+    ['expo-dev-client', { addGeneratedScheme: !production }],
     'expo-router',
     'expo-secure-store',
     'expo-font',
@@ -102,6 +114,7 @@ const config: ExpoConfig = {
       },
     ],
     ['./plugins/withFirebase.cjs'],
+    ['./plugins/withAndroidRelease.cjs', { production }],
     ...(process.env.EXPO_PUBLIC_GOOGLE_MAPS_ANDROID_API_KEY ||
     process.env.EXPO_PUBLIC_GOOGLE_MAPS_IOS_API_KEY
       ? [
@@ -121,7 +134,13 @@ const config: ExpoConfig = {
     [
       'expo-build-properties',
       {
-        android: { usesCleartextTraffic: true, cmakeVersion: '3.31.6' },
+        android: {
+          usesCleartextTraffic: !production,
+          cmakeVersion: '3.31.6',
+          enableMinifyInReleaseBuilds: optimizedRelease,
+          enableShrinkResourcesInReleaseBuilds: optimizedRelease,
+          networkInspector: !optimizedRelease,
+        },
         ...(process.env.GOOGLE_SERVICES_PLIST
           ? { ios: { useFrameworks: 'static' } }
           : {}),
@@ -138,6 +157,7 @@ const config: ExpoConfig = {
   ],
   experiments: { typedRoutes: true },
   extra: {
+    appVariant: production ? 'production' : 'development',
     androidFirebase: !!process.env.GOOGLE_SERVICES_FILE,
     iosFirebase: !!process.env.GOOGLE_SERVICES_PLIST,
     androidMaps: !!process.env.EXPO_PUBLIC_GOOGLE_MAPS_ANDROID_API_KEY,

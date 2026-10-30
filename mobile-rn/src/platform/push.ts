@@ -1,5 +1,6 @@
 import Constants from 'expo-constants';
 import { Platform, PermissionsAndroid } from 'react-native';
+import * as SecureStore from 'expo-secure-store';
 import { api, session, queryClient } from '../core/runtime';
 
 const firebaseConfigured = () =>
@@ -22,6 +23,20 @@ session.subscribe(() => {
     void unregisterDevice().catch(() => undefined);
   observedUser = user;
 });
+/** Flutter credentials cannot be decrypted by Expo SecureStore. Retire its inherited
+ * FCM token when no RN credential exists, before a new account can register one. */
+export async function clearUnownedPushToken() {
+  if (!firebaseConfigured()) return;
+  const snapshot = session.getSnapshot();
+  if (snapshot.token || stoppedGeneration === snapshot.generation) return;
+  const stored = await SecureStore.getItemAsync('access_token');
+  if (
+    !stored &&
+    session.getSnapshot().generation === snapshot.generation &&
+    !session.getSnapshot().token
+  )
+    await unregisterDevice();
+}
 export function registerBackgroundMessaging() {
   if (!firebaseConfigured()) return;
   try {

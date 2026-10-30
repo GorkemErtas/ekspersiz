@@ -11,6 +11,7 @@ const mockHandlers: {
   open?: (event: { data: Record<string, string> }) => void;
 } = {};
 const mockPermission = jest.fn(async () => 1),
+  mockStoredToken = jest.fn(async (): Promise<string | null> => null),
   mockDeleteToken = jest.fn(async (): Promise<void> => undefined),
   mockAutoInit = jest.fn(async () => undefined),
   mockSubscribe = jest.fn(),
@@ -22,6 +23,7 @@ jest.mock('expo-constants', () => ({
     expoConfig: { extra: { androidFirebase: true, iosFirebase: true } },
   },
 }));
+jest.mock('expo-secure-store', () => ({ getItemAsync: mockStoredToken }));
 jest.mock('react-native', () => ({
   Platform: { OS: 'ios', Version: 36 },
   PermissionsAndroid: {
@@ -76,6 +78,7 @@ beforeEach(() => {
   mockState.profile = { id: 7 };
   mockState.token = 'jwt';
   mockPermission.mockImplementation(async () => 1);
+  mockStoredToken.mockImplementation(async () => null);
   mockApns.mockImplementation(async () => 'apns-token');
   mockToken.mockImplementation(async () => 'fcm-token');
   mockRequest.mockImplementation(async () => undefined);
@@ -85,6 +88,43 @@ beforeEach(() => {
   });
 });
 afterEach(() => jest.useRealTimers());
+
+test('first RN launch without an Expo credential retires the inherited Flutter FCM token once', async () => {
+  mockState.profile = null;
+  mockState.token = null;
+  await push.clearUnownedPushToken();
+  await push.clearUnownedPushToken();
+  expect(mockAutoInit).toHaveBeenCalledWith(expect.anything(), false);
+  expect(mockDeleteToken).toHaveBeenCalledTimes(1);
+  expect(mockRequest).not.toHaveBeenCalled();
+});
+
+test('a persisted RN session keeps its token during session restoration', async () => {
+  mockState.profile = null;
+  mockState.token = null;
+  mockStoredToken.mockResolvedValueOnce('persisted-rn-jwt');
+  await push.clearUnownedPushToken();
+  expect(mockDeleteToken).not.toHaveBeenCalled();
+});
+
+test('late credential lookup cannot retire a newly authenticated account token', async () => {
+  mockState.profile = null;
+  mockState.token = null;
+  let complete!: (token: string | null) => void;
+  mockStoredToken.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        complete = resolve;
+      }),
+  );
+  const pending = push.clearUnownedPushToken();
+  mockState.generation++;
+  mockState.token = 'new-rn-jwt';
+  mockState.profile = { id: 9 };
+  complete(null);
+  await pending;
+  expect(mockDeleteToken).not.toHaveBeenCalled();
+});
 test('concurrent registration writes one FCM token, never the APNS token', async () => {
   await Promise.all([push.registerDevice(), push.registerDevice()]);
   expect(mockRequest).toHaveBeenCalledTimes(1);

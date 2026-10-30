@@ -2,7 +2,7 @@
 
 Tarih: 29 Ekim 2026. Branch: `migration/flutter-to-expo`.
 
-**Durum:** önceki dokümanda bekleyen istemci akışları gerçek API ve native SDK bağlantılarıyla uygulandı. Android development APK derlendi ve ana native akışlar test edildi. Üretime geçiş tamamlanmış sayılmaz: iOS native derlemesi, gerçek mağaza/FCM/Play doğrulaması, tüm ekran/durumların görsel kabulü ve bağımlılık güvenlik bulguları aşağıda açıkça ayrılmıştır. Production build yapılandırması engelli kalır. Flutter ve backend kaynakları korunur; production deploy veya master merge bu çalışmanın parçası değildir.
+**Durum:** önceki dokümanda bekleyen istemci akışları gerçek API ve native SDK bağlantılarıyla uygulandı. Android development APK derlendi ve ana native akışlar test edildi. Android production girdileri/imzalama ve güncelleme prosedürü artık [Android release hazırlığında](../production/ANDROID_RELEASE.md) tanımlıdır; eksik veya hatalı girdiler build'i durdurur. Gerçek mağaza/FCM/Play doğrulaması, tüm ekran/durumların görsel kabulü ve bağımlılık güvenlik bulguları açık kalır. iOS native release ayrı kapsamdır. Flutter ve backend kaynakları korunur; production deploy veya master merge bu çalışmanın parçası değildir.
 
 Çalıştırma, SDK kurulumu, ortam değişkenleri, Android/iOS ve test komutları: **[mobile-rn/README.md](../../mobile-rn/README.md)**. Görsel kanıt ve sınırlamalar: **[VISUAL_PARITY.md](VISUAL_PARITY.md)**.
 
