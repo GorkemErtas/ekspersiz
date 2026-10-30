@@ -1,0 +1,5 @@
+Copyright (c) 2026 Görkem Ertaş. All rights reserved.
+
+Ekspersiz is proprietary software. No license is granted to copy, modify, distribute, sublicense, sell or commercially exploit the proprietary source code except as expressly authorized in writing by the copyright holder or permitted by applicable law.
+
+Third-party components remain governed by their respective licenses.
