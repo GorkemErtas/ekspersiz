@@ -60,3 +60,33 @@ test.each([false, true])(
     expect(bytes.includes(Buffer.from(jpeg))).toBe(true);
   },
 );
+
+test('two-photo validation waits for the shared reservation before starting the second request', async () => {
+  let release!: (value: typeof fixtures.inspection) => void;
+  mockRequest.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        release = resolve;
+      }),
+  );
+  const checking = inspections.checkPhotos(1);
+  await Promise.resolve();
+  expect(mockRequest).toHaveBeenCalledTimes(1);
+  expect(mockRequest.mock.calls[0]![0]).toBe(
+    '/inspections/1/context-image-quality',
+  );
+  release(fixtures.inspection);
+  await checking;
+  expect(mockRequest.mock.calls.map(([path]) => path)).toEqual([
+    '/inspections/1/context-image-quality',
+    '/inspections/1/image-quality',
+  ]);
+});
+
+test('a failed first photo validation does not dispatch a second request', async () => {
+  mockRequest.mockRejectedValueOnce(new Error('validation unavailable'));
+  await expect(inspections.checkPhotos(1)).rejects.toThrow(
+    'validation unavailable',
+  );
+  expect(mockRequest).toHaveBeenCalledTimes(1);
+});

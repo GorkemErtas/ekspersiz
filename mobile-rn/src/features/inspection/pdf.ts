@@ -476,6 +476,8 @@ async function assetBytes(module: number) {
 export async function sharePdf(inspection: Inspection, record?: DamageRecord) {
   const generation = session.getSnapshot().generation;
   if (record) {
+    if (record.inspectionId !== inspection.id)
+      throw new Error('Tutanak ve inceleme kimlikleri eşleşmiyor.');
     const snapshot = recordSnapshot(record);
     const snapshotAnalysis = snapshot.analysis as Record<string, unknown>;
     if (
@@ -485,14 +487,14 @@ export async function sharePdf(inspection: Inspection, record?: DamageRecord) {
       throw new Error(
         'Kesinleştirilmiş tutanağın fotoğrafı değişmiş. Belge paylaşılamıyor.',
       );
-    if (record.contentHash) {
-      const hash = await Crypto.digestStringAsync(
-        Crypto.CryptoDigestAlgorithm.SHA256,
-        record.snapshotJson!,
-      );
-      if (hash.toLowerCase() !== record.contentHash.toLowerCase())
-        throw new Error('Tutanak içeriği doğrulanamadı. Belge paylaşılamıyor.');
-    }
+    if (!record.contentHash || !/^[0-9a-f]{64}$/i.test(record.contentHash))
+      throw new Error('Tutanak içeriği doğrulanamadı. Belge paylaşılamıyor.');
+    const hash = await Crypto.digestStringAsync(
+      Crypto.CryptoDigestAlgorithm.SHA256,
+      record.snapshotJson!,
+    );
+    if (hash.toLowerCase() !== record.contentHash.toLowerCase())
+      throw new Error('Tutanak içeriği doğrulanamadı. Belge paylaşılamıyor.');
   }
   session.check(generation);
   if (!(await Sharing.isAvailableAsync()))

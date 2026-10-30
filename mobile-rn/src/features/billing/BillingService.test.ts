@@ -93,11 +93,11 @@ async function setup() {
     restore: jest.fn(async () => undefined),
     transactions: jest.fn(async () => []),
   };
-  let stored: PendingCredit[] = [];
+  const stored = new Map<string, PendingCredit[]>();
   const pendingStore = {
-    read: jest.fn(async () => stored),
-    write: jest.fn(async (_: string, items: PendingCredit[]) => {
-      stored = JSON.parse(JSON.stringify(items));
+    read: jest.fn(async (scope: string) => stored.get(scope) ?? []),
+    write: jest.fn(async (scope: string, items: PendingCredit[]) => {
+      stored.set(scope, JSON.parse(JSON.stringify(items)));
     }),
   };
   return {
@@ -170,6 +170,61 @@ test('explicit reconciliation clears a confirmed pending transaction without ano
   expect(x.service.isPending(product.productId)).toBe(false);
   expect(x.gateway.purchase).toHaveBeenCalledTimes(1);
 });
+
+test('malformed transaction confirmation never unlocks another payment', async () => {
+  const x = await setup();
+  (x.gateway.purchase as jest.Mock).mockRejectedValueOnce(new PaymentPending());
+  await expect(x.service.purchaseCredit(product)).rejects.toBeInstanceOf(
+    PaymentPending,
+  );
+  (x.gateway.transactions as jest.Mock).mockResolvedValue([
+    {
+      productId: product.productId,
+      id: 'late-txn',
+      date: new Date().toISOString(),
+    },
+  ]);
+  x.request.mockImplementation(async (path) =>
+    path.startsWith('/credits/purchases/') ? { confirmed: 'false' } : overview,
+  );
+  await x.service.load();
+  expect(x.service.isPending(product.productId)).toBe(true);
+  expect(x.gateway.purchase).toHaveBeenCalledTimes(1);
+});
+
+test('a session change during pending journal cleanup stops subsequent transaction reads', async () => {
+  const x = await setup();
+  await x.pendingStore.write('user.7', [
+    {
+      sku: 'business',
+      kind: 'subscription',
+      plan: 'BUSINESS',
+      at: Date.now(),
+      known: [],
+    },
+    {
+      sku: product.productId,
+      transaction: 'old-user-transaction',
+      at: Date.now(),
+      known: [],
+    },
+  ]);
+  x.request.mockResolvedValue({
+    ...overview,
+    status: { ...overview.status, currentPlan: 'BUSINESS' },
+  });
+  x.pendingStore.write.mockImplementationOnce(async () => {
+    await x.session.logout();
+  });
+  await expect(x.service.load()).rejects.toThrow(
+    'Çalışma alanı veya oturum değişti',
+  );
+  expect(
+    x.request.mock.calls.some(([path]) =>
+      path.startsWith('/credits/purchases/'),
+    ),
+  ).toBe(false);
+});
 test('cancelled payments remove the pending marker and never reconcile or grant credits', async () => {
   const x = await setup();
   (x.gateway.purchase as jest.Mock).mockRejectedValueOnce(
@@ -224,7 +279,120 @@ test('native package aliases cannot replace an actual SKU mapping', () => {
 test('an already active store subscription suppresses a duplicate payment', async () => {
   const x = await setup();
   (x.gateway.active as jest.Mock).mockResolvedValue(true);
-  await x.service.purchasePlan(overview.plans[0]!);
+  await expect(
+    x.service.purchasePlan(overview.plans[0]!),
+  ).rejects.toBeInstanceOf(PaymentPending);
   expect(x.gateway.purchase).not.toHaveBeenCalled();
   expect(x.order.filter((path) => path === '/billing/sync')).toHaveLength(1);
+});
+
+test('an unknown subscription payment survives a service restart and cannot open another sheet', async () => {
+  const x = await setup();
+  (x.gateway.packages as jest.Mock).mockResolvedValue([
+    {
+      identifier: 'business_monthly',
+      storeProduct: {
+        identifier: 'business',
+        price: 100,
+        currencyCode: 'TRY',
+        priceString: '₺100',
+      },
+    },
+  ]);
+  (x.gateway.purchase as jest.Mock).mockRejectedValueOnce(
+    new Error('connection lost'),
+  );
+  await expect(
+    x.service.purchasePlan(overview.plans[0]!),
+  ).rejects.toBeInstanceOf(PaymentPending);
+  const next = new BillingService(
+    { request: x.request } as unknown as Api,
+    x.session,
+    x.gateway,
+    x.pendingStore,
+  );
+  await expect(next.purchasePlan(overview.plans[0]!)).rejects.toBeInstanceOf(
+    PaymentPending,
+  );
+  expect(x.gateway.purchase).toHaveBeenCalledTimes(1);
+});
+
+test('subscription cancellation clears its journal; server-lagged success keeps it pending', async () => {
+  const x = await setup();
+  (x.gateway.packages as jest.Mock).mockResolvedValue([
+    {
+      identifier: 'business_monthly',
+      storeProduct: {
+        identifier: 'business',
+        price: 100,
+        currencyCode: 'TRY',
+        priceString: '₺100',
+      },
+    },
+  ]);
+  (x.gateway.purchase as jest.Mock).mockRejectedValueOnce(
+    new PaymentCancelled(),
+  );
+  await expect(
+    x.service.purchasePlan(overview.plans[0]!),
+  ).rejects.toBeInstanceOf(PaymentCancelled);
+  expect(x.service.isPending('business')).toBe(false);
+  await expect(
+    x.service.purchasePlan(overview.plans[0]!),
+  ).rejects.toBeInstanceOf(PaymentPending);
+  expect(x.service.isPending('business')).toBe(true);
+  x.request.mockResolvedValue({
+    ...overview,
+    status: { ...overview.status, currentPlan: 'BUSINESS' },
+  });
+  await x.service.load();
+  expect(x.service.isPending('business')).toBe(false);
+});
+
+test('journal persistence failure occurs before a server intent or native payment', async () => {
+  const x = await setup();
+  x.pendingStore.write.mockRejectedValueOnce(new Error('storage full'));
+  await expect(x.service.purchaseCredit(product)).rejects.toThrow(
+    'storage full',
+  );
+  expect(x.order).not.toContain('/credits/purchase-intents/analysis_10');
+  expect(x.gateway.purchase).not.toHaveBeenCalled();
+});
+
+test('pending payments retain the same journal key after a workspace change', async () => {
+  const x = await setup();
+  (x.gateway.purchase as jest.Mock).mockRejectedValueOnce(new PaymentPending());
+  await expect(x.service.purchaseCredit(product)).rejects.toBeInstanceOf(
+    PaymentPending,
+  );
+  const profile = x.session.getSnapshot().profile!;
+  await x.session.authenticate(
+    'new-token',
+    {
+      ...profile,
+      businessAccount: {
+        id: 12,
+        companyName: 'Other company',
+        role: 'OWNER',
+        sandbox: false,
+        workspaceAvailable: true,
+        workspaceAccessStatus: 'ACTIVE',
+      },
+    },
+    x.session.beginLogin(),
+  );
+  expect(x.session.getSnapshot().workspace).toBe('BUSINESS');
+  const next = new BillingService(
+    { request: x.request } as unknown as Api,
+    x.session,
+    x.gateway,
+    x.pendingStore,
+  );
+  await expect(next.purchaseCredit(product)).rejects.toBeInstanceOf(
+    PaymentPending,
+  );
+  expect(
+    new Set(x.pendingStore.read.mock.calls.map(([scope]) => scope)),
+  ).toEqual(new Set(['user.7']));
+  expect(x.gateway.purchase).toHaveBeenCalledTimes(1);
 });

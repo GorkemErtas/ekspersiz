@@ -34,6 +34,10 @@ const config: ExpoConfig = {
   icon: './assets/images/ekspersiz_logo.png',
   android: {
     package: 'com.gorkem.ekspersiz.dev',
+    permissions: [
+      'android.permission.RECORD_AUDIO',
+      'android.permission.POST_NOTIFICATIONS',
+    ],
     versionCode: Number(process.env.ANDROID_VERSION_CODE ?? 52),
     blockedPermissions: [
       'android.permission.READ_EXTERNAL_STORAGE',
@@ -76,7 +80,9 @@ const config: ExpoConfig = {
         photosPermission:
           'Hasar analizi için seçtiğiniz fotoğraflara erişim gerekir.',
         cameraPermission: 'Hasar fotoğrafı çekmek için kamera erişimi gerekir.',
-        microphonePermission: false,
+        // false blocks RECORD_AUDIO globally, including the speech plugin.
+        microphonePermission:
+          'AI Asistan’a sesli soru yazmak için mikrofon izni gerekir.',
       },
     ],
     [
@@ -110,6 +116,7 @@ const config: ExpoConfig = {
           ] as [string, Record<string, string | undefined>],
         ]
       : []),
+    ['./plugins/withAndroidSplashApi33.cjs'],
     ['expo-splash-screen', { backgroundColor: '#08070B' }],
     [
       'expo-build-properties',

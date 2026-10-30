@@ -1,0 +1,89 @@
+name: React Native readiness checks
+
+on:
+  pull_request:
+    paths:
+      - "mobile-rn/**"
+      - "contracts/**"
+      - "src/main/java/com/gorkem/vehicle_inspector/dto/**"
+      - ".github/workflows/mobile-rn-checks.yml"
+  push:
+    branches: [master]
+    paths:
+      - "mobile-rn/**"
+      - ".github/workflows/mobile-rn-checks.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mobile-rn-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CI: "1"
+  APP_VARIANT: development
+  EXPO_PUBLIC_API_BASE_URL: http://127.0.0.1:8080/api/v1
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: mobile-rn
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: mobile-rn/.nvmrc
+          cache: npm
+          cache-dependency-path: mobile-rn/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test -- --ci
+      - run: npm run test:ci-scripts
+      - run: npx expo install --check
+      - run: npm run check:config
+      - run: npm run audit:ci
+      - name: Bundle both native JS entry points without store or AI credentials
+        run: npx expo export --platform android --platform ios --source-maps --output-dir dist
+      - run: node scripts/check-runtime-bundle.mjs dist
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mobile-rn-audit
+          path: mobile-rn/coverage/npm-audit.json
+          retention-days: 14
+
+  android:
+    needs: checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: mobile-rn
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: mobile-rn/.nvmrc
+          cache: npm
+          cache-dependency-path: mobile-rn/package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: android-actions/setup-android@v3
+      - run: npm ci
+      - name: Install native toolchain
+        run: sdkmanager 'platforms;android-37.0' 'build-tools;37.0.0' 'ndk;27.1.12297006' 'cmake;3.31.6'
+      - name: Generate development Android project
+        run: npx expo prebuild --platform android --no-install
+      - name: Compile native modules and assemble a development APK
+        working-directory: mobile-rn/android
+        run: ./gradlew :app:assembleDebug :app:lintDebug -PreactNativeArchitectures=arm64-v8a --max-workers=2 --no-daemon
+      - name: Check effective permissions after all native manifest merges
+        run: node scripts/check-android-manifest.mjs

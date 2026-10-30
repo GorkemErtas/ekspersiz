@@ -1,8 +1,15 @@
 import { readFileSync } from 'node:fs';
 import { PDFDocument } from 'pdf-lib';
+import * as Crypto from 'expo-crypto';
 import fixture from '../../../visual/fixtures.json';
 import type { DamageRecord, Inspection } from '../../core/models';
-import { buildPdf, recordBlocks, recordSnapshot, reportBlocks } from './pdf';
+import {
+  buildPdf,
+  recordBlocks,
+  recordSnapshot,
+  reportBlocks,
+  sharePdf,
+} from './pdf';
 jest.mock('../../platform/images', () => ({
   protectedImage: jest.fn(),
   removePrepared: jest.fn(),
@@ -37,6 +44,33 @@ test('draft, malformed snapshot and unfinished reports cannot be exported', () =
   expect(() => recordSnapshot({ ...record, status: 'DRAFT' })).toThrow();
   expect(() => recordSnapshot({ ...record, snapshotJson: '[]' })).toThrow();
   expect(() => reportBlocks({ ...inspection, status: 'PENDING' })).toThrow();
+});
+
+test('sharing refuses a mismatched inspection or a finalized record without its server checksum', async () => {
+  await expect(sharePdf({ ...inspection, id: 2 }, record)).rejects.toThrow(
+    'kimlikleri',
+  );
+  await expect(sharePdf(inspection, record)).rejects.toThrow('doğrulanamadı');
+  await expect(
+    sharePdf(inspection, { ...record, contentHash: 'bad-hash' }),
+  ).rejects.toThrow('doğrulanamadı');
+});
+
+test('a modified finalized snapshot is rejected before image loading or file sharing', async () => {
+  const digest = jest
+    .spyOn(Crypto, 'digestStringAsync')
+    .mockResolvedValueOnce('0'.repeat(64));
+  try {
+    await expect(
+      sharePdf(inspection, { ...record, contentHash: '1'.repeat(64) }),
+    ).rejects.toThrow('doğrulanamadı');
+    expect(digest).toHaveBeenCalledWith(
+      Crypto.CryptoDigestAlgorithm.SHA256,
+      record.snapshotJson,
+    );
+  } finally {
+    digest.mockRestore();
+  }
 });
 test('real PDF builder embeds original Turkish fonts and paginates long text on A4', async () => {
   const bytes = (name: string) =>

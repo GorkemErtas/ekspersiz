@@ -154,6 +154,12 @@ export const inspections = {
       'POST',
       120_000,
     ),
+  checkPhotos: async (id: number) => {
+    // Both endpoints share one reservation and the AI service has capacity=1.
+    const general = await inspections.quality(id, true);
+    const detail = await inspections.quality(id);
+    return [general, detail] as const;
+  },
   report: (id: number) =>
     write<Inspection>(
       `${idPath('/inspections', id)}/report`,

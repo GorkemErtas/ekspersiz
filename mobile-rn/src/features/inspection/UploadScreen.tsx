@@ -213,10 +213,7 @@ export default function UploadScreen() {
             onPress={() =>
               void action.run(async () => {
                 await upload();
-                const [general, detail] = await Promise.all([
-                  inspections.quality(id, true),
-                  inspections.quality(id),
-                ]);
+                const [general, detail] = await inspections.checkPhotos(id);
                 action.show(
                   `${general.message ?? ''}\n${detail.message ?? ''}`,
                 );

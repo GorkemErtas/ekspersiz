@@ -15,6 +15,8 @@ jest.mock('@react-native-google-signin/google-signin', () => ({
     configure: jest.fn(),
     hasPlayServices: jest.fn(async () => true),
     signIn: jest.fn(),
+    getCurrentUser: jest.fn(() => null),
+    signOut: jest.fn(async () => undefined),
   },
   isSuccessResponse: (response: { type: string }) =>
     response.type === 'success',
@@ -67,4 +69,29 @@ test('native ID token is exchanged for server credentials; Google success alone 
     expect.objectContaining({ id: 1 }),
     7,
   );
+});
+
+test('a retained Google account is signed out locally before the account chooser opens', async () => {
+  jest
+    .mocked(GoogleSignin.getCurrentUser)
+    .mockReturnValueOnce({ user: { id: 'previous-account' } } as ReturnType<
+      typeof GoogleSignin.getCurrentUser
+    >);
+  jest
+    .mocked(GoogleSignin.signIn)
+    .mockResolvedValue({ type: 'cancelled', data: null });
+  await googleLogin();
+  expect(GoogleSignin.signOut).toHaveBeenCalledTimes(1);
+  expect(
+    jest.mocked(GoogleSignin.signOut).mock.invocationCallOrder[0],
+  ).toBeLessThan(jest.mocked(GoogleSignin.signIn).mock.invocationCallOrder[0]!);
+});
+
+test('a session change while waiting for Play services prevents an obsolete Google sheet', async () => {
+  jest.mocked(session.check).mockImplementationOnce(() => {
+    throw new Error('stale');
+  });
+  await expect(googleLogin()).rejects.toThrow('stale');
+  expect(GoogleSignin.signIn).not.toHaveBeenCalled();
+  expect(api.request).not.toHaveBeenCalled();
 });

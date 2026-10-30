@@ -90,7 +90,18 @@ const gateway: StoreGateway = {
 };
 export const billing = new BillingService(api, session, gateway, {
   read: async (scope) => {
-    const raw = await SecureStore.getItemAsync(`pending-credit.${scope}`);
+    const state = session.getSnapshot();
+    const legacyKey = `pending-credit.${state.profile!.id}.${state.workspace}.${state.workspace === 'BUSINESS' ? (state.profile!.businessAccount?.id ?? 0) : 'personal'}`;
+    const key = `pending-credit.${scope}`;
+    // Preserve journals created by the migration client; copy before deleting.
+    const legacy = await SecureStore.getItemAsync(legacyKey);
+    const current = await SecureStore.getItemAsync(key);
+    const raw = legacy
+      ? JSON.stringify([
+          ...(current ? JSON.parse(current) : []),
+          ...JSON.parse(legacy),
+        ])
+      : current;
     if (!raw) return [];
     const value: unknown = JSON.parse(raw);
     if (
@@ -102,12 +113,18 @@ export const billing = new BillingService(api, session, gateway, {
           Number.isFinite(item.at) &&
           Array.isArray(item.known) &&
           item.known.every((id: unknown) => typeof id === 'string') &&
-          (item.transaction == null || typeof item.transaction === 'string'),
+          (item.transaction == null || typeof item.transaction === 'string') &&
+          (item.kind == null ||
+            (item.kind === 'subscription' && typeof item.plan === 'string')),
       )
     )
       throw new Error(
         'Bekleyen satın alma kaydı okunamadı. Tekrar ödeme yapmadan destek alın.',
       );
+    if (legacy) {
+      await SecureStore.setItemAsync(key, JSON.stringify(value));
+      await SecureStore.deleteItemAsync(legacyKey);
+    }
     return value as PendingCredit[];
   },
   write: (scope, items) =>

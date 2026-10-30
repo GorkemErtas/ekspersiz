@@ -1,4 +1,8 @@
-const mockState = { generation: 1, profile: { id: 7 }, token: 'jwt' };
+const mockState: {
+  generation: number;
+  profile: { id: number } | null;
+  token: string | null;
+} = { generation: 1, profile: { id: 7 }, token: 'jwt' };
 const mockRequest = jest.fn(async (): Promise<void> => undefined);
 const mockInvalidate = jest.fn();
 const mockHandlers: {
@@ -7,6 +11,9 @@ const mockHandlers: {
   open?: (event: { data: Record<string, string> }) => void;
 } = {};
 const mockPermission = jest.fn(async () => 1),
+  mockDeleteToken = jest.fn(async (): Promise<void> => undefined),
+  mockAutoInit = jest.fn(async () => undefined),
+  mockSubscribe = jest.fn(),
   mockApns = jest.fn(async (): Promise<string | null> => 'apns-token'),
   mockToken = jest.fn(async () => 'fcm-token');
 jest.mock('expo-constants', () => ({
@@ -25,6 +32,7 @@ jest.mock('react-native', () => ({
 }));
 jest.mock('../core/runtime', () => ({
   session: {
+    subscribe: mockSubscribe,
     getSnapshot: () => mockState,
     check: (generation: number) => {
       if (generation !== mockState.generation) throw new Error('stale');
@@ -41,6 +49,8 @@ jest.mock('@react-native-firebase/messaging', () => ({
   registerDeviceForRemoteMessages: jest.fn(),
   getAPNSToken: mockApns,
   getToken: mockToken,
+  deleteToken: mockDeleteToken,
+  setAutoInitEnabled: mockAutoInit,
   onTokenRefresh: (_: unknown, callback: () => void) => {
     mockHandlers.refresh = callback;
     return jest.fn();
@@ -63,10 +73,13 @@ beforeEach(() => {
   jest.resetModules();
   jest.clearAllMocks();
   mockState.generation = 1;
+  mockState.profile = { id: 7 };
+  mockState.token = 'jwt';
   mockPermission.mockImplementation(async () => 1);
   mockApns.mockImplementation(async () => 'apns-token');
   mockToken.mockImplementation(async () => 'fcm-token');
   mockRequest.mockImplementation(async () => undefined);
+  mockDeleteToken.mockImplementation(async () => undefined);
   jest.isolateModules(() => {
     push = jest.requireActual<typeof import('./push')>('./push');
   });
@@ -148,4 +161,81 @@ test('iOS reports missing APNS registration and never sends an APNS/placeholder 
   expect(mockApns).toHaveBeenCalledTimes(5);
   expect(mockToken).not.toHaveBeenCalled();
   expect(mockRequest).not.toHaveBeenCalled();
+});
+
+test('logout disables auto-init and invalidates the native token even when backend removal fails', async () => {
+  await push.registerDevice();
+  mockRequest.mockRejectedValueOnce(new Error('offline'));
+  await push.unregisterDevice();
+  expect(mockAutoInit).toHaveBeenLastCalledWith(expect.anything(), false);
+  expect(mockDeleteToken).toHaveBeenCalledTimes(1);
+});
+
+test('a restarted process can invalidate its native token without an in-memory registration', async () => {
+  await push.unregisterDevice();
+  expect(mockDeleteToken).toHaveBeenCalledTimes(1);
+  expect(mockRequest).not.toHaveBeenCalled();
+});
+
+test('workspace changes do not POST an unchanged user/device token again', async () => {
+  await push.registerDevice();
+  mockState.generation++;
+  await push.registerDevice();
+  expect(mockRequest).toHaveBeenCalledTimes(1);
+});
+
+test('failed Firebase token deletion never blocks local logout', async () => {
+  mockDeleteToken.mockRejectedValueOnce(new Error('offline'));
+  await expect(push.unregisterDevice()).resolves.toBeUndefined();
+});
+
+test('a stalled Firebase cleanup cannot hold local logout indefinitely', async () => {
+  jest.useFakeTimers();
+  mockDeleteToken.mockImplementationOnce(
+    () => new Promise<void>(() => undefined),
+  );
+  const cleanup = push.unregisterDevice();
+  await jest.advanceTimersByTimeAsync(5000);
+  await expect(cleanup).resolves.toBeUndefined();
+  expect(jest.getTimerCount()).toBe(0);
+});
+
+test('a server-driven session loss invalidates FCM without using the next account credentials', async () => {
+  await push.registerDevice();
+  mockState.profile = null;
+  mockState.token = null;
+  mockState.generation++;
+  mockSubscribe.mock.calls[0]![0]();
+  for (let tick = 0; tick < 30; tick++) await Promise.resolve();
+  expect(mockDeleteToken).toHaveBeenCalledTimes(1);
+  expect(mockRequest).toHaveBeenCalledTimes(1);
+});
+
+test('the next account cannot obtain/register a token until the former token deletion finishes', async () => {
+  await push.registerDevice();
+  let finish!: () => void;
+  mockDeleteToken.mockImplementationOnce(
+    () =>
+      new Promise<void>((resolve) => {
+        finish = resolve;
+      }),
+  );
+  const unregistering = push.unregisterDevice();
+  for (let tick = 0; tick < 20 && !finish; tick++) await Promise.resolve();
+  expect(finish).toBeDefined();
+  mockState.profile = { id: 8 };
+  mockState.generation++;
+  mockToken.mockResolvedValue('next-user-token');
+  const registering = push.registerDevice();
+  for (let tick = 0; tick < 20; tick++) await Promise.resolve();
+  expect(mockToken).toHaveBeenCalledTimes(1);
+  finish();
+  await unregistering;
+  await registering;
+  expect(mockRequest).toHaveBeenLastCalledWith(
+    '/notifications/devices',
+    expect.objectContaining({
+      body: { token: 'next-user-token', platform: 'IOS' },
+    }),
+  );
 });

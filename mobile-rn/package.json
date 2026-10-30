@@ -14,9 +14,12 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint .",
+    "lint": "eslint . --max-warnings=0",
     "format:check": "prettier --check .",
     "test": "jest --runInBand",
+    "test:ci-scripts": "node --test --test-isolation=none scripts/security-audit.test.mjs",
+    "audit:ci": "node scripts/security-audit.mjs",
+    "check:config": "node scripts/check-config.mjs",
     "audit:flutter": "node scripts/inventory.mjs",
     "visual:compare": "node scripts/compare-screenshots.mjs"
   },

@@ -129,6 +129,22 @@ test('role change cancels requests and clears protected data', async () => {
   }));
   expect(controller.signal.aborted).toBe(true);
 });
+
+test('an expiry found by profile refresh persists PERSONAL across a later login', async () => {
+  const { session, values } = setup();
+  await login(session);
+  await session.refreshProfile(async () => ({
+    ...user,
+    businessAccount: {
+      ...user.businessAccount!,
+      workspaceAvailable: false,
+      workspaceAccessStatus: 'EXPIRED',
+    },
+  }));
+  expect(values.get('workspace.user.1')).toBe('PERSONAL');
+  await login(session);
+  expect(session.getSnapshot().workspace).toBe('PERSONAL');
+});
 test('older profile response cannot overwrite a newer refresh', async () => {
   const { session } = setup();
   await login(session);

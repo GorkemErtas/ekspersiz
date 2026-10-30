@@ -36,6 +36,8 @@ export interface PendingCredit {
   at: number;
   known: string[];
   transaction?: string;
+  kind?: 'subscription';
+  plan?: string;
 }
 export interface PendingStore {
   read: (scope: string) => Promise<PendingCredit[]>;
@@ -63,7 +65,9 @@ export class BillingService {
   private scope() {
     const state = this.session.getSnapshot();
     if (!state.profile) throw new Error('Önce giriş yapın.');
-    return `${state.profile.id}.${state.workspace}.${state.workspace === 'BUSINESS' ? (state.profile.businessAccount?.id ?? 0) : 'personal'}`;
+    // RevenueCat identity belongs to the user. A workspace/company change must
+    // not bypass an unresolved payment or replace its server purchase intent.
+    return `user.${state.profile.id}`;
   }
   isPending(sku: string) {
     return (
@@ -123,6 +127,17 @@ export class BillingService {
         const transactions = (await this.gateway.transactions?.()) ?? [];
         this.check(generation);
         for (const item of pending) {
+          this.check(generation);
+          if (item.kind === 'subscription') {
+            if (verified.status.currentPlan === item.plan)
+              await this.savePending(
+                scope,
+                (this.pending.get(scope) ?? []).filter(
+                  (entry) => entry !== item,
+                ),
+              );
+            continue;
+          }
           const transaction =
             item.transaction ??
             transactions.find(
@@ -137,7 +152,7 @@ export class BillingService {
               `/credits/purchases/${encodeURIComponent(transaction)}`,
             );
             this.check(generation);
-            if (result.confirmed)
+            if (result.confirmed === true)
               await this.savePending(
                 scope,
                 (this.pending.get(scope) ?? []).filter(
@@ -149,6 +164,7 @@ export class BillingService {
           }
         }
       }
+      this.check(generation);
       let packages: StorePackage[] = [];
       try {
         packages = await this.gateway.packages();
@@ -201,11 +217,6 @@ export class BillingService {
         )
         .map((tx) => tx.id);
       this.check(generation);
-      await this.api.request(
-        `/credits/purchase-intents/${encodeURIComponent(product.productId)}`,
-        { method: 'POST' },
-      );
-      this.check(generation);
       const item: PendingCredit = {
         sku: product.productId,
         at: Date.now(),
@@ -214,7 +225,13 @@ export class BillingService {
       await this.savePending(scope, [...pending, item]);
       try {
         this.check(generation);
+        await this.api.request(
+          `/credits/purchase-intents/${encodeURIComponent(product.productId)}`,
+          { method: 'POST' },
+        );
+        this.check(generation);
       } catch (error) {
+        // No native sheet was opened, so removing this marker cannot hide a payment.
         await this.savePending(scope, pending);
         throw error;
       }
@@ -249,6 +266,9 @@ export class BillingService {
   async purchasePlan(plan: BillingPlan) {
     return this.exclusive(async () => {
       const { generation, profile } = this.session.getSnapshot();
+      const scope = this.scope(),
+        pending = await this.readPending(scope);
+      this.check(generation);
       if (
         plan.plan === 'BUSINESS' &&
         profile?.businessAccount &&
@@ -272,9 +292,11 @@ export class BillingService {
         throw new Error('Bu plan mağaza üzerinden satın alınamaz.');
       if (await this.gateway.active(canonical.productId)) {
         this.check(generation);
-        return verified;
+        throw new PaymentPending();
       }
       this.check(generation);
+      if (pending.some((item) => item.sku === canonical.productId))
+        throw new PaymentPending();
       const packages = await this.gateway.packages();
       this.check(generation);
       const pkg = indexPackages(packages).get(canonical.packageIdentifier);
@@ -291,14 +313,46 @@ export class BillingService {
         verified.status.currentPlan !== canonical.plan;
       const rank = (value: string) =>
         ['FREE', 'PLUS', 'PRO', 'BUSINESS'].indexOf(value);
-      await this.gateway.purchase(
-        pkg,
-        changing ? (verified.status.productId ?? undefined) : undefined,
-        rank(canonical.plan) > rank(verified.status.currentPlan),
-      );
+      if (changing && !verified.status.productId)
+        throw new Error(
+          'Mevcut mağaza aboneliği doğrulanamadı. Yeniden ödeme yapmadan aboneliği kontrol edin.',
+        );
+      const item: PendingCredit = {
+        sku: canonical.productId,
+        at: Date.now(),
+        known: [],
+        kind: 'subscription',
+        plan: canonical.plan,
+      };
+      await this.savePending(scope, [...pending, item]);
       try {
         this.check(generation);
-        return await this.sync();
+      } catch (error) {
+        await this.savePending(scope, pending);
+        throw error;
+      }
+      try {
+        item.transaction = await this.gateway.purchase(
+          pkg,
+          changing ? verified.status.productId! : undefined,
+          rank(canonical.plan) > rank(verified.status.currentPlan),
+        );
+        await this.savePending(scope, [...pending, item]);
+      } catch (error) {
+        if (error instanceof PaymentCancelled) {
+          await this.savePending(scope, pending);
+          throw error;
+        }
+        throw new PaymentPending();
+      }
+      try {
+        this.check(generation);
+        const result = await this.sync();
+        this.check(generation);
+        if (result.status.currentPlan !== canonical.plan)
+          throw new PaymentPending();
+        await this.savePending(scope, pending);
+        return result;
       } catch {
         throw new PaymentPending();
       }

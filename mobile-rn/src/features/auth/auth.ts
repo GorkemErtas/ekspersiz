@@ -40,31 +40,43 @@ export async function login(email: string, password: string) {
     throw error;
   }
 }
+let googleBusy = false;
 export async function googleLogin() {
+  if (googleBusy) throw new Error('Google giriş işlemi devam ediyor.');
   const clientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
   if (!clientId) throw new Error('Google Sign-In yapılandırması bulunamadı.');
-  const generation = session.beginLogin();
-  // Load the native SDK only on the explicit Google action. Metro resolves this
-  // synchronously without adding native-module initialization to app startup.
-  const { GoogleSignin, isSuccessResponse } =
-    // eslint-disable-next-line @typescript-eslint/no-require-imports -- Defer the native SDK until the user chooses Google login.
-    require('@react-native-google-signin/google-signin') as typeof import('@react-native-google-signin/google-signin');
-  GoogleSignin.configure({
-    webClientId: clientId,
-    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
-  });
-  await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
-  const result = await GoogleSignin.signIn();
-  session.check(generation);
-  if (!isSuccessResponse(result)) return;
-  if (!result.data.idToken)
-    throw new Error('Google kimlik doğrulama tokenı alınamadı.');
-  const response = await api.request('/auth/google', {
-    method: 'POST',
-    auth: false,
-    body: { idToken: result.data.idToken },
-  });
-  await acceptLogin(response, generation);
+  googleBusy = true;
+  try {
+    const generation = session.beginLogin();
+    // Load the native SDK only on the explicit Google action. Metro resolves this
+    // synchronously without adding native-module initialization to app startup.
+    const { GoogleSignin, isSuccessResponse } =
+      // eslint-disable-next-line @typescript-eslint/no-require-imports -- Defer the native SDK until the user chooses Google login.
+      require('@react-native-google-signin/google-signin') as typeof import('@react-native-google-signin/google-signin');
+    GoogleSignin.configure({
+      webClientId: clientId,
+      iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+    });
+    await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+    session.check(generation);
+    // Google retains its native account after our JWT is cleared. Reset local
+    // selection so shared devices can choose a different account; never revoke access.
+    if (GoogleSignin.getCurrentUser()) await GoogleSignin.signOut();
+    session.check(generation);
+    const result = await GoogleSignin.signIn();
+    session.check(generation);
+    if (!isSuccessResponse(result)) return;
+    if (!result.data.idToken)
+      throw new Error('Google kimlik doğrulama tokenı alınamadı.');
+    const response = await api.request('/auth/google', {
+      method: 'POST',
+      auth: false,
+      body: { idToken: result.data.idToken },
+    });
+    await acceptLogin(response, generation);
+  } finally {
+    googleBusy = false;
+  }
 }
 export async function restoreSession() {
   await session.restore();

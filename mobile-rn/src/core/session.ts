@@ -147,7 +147,15 @@ export class Session {
       previous?.workspaceAvailable !== business?.workspaceAvailable ||
       previous?.workspaceAccessStatus !== business?.workspaceAccessStatus ||
       previous?.sandbox !== business?.sandbox;
+    const fellBack =
+      this.state.workspace === 'BUSINESS' && workspace === 'PERSONAL';
     this.publish({ profile, workspace }, boundary);
+    if (fellBack) {
+      await this.write(() =>
+        this.storage.set(`workspace.user.${profile.id}`, 'PERSONAL'),
+      ).catch(() => undefined);
+      this.check(generation + (boundary ? 1 : 0));
+    }
   }
   async select(
     workspace: Workspace,

@@ -1,10 +1,30 @@
 import { Linking, Platform } from 'react-native';
-import { nativeApplicationVersion, nativeBuildVersion } from 'expo-application';
+import {
+  applicationId,
+  nativeApplicationVersion,
+  nativeBuildVersion,
+} from 'expo-application';
 import { api } from '../core/runtime';
 import { native } from './native';
 export interface UpdateStatus {
   required: boolean;
   immediate: boolean;
+}
+async function playUpdateInfo() {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      native().playUpdateInfo(),
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(
+          () => reject(new Error('Mağaza yanıt vermedi.')),
+          5000,
+        );
+      }),
+    ]);
+  } finally {
+    clearTimeout(timer);
+  }
 }
 export async function checkUpdate(): Promise<UpdateStatus> {
   if (Platform.OS !== 'android') return { required: false, immediate: false };
@@ -21,10 +41,10 @@ export async function checkUpdate(): Promise<UpdateStatus> {
     /* Same offline fallback as Flutter. */
   }
   try {
-    const update = await native().playUpdateInfo();
+    const update = await playUpdateInfo();
     return {
       required: backendRequired || update.available || update.inProgress,
-      immediate: update.immediateAllowed,
+      immediate: update.immediateAllowed || update.inProgress,
     };
   } catch {
     return { required: backendRequired, immediate: false };
@@ -39,7 +59,7 @@ export async function performUpdate(status: UpdateStatus) {
     }
   }
   await Linking.openURL(
-    'https://play.google.com/store/apps/details?id=com.gorkem.ekspersiz',
+    `https://play.google.com/store/apps/details?id=${encodeURIComponent(applicationId ?? 'com.gorkem.ekspersiz')}`,
   );
 }
 export const appVersion = () =>

@@ -9,11 +9,19 @@ const firebaseConfigured = () =>
 const sdk = () =>
   // eslint-disable-next-line @typescript-eslint/no-require-imports -- Firebase is optional until real platform config is supplied.
   require('@react-native-firebase/messaging') as typeof import('@react-native-firebase/messaging');
-let currentRegistration: { token: string; generation: number } | undefined;
+let currentRegistration: { token: string; userId: number } | undefined;
 let serial: Promise<void> = Promise.resolve();
 let initialChecked = false;
 let registrationEpoch = 0;
 let stoppedGeneration: number | undefined;
+let observedUser = session.getSnapshot().profile?.id;
+// Also covers server-driven 401/logout, which bypasses the profile button.
+session.subscribe(() => {
+  const user = session.getSnapshot().profile?.id;
+  if (observedUser !== undefined && observedUser !== user)
+    void unregisterDevice().catch(() => undefined);
+  observedUser = user;
+});
 export function registerBackgroundMessaging() {
   if (!firebaseConfigured()) return;
   try {
@@ -73,20 +81,17 @@ export async function registerDevice(explicit = false) {
         'Bildirim kaydı henüz tamamlanamadı. Lütfen yeniden deneyin.',
       );
   }
-  const token = await module.getToken(messaging);
-  session.check(snapshot.generation);
-  if (
-    !token ||
-    (currentRegistration?.token === token &&
-      currentRegistration.generation === snapshot.generation)
-  )
-    return;
   const next = serial.then(async () => {
     session.check(snapshot.generation);
     if (epoch !== registrationEpoch) return;
+    await module.setAutoInitEnabled(messaging, true);
+    const token = await module.getToken(messaging);
+    session.check(snapshot.generation);
+    if (epoch !== registrationEpoch) return;
     if (
-      currentRegistration?.token === token &&
-      currentRegistration.generation === snapshot.generation
+      !token ||
+      (currentRegistration?.token === token &&
+        currentRegistration.userId === snapshot.profile!.id)
     )
       return;
     await api.request('/notifications/devices', {
@@ -95,7 +100,7 @@ export async function registerDevice(explicit = false) {
       body: { token, platform: Platform.OS === 'ios' ? 'IOS' : 'ANDROID' },
     });
     session.check(snapshot.generation);
-    currentRegistration = { token, generation: snapshot.generation };
+    currentRegistration = { token, userId: snapshot.profile!.id };
   });
   serial = next.catch(() => undefined);
   await next;
@@ -104,22 +109,51 @@ export async function unregisterDevice() {
   const generation = session.getSnapshot().generation;
   stoppedGeneration = generation;
   registrationEpoch++;
+  observedUser = undefined;
   const next = serial.then(async () => {
-    if (session.getSnapshot().generation !== generation) return;
     const current = currentRegistration;
-    if (!current || current.generation !== generation) return;
     currentRegistration = undefined;
     try {
-      await api.request(
-        `/notifications/devices?token=${encodeURIComponent(current.token)}`,
-        { method: 'DELETE', timeout: 5000 },
-      );
+      if (
+        current &&
+        session.getSnapshot().generation === generation &&
+        session.getSnapshot().profile?.id === current.userId
+      )
+        await api.request(
+          `/notifications/devices?token=${encodeURIComponent(current.token)}`,
+          { method: 'DELETE', timeout: 5000 },
+        );
     } catch {
-      /* Logout continues offline, matching Flutter. */
+      /* Native invalidation below still runs if the backend is unreachable. */
+    } finally {
+      try {
+        if (firebaseConfigured()) {
+          const module = sdk(),
+            messaging = module.getMessaging();
+          await module
+            .setAutoInitEnabled(messaging, false)
+            .catch(() => undefined);
+          await module.deleteToken(messaging).catch(() => undefined);
+        }
+      } catch {
+        /* Missing native/Firebase configuration must not block local logout. */
+      }
     }
   });
   serial = next.catch(() => undefined);
-  await next;
+  // Local logout has a deadline. Keep the real cleanup in the native queue so
+  // an eventual old deleteToken cannot invalidate a newly registered account.
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    await Promise.race([
+      next,
+      new Promise<void>((resolve) => {
+        timer = setTimeout(resolve, 5000);
+      }),
+    ]);
+  } finally {
+    clearTimeout(timer);
+  }
 }
 export function watchPush(
   onOpen: (data: Record<string, string | object>) => void,
