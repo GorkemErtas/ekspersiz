@@ -69,7 +69,7 @@ CI'deki açık `expo install --check` adımı, yalnızca bu adımda `EXPO_OFFLIN
 | APK manifest / ZIP hizalaması       | `aapt`: production paket, 1.0.2 (54), minSdk 24 / targetSdk 36 ve üç ABI; `zipalign -c -P 16 4` geçti                                                                                                       |
 | APK / emülatör cold-start           | **3/3 geçti.** İzole API 36 x86_64 AVD'de üç farklı süreç, `LaunchState: COLD`, RN onboarding ve resumed MainActivity; her süreç en az 10 saniye ayakta, logcat'te crash/ANR yok. Screenshot'lar incelendi. |
 | APK / AAB eşleşmesi                 | İki artifact'ın `classes.dex` SHA-256 değerleri birebir eşleşti; üç public parametresiz constructor ikisinde de doğrulandı                                                                                  |
-| Fiziksel cihaz cold-start           | Bekliyor; bağlı Samsung'da Play 53 kurulumu görüldü, sonra cihaz ADB listesinden ayrıldı. Mevcut kurulum/veri silinmedi.                                                                                    |
+| Fiziksel cihaz cold-start           | Kullanıcı aynı AAB'yi Play Internal Testing üzerinden telefonda test edecek; sonuç bekleniyor. Mevcut kurulum/veri silinmedi.                                                                               |
 
 Mevcut emülatörde farklı imzalı Flutter 52 kurulu olduğu için test aracı `INSTALL_FAILED_UPDATE_INCOMPATIBLE` ile durdu; kurulum/veri silinmedi. Başarılı test yeni `Ekspersiz_WorkManager_54_20261031` AVD'sinde yapıldı. Bu **temiz kurulum testi**, mevcut Flutter/Play kurulumunun yerinde güncellenmesi değildir. Windows logcat yakalaması cihazın epoch zamanı ve doğrudan `adb shell logcat` ile doğrulandı.
 
@@ -82,4 +82,4 @@ Ortak DEX SHA-256: `25b93bc8a39e1e2d1c9b230fc9b69efeca603838e9e489047804d8694fda
 
 İmza/native/R8 raporu: `release-artifacts/ekspersiz-1.0.2-54-verification.json`. Çalışma zamanı kanıtları: `release-artifacts/cold-start-clean-emulator-54/cold-start.json` ve aynı klasörde her denemenin PNG, UI XML, Activity ve logcat kayıtları. Rapor `physicalDevice=false` olarak işaretlidir.
 
-**Fiziksel cihaz cold-start kanıtı bekliyor; yayın kabulü NO-GO ve PR taslaktır.** Emülatör başarısı fiziksel cihaz kabulü sayılmaz. Play'e yükleme, master'a merge ve production deploy yapılmadı.
+**Internal Testing adayı hazır; fiziksel cihaz sonucu bekleniyor ve PR taslaktır.** Kullanıcı AAB'yi kendisi Play Internal Testing üzerinden telefonda test edecek. Fiziksel kanıt gelene kadar production rollout kabulü NO-GO'dur; emülatör başarısı fiziksel cihaz kabulü sayılmaz. Bu ajan Play'e yükleme, master'a merge veya production deploy yapmadı.
