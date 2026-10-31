@@ -44,6 +44,10 @@ jobs:
       - run: npm run typecheck
       - run: npm run lint
       - run: npm test -- --ci
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
       - run: npm run test:ci-scripts
       - run: npx expo install --check
       - run: npm run check:config
@@ -113,7 +117,7 @@ jobs:
       - name: Compile optimized release smoke bundle and run release lint
         if: matrix.variant == 'release'
         working-directory: mobile-rn/android
-        run: ./gradlew :app:bundleRelease :app:lintRelease -PreactNativeArchitectures=arm64-v8a --max-workers=2 --no-daemon
+        run: ./gradlew :app:bundleRelease :app:assembleRelease :app:lintRelease -PreactNativeArchitectures=x86_64 --max-workers=2 --no-daemon
       - name: Check effective permissions after all native manifest merges
         if: matrix.variant == 'debug'
         run: node scripts/check-android-manifest.mjs
@@ -121,10 +125,29 @@ jobs:
         if: matrix.variant == 'release'
         run: |
           node scripts/check-android-manifest.mjs android/app/build/intermediates/merged_manifests/release/processReleaseManifest/AndroidManifest.xml --release
+          node scripts/check-android-r8.mjs
           java scripts/android/ReleaseIdentity.java inspect android/app/build/outputs/bundle/release/app-release.aab
+      - name: Enable emulator KVM access on the ephemeral runner
+        if: matrix.variant == 'release'
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Cold-start optimized APK three times and require rendered React Native UI
+        if: matrix.variant == 'release'
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 36
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          working-directory: mobile-rn
+          script: node scripts/android-cold-start.mjs emulator-5554 android/app/build/outputs/apk/release/app-release.apk android/app/build/outputs/bundle/release/app-release.aab com.gorkem.ekspersiz.dev 52 release-artifacts/cold-start-ci
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: android-${{ matrix.variant }}-lint
-          path: mobile-rn/android/app/build/reports/lint-results-*
+          path: |
+            mobile-rn/android/app/build/reports/lint-results-*
+            mobile-rn/release-artifacts/cold-start-ci/
           retention-days: 14

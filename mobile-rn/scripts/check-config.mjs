@@ -1,5 +1,6 @@
 import { spawnSync } from 'node:child_process';
 import assert from 'node:assert/strict';
+import { checkConstructorRules } from './check-android-r8.mjs';
 const cli = 'node_modules/expo/bin/cli';
 const clean = { ...process.env, EXPO_NO_DOTENV: '1' };
 for (const name of Object.keys(clean))
@@ -26,6 +27,20 @@ const run = (env) => {
 const development = run({ APP_VARIANT: 'development' });
 assert.equal(development.status, 0, development.stderr);
 const config = JSON.parse(development.stdout);
+const buildProperties = (value) =>
+  value.plugins.find(
+    (plugin) => Array.isArray(plugin) && plugin[0] === 'expo-build-properties',
+  )[1].android;
+checkConstructorRules(buildProperties(config).extraProguardRules);
+const optimized = run({
+  APP_VARIANT: 'development',
+  ANDROID_RELEASE_OPTIMIZE: '1',
+});
+assert.equal(optimized.status, 0, optimized.stderr);
+const releaseProperties = buildProperties(JSON.parse(optimized.stdout));
+checkConstructorRules(releaseProperties.extraProguardRules);
+assert.equal(releaseProperties.enableMinifyInReleaseBuilds, true);
+assert.equal(releaseProperties.enableShrinkResourcesInReleaseBuilds, true);
 assert.equal(config.android.package, 'com.gorkem.ekspersiz.dev');
 assert.equal(config.ios.bundleIdentifier, 'com.gorkem.ekspersiz.dev');
 assert.ok(

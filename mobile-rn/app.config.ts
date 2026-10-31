@@ -140,6 +140,12 @@ const config: ExpoConfig = {
           enableMinifyInReleaseBuilds: optimizedRelease,
           enableShrinkResourcesInReleaseBuilds: optimizedRelease,
           networkInspector: !optimizedRelease,
+          // Room/WorkManager 2.5.0/2.9.1 instantiate these reflectively. AGP 9
+          // R8 full mode does not retain constructors for class-only keep rules.
+          extraProguardRules: [
+            '-keep class * extends androidx.room.RoomDatabase { <init>(); }',
+            '-keep class * extends androidx.work.InputMerger { <init>(); }',
+          ].join('\n'),
         },
         ...(process.env.GOOGLE_SERVICES_PLIST
           ? { ios: { useFrameworks: 'static' } }

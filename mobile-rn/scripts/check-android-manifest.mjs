@@ -4,7 +4,7 @@ import { pathToFileURL } from 'node:url';
 
 export function checkManifest(
   xml,
-  { release = false, production = false, versionCode } = {},
+  { release = false, production = false, versionCode, versionName } = {},
 ) {
   const permissions = new Set(
     [...xml.matchAll(/<uses-permission\b[^>]*android:name="([^"]+)"[^>]*>/g)]
@@ -39,6 +39,14 @@ export function checkManifest(
       `Broad storage/media permission present: ${name}`,
     );
   if (release) {
+    for (const initializer of [
+      'androidx.startup.InitializationProvider',
+      'androidx.work.WorkManagerInitializer',
+    ])
+      assert.ok(
+        xml.includes(`android:name="${initializer}"`),
+        `Required release startup component missing: ${initializer}`,
+      );
     const application = xml.match(/<application\b[^>]*>/s)?.[0];
     assert.ok(application, 'Application missing from merged release manifest');
     assert.ok(
@@ -93,6 +101,11 @@ export function checkManifest(
         assert.ok(
           manifest.includes(`android:versionCode="${versionCode}"`),
           'Production manifest versionCode differs from the verified release input',
+        );
+      if (versionName !== undefined)
+        assert.ok(
+          manifest.includes(`android:versionName="${versionName}"`),
+          'Production manifest versionName differs from the verified release input',
         );
     }
   }

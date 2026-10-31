@@ -1,5 +1,7 @@
 # Android production release hazırlığı — 30 Ekim 2026
 
+31 Ekim 2026 tarihli **1.0.2 (54) WorkManager/R8 açılış düzeltmesi ve regresyon kontrolleri** için [güncel crash raporuna](ANDROID_WORKMANAGER_CRASH.md) bakın. Aşağıdaki 1.0.1 (53) sonuçları önceki adayın tarihsel kaydıdır.
+
 Başlangıç `master` / `4e21fc1`; branch `release/react-native-production`. Hedef, Flutter uygulamasının **aynı Play kaydına güncelleme**: `com.gorkem.ekspersiz`, ad `EksperSiz`, versionName `1.0.1`, versionCode `53`. Kullanıcı tüm Play track/taslakları için en yüksek kodu `52` olarak ve Play App Signing SHA-1/SHA-256 değerlerini doğruladı. Sonraki yayınlarda maksimum kod yeniden kontrol edilir.
 
 **Karar: production rollout için NO-GO.** Yerel derleme ve konfigürasyon doğrulaması mağaza/cihaz kabulünün yerine geçmez. Aşağıdaki açık kapılar kapatılmadan yayın kararı verilmez. Bu çalışma konsol/production veri değişikliği, gerçek ödeme, ücretli Gemini isteği veya Play yüklemesi yapmaz. iOS release bu kapsamda değildir.
