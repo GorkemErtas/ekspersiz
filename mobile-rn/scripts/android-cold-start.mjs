@@ -38,7 +38,11 @@ function run(command, args, binary = false) {
     maxBuffer: 24 * 1024 * 1024,
   });
   assert.ifError(result.error);
-  assert.equal(result.status, 0, result.stderr?.toString());
+  assert.equal(
+    result.status,
+    0,
+    result.stderr?.toString() || result.stdout?.toString().slice(0, 1000),
+  );
   return result.stdout;
 }
 const device = (...args) => run(adb, ['-s', serial, ...args]).trim();
@@ -92,7 +96,8 @@ try {
       false,
     );
     // Device clock, so logcat filtering never depends on host timezone/clock skew.
-    const since = device('shell', "date '+%m-%d %H:%M:%S.000'");
+    const since = device('shell', 'date', '+%s.000');
+    assert.match(since, /^\d+\.\d+$/);
     const start = device(
       'shell',
       'am',
@@ -147,8 +152,17 @@ try {
       pid,
       'Process restarted or died during observation',
     );
-    const log = device('logcat', '-d', '-v', 'threadtime', '-T', since);
+    const log = device(
+      'shell',
+      'logcat',
+      '-d',
+      '-v',
+      'threadtime',
+      '-T',
+      since,
+    );
     const ownLog = device(
+      'shell',
       'logcat',
       '-d',
       '-v',

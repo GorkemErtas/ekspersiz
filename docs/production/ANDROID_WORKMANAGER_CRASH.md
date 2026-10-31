@@ -46,7 +46,7 @@ Normal `npm run release:android` akışı generated ve effective R8 kuralların�
 `--apk` ayrıca aynı release varyantının APK'sını üretir; APK imzasını mevcut upload sertifikasıyla ve **tüm DEX SHA-256 değerlerini AAB ile** karşılaştırır. Test APK'sı, farklı debug build'inden alınamaz.
 
 ```powershell
-node scripts/android-cold-start.mjs emulator-5554 release-artifacts/ekspersiz-1.0.2-54.apk release-artifacts/ekspersiz-1.0.2-54.aab com.gorkem.ekspersiz 54 release-artifacts/cold-start-emulator-54
+node scripts/android-cold-start.mjs emulator-5556 release-artifacts/ekspersiz-1.0.2-54.apk release-artifacts/ekspersiz-1.0.2-54.aab com.gorkem.ekspersiz 54 release-artifacts/cold-start-clean-emulator-54
 ```
 
 Fiziksel cihaz için ilk argümana açık cihaz seri numarası, son argümana ayrı bir kanıt klasörü verilir. Script `install -r` yapar; uninstall veya uygulama verisi silme yapmaz. Her üç denemede force-stop ile süreç kapatılır, MainActivity başlatılır, React Native onboarding/giriş ekranının UI XML'de görünmesi ve foreground Activity doğrulanır, süreç 10 saniye daha izlenir, logcat/ANR kontrol edilir. Screenshot, UI XML, Activity dökümü, logcat ve artifact hash'leriyle `cold-start.json` git dışında kaydedilir. Emülatör sonucu fiziksel cihaz sonucu olarak işaretlenmez.
@@ -59,14 +59,27 @@ CI'deki açık `expo install --check` adımı, yalnızca bu adımda `EXPO_OFFLIN
 
 ## Doğrulama sonuçları
 
-| Kontrol                           | Sonuç                                                                                                                    |
-| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| TypeScript / ESLint / Expo config | Geçti                                                                                                                    |
-| Script regresyonları              | 13/13 geçti; sürüm ve startup manifest kontrolleri de geçti                                                              |
-| Jest                              | 18 suite, 118 test geçti. Native build ile paralel ilk koşudaki PDF süre aşımı tam tekrar koşusunda tekrarlanmadı.       |
-| Production AAB / release lint     | `npm run release:android` geçti; 1.248 imzalı giriş, 87 native kütüphane, üç ABI, Hermes ve ELF 16 KiB kontrolü geçti    |
-| ProGuard / optimize DEX           | Generated ve effective kurallar, üç public `()V` constructor, SDK `dexdump` kontrolü geçti                               |
-| APK / emülatör cold-start         | Devam ediyor; henüz başarı iddiası yok                                                                                   |
-| Fiziksel cihaz cold-start         | Bekliyor; bağlı Samsung'da Play 53 kurulumu görüldü, sonra cihaz ADB listesinden ayrıldı. Mevcut kurulum/veri silinmedi. |
+| Kontrol                             | Sonuç                                                                                                                                                                                                       |
+| ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| TypeScript / ESLint / Expo config   | Geçti                                                                                                                                                                                                       |
+| Script regresyonları                | 13/13 geçti; sürüm ve startup manifest kontrolleri de geçti                                                                                                                                                 |
+| Jest                                | 18 suite, 118 test geçti. Native build ile paralel ilk koşudaki PDF süre aşımı tam tekrar koşusunda tekrarlanmadı.                                                                                          |
+| Production AAB / APK / release lint | `npm run release:android -- --apk` geçti; 1.248 imzalı giriş, 87 native kütüphane, üç ABI, Hermes ve ELF 16 KiB kontrolü geçti                                                                              |
+| ProGuard / optimize DEX             | Generated ve effective kurallar, üç public `()V` constructor, SDK `dexdump` kontrolü geçti                                                                                                                  |
+| APK manifest / ZIP hizalaması       | `aapt`: production paket, 1.0.2 (54), minSdk 24 / targetSdk 36 ve üç ABI; `zipalign -c -P 16 4` geçti                                                                                                       |
+| APK / emülatör cold-start           | **3/3 geçti.** İzole API 36 x86_64 AVD'de üç farklı süreç, `LaunchState: COLD`, RN onboarding ve resumed MainActivity; her süreç en az 10 saniye ayakta, logcat'te crash/ANR yok. Screenshot'lar incelendi. |
+| APK / AAB eşleşmesi                 | İki artifact'ın `classes.dex` SHA-256 değerleri birebir eşleşti; üç public parametresiz constructor ikisinde de doğrulandı                                                                                  |
+| Fiziksel cihaz cold-start           | Bekliyor; bağlı Samsung'da Play 53 kurulumu görüldü, sonra cihaz ADB listesinden ayrıldı. Mevcut kurulum/veri silinmedi.                                                                                    |
 
-İlk AAB ve doğrulama kaydı `mobile-rn/release-artifacts/ekspersiz-1.0.2-54.aab` ve `ekspersiz-1.0.2-54-verification.json` içinde yerel olarak hazır. APK ve fiziksel cihaz testi tamamlanana kadar çalışma **yayın kabulü almış sayılmaz**. Play'e yükleme, master'a merge ve production deploy yapılmadı.
+Mevcut emülatörde farklı imzalı Flutter 52 kurulu olduğu için test aracı `INSTALL_FAILED_UPDATE_INCOMPATIBLE` ile durdu; kurulum/veri silinmedi. Başarılı test yeni `Ekspersiz_WorkManager_54_20261031` AVD'sinde yapıldı. Bu **temiz kurulum testi**, mevcut Flutter/Play kurulumunun yerinde güncellenmesi değildir. Windows logcat yakalaması cihazın epoch zamanı ve doğrudan `adb shell logcat` ile doğrulandı.
+
+| Artifact       | Yerel yol (`mobile-rn/` altında)           |           Boyut | SHA-256                                                            |
+| -------------- | ------------------------------------------ | --------------: | ------------------------------------------------------------------ |
+| Production AAB | `release-artifacts/ekspersiz-1.0.2-54.aab` | 68.628.712 bayt | `bb9d794138becf7694d4534ebb77bbbf8abff8d065c80ce1bc45f7465146ee56` |
+| Optimize APK   | `release-artifacts/ekspersiz-1.0.2-54.apk` | 90.905.848 bayt | `3376e9a58b85cd2ec6262ec7362b13ea26873d93c58657c59d6bf236f81bf1f7` |
+
+Ortak DEX SHA-256: `25b93bc8a39e1e2d1c9b230fc9b69efeca603838e9e489047804d8694fda79d5`. Upload sertifikası SHA-256: `1E1689B271621619851BA875CE835294E667BA91301C16B7A530188D079B2732`; 53 ile aynı mevcut Flutter upload key.
+
+İmza/native/R8 raporu: `release-artifacts/ekspersiz-1.0.2-54-verification.json`. Çalışma zamanı kanıtları: `release-artifacts/cold-start-clean-emulator-54/cold-start.json` ve aynı klasörde her denemenin PNG, UI XML, Activity ve logcat kayıtları. Rapor `physicalDevice=false` olarak işaretlidir.
+
+**Fiziksel cihaz cold-start kanıtı bekliyor; yayın kabulü NO-GO ve PR taslaktır.** Emülatör başarısı fiziksel cihaz kabulü sayılmaz. Play'e yükleme, master'a merge ve production deploy yapılmadı.
