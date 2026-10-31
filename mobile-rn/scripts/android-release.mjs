@@ -12,6 +12,7 @@ import {
   checkManifest,
   checkSplashResources,
 } from './check-android-manifest.mjs';
+import { checkAndroidR8 } from './check-android-r8.mjs';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 const envFile = resolve(
@@ -20,6 +21,7 @@ const envFile = resolve(
     '.env.production.local',
 );
 const checkOnly = process.argv.includes('--check');
+const withApk = process.argv.includes('--apk');
 const env = { ...process.env };
 // Expo/Metro must not inherit public values from the current development shell.
 for (const name of Object.keys(env))
@@ -122,6 +124,7 @@ if (checkOnly) {
     wrapper,
     [
       ':app:bundleRelease',
+      ...(withApk ? [':app:assembleRelease'] : []),
       ':app:lintRelease',
       '-PreactNativeArchitectures=armeabi-v7a,arm64-v8a,x86_64',
       '--max-workers=2',
@@ -140,6 +143,7 @@ if (checkOnly) {
     release: true,
     production: true,
     versionCode: config.versionCode,
+    versionName: config.versionName,
   });
   checkSplashResources(
     readFileSync(
@@ -159,6 +163,7 @@ if (checkOnly) {
     root,
     'android/app/build/outputs/bundle/release/app-release.aab',
   );
+  const r8 = checkAndroidR8(join(root, 'android'));
   const verified = identity(artifact);
   if (
     verified.sha256 !== signer.sha256 ||
@@ -173,6 +178,59 @@ if (checkOnly) {
   mkdirSync(output, { recursive: true });
   const name = `ekspersiz-${config.versionName}-${config.versionCode}`;
   const destination = join(output, `${name}.aab`);
+  let apk;
+  if (withApk) {
+    const path = join(
+      root,
+      'android/app/build/outputs/apk/release/app-release.apk',
+    );
+    const result = spawnSync(java, [identitySource, 'constructors', path], {
+      env,
+      encoding: 'utf8',
+    });
+    if (result.status !== 0)
+      throw new Error(`APK constructor verification failed: ${result.stderr}`);
+    const constructors = JSON.parse(result.stdout);
+    if (
+      JSON.stringify(constructors.dexSha256) !==
+      JSON.stringify(verified.constructors.dexSha256)
+    )
+      throw new Error(
+        'Optimized APK and AAB DEX hashes differ. Do not use this APK as release startup evidence.',
+      );
+    const sdk = env.ANDROID_HOME ?? env.ANDROID_SDK_ROOT;
+    if (!sdk)
+      throw new Error(
+        'ANDROID_HOME is required for APK signature verification.',
+      );
+    const signature = spawnSync(
+      java,
+      [
+        '-jar',
+        join(sdk, 'build-tools/37.0.0/lib/apksigner.jar'),
+        'verify',
+        '--verbose',
+        '--print-certs',
+        path,
+      ],
+      { env, encoding: 'utf8' },
+    );
+    if (
+      signature.status !== 0 ||
+      !signature.stdout
+        .toUpperCase()
+        .includes(`CERTIFICATE SHA-256 DIGEST: ${signer.sha256}`)
+    )
+      throw new Error(
+        'Optimized APK signature does not match the existing Flutter upload key.',
+      );
+    copyFileSync(path, join(output, `${name}.apk`));
+    apk = {
+      sha256: createHash('sha256').update(readFileSync(path)).digest('hex'),
+      uploadCertificate: signer.sha256,
+      dexMatchesAab: true,
+    };
+  }
   copyFileSync(artifact, destination);
   copyFileSync(
     join(root, 'android/app/build/outputs/mapping/release/mapping.txt'),
@@ -191,6 +249,8 @@ if (checkOnly) {
         uploadCertificate: verified.sha256,
         playAppSigningCertificate: config.sha256,
         native: verified,
+        r8,
+        ...(apk ? { apk } : {}),
         builtAt: new Date().toISOString(),
         manualDeviceAndConsoleChecksRequired: true,
       },

@@ -17,9 +17,9 @@ const fixture = () => ({
   EXPO_PUBLIC_GOOGLE_MAPS_ANDROID_API_KEY: 'AIza' + 'x'.repeat(35),
   EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: 'fixture-web.apps.googleusercontent.com',
   GOOGLE_SERVICES_FILE: 'fixture.json',
-  ANDROID_VERSION_NAME: '1.0.1',
-  ANDROID_VERSION_CODE: '53',
-  ANDROID_PLAY_MAX_VERSION_CODE: '52',
+  ANDROID_VERSION_NAME: '1.0.2',
+  ANDROID_VERSION_CODE: '54',
+  ANDROID_PLAY_MAX_VERSION_CODE: '53',
   ANDROID_PLAY_SIGNING_SHA1: sha1,
   ANDROID_PLAY_SIGNING_SHA256: '34'.repeat(32),
   ANDROID_KEYSTORE_PROPERTIES_FILE: 'fixture.properties',
@@ -53,7 +53,8 @@ const evaluate = (env = fixture(), json = firebase(), exists = () => true) =>
   androidReleaseConfig(env, process.cwd(), () => JSON.stringify(json), exists);
 
 test('production config binds the original package, web OAuth and verified Play SHA-1', () => {
-  assert.equal(evaluate().versionCode, 53);
+  assert.equal(evaluate().versionCode, 54);
+  assert.equal(evaluate().versionName, '1.0.2');
   assert.equal(evaluate().sha1, sha1);
   const bad = firebase();
   bad.client[0].client_info.android_client_info.package_name += '.dev';
@@ -87,7 +88,7 @@ test('each mandatory production input fails closed when missing', () => {
 
 test('reused version codes, cleartext/wrong hosts, test RC keys and extra public secrets are rejected', () => {
   for (const change of [
-    { ANDROID_VERSION_CODE: '52' },
+    { ANDROID_VERSION_CODE: '53' },
     { ANDROID_PLAY_MAX_VERSION_CODE: '54' },
     { ANDROID_VERSION_CODE: 'NaN' },
     { ANDROID_VERSION_CODE: '2100000001' },
@@ -135,11 +136,17 @@ test('release manifest rejects development permissions, debug mode, wrong packag
       (name) => `<uses-permission android:name="android.permission.${name}"/>`,
     )
     .join('');
-  const xml = `<manifest package="com.gorkem.ekspersiz" android:versionCode="53">${permissions}<uses-permission android:name="com.android.vending.BILLING"/>
+  const xml = `<manifest package="com.gorkem.ekspersiz" android:versionCode="54" android:versionName="1.0.2">${permissions}<uses-permission android:name="com.android.vending.BILLING"/>
     <application android:usesCleartextTraffic="false" android:allowBackup="false"><service><action android:name="com.google.firebase.MESSAGING_EVENT"/></service>
+    <provider android:name="androidx.startup.InitializationProvider"><meta-data android:name="androidx.work.WorkManagerInitializer" android:value="androidx.startup"/></provider>
     <meta-data android:name="com.google.android.geo.API_KEY"/>
     <meta-data android:name="firebase_messaging_auto_init_enabled" android:value="false"/></application></manifest>`;
-  const options = { release: true, production: true, versionCode: 53 };
+  const options = {
+    release: true,
+    production: true,
+    versionCode: 54,
+    versionName: '1.0.2',
+  };
   checkManifest(xml, options);
   for (const invalid of [
     xml.replace('<application ', '<application android:debuggable="true" '),
@@ -149,7 +156,9 @@ test('release manifest rejects development permissions, debug mode, wrong packag
       '</manifest>',
       '<uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/></manifest>',
     ),
-    xml.replace('versionCode="53"', 'versionCode="52"'),
+    xml.replace('versionCode="54"', 'versionCode="53"'),
+    xml.replace('versionName="1.0.2"', 'versionName="1.0.1"'),
+    xml.replace('androidx.work.WorkManagerInitializer', 'removed.Initializer'),
     xml.replace('android:value="false"', 'android:value="true"'),
   ])
     assert.throws(() => checkManifest(invalid, options));
