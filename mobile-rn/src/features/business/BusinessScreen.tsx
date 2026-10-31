@@ -122,6 +122,7 @@ export default function BusinessScreen() {
                     <View
                       style={{
                         flexDirection: 'row',
+                        flexWrap: 'wrap',
                         justifyContent: 'space-between',
                         gap: 8,
                       }}

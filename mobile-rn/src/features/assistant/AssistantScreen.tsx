@@ -1,12 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import {
-  ActivityIndicator,
-  FlatList,
-  KeyboardAvoidingView,
-  Platform,
-  TextInput,
-  View,
-} from 'react-native';
+import { ActivityIndicator, FlatList, TextInput, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { randomUUID } from 'expo-crypto';
 
@@ -24,14 +17,12 @@ import { Page, Select, StateView } from '../../design/layout';
 import { useTheme } from '../../design/ThemeProvider';
 import { fonts } from '../../design/tokens';
 import { AssistantService } from './AssistantService';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MessageBubble } from './MessageBubble';
 
 export default function AssistantScreen() {
   const router = useRouter(),
     { vehicle } = useLocalSearchParams<{ vehicle?: string }>(),
     { colors } = useTheme();
-  const insets = useSafeAreaInsets();
   const entitlement = useResource(
       'assistant/entitlement',
       assistantEntitlement,
@@ -175,10 +166,8 @@ export default function AssistantScreen() {
     }
   };
   return (
-    <Page title="AI Asistan" scroll={false}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={insets.top}
+    <Page title="AI Asistan" scroll={false} keyboardAvoiding>
+      <View
         style={{ flex: 1, maxWidth: 900, width: '100%', alignSelf: 'center' }}
       >
         <View style={{ paddingHorizontal: 16, gap: 8 }}>
@@ -271,7 +260,7 @@ export default function AssistantScreen() {
             alignItems: 'flex-end',
             gap: 8,
             padding: 12,
-            paddingBottom: 24,
+            paddingBottom: 12,
           }}
         >
           <IconButton
@@ -311,7 +300,7 @@ export default function AssistantScreen() {
             }
           />
         </View>
-      </KeyboardAvoidingView>
+      </View>
     </Page>
   );
 }

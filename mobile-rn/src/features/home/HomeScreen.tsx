@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Pressable, useWindowDimensions, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useSession } from '../../core/runtime';
@@ -15,6 +15,7 @@ import {
   Tile,
 } from '../../design/layout';
 import { useTheme } from '../../design/ThemeProvider';
+import { spacing } from '../../design/tokens';
 import PrimaryVehicleSheet from './PrimaryVehicleSheet';
 import {
   AnalysisHero,
@@ -59,6 +60,7 @@ export default function HomeScreen({
       `${parts[0]?.[0] ?? 'E'}${parts.length > 1 ? (parts.at(-1)?.[0] ?? '') : ''}`.toLocaleUpperCase(
         'tr-TR',
       );
+  const { fontScale } = useWindowDimensions();
   return (
     <Page
       title="Ana Sayfa"
@@ -67,10 +69,16 @@ export default function HomeScreen({
       toolbar={false}
       onRefresh={refresh}
       refreshing={garage.isRefetching || history.isRefetching}
-      contentBottom={200}
+      contentBottom={spacing.l}
     >
       <View
-        style={{ flexDirection: 'row', alignItems: 'center', paddingBottom: 7 }}
+        style={{
+          flexDirection: 'row',
+          flexWrap: 'wrap',
+          alignItems: 'center',
+          rowGap: spacing.m,
+          paddingBottom: spacing.s,
+        }}
       >
         <Pressable
           accessibilityRole="button"
@@ -89,74 +97,92 @@ export default function HomeScreen({
               justifyContent: 'center',
             }}
           >
-            <AppText style={{ color: '#fff', fontWeight: '900', fontSize: 15 }}>
+            <AppText
+              style={{ color: '#110818', fontWeight: '700', fontSize: 15 }}
+            >
               {initials}
             </AppText>
           </LinearGradient>
         </Pressable>
-        <View style={{ flex: 1, marginLeft: 14, marginRight: 8 }}>
+        <View
+          style={{
+            flex: 1,
+            minWidth: fontScale > 1.3 ? 170 : 120,
+            marginLeft: 12,
+            marginRight: 8,
+          }}
+        >
           <AppText
             variant="titleLarge"
-            numberOfLines={1}
             style={{ fontWeight: '900', letterSpacing: -0.4 }}
           >
             EksperSiz
           </AppText>
           <View style={{ height: 2 }} />
-          <AppText
-            variant="bodySmall"
-            numberOfLines={1}
-            style={{ fontWeight: '600' }}
-          >
-            AI destekli araç asistanınız
+          <AppText variant="bodySmall" style={{ fontWeight: '600' }}>
+            {parts[0] ? 'Merhaba, ' + parts[0] : 'AI destekli araç asistanınız'}
           </AppText>
         </View>
-        <IconButton
-          surface
-          label={mode === 'dark' ? 'Açık tema' : 'Koyu tema'}
-          icon={mode === 'dark' ? 'light' : 'dark'}
-          onPress={toggle}
-        />
-        <View style={{ width: 8 }} />
-        <View>
+        <View
+          style={{ flexDirection: 'row', gap: spacing.s, marginLeft: 'auto' }}
+        >
           <IconButton
             surface
-            label={`Bildirimler, ${unread.data?.unreadCount ?? 0} okunmamış`}
-            icon="bell"
-            onPress={() => router.push('/notifications')}
+            label={mode === 'dark' ? 'Açık tema' : 'Koyu tema'}
+            icon={mode === 'dark' ? 'light' : 'dark'}
+            onPress={toggle}
           />
-          {!!unread.data?.unreadCount && (
-            <View
-              style={{
-                position: 'absolute',
-                right: 5,
-                top: 5,
-                minWidth: 17,
-                height: 17,
-                paddingHorizontal: 4,
-                borderRadius: 9,
-                backgroundColor: colors.error,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <AppText
+          <View>
+            <IconButton
+              surface
+              label={`Bildirimler, ${unread.data?.unreadCount ?? 0} okunmamış`}
+              icon="bell"
+              onPress={() => router.push('/notifications')}
+            />
+            {!!unread.data?.unreadCount && (
+              <View
+                pointerEvents="none"
+                importantForAccessibility="no-hide-descendants"
                 style={{
-                  color: '#fff',
-                  fontSize: 9,
-                  lineHeight: 12,
-                  fontWeight: '900',
+                  position: 'absolute',
+                  right: 5,
+                  top: 5,
+                  minWidth: 17,
+                  minHeight: 17,
+                  paddingHorizontal: 4,
+                  borderRadius: 9,
+                  backgroundColor: colors.error,
+                  alignItems: 'center',
+                  justifyContent: 'center',
                 }}
               >
-                {unread.data.unreadCount > 99 ? '99+' : unread.data.unreadCount}
-              </AppText>
-            </View>
-          )}
+                <AppText
+                  style={{
+                    color: '#fff',
+                    fontSize: 9,
+                    lineHeight: 12,
+                    fontWeight: '900',
+                  }}
+                >
+                  {unread.data.unreadCount > 99
+                    ? '99+'
+                    : unread.data.unreadCount}
+                </AppText>
+              </View>
+            )}
+          </View>
         </View>
       </View>
       {workspace === 'BUSINESS' && profile?.businessAccount && (
         <Card>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <View
+            style={{
+              flexDirection: 'row',
+              flexWrap: 'wrap',
+              alignItems: 'center',
+              gap: 12,
+            }}
+          >
             <Icon name="business" color={colors.primary} size={28} />
             <View style={{ flex: 1 }}>
               <AppText variant="titleMedium" style={{ fontWeight: '900' }}>

@@ -45,7 +45,7 @@ export default function HistoryScreen({
           contentContainerStyle={{
             paddingHorizontal: 18,
             paddingTop: 15,
-            paddingBottom: 120,
+            paddingBottom: 24,
             gap: 14,
             maxWidth: 1100,
             width: '100%',

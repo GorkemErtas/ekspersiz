@@ -130,7 +130,16 @@ const config: ExpoConfig = {
         ]
       : []),
     ['./plugins/withAndroidSplashApi33.cjs'],
-    ['expo-splash-screen', { backgroundColor: '#08070B' }],
+    ['./plugins/withAndroidBranding.cjs'],
+    [
+      'expo-splash-screen',
+      {
+        backgroundColor: '#08070B',
+        image: './assets/images/ekspersiz_logo.png',
+        imageWidth: 112,
+        resizeMode: 'contain',
+      },
+    ],
     [
       'expo-build-properties',
       {

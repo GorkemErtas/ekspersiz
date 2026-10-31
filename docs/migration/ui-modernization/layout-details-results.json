@@ -1,0 +1,173 @@
+{
+  "passed": true,
+  "apkSha256": "fda5077b714454b74fbe25dd5ceec5e68fad7ba82c62714029b1da5c45a3197e",
+  "physicalDevice": false,
+  "testedAt": "2026-10-31T14:40:04.715Z",
+  "evidence": [
+    {
+      "name": "rotation-90-three-button",
+      "marker": "AI Hasar Analizi",
+      "width": 844,
+      "height": 390
+    },
+    {
+      "name": "rotation-90-three-button-assistant-hit",
+      "button": {
+        "index": "4",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.Button",
+        "package": "com.gorkem.ekspersiz.dev",
+        "content-desc": "AI Asistan’ı aç",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[638,326][780,382]",
+        "drawing-order": "5",
+        "hint": "",
+        "left": 638,
+        "top": 326,
+        "right": 780,
+        "bottom": 382,
+        "x": 709,
+        "y": 354,
+        "area": 7952
+      },
+      "navigation": [
+        {
+          "left": 62,
+          "top": 41,
+          "right": 188,
+          "bottom": 89
+        },
+        {
+          "left": 62,
+          "top": 97,
+          "right": 188,
+          "bottom": 145
+        },
+        {
+          "left": 62,
+          "top": 153,
+          "right": 188,
+          "bottom": 201
+        },
+        {
+          "left": 62,
+          "top": 209,
+          "right": 188,
+          "bottom": 257
+        }
+      ]
+    },
+    {
+      "name": "rotation-profile-three-button",
+      "marker": "Deniz Yılmaz",
+      "width": 844,
+      "height": 390
+    },
+    {
+      "name": "rotation-90-gesture",
+      "marker": "AI Hasar Analizi",
+      "width": 844,
+      "height": 390
+    },
+    {
+      "name": "rotation-90-gesture-assistant-hit",
+      "button": {
+        "index": "4",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.Button",
+        "package": "com.gorkem.ekspersiz.dev",
+        "content-desc": "AI Asistan’ı aç",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[686,302][828,358]",
+        "drawing-order": "5",
+        "hint": "",
+        "left": 686,
+        "top": 302,
+        "right": 828,
+        "bottom": 358,
+        "x": 757,
+        "y": 330,
+        "area": 7952
+      },
+      "navigation": [
+        {
+          "left": 62,
+          "top": 41,
+          "right": 188,
+          "bottom": 89
+        },
+        {
+          "left": 62,
+          "top": 97,
+          "right": 188,
+          "bottom": 145
+        },
+        {
+          "left": 62,
+          "top": 153,
+          "right": 188,
+          "bottom": 201
+        },
+        {
+          "left": 62,
+          "top": 209,
+          "right": 188,
+          "bottom": 257
+        }
+      ]
+    },
+    {
+      "name": "rotation-profile-gesture",
+      "marker": "Deniz Yılmaz",
+      "width": 844,
+      "height": 390
+    },
+    {
+      "name": "small-vehicle-form-font-16",
+      "marker": "Araç bilgileri",
+      "width": 320,
+      "height": 640
+    },
+    {
+      "name": "small-year-options-font-16",
+      "marker": "Model yılı seçin",
+      "width": 320,
+      "height": 640
+    },
+    {
+      "name": "small-year-keyboard-font-16",
+      "marker": "2024",
+      "width": 320,
+      "height": 640
+    },
+    {
+      "name": "small-year-keyboard-bounds",
+      "inputBounds": "[65,168][303,222]",
+      "keyboardTop": 357
+    },
+    {
+      "name": "completed",
+      "physicalDevice": false
+    }
+  ]
+}

@@ -17,6 +17,7 @@ let profile = clone(initial.profile),
   record = null;
 const uploads = new Map(),
   events = [];
+let scenario = 'default';
 const fallback = await readFile(
   new URL('../assets/guide/analysis-dark.png', import.meta.url),
 );
@@ -49,6 +50,36 @@ const server = http.createServer(async (req, res) => {
     if (path === '/__fixture/events') return reply(events);
     if (path === '/__fixture')
       return reply({ testOnly: true, transport: 'ekspersiz-visual-fixtures' });
+    if (path === '/__fixture/scenario' && method === 'POST') {
+      const next = json().scenario;
+      if (
+        ![
+          'default',
+          'empty',
+          'error',
+          'business-owner',
+          'business-member',
+        ].includes(next)
+      )
+        return reply({ message: 'Unknown test scenario' }, 400);
+      scenario = next;
+      profile = clone(initial.profile);
+      garage = scenario === 'empty' ? [] : [clone(initial.vehicle)];
+      history = scenario === 'empty' ? [] : [clone(initial.inspection)];
+      if (scenario.startsWith('business-')) {
+        profile.subscriptionPlan = 'BUSINESS';
+        profile.businessAccount = {
+          id: 12,
+          companyName:
+            'EksperSiz Örnek Otomotiv Bakım ve Filo Yönetimi Şirketi',
+          role: scenario === 'business-owner' ? 'OWNER' : 'MEMBER',
+          workspaceAvailable: true,
+          workspaceAccessStatus: 'ACTIVE',
+          sandbox: true,
+        };
+      }
+      return reply({ testOnly: true, scenario });
+    }
     if (path === '/app/version') return reply({ minimumAndroidBuild: 1 });
     if (path === '/auth/login')
       return reply({
@@ -60,6 +91,11 @@ const server = http.createServer(async (req, res) => {
       });
     if (req.headers.authorization !== 'Bearer visual-only-token')
       return reply({ message: 'Visual test token required' }, 401);
+    if (scenario === 'error' && /^\/(vehicles|inspections)(\/|$)/.test(path))
+      return reply(
+        { message: 'Görsel test: bağlantı şu an kullanılamıyor.' },
+        503,
+      );
     if (path === '/auth/me') return reply(profile);
     if (path === '/workspace')
       return reply({
@@ -307,7 +343,33 @@ const server = http.createServer(async (req, res) => {
       });
     if (path === '/billing' || path === '/billing/sync')
       return reply(initial.billing);
-    if (path === '/credits') return reply(initial.credits);
+    if (path === '/credits') {
+      const credits = clone(initial.credits);
+      if (scenario.startsWith('business-'))
+        credits.company = {
+          ...clone(credits.personal),
+          totalSlots: 10,
+          owner: scenario === 'business-owner',
+        };
+      return reply(credits);
+    }
+    if (path === '/business-members')
+      return reply([
+        {
+          id: 1,
+          userId: 7,
+          fullName: 'Deniz Yılmaz',
+          email: 'deniz@example.com',
+          role: 'OWNER',
+        },
+        {
+          id: 2,
+          userId: 8,
+          fullName: 'Örnek Uzun İsimli Ekip Üyesi',
+          email: 'uzun.isimli.ornek.ekip.uyesi@example.com',
+          role: 'MEMBER',
+        },
+      ]);
     if (path === '/ai-assistant/entitlement') return reply(initial.assistant);
     if (path === '/ai-assistant/chat')
       return reply({

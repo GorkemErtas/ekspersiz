@@ -123,7 +123,6 @@ export default function ProfileScreen({
       embedded={embedded}
       onRefresh={() => void action.run(refreshProfile)}
       refreshing={action.busy}
-      contentBottom={120}
     >
       <View
         style={{ alignItems: 'center', paddingVertical: 16, marginBottom: 5 }}

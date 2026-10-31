@@ -17,13 +17,14 @@
     "lint": "eslint . --max-warnings=0",
     "format:check": "prettier --check .",
     "test": "jest --runInBand",
-    "test:ci-scripts": "node --test --test-isolation=none scripts/security-audit.test.mjs scripts/android-release.test.mjs scripts/android-r8.test.mjs",
+    "test:ci-scripts": "node --test --test-isolation=none scripts/security-audit.test.mjs scripts/android-release.test.mjs scripts/android-r8.test.mjs scripts/android-branding.test.mjs",
     "release:check": "node scripts/android-release.mjs .env.production.local --check",
     "release:android": "node scripts/android-release.mjs",
     "audit:ci": "node scripts/security-audit.mjs",
     "check:config": "node scripts/check-config.mjs",
     "audit:flutter": "node scripts/inventory.mjs",
-    "visual:compare": "node scripts/compare-screenshots.mjs"
+    "visual:compare": "node scripts/compare-screenshots.mjs",
+    "visual:android:smoke": "node visual/ui-modernization-smoke.mjs"
   },
   "dependencies": {
     "@pdf-lib/fontkit": "1.1.1",

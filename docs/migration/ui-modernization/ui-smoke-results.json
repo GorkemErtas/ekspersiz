@@ -1,0 +1,828 @@
+{
+  "passed": true,
+  "physicalDevice": false,
+  "testedAt": "2026-10-31T14:29:10.568Z",
+  "evidence": [
+    {
+      "name": "login-logo",
+      "marker": "Giriş Yap",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "name": "login-keyboard",
+      "marker": "Şifre",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "name": "login-keyboard-bounds",
+      "inputBounds": "[90,452][300,500]",
+      "keyboardTop": 545
+    },
+    {
+      "name": "small-dark-gesture",
+      "marker": "AI Hasar Analizi",
+      "width": 320,
+      "height": 640
+    },
+    {
+      "name": "small-dark-gesture-assistant-hit",
+      "button": {
+        "index": "3",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.Button",
+        "package": "com.gorkem.ekspersiz.dev",
+        "content-desc": "AI Asistan’ı aç",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[162,456][304,512]",
+        "drawing-order": "4",
+        "hint": "",
+        "left": 162,
+        "top": 456,
+        "right": 304,
+        "bottom": 512,
+        "x": 233,
+        "y": 484,
+        "area": 7952
+      },
+      "navigation": [
+        {
+          "left": 13,
+          "top": 533,
+          "right": 87,
+          "bottom": 603
+        },
+        {
+          "left": 87,
+          "top": 533,
+          "right": 160,
+          "bottom": 603
+        },
+        {
+          "left": 160,
+          "top": 533,
+          "right": 234,
+          "bottom": 603
+        },
+        {
+          "left": 234,
+          "top": 533,
+          "right": 307,
+          "bottom": 603
+        }
+      ]
+    },
+    {
+      "name": "small-dark-gesture",
+      "width": 320,
+      "height": 640,
+      "font": "1.0",
+      "mode": "dark",
+      "navigation": "gesture"
+    },
+    {
+      "name": "small-light-large-font",
+      "marker": "AI Hasar Analizi",
+      "width": 320,
+      "height": 640
+    },
+    {
+      "name": "small-light-large-font-assistant-hit",
+      "button": {
+        "index": "3",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.Button",
+        "package": "com.gorkem.ekspersiz.dev",
+        "content-desc": "AI Asistan’ı aç",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[120,397][304,454]",
+        "drawing-order": "4",
+        "hint": "",
+        "left": 120,
+        "top": 397,
+        "right": 304,
+        "bottom": 454,
+        "x": 212,
+        "y": 425.5,
+        "area": 10488
+      },
+      "navigation": [
+        {
+          "left": 13,
+          "top": 475,
+          "right": 87,
+          "bottom": 579
+        },
+        {
+          "left": 87,
+          "top": 475,
+          "right": 160,
+          "bottom": 579
+        },
+        {
+          "left": 160,
+          "top": 475,
+          "right": 234,
+          "bottom": 579
+        },
+        {
+          "left": 234,
+          "top": 475,
+          "right": 307,
+          "bottom": 579
+        }
+      ]
+    },
+    {
+      "name": "small-light-large-font",
+      "width": 320,
+      "height": 640,
+      "font": "1.6",
+      "mode": "light",
+      "navigation": "three-button"
+    },
+    {
+      "name": "standard-light-gesture",
+      "marker": "AI Hasar Analizi",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "name": "standard-light-gesture-assistant-hit",
+      "button": {
+        "index": "3",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.Button",
+        "package": "com.gorkem.ekspersiz.dev",
+        "content-desc": "AI Asistan’ı aç",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[232,660][374,716]",
+        "drawing-order": "4",
+        "hint": "",
+        "left": 232,
+        "top": 660,
+        "right": 374,
+        "bottom": 716,
+        "x": 303,
+        "y": 688,
+        "area": 7952
+      },
+      "navigation": [
+        {
+          "left": 13,
+          "top": 737,
+          "right": 104,
+          "bottom": 807
+        },
+        {
+          "left": 104,
+          "top": 737,
+          "right": 195,
+          "bottom": 807
+        },
+        {
+          "left": 195,
+          "top": 737,
+          "right": 286,
+          "bottom": 807
+        },
+        {
+          "left": 286,
+          "top": 737,
+          "right": 377,
+          "bottom": 807
+        }
+      ]
+    },
+    {
+      "name": "standard-light-gesture",
+      "width": 390,
+      "height": 844,
+      "font": "1.0",
+      "mode": "light",
+      "navigation": "gesture"
+    },
+    {
+      "name": "standard-dark-three-button",
+      "marker": "AI Hasar Analizi",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "name": "standard-dark-three-button-assistant-hit",
+      "button": {
+        "index": "3",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.Button",
+        "package": "com.gorkem.ekspersiz.dev",
+        "content-desc": "AI Asistan’ı aç",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[232,636][374,692]",
+        "drawing-order": "4",
+        "hint": "",
+        "left": 232,
+        "top": 636,
+        "right": 374,
+        "bottom": 692,
+        "x": 303,
+        "y": 664,
+        "area": 7952
+      },
+      "navigation": [
+        {
+          "left": 13,
+          "top": 713,
+          "right": 104,
+          "bottom": 783
+        },
+        {
+          "left": 104,
+          "top": 713,
+          "right": 195,
+          "bottom": 783
+        },
+        {
+          "left": 195,
+          "top": 713,
+          "right": 286,
+          "bottom": 783
+        },
+        {
+          "left": 286,
+          "top": 713,
+          "right": 377,
+          "bottom": 783
+        }
+      ]
+    },
+    {
+      "name": "standard-dark-three-button",
+      "width": 390,
+      "height": 844,
+      "font": "1.0",
+      "mode": "dark",
+      "navigation": "three-button"
+    },
+    {
+      "name": "standard-dark-font-2",
+      "marker": "AI Hasar Analizi",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "name": "standard-dark-font-2-assistant-hit",
+      "button": {
+        "index": "3",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.Button",
+        "package": "com.gorkem.ekspersiz.dev",
+        "content-desc": "AI Asistan’ı aç",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[176,611][374,674]",
+        "drawing-order": "4",
+        "hint": "",
+        "left": 176,
+        "top": 611,
+        "right": 374,
+        "bottom": 674,
+        "x": 275,
+        "y": 642.5,
+        "area": 12474
+      },
+      "navigation": [
+        {
+          "left": 13,
+          "top": 695,
+          "right": 104,
+          "bottom": 807
+        },
+        {
+          "left": 104,
+          "top": 695,
+          "right": 195,
+          "bottom": 807
+        },
+        {
+          "left": 195,
+          "top": 695,
+          "right": 286,
+          "bottom": 807
+        },
+        {
+          "left": 286,
+          "top": 695,
+          "right": 377,
+          "bottom": 807
+        }
+      ]
+    },
+    {
+      "name": "standard-dark-font-2",
+      "width": 390,
+      "height": 844,
+      "font": "2.0",
+      "mode": "dark",
+      "navigation": "gesture"
+    },
+    {
+      "name": "landscape-light",
+      "marker": "AI Hasar Analizi",
+      "width": 844,
+      "height": 390
+    },
+    {
+      "name": "landscape-light-assistant-hit",
+      "button": {
+        "index": "4",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.Button",
+        "package": "com.gorkem.ekspersiz.dev",
+        "content-desc": "AI Asistan’ı aç",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[686,278][828,334]",
+        "drawing-order": "5",
+        "hint": "",
+        "left": 686,
+        "top": 278,
+        "right": 828,
+        "bottom": 334,
+        "x": 757,
+        "y": 306,
+        "area": 7952
+      },
+      "navigation": [
+        {
+          "left": 17,
+          "top": 41,
+          "right": 143,
+          "bottom": 89
+        },
+        {
+          "left": 17,
+          "top": 97,
+          "right": 143,
+          "bottom": 145
+        },
+        {
+          "left": 17,
+          "top": 153,
+          "right": 143,
+          "bottom": 201
+        },
+        {
+          "left": 17,
+          "top": 209,
+          "right": 143,
+          "bottom": 257
+        }
+      ]
+    },
+    {
+      "name": "landscape-light",
+      "width": 844,
+      "height": 390,
+      "font": "1.0",
+      "mode": "light",
+      "navigation": "three-button"
+    },
+    {
+      "name": "tablet-dark",
+      "marker": "AI Hasar Analizi",
+      "width": 1024,
+      "height": 768
+    },
+    {
+      "name": "tablet-dark-assistant-hit",
+      "button": {
+        "index": "4",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.Button",
+        "package": "com.gorkem.ekspersiz.dev",
+        "content-desc": "AI Asistan’ı aç",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[866,672][1008,728]",
+        "drawing-order": "5",
+        "hint": "",
+        "left": 866,
+        "top": 672,
+        "right": 1008,
+        "bottom": 728,
+        "x": 937,
+        "y": 700,
+        "area": 7952
+      },
+      "navigation": [
+        {
+          "left": 17,
+          "top": 58,
+          "right": 143,
+          "bottom": 106
+        },
+        {
+          "left": 17,
+          "top": 114,
+          "right": 143,
+          "bottom": 162
+        },
+        {
+          "left": 17,
+          "top": 170,
+          "right": 143,
+          "bottom": 218
+        },
+        {
+          "left": 17,
+          "top": 226,
+          "right": 143,
+          "bottom": 274
+        }
+      ]
+    },
+    {
+      "name": "tablet-dark",
+      "width": 1024,
+      "height": 768,
+      "font": "1.0",
+      "mode": "dark",
+      "navigation": "gesture"
+    },
+    {
+      "name": "tablet-light-large-font",
+      "marker": "AI Hasar Analizi",
+      "width": 1024,
+      "height": 768
+    },
+    {
+      "name": "tablet-light-large-font-assistant-hit",
+      "button": {
+        "index": "4",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.Button",
+        "package": "com.gorkem.ekspersiz.dev",
+        "content-desc": "AI Asistan’ı aç",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[824,647][1008,704]",
+        "drawing-order": "5",
+        "hint": "",
+        "left": 824,
+        "top": 647,
+        "right": 1008,
+        "bottom": 704,
+        "x": 916,
+        "y": 675.5,
+        "area": 10488
+      },
+      "navigation": [
+        {
+          "left": 17,
+          "top": 58,
+          "right": 183,
+          "bottom": 130
+        },
+        {
+          "left": 17,
+          "top": 138,
+          "right": 183,
+          "bottom": 186
+        },
+        {
+          "left": 17,
+          "top": 194,
+          "right": 183,
+          "bottom": 242
+        },
+        {
+          "left": 17,
+          "top": 250,
+          "right": 183,
+          "bottom": 298
+        }
+      ]
+    },
+    {
+      "name": "tablet-light-large-font",
+      "width": 1024,
+      "height": 768,
+      "font": "1.6",
+      "mode": "light",
+      "navigation": "three-button"
+    },
+    {
+      "name": "vehicles",
+      "marker": "Toyota",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "name": "vehicle-actions",
+      "marker": "Düzenle",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "name": "vehicle-year-options",
+      "marker": "Model yılı seçin",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "name": "vehicle-year-keyboard",
+      "marker": "2024",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "name": "year-search-keyboard-bounds",
+      "inputBounds": "[65,176][373,224]",
+      "keyboardTop": 545
+    },
+    {
+      "name": "vehicle-form-bottom",
+      "marker": "Kaydet",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "name": "native-vehicle-create",
+      "numericModelYear": 2024
+    },
+    {
+      "name": "vehicle-legacy-year",
+      "marker": "1942",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "name": "native-vehicle-legacy-preserved",
+      "numericModelYear": 1942
+    },
+    {
+      "name": "screen-assistant",
+      "marker": "Araç bağlamı",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "name": "screen-inspection-1",
+      "marker": "Hasar Analiz Raporu",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "name": "screen-inspection-record-id-1",
+      "marker": "Beyan Tutanağı",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "name": "screen-vehicle-1",
+      "marker": "Toyota",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "name": "screen-vehicle-tracking-vehicle-1-kind-maintenance",
+      "marker": "Bakım",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "name": "screen-billing",
+      "marker": "Paket",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "name": "screen-notifications",
+      "marker": "Bildirimler",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "name": "screen-business",
+      "marker": "Şirket Yönetimi",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "name": "assistant-keyboard",
+      "marker": "Araç bağlamı",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "name": "assistant-keyboard-bounds",
+      "inputBounds": "[68,378][322,428]",
+      "keyboardTop": 545
+    },
+    {
+      "name": "history",
+      "marker": "Analiz Geçmişi",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "name": "profile",
+      "marker": "deniz@example.com",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "name": "state-empty",
+      "marker": "Garajınız henüz boş",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "name": "state-error",
+      "marker": "Görsel test:",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "name": "state-business-owner",
+      "marker": "Hesap değiştir",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "name": "workspace-business-owner",
+      "marker": "Hesap Değiştir",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "name": "business-business-owner",
+      "marker": "Şirket Yönetimi",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "name": "state-business-member",
+      "marker": "Hesap değiştir",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "name": "workspace-business-member",
+      "marker": "Hesap Değiştir",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "name": "business-business-member",
+      "marker": "Şirket Yönetimi",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "name": "reduced-motion",
+      "marker": "AI Hasar Analizi",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "name": "reduced-motion-assistant-hit",
+      "button": {
+        "index": "3",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.Button",
+        "package": "com.gorkem.ekspersiz.dev",
+        "content-desc": "AI Asistan’ı aç",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[232,636][374,692]",
+        "drawing-order": "4",
+        "hint": "",
+        "left": 232,
+        "top": 636,
+        "right": 374,
+        "bottom": 692,
+        "x": 303,
+        "y": 664,
+        "area": 7952
+      },
+      "navigation": [
+        {
+          "left": 13,
+          "top": 713,
+          "right": 104,
+          "bottom": 783
+        },
+        {
+          "left": 104,
+          "top": 713,
+          "right": 195,
+          "bottom": 783
+        },
+        {
+          "left": 195,
+          "top": 713,
+          "right": 286,
+          "bottom": 783
+        },
+        {
+          "left": 286,
+          "top": 713,
+          "right": 377,
+          "bottom": 783
+        }
+      ]
+    },
+    {
+      "name": "completed",
+      "physicalDevice": false,
+      "api": "36"
+    }
+  ]
+}

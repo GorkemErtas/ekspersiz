@@ -1,4 +1,4 @@
-import { Pressable, View } from 'react-native';
+import { View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import type { Inspection, Vehicle, VehicleOverview } from '../../core/models';
 import { label, number } from '../../core/labels';
@@ -6,9 +6,10 @@ import { AppText, Card, Icon } from '../../design/components';
 import { Badge } from '../../design/layout';
 import { useTheme } from '../../design/ThemeProvider';
 import { gradients } from '../../design/tokens';
+import { TouchSurface } from '../../design/TouchSurface';
 export function AnalysisHero({ onPress }: { onPress: () => void }) {
   return (
-    <Pressable
+    <TouchSurface
       accessibilityRole="button"
       accessibilityLabel="Yeni Analiz Başlat"
       onPress={onPress}
@@ -24,17 +25,6 @@ export function AnalysisHero({ onPress }: { onPress: () => void }) {
           boxShadow: '0 8px 24px #6D28D92E',
         }}
       >
-        <View
-          style={{
-            position: 'absolute',
-            right: -10,
-            top: -20,
-            width: 132,
-            height: 132,
-            borderRadius: 66,
-            backgroundColor: '#FFFFFF12',
-          }}
-        />
         <View
           style={{
             width: 42,
@@ -60,13 +50,21 @@ export function AnalysisHero({ onPress }: { onPress: () => void }) {
           oluşturun.
         </AppText>
         <View style={{ height: 18 }} />
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            gap: 6,
+          }}
+        >
           <AppText
             variant="labelLarge"
             style={{
               color: '#fff',
               fontWeight: '900',
               fontSize: 14,
+              flexShrink: 1,
               lineHeight: 20,
             }}
           >
@@ -75,7 +73,7 @@ export function AnalysisHero({ onPress }: { onPress: () => void }) {
           <Icon name="forward" size={19} color="#fff" />
         </View>
       </LinearGradient>
-    </Pressable>
+    </TouchSurface>
   );
 }
 export function TrackingPeek({
@@ -86,7 +84,7 @@ export function TrackingPeek({
   onPress: () => void;
 }) {
   return (
-    <Pressable
+    <TouchSurface
       accessibilityRole="button"
       accessibilityLabel="Araç takibi"
       onPress={onPress}
@@ -101,11 +99,7 @@ export function TrackingPeek({
             <View style={{ height: 4 }} />
             {overview.upcomingReminders.length ? (
               overview.upcomingReminders.slice(0, 2).map((reminder) => (
-                <AppText
-                  key={reminder.id}
-                  numberOfLines={1}
-                  style={{ paddingTop: 2 }}
-                >
+                <AppText key={reminder.id} style={{ paddingTop: 2 }}>
                   {reminder.title || label(reminder.reminderType)}
                 </AppText>
               ))
@@ -121,7 +115,7 @@ export function TrackingPeek({
           </View>
         </View>
       </Card>
-    </Pressable>
+    </TouchSurface>
   );
 }
 export function PrimaryCard({
@@ -133,7 +127,7 @@ export function PrimaryCard({
 }) {
   const { colors } = useTheme();
   return (
-    <Pressable
+    <TouchSurface
       accessibilityRole="button"
       accessibilityLabel="Ana aracı seç"
       onPress={onPress}
@@ -153,11 +147,7 @@ export function PrimaryCard({
             <Icon name="car" size={29} color={colors.primary} />
           </View>
           <View style={{ flex: 1 }}>
-            <AppText
-              variant="titleMedium"
-              numberOfLines={1}
-              style={{ fontWeight: '900' }}
-            >
+            <AppText variant="titleMedium" style={{ fontWeight: '900' }}>
               {vehicle.brand} {vehicle.model}
             </AppText>
             <View style={{ height: 8 }} />
@@ -172,7 +162,7 @@ export function PrimaryCard({
           <Icon name="swap" color={colors.primary} />
         </View>
       </Card>
-    </Pressable>
+    </TouchSurface>
   );
 }
 export function LatestCard({
@@ -185,7 +175,7 @@ export function LatestCard({
   const { colors } = useTheme();
   const severity = inspection.damageSeverity ?? 'UNKNOWN';
   return (
-    <Pressable
+    <TouchSurface
       accessibilityRole="button"
       accessibilityLabel="Son analizi aç"
       onPress={onPress}
@@ -228,13 +218,20 @@ export function LatestCard({
                   : 'Hasar Seviyesi Belirsiz'}
         </AppText>
         <View style={{ height: 7 }} />
-        <AppText numberOfLines={2}>
+        <AppText>
           {inspection.affectedParts.length
             ? inspection.affectedParts.slice(0, 3).map(label).join(' • ')
             : 'Hasar analizi tamamlandı'}
         </AppText>
         <View style={{ height: 18 }} />
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            gap: 6,
+          }}
+        >
           <Icon name="carOutline" size={17} color={colors.secondaryText} />
           <AppText variant="bodySmall" style={{ flex: 1, fontWeight: '700' }}>
             {inspection.vehiclePlate}
@@ -253,6 +250,6 @@ export function LatestCard({
           </AppText>
         </View>
       </Card>
-    </Pressable>
+    </TouchSurface>
   );
 }

@@ -1,0 +1,51 @@
+{
+  "passed": true,
+  "apkSha256": "fda5077b714454b74fbe25dd5ceec5e68fad7ba82c62714029b1da5c45a3197e",
+  "physicalDevice": false,
+  "testedAt": "2026-10-31T14:33:19.239Z",
+  "evidence": [
+    {
+      "name": "login-logo",
+      "marker": "Giriş Yap",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "name": "login-keyboard",
+      "marker": "Şifre",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "name": "login-keyboard-bounds",
+      "inputBounds": "[90,497][300,545]",
+      "keyboardTop": 545
+    },
+    {
+      "name": "assistant-keyboard",
+      "marker": "Araç bağlamı",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "name": "assistant-keyboard-bounds",
+      "inputBounds": "[68,483][322,533]",
+      "keyboardTop": 545
+    },
+    {
+      "name": "vehicle-year-keyboard",
+      "marker": "2024",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "name": "year-search-keyboard-bounds",
+      "inputBounds": "[65,176][373,224]",
+      "keyboardTop": 545
+    },
+    {
+      "name": "completed",
+      "physicalDevice": false
+    }
+  ]
+}
