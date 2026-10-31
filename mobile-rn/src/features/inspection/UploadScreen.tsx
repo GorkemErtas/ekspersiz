@@ -148,7 +148,7 @@ export default function UploadScreen() {
                 ) : (
                   <View
                     style={{
-                      height: 140,
+                      minHeight: 140,
                       alignItems: 'center',
                       justifyContent: 'center',
                       gap: 12,

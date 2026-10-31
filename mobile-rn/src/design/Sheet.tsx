@@ -1,29 +1,57 @@
-import type { ReactNode } from 'react';
-import { Modal, Pressable, View, useWindowDimensions } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useState, type ReactNode } from 'react';
+import {
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+  useWindowDimensions,
+} from 'react-native';
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from 'react-native-safe-area-context';
+import Animated, { FadeInDown, ReduceMotion } from 'react-native-reanimated';
 import { AppText, IconButton } from './components';
 import { useTheme } from './ThemeProvider';
+import { motion, radius, spacing } from './tokens';
+
 export function Sheet({
   visible,
   onClose,
   title,
   children,
+  scroll = true,
 }: {
   visible: boolean;
   onClose: () => void;
   title: string;
   children: ReactNode;
+  scroll?: boolean;
 }) {
-  const { colors } = useTheme(),
-    { height } = useWindowDimensions();
+  const { colors } = useTheme();
+  const { height } = useWindowDimensions();
+  const [containerHeight, setContainerHeight] = useState(height);
+  const insets = useSafeAreaInsets();
+  const viewport = Math.min(height, containerHeight);
+  const available = Math.max(
+    0,
+    Math.min(viewport * 0.88, viewport - insets.top - spacing.m),
+  );
   return (
     <Modal
       visible={visible}
       transparent
-      animationType="slide"
+      animationType="none"
       onRequestClose={onClose}
     >
-      <View
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        onLayout={(event) =>
+          setContainerHeight(event.nativeEvent.layout.height)
+        }
         style={{
           flex: 1,
           justifyContent: 'flex-end',
@@ -31,50 +59,78 @@ export function Sheet({
         }}
       >
         <Pressable
-          accessibilityLabel="Kapat"
+          accessibilityLabel="Seçimi kapat"
           accessibilityRole="button"
           onPress={onClose}
-          style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
+          style={StyleSheet.absoluteFill}
         />
-        <SafeAreaView
-          edges={['bottom', 'left', 'right']}
-          accessibilityViewIsModal
+        <Animated.View
+          entering={FadeInDown.duration(motion.medium).reduceMotion(
+            ReduceMotion.System,
+          )}
           style={{
-            maxHeight: height * 0.72,
+            maxHeight: available,
+            height: scroll ? undefined : available,
             width: '100%',
             maxWidth: 760,
             alignSelf: 'center',
             backgroundColor: colors.surface,
-            borderTopLeftRadius: 28,
-            borderTopRightRadius: 28,
-            paddingTop: 10,
-            paddingHorizontal: 18,
-            paddingBottom: 14,
+            borderTopLeftRadius: radius.xlarge,
+            borderTopRightRadius: radius.xlarge,
           }}
         >
-          <View
+          <SafeAreaView
+            edges={['bottom', 'left', 'right']}
+            accessibilityViewIsModal
             style={{
-              width: 36,
-              height: 4,
-              borderRadius: 4,
-              alignSelf: 'center',
-              backgroundColor: colors.outline,
-              marginBottom: 8,
+              flexShrink: 1,
+              height: scroll ? undefined : '100%',
+              paddingHorizontal: spacing.page,
+              paddingTop: spacing.s,
+              paddingBottom: spacing.s,
             }}
-          />
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-            <AppText
-              accessibilityRole="header"
-              variant="titleLarge"
-              style={{ flex: 1 }}
+          >
+            <View
+              style={{
+                width: 36,
+                height: 4,
+                borderRadius: 4,
+                alignSelf: 'center',
+                backgroundColor: colors.border,
+                marginBottom: spacing.s,
+              }}
+            />
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: spacing.s,
+                marginBottom: spacing.s,
+              }}
             >
-              {title}
-            </AppText>
-            <IconButton label="Kapat" icon="back" onPress={onClose} />
-          </View>
-          {children}
-        </SafeAreaView>
-      </View>
+              <AppText
+                accessibilityRole="header"
+                variant="titleLarge"
+                style={{ flex: 1 }}
+              >
+                {title}
+              </AppText>
+              <IconButton label="Kapat" icon="close" onPress={onClose} />
+            </View>
+            {scroll ? (
+              <ScrollView
+                style={{ flexGrow: 0 }}
+                keyboardShouldPersistTaps="handled"
+                keyboardDismissMode="on-drag"
+              >
+                {children}
+              </ScrollView>
+            ) : (
+              <View style={{ flex: 1, minHeight: 0 }}>{children}</View>
+            )}
+          </SafeAreaView>
+        </Animated.View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }

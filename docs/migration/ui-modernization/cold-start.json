@@ -1,0 +1,39 @@
+{
+  "package": "com.gorkem.ekspersiz.dev",
+  "versionCode": 52,
+  "model": "sdk_gphone64_x86_64",
+  "api": "36",
+  "abi": "x86_64",
+  "physicalDevice": false,
+  "apkSha256": "fda5077b714454b74fbe25dd5ceec5e68fad7ba82c62714029b1da5c45a3197e",
+  "aabSha256": "01d96cb2cc798d6a084d519e374f2613fdf610e6255ec466fb480b2095639ed2",
+  "dexSha256": {
+    "classes.dex": "cfe84b206b787dc46e70238ef3c5182e8c4830d17263965fd4ac17a8b38359c9"
+  },
+  "attempts": [
+    {
+      "attempt": 1,
+      "pid": "16585",
+      "rnScreenRendered": true,
+      "observedAliveSeconds": 10,
+      "start": "Starting: Intent { cmp=com.gorkem.ekspersiz.dev/.MainActivity }\r\nStatus: ok\r\nLaunchState: COLD\r\nActivity: com.gorkem.ekspersiz.dev/.MainActivity\r\nTotalTime: 1387\r\nWaitTime: 1392\r\nComplete"
+    },
+    {
+      "attempt": 2,
+      "pid": "16718",
+      "rnScreenRendered": true,
+      "observedAliveSeconds": 10,
+      "start": "Starting: Intent { cmp=com.gorkem.ekspersiz.dev/.MainActivity }\r\nStatus: ok\r\nLaunchState: COLD\r\nActivity: com.gorkem.ekspersiz.dev/.MainActivity\r\nTotalTime: 1081\r\nWaitTime: 1085\r\nComplete"
+    },
+    {
+      "attempt": 3,
+      "pid": "16831",
+      "rnScreenRendered": true,
+      "observedAliveSeconds": 10,
+      "start": "Starting: Intent { cmp=com.gorkem.ekspersiz.dev/.MainActivity }\r\nStatus: ok\r\nLaunchState: COLD\r\nActivity: com.gorkem.ekspersiz.dev/.MainActivity\r\nTotalTime: 1143\r\nWaitTime: 1146\r\nComplete"
+    }
+  ],
+  "passed": true,
+  "versionName": "1.0.0",
+  "testedAt": "2026-10-31T14:31:54.050Z"
+}

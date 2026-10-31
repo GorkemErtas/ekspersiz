@@ -1,6 +1,6 @@
 // Uses actual native screens. The separate fixture server is an explicit test transport only.
 import { spawnSync } from 'node:child_process';
-import { readFile, mkdir } from 'node:fs/promises';
+import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import { PNG } from 'pngjs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -8,13 +8,15 @@ const adb = path.join(
   process.env.ANDROID_HOME ??
     path.join(process.env.LOCALAPPDATA, 'Android', 'Sdk'),
   'platform-tools',
-  'adb.exe',
+  process.platform === 'win32' ? 'adb.exe' : 'adb',
 );
-const serial = 'emulator-5554',
-  artifact = fileURLToPath(new URL('../visual-artifacts/', import.meta.url)),
-  output = fileURLToPath(
-    new URL('../../docs/migration/native/', import.meta.url),
-  );
+const serial = process.env.ANDROID_SERIAL ?? 'emulator-5554',
+  artifact =
+    process.env.UI_CAPTURE_ARTIFACT_DIR ??
+    fileURLToPath(new URL('../visual-artifacts/', import.meta.url)),
+  output =
+    process.env.UI_CAPTURE_OUTPUT_DIR ??
+    fileURLToPath(new URL('../../docs/migration/native/', import.meta.url));
 export const run = (...args) => {
   const result = spawnSync(adb, ['-s', serial, ...args], {
     encoding: 'utf8',
@@ -49,9 +51,13 @@ export function nodes(xml) {
       ),
     )
     .map((node) => {
-      const rect = node.bounds?.match(/\d+/g)?.map(Number) ?? [];
+      const rect = node.bounds?.match(/-?\d+/g)?.map(Number) ?? [];
       return {
         ...node,
+        left: rect[0] ?? 0,
+        top: rect[1] ?? 0,
+        right: rect[2] ?? 0,
+        bottom: rect[3] ?? 0,
         x: ((rect[0] ?? 0) + (rect[2] ?? 0)) / 2,
         y: ((rect[1] ?? 0) + (rect[3] ?? 0)) / 2,
         area:
@@ -109,6 +115,7 @@ export async function capture(
   marker,
   { width = 390, height = 844 } = {},
 ) {
+  await mkdir(output, { recursive: true });
   await waitFor(
     marker,
     120000,
@@ -120,6 +127,7 @@ export async function capture(
   run('shell', 'screencap', '-p', '/sdcard/ekspersiz-capture.png');
   const file = path.join(output, `${name}.png`);
   run('pull', '/sdcard/ekspersiz-capture.png', file);
+  await writeFile(path.join(output, name + '.xml'), await ui(), 'utf8');
   const bytes = await readFile(file);
   const png = PNG.sync.read(bytes);
   let black = 0;

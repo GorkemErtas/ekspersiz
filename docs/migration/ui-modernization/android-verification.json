@@ -1,0 +1,33 @@
+{
+  "package": "com.gorkem.ekspersiz.dev",
+  "fixtureOnly": true,
+  "native": {
+    "signatureVerified": true,
+    "constructors": {
+      "publicNoArg": true,
+      "classes": [
+        "androidx.work.ArrayCreatingInputMerger",
+        "androidx.work.OverwritingInputMerger",
+        "androidx.work.impl.WorkDatabase_Impl"
+      ],
+      "dexSha256": {
+        "classes.dex": "cfe84b206b787dc46e70238ef3c5182e8c4830d17263965fd4ac17a8b38359c9"
+      }
+    },
+    "verifiedEntries": 1162,
+    "nativeLibraries": 29,
+    "hermes": true,
+    "arm64": false,
+    "arm32": false,
+    "x64": true
+  },
+  "r8": {
+    "generatedRules": true,
+    "effectiveR8Rules": true,
+    "minify": true,
+    "shrinkResources": true,
+    "hermes": true
+  },
+  "apkSha256": "fda5077b714454b74fbe25dd5ceec5e68fad7ba82c62714029b1da5c45a3197e",
+  "builtAt": "2026-10-31T14:29:58.469Z"
+}

@@ -72,6 +72,7 @@ export default function NotificationsScreen() {
               <View
                 style={{
                   flexDirection: 'row',
+                  flexWrap: 'wrap',
                   justifyContent: 'space-between',
                 }}
               >

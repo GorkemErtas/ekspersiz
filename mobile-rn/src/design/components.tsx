@@ -4,7 +4,6 @@ import {
   Image,
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
   TextInput,
@@ -26,6 +25,7 @@ import Animated, {
   useReducedMotion,
 } from 'react-native-reanimated';
 import { useTheme } from './ThemeProvider';
+import { TouchSurface } from './TouchSurface';
 import {
   dimensions,
   fonts,
@@ -119,13 +119,13 @@ export function IconButton({
 }) {
   const { colors } = useTheme();
   return (
-    <Pressable
+    <TouchSurface
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{ disabled }}
       disabled={disabled}
       onPress={onPress}
-      style={({ pressed }) => ({
+      style={{
         width: 48,
         height: 48,
         borderRadius: 16,
@@ -138,14 +138,14 @@ export function IconButton({
         borderColor: colors.border,
         alignItems: 'center',
         justifyContent: 'center',
-        opacity: disabled ? 0.5 : pressed ? 0.75 : 1,
-      })}
+        opacity: disabled ? 0.5 : 1,
+      }}
     >
       <Icon
         name={icon}
         color={color ?? (filled ? colors.onPrimary : colors.text)}
       />
-    </Pressable>
+    </TouchSurface>
   );
 }
 export function Icon({
@@ -239,7 +239,7 @@ export function Button({
           : colors.primary
         : colors.text;
   return (
-    <Pressable
+    <TouchSurface
       onPress={onPress}
       disabled={blocked}
       accessibilityRole="button"
@@ -249,7 +249,7 @@ export function Button({
       android_ripple={{ color: mode === 'dark' ? '#FFFFFF1F' : '#00000014' }}
       onFocus={() => setFocused(true)}
       onBlur={() => setFocused(false)}
-      style={({ pressed }) => [
+      style={[
         {
           minHeight: variant === 'text' ? dimensions.touch : dimensions.button,
           paddingVertical:
@@ -270,7 +270,6 @@ export function Button({
               : variant === 'outlined'
                 ? colors.surface
                 : 'transparent',
-          opacity: pressed ? 0.88 : 1,
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'center',
@@ -303,7 +302,7 @@ export function Button({
       >
         {label}
       </AppText>
-    </Pressable>
+    </TouchSurface>
   );
 }
 
@@ -322,19 +321,28 @@ export function Field({
   ref?: Ref<TextInputInstance>;
 }) {
   const { colors } = useTheme();
-  const { fontScale } = useWindowDimensions();
   const [focused, setFocused] = useState(false);
   const [hidden, setHidden] = useState(true);
-  const floating = focused || !!props.value;
-  const borderWidth = focused ? 1.6 : 1;
   return (
-    <View>
+    <View style={{ gap: spacing.s }}>
+      <AppText
+        variant="bodySmall"
+        style={{
+          color: error
+            ? colors.error
+            : focused
+              ? colors.primary
+              : colors.secondaryText,
+        }}
+      >
+        {label}
+      </AppText>
       <View
         style={{
-          minHeight: 56,
+          minHeight: dimensions.button,
           backgroundColor: colors.input,
           borderRadius: radius.medium,
-          borderWidth,
+          borderWidth: 1,
           borderColor: error
             ? colors.error
             : focused
@@ -343,55 +351,18 @@ export function Field({
           flexDirection: 'row',
           alignItems: 'center',
           paddingLeft: 12,
+          opacity: props.editable === false ? 0.6 : 1,
         }}
       >
         <Icon name={icon} size={24} color={colors.inputIcon} />
-        <View style={{ flex: 1, marginLeft: 15 }}>
-          {floating && (
-            <AppText
-              style={{
-                position: 'absolute',
-                top: -9 * fontScale,
-                left: -4,
-                backgroundColor: colors.input,
-                paddingHorizontal: 4,
-                fontSize: 12,
-                lineHeight: 16,
-                color: error
-                  ? colors.error
-                  : focused
-                    ? colors.primary
-                    : colors.secondaryText,
-                fontFamily: fonts.semibold,
-                fontWeight: '600',
-              }}
-            >
-              {label}
-            </AppText>
-          )}
-          {!floating && (
-            <AppText
-              pointerEvents="none"
-              style={{
-                position: 'absolute',
-                top: 16 - borderWidth,
-                fontSize: 16,
-                lineHeight: 24,
-                color: colors.secondaryText,
-                fontFamily: fonts.semibold,
-                fontWeight: '600',
-              }}
-            >
-              {label}
-            </AppText>
-          )}
+        <View style={{ flex: 1, minWidth: 0, marginLeft: 12 }}>
           <TextInput
             {...props}
             accessibilityLabel={label}
             accessibilityHint={error}
             autoCapitalize={props.autoCapitalize ?? 'none'}
             autoCorrect={props.autoCorrect ?? false}
-            placeholder={floating ? props.placeholder : undefined}
+            placeholder={props.placeholder}
             placeholderTextColor={colors.muted}
             secureTextEntry={password && hidden}
             selectionColor={colors.primary}
@@ -407,9 +378,10 @@ export function Field({
               typography.bodyLarge,
               {
                 color: colors.text,
-                paddingVertical: 16 - borderWidth,
+                paddingVertical: 12,
                 paddingRight: 16,
-                minHeight: 56 - borderWidth * 2,
+                minHeight: props.multiline ? 104 : dimensions.touch,
+                textAlignVertical: props.multiline ? 'top' : 'center',
                 includeFontPadding: false,
               },
               style,
@@ -417,7 +389,7 @@ export function Field({
           />
         </View>
         {password && (
-          <Pressable
+          <TouchSurface
             disabled={props.editable === false}
             accessibilityRole="button"
             accessibilityLabel={hidden ? 'Şifreyi göster' : 'Şifreyi gizle'}
@@ -433,17 +405,15 @@ export function Field({
               name={hidden ? 'visible' : 'hidden'}
               color={colors.inputIcon}
             />
-          </Pressable>
+          </TouchSurface>
         )}
       </View>
       {error && (
         <AppText
           accessibilityRole="alert"
           style={{
-            fontSize: 12,
             color: colors.error,
-            paddingHorizontal: 16,
-            paddingTop: 6,
+            paddingHorizontal: spacing.xs,
           }}
         >
           {error}
@@ -490,14 +460,15 @@ export function AuthShell({
   maxWidth?: number;
 }) {
   const { colors, mode } = useTheme();
-  const { width } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
+  const logoSize = height < 600 ? 72 : 112;
   const insets = useSafeAreaInsets();
   return (
     <SafeAreaView style={styles.flex}>
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={insets.top}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top : 0}
       >
         <ScrollView
           contentContainerStyle={styles.authScroll}
@@ -510,21 +481,24 @@ export function AuthShell({
               .reduceMotion(ReduceMotion.System)}
             style={{ width: '100%', maxWidth }}
           >
-            <View style={{ alignItems: 'center', marginBottom: 26 }}>
+            <View style={{ alignItems: 'center', marginBottom: spacing.l }}>
               <View
                 style={{
-                  width: 88,
-                  height: 88,
-                  borderRadius: 28,
-                  boxShadow: shadow(mode, 'primary'),
+                  width: logoSize,
+                  height: logoSize,
+                  padding: spacing.s,
+                  borderRadius: radius.large,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  backgroundColor: colors.low,
+                  boxShadow: shadow(mode, 'soft'),
                 }}
               >
                 <Image
                   source={require('../../assets/images/ekspersiz_logo.png')}
-                  style={{ width: 88, height: 88, borderRadius: 28 }}
-                  resizeMode="cover"
+                  style={{ width: '100%', height: '100%' }}
+                  resizeMode="contain"
                   resizeMethod="resize"
-                  resizeMultiplier={256 / 88}
                   accessible={false}
                 />
               </View>
@@ -549,7 +523,7 @@ export function AuthShell({
             <Card
               style={{
                 borderRadius: radius.xlarge,
-                padding: width < 360 ? 17 : 22,
+                padding: width < 360 ? spacing.card : spacing.l,
               }}
             >
               {children}

@@ -1,47 +1,52 @@
 import { useState, useCallback } from 'react';
 import {
   BackHandler,
-  Pressable,
+  ScrollView,
   useWindowDimensions,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import Animated, { useReducedMotion } from 'react-native-reanimated';
 import { AppText, Icon, type IconName } from '../../design/components';
+import { TouchSurface } from '../../design/TouchSurface';
 import { useTheme } from '../../design/ThemeProvider';
-import { LinearGradient } from 'expo-linear-gradient';
-import { gradients, shadow } from '../../design/tokens';
+import {
+  dimensions,
+  motion,
+  radius,
+  shadow,
+  spacing,
+} from '../../design/tokens';
 import HomeScreen from './HomeScreen';
 import WorkspaceSwitcher from './WorkspaceSwitcher';
 import VehicleListScreen from '../vehicle/VehicleListScreen';
 import HistoryScreen from '../inspection/HistoryScreen';
 import ProfileScreen from '../profile/ProfileScreen';
-const destinations: [string, IconName][] = [
-  ['Ana Sayfa', 'home'],
-  ['Araçlar', 'car'],
-  ['Analizler', 'report'],
-  ['Profil', 'person'],
+
+const destinations: [string, IconName, IconName][] = [
+  ['Ana Sayfa', 'home', 'homeOutline'],
+  ['Araçlar', 'car', 'carOutline'],
+  ['Analizler', 'report', 'reportOutline'],
+  ['Profil', 'person', 'person'],
 ];
-const outlines: IconName[] = [
-  'homeOutline',
-  'carOutline',
-  'reportOutline',
-  'person',
-];
+
 export default function MainShell() {
-  const { tab: initial } = useLocalSearchParams<{ tab?: string }>(),
-    { colors, mode } = useTheme(),
-    { width, fontScale } = useWindowDimensions(),
-    router = useRouter();
+  const { tab: initial } = useLocalSearchParams<{ tab?: string }>();
+  const { colors, mode } = useTheme();
+  const { width, height, fontScale } = useWindowDimensions();
+  const reduce = useReducedMotion();
+  const router = useRouter();
   const initialTab = Math.min(3, Math.max(0, Number(initial) || 0));
-  const [tab, setTab] = useState(initialTab),
-    [visited, setVisited] = useState(new Set([initialTab]));
-  const [railGroupHeight, setRailGroupHeight] = useState(0);
+  const [tab, setTab] = useState(initialTab);
+  const [visited, setVisited] = useState(new Set([initialTab]));
+  const rail = width >= 900 || (width >= 600 && width > height);
   const select = (index: number) => {
     setTab(index);
-    setVisited((current) => new Set([...current, index]));
+    setVisited((current) =>
+      current.has(index) ? current : new Set([...current, index]),
+    );
   };
-  const rail = width >= 900 && fontScale <= 1.4;
   useFocusEffect(
     useCallback(() => {
       const subscription = BackHandler.addEventListener(
@@ -49,221 +54,206 @@ export default function MainShell() {
         () => {
           if (tab === 0) return false;
           setTab(0);
-          setVisited((current) => new Set([...current, 0]));
+          setVisited((current) =>
+            current.has(0) ? current : new Set([...current, 0]),
+          );
           return true;
         },
       );
       return () => subscription.remove();
     }, [tab]),
   );
-  const item = (index: number) => (
-    <Pressable
-      key={index}
-      accessibilityRole="tab"
-      accessibilityState={{ selected: tab === index }}
-      accessibilityLabel={destinations[index]![0]}
-      onPress={() => select(index)}
-      style={({ pressed }) => ({
-        flex: rail ? undefined : 1,
-        minHeight: rail ? 64 : 58,
-        paddingVertical: rail ? 4 : 3,
-        paddingHorizontal: 4,
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 4,
-        borderRadius: 18,
-        opacity: pressed ? 0.7 : 1,
-      })}
-    >
-      <View
+
+  const item = (
+    [title, filled, outline]: (typeof destinations)[number],
+    index: number,
+  ) => {
+    const selected = tab === index;
+    const color = selected
+      ? mode === 'dark'
+        ? colors.secondary
+        : colors.primary
+      : colors.secondaryText;
+    return (
+      <TouchSurface
+        key={title}
+        accessibilityRole="tab"
+        accessibilityState={{ selected }}
+        accessibilityLabel={title}
+        onPress={() => select(index)}
         style={{
-          width: rail ? 56 : 64,
-          height: 32,
-          borderRadius: 16,
-          overflow: 'hidden',
+          flex: rail ? undefined : 1,
+          minWidth: 0,
+          minHeight: dimensions.touch,
+          flexDirection: rail ? 'row' : 'column',
+          paddingVertical: spacing.s,
+          paddingHorizontal: rail ? spacing.xs : 0,
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor:
-            tab === index ? colors.primaryContainer : 'transparent',
+          gap: spacing.xs,
+          borderRadius: radius.medium,
         }}
       >
-        <Icon
-          name={tab === index ? destinations[index]![1] : outlines[index]!}
-          color={
-            tab === index
-              ? mode === 'dark'
-                ? colors.secondary
-                : colors.primary
-              : colors.secondaryText
-          }
-          size={24}
-        />
-      </View>
-      <AppText
-        variant="bodySmall"
-        numberOfLines={fontScale > 1.4 ? 2 : 1}
-        style={{
-          fontSize: rail ? 14 : 11,
-          lineHeight: rail ? 20 : 15.95,
-          fontWeight: '600',
-          color:
-            tab === index
-              ? mode === 'dark'
-                ? colors.secondary
-                : colors.primary
-              : colors.secondaryText,
-        }}
-      >
-        {destinations[index]![0]}
-      </AppText>
-    </Pressable>
-  );
+        <Animated.View
+          style={{
+            width: rail ? 40 : 56,
+            flexShrink: 0,
+            maxWidth: '100%',
+            minHeight: 32,
+            paddingVertical: spacing.xs,
+            borderRadius: radius.pill,
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: selected ? colors.primaryContainer : 'transparent',
+            transitionProperty: 'backgroundColor',
+            transitionDuration: reduce ? 0 : motion.fast,
+          }}
+        >
+          <Icon name={selected ? filled : outline} color={color} size={24} />
+        </Animated.View>
+        <AppText
+          variant="bodySmall"
+          style={{
+            fontSize: rail ? 14 : 12,
+            lineHeight: rail ? 20 : 18,
+            fontWeight: '600',
+            color,
+            textAlign: rail ? 'left' : 'center',
+            ...(rail ? { flex: 1 } : { alignSelf: 'stretch' }),
+          }}
+        >
+          {title}
+        </AppText>
+      </TouchSurface>
+    );
+  };
+
   return (
     <SafeAreaView
       edges={['top', 'bottom', 'left', 'right']}
       style={{ flex: 1 }}
     >
       <WorkspaceSwitcher />
-      <View style={{ flex: 1, flexDirection: rail ? 'row' : 'column' }}>
+      <View
+        style={{
+          flex: 1,
+          minHeight: 0,
+          flexDirection: rail ? 'row' : 'column',
+        }}
+      >
         {rail && (
-          <View
-            accessibilityRole="tablist"
+          <ScrollView
             style={{
-              width: 113,
+              width: Math.min(200, 160 * Math.max(1, fontScale)),
+              flexGrow: 0,
             }}
+            contentContainerStyle={{ padding: spacing.s }}
           >
             <View
+              accessibilityRole="tablist"
               style={{
-                flex: 1,
-                margin: 14,
-                borderRadius: 24,
+                padding: spacing.s,
+                borderRadius: radius.large,
                 borderWidth: 1,
-                borderColor: '#8B5CF629',
+                borderColor: colors.border,
                 backgroundColor: colors.surface,
-                boxShadow: shadow(mode, 'elevated'),
+                gap: spacing.s,
               }}
             >
-              <View
+              {destinations.map(item)}
+            </View>
+          </ScrollView>
+        )}
+        <View style={{ flex: 1, minWidth: 0, minHeight: 0 }}>
+          <View testID="main-content" style={{ flex: 1, minHeight: 0 }}>
+            {destinations.map(
+              (_, index) =>
+                visited.has(index) && (
+                  <View
+                    key={index}
+                    style={{
+                      flex: 1,
+                      display: tab === index ? 'flex' : 'none',
+                    }}
+                    accessibilityElementsHidden={tab !== index}
+                    importantForAccessibility={
+                      tab === index ? 'auto' : 'no-hide-descendants'
+                    }
+                  >
+                    {index === 0 ? (
+                      <HomeScreen
+                        onProfile={() => select(3)}
+                        onVehicles={() => select(1)}
+                        onHistory={() => select(2)}
+                      />
+                    ) : index === 1 ? (
+                      <VehicleListScreen embedded />
+                    ) : index === 2 ? (
+                      <HistoryScreen embedded />
+                    ) : (
+                      <ProfileScreen embedded />
+                    )}
+                  </View>
+                ),
+            )}
+          </View>
+          {tab === 0 && (
+            // The assistant owns its height. Neither content nor navigation can overlap it.
+            <View
+              testID="assistant-dock"
+              style={{
+                paddingHorizontal: spacing.page,
+                paddingVertical: spacing.s,
+                alignItems: 'flex-end',
+              }}
+            >
+              <TouchSurface
+                accessibilityRole="button"
+                accessibilityLabel="AI Asistan’ı aç"
+                onPress={() => router.push('/assistant')}
                 style={{
+                  minHeight: dimensions.fab,
+                  maxWidth: '100%',
+                  paddingVertical: 14,
+                  paddingHorizontal: 20,
+                  borderRadius: radius.pill,
+                  flexDirection: 'row',
                   alignItems: 'center',
-                  paddingTop: 26,
-                  paddingBottom: 30,
+                  justifyContent: 'center',
+                  gap: spacing.s,
+                  backgroundColor: colors.primary,
+                  boxShadow: shadow(mode, 'primary'),
                 }}
               >
-                <LinearGradient
-                  colors={gradients.brand}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={{
-                    width: 54,
-                    height: 54,
-                    borderRadius: 18,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    boxShadow: shadow(mode, 'primary'),
-                  }}
+                <Icon name="sparkles" color={colors.onPrimary} size={22} />
+                <AppText
+                  variant="labelLarge"
+                  style={{ color: colors.onPrimary, flexShrink: 1 }}
                 >
-                  <Icon name="crashRound" size={28} color="#fff" />
-                </LinearGradient>
-              </View>
-              <View
-                onLayout={(event) =>
-                  setRailGroupHeight(event.nativeEvent.layout.height)
-                }
-                style={{ flex: 1 }}
-              >
-                <View
-                  style={{
-                    paddingTop: Math.max(0, (railGroupHeight - 256) * 0.14),
-                  }}
-                >
-                  {destinations.map((_, index) => item(index))}
-                </View>
-              </View>
+                  AI Asistan
+                </AppText>
+              </TouchSurface>
             </View>
-          </View>
-        )}
-        <View style={{ flex: 1 }}>
-          {destinations.map(
-            (_, index) =>
-              visited.has(index) && (
-                <View
-                  key={index}
-                  style={{ flex: 1, display: tab === index ? 'flex' : 'none' }}
-                  accessibilityElementsHidden={tab !== index}
-                  importantForAccessibility={
-                    tab === index ? 'auto' : 'no-hide-descendants'
-                  }
-                >
-                  {index === 0 ? (
-                    <HomeScreen
-                      onProfile={() => select(3)}
-                      onVehicles={() => select(1)}
-                      onHistory={() => select(2)}
-                    />
-                  ) : index === 1 ? (
-                    <VehicleListScreen embedded />
-                  ) : index === 2 ? (
-                    <HistoryScreen embedded />
-                  ) : (
-                    <ProfileScreen embedded />
-                  )}
-                </View>
-              ),
           )}
         </View>
       </View>
-      {tab === 0 && (
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="AI Asistan’ı aç"
-          onPress={() => router.push('/assistant')}
-          style={{
-            position: 'absolute',
-            right: 16,
-            bottom: rail ? 128 : 98,
-            width: 52,
-            height: 52,
-            borderRadius: 26,
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: colors.primary,
-            boxShadow: '0 5px 22px #6D28D94D',
-          }}
-        >
-          <LinearGradient
-            colors={gradients.deep}
-            style={{
-              width: 52,
-              height: 52,
-              borderRadius: 26,
-              borderWidth: 1,
-              borderColor: '#FFFFFF29',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Icon name="sparkles" color="#FFFFFF" size={24} />
-          </LinearGradient>
-        </Pressable>
-      )}
       {!rail && (
         <View
+          testID="bottom-navigation"
           accessibilityRole="tablist"
           style={{
             flexDirection: 'row',
-            marginHorizontal: 12,
-            marginTop: 6,
-            marginBottom: 0,
-            padding: 6,
-            borderRadius: 24,
+            marginHorizontal: spacing.s,
+            marginVertical: spacing.s,
+            padding: spacing.xs,
+            borderRadius: radius.large,
             borderWidth: 1,
             borderColor: colors.border,
             backgroundColor: colors.surface,
             minHeight: 72,
           }}
         >
-          {destinations.map((_, index) => item(index))}
+          {destinations.map(item)}
         </View>
       )}
     </SafeAreaView>

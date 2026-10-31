@@ -1,6 +1,6 @@
 import type { TextStyle } from 'react-native';
 
-// Source: mobile/lib/core/theme/app_theme.dart. Values are logical pixels.
+// Flutter brand identity, with a shared 8-point spacing scale. Logical pixels.
 export const brand = {
   primary: '#8B5CF6',
   primaryDark: '#6D28D9',
@@ -10,12 +10,12 @@ export const brand = {
 export const spacing = {
   xs: 4,
   s: 8,
-  m: 15,
-  l: 22,
-  xl: 30,
+  m: 16,
+  l: 24,
+  xl: 32,
   xxl: 36,
-  page: 18,
-  card: 18,
+  page: 16,
+  card: 16,
 } as const;
 export const radius = {
   small: 12,
@@ -31,12 +31,13 @@ export const dimensions = {
   auth: 460,
   authWide: 520,
   toolbar: 60,
+  fab: 56,
 } as const;
 export const motion = {
-  fast: 140,
-  medium: 240,
-  slow: 320,
-  theme: 420,
+  fast: 160,
+  medium: 220,
+  slow: 280,
+  theme: 240,
   pressedScale: 0.985,
 } as const;
 export const gradients = {
@@ -181,13 +182,13 @@ export const typography = {
   bodyLarge: {
     fontSize: 16,
     lineHeight: 24,
-    letterSpacing: 0.5,
+    letterSpacing: 0.2,
     fontFamily: fonts.regular,
   },
   bodyMedium: {
     fontSize: 14,
-    lineHeight: 21,
-    letterSpacing: 0.25,
+    lineHeight: 22,
+    letterSpacing: 0.15,
     fontFamily: fonts.regular,
   },
   bodySmall: {

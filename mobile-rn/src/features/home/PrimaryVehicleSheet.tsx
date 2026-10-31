@@ -21,7 +21,12 @@ export default function PrimaryVehicleSheet({
   const { colors } = useTheme(),
     action = useAction();
   return (
-    <Sheet visible={visible} onClose={onClose} title="Ana Aracı Seç">
+    <Sheet
+      visible={visible}
+      onClose={onClose}
+      title="Ana Aracı Seç"
+      scroll={false}
+    >
       <FlatList
         data={items}
         keyExtractor={(item) => String(item.id)}

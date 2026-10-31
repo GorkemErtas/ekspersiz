@@ -14,6 +14,7 @@ import {
 } from '../../design/layout';
 import { vehicleCatalog } from './catalog';
 import { useAction } from '../auth/useAction';
+import { modelYearItems, validModelYear } from './vehicleYears';
 
 const trackingDates = {
   lastMaintenanceDate: 'Son bakım tarihi',
@@ -69,9 +70,7 @@ function VehicleForm({
       !form.plate.trim() ||
       !form.brand.trim() ||
       !form.model.trim() ||
-      !/^\d{4}$/.test(form.modelYear) ||
-      Number(form.modelYear) < 1950 ||
-      Number(form.modelYear) > new Date().getFullYear() + 1 ||
+      !validModelYear(form.modelYear, initial?.modelYear) ||
       !/^\d+$/.test(form.mileage) ||
       Number(form.mileage) > 2_000_000
     ) {
@@ -161,12 +160,11 @@ function VehicleForm({
           onChange={(v) => change('model', v)}
         />
         <Gap />
-        <Field
-          label="Model yılı"
-          icon="calendar"
+        <Select
+          title="Model yılı"
           value={form.modelYear}
-          onChangeText={(v) => change('modelYear', v)}
-          keyboardType="number-pad"
+          items={modelYearItems(initial?.modelYear)}
+          onChange={(v) => change('modelYear', v)}
         />
         <Gap />
         <Field
