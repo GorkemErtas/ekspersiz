@@ -181,3 +181,5 @@ Yerel çalıştırma için backend ve AI servisinin ortam değişkenleri (`DATAB
 ---
 
 **Geliştirici:** Görkem Ertaş · Yazılım Mühendisi · Full-Stack & AI/ML
+
+Copyright © 2026 Görkem Ertaş. All rights reserved.

@@ -44,6 +44,51 @@ test('an interrupted immediate update is resumable', async () => {
     immediate: true,
   });
 });
+
+test('Play and backend checks start together and preserve mandatory backend policy', async () => {
+  let complete!: (value: unknown) => void;
+  jest.mocked(api.request).mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        complete = resolve;
+      }),
+  );
+  mockInfo.mockRejectedValueOnce(new Error('Play unavailable'));
+  const pending = checkUpdate();
+  expect(mockInfo).toHaveBeenCalledTimes(1);
+  complete({ minimumAndroidBuild: 53 });
+  await expect(pending).resolves.toEqual({ required: true, immediate: false });
+});
+
+test('backend unavailability does not hide a Play update', async () => {
+  jest.mocked(api.request).mockRejectedValueOnce(new Error('offline'));
+  mockInfo.mockResolvedValueOnce({
+    available: true,
+    inProgress: false,
+    immediateAllowed: true,
+  });
+  await expect(checkUpdate()).resolves.toEqual({
+    required: true,
+    immediate: true,
+  });
+});
+
+test('two unavailable services consume one five-second startup budget', async () => {
+  jest.useFakeTimers();
+  jest
+    .mocked(api.request)
+    .mockImplementationOnce(
+      () =>
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('timeout')), 5000),
+        ),
+    );
+  mockInfo.mockImplementationOnce(() => new Promise(() => undefined));
+  const result = checkUpdate();
+  await jest.advanceTimersByTimeAsync(5000);
+  await expect(result).resolves.toEqual({ required: false, immediate: false });
+  expect(jest.getTimerCount()).toBe(0);
+});
 test('failed native update opens the installed application listing', async () => {
   mockImmediate.mockRejectedValueOnce(new Error('not installed by Play'));
   await performUpdate({ required: true, immediate: true });

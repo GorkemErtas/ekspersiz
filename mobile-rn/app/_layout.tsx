@@ -14,6 +14,7 @@ import { restoreSession } from '../src/features/auth/auth';
 import { BootReadyContext } from '../src/core/BootContext';
 import Guide from '../src/features/onboarding/Guide';
 import { native } from '../src/platform/native';
+import { clearUnownedPushToken } from '../src/platform/push';
 import {
   checkUpdate,
   performUpdate,
@@ -26,6 +27,9 @@ export default function RootLayout() {
     InterMedium: require('../assets/fonts/Inter-Medium.ttf'),
     FlutterMaterialIcons: require('../assets/fonts/MaterialIcons-Regular.otf'),
   });
+  useEffect(() => {
+    void clearUnownedPushToken().catch(() => undefined);
+  }, []);
   if (error) throw error;
   if (!loaded) return null;
   return (
@@ -64,6 +68,12 @@ function Navigation() {
           setError(
             reason instanceof Error ? reason.message : 'Oturum doğrulanamadı.',
           );
+      })
+      .finally(() => {
+        // Includes an expired restored JWT; do not leave an inherited token owned
+        // by the previous Flutter account while showing the login screen.
+        if (!session.getSnapshot().token)
+          void clearUnownedPushToken().catch(() => undefined);
       });
   }, []);
   const begin = useCallback(() => {

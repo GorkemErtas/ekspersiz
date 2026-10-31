@@ -59,9 +59,17 @@ jobs:
           retention-days: 14
 
   android:
+    name: ${{ matrix.variant == 'debug' && 'android' || 'android-release' }}
     needs: checks
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        variant: [debug, release]
+    env:
+      # Release smoke stays on .dev, uses no production inputs, and exercises R8/Hermes.
+      ANDROID_RELEASE_OPTIMIZE: ${{ matrix.variant == 'release' && '1' || '0' }}
     defaults:
       run:
         working-directory: mobile-rn
@@ -99,7 +107,24 @@ jobs:
       - name: Generate development Android project
         run: npx expo prebuild --platform android --no-install
       - name: Compile native modules and assemble a development APK
+        if: matrix.variant == 'debug'
         working-directory: mobile-rn/android
         run: ./gradlew :app:assembleDebug :app:lintDebug -PreactNativeArchitectures=arm64-v8a --max-workers=2 --no-daemon
+      - name: Compile optimized release smoke bundle and run release lint
+        if: matrix.variant == 'release'
+        working-directory: mobile-rn/android
+        run: ./gradlew :app:bundleRelease :app:lintRelease -PreactNativeArchitectures=arm64-v8a --max-workers=2 --no-daemon
       - name: Check effective permissions after all native manifest merges
+        if: matrix.variant == 'debug'
         run: node scripts/check-android-manifest.mjs
+      - name: Verify release manifest, embedded Hermes, AAB signatures and native 16 KiB alignment
+        if: matrix.variant == 'release'
+        run: |
+          node scripts/check-android-manifest.mjs android/app/build/intermediates/merged_manifests/release/processReleaseManifest/AndroidManifest.xml --release
+          java scripts/android/ReleaseIdentity.java inspect android/app/build/outputs/bundle/release/app-release.aab
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: android-${{ matrix.variant }}-lint
+          path: mobile-rn/android/app/build/reports/lint-results-*
+          retention-days: 14

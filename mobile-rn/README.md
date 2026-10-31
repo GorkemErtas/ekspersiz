@@ -1,6 +1,6 @@
 # EksperSiz — React Native geliştirme ve test
 
-Flutter referansı `../mobile/`, Expo uygulaması bu dizindedir. Ana kabuk, araç/bakım/hatırlatıcı yönetimi, iki fotoğrafla analiz, rapor/tutanak PDF’leri, asistan, Business, bildirim ve mağaza akışları gerçek API/native SDK bağlantılarıyla uygulanmıştır. Doğrulananlarla harici ortam gerektiren kontrolleri [migration durumunda](../docs/migration/FLUTTER_TO_REACT_NATIVE.md) ayrı okuyun. Bu bir geliştirme uygulamasıdır; production yapılandırması bilerek engellidir.
+Flutter referansı `../mobile/`, Expo uygulaması bu dizindedir. Ana kabuk, araç/bakım/hatırlatıcı yönetimi, iki fotoğrafla analiz, rapor/tutanak PDF’leri, asistan, Business, bildirim ve mağaza akışları gerçek API/native SDK bağlantılarıyla uygulanmıştır. Doğrulananlarla harici ortam gerektiren kontrolleri [migration durumunda](../docs/migration/FLUTTER_TO_REACT_NATIVE.md) ayrı okuyun. Varsayılan kimlik `.dev` olarak kalır; Android production derlemesi doğrulanmış girdiler ve mevcut upload key ile [release akışından](../docs/production/ANDROID_RELEASE.md) yapılır. Eksik girdilerde production açık hatayla durur.
 
 Güncel yayın engelleri, hardening düzeltmeleri, CI kontrolleri ve manuel kabul matrisi: [Production readiness audit](../docs/production/READINESS_AUDIT.md).
 

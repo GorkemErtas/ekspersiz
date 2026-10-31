@@ -1,5 +1,7 @@
 # Production readiness audit — 30 Ekim 2026
 
+Bu rapor `e74a537` audit çalışmasının kaydıdır. Sonraki Android production hazırlığı, koşullu build koruması, mevcut upload key ve sürüm/servis eşleştirmeleri [ANDROID_RELEASE.md](ANDROID_RELEASE.md) içinde güncellenir. Aşağıdaki eski "production build engelli" bulgusu artık bu koşullu akışla ele alınır; fiziksel cihaz/mağaza kabulü hâlâ yayın kapısıdır.
+
 Karar: **henüz production yayınına hazır değil.** Kritik yerel düzeltmeler uygulandı; mağaza, gerçek cihaz ve staging kabul kapıları açık. Production build koruması kaldırılmadı.
 
 Başlangıç: güncel `origin/master`, `f740b1c` (PR #41 merge). Çalışma branch'i: `audit/production-readiness-rn`. Flutter, Spring Boot, FastAPI ve PostgreSQL mimarisi korundu. Production veritabanı, Railway, RevenueCat dashboard ve Play Console değiştirilmedi. Gerçek ödeme, ücretli Gemini isteği, merge veya deploy yapılmadı.

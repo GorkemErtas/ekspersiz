@@ -1,12 +1,28 @@
 import { spawnSync } from 'node:child_process';
 import assert from 'node:assert/strict';
 const cli = 'node_modules/expo/bin/cli';
-const run = (env) =>
-  spawnSync(process.execPath, [cli, 'config', '--type', 'public', '--json'], {
-    encoding: 'utf8',
-    timeout: 60_000,
-    env: { ...process.env, ...env },
-  });
+const clean = { ...process.env, EXPO_NO_DOTENV: '1' };
+for (const name of Object.keys(clean))
+  if (
+    name.startsWith('EXPO_PUBLIC_') ||
+    name.startsWith('ANDROID_') ||
+    name.startsWith('GOOGLE_SERVICES') ||
+    name === 'GOOGLE_IOS_URL_SCHEME'
+  )
+    delete clean[name];
+const run = (env) => {
+  const result = spawnSync(
+    process.execPath,
+    [cli, 'config', '--type', 'public', '--json'],
+    {
+      encoding: 'utf8',
+      timeout: 60_000,
+      env: { ...clean, ...env },
+    },
+  );
+  if (result.error) throw result.error;
+  return result;
+};
 const development = run({ APP_VARIANT: 'development' });
 assert.equal(development.status, 0, development.stderr);
 const config = JSON.parse(development.stdout);
