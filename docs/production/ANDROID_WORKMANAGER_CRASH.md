@@ -55,6 +55,8 @@ Play App Signing sertifikası upload sertifikasından farklıdır. Play'den kuru
 
 CI release job'u aynı ProGuard/DEX denetimlerini ve API 36 x86_64 emülatöründe üç cold-start denemesini çalıştırır. CI paketi `.dev` kimliğinde ve production girdileri olmadan üretilir; production AAB kanıtları ayrıca yerel release raporuna yazılır.
 
+CI'deki açık `expo install --check` adımı, yalnızca bu adımda `EXPO_OFFLINE=1` ile lockfile'daki Expo'nun `bundledNativeModules.json` uyumluluk haritasını denetler. Uzak API'nin yeni `58.0.22 / build-properties 58.0.12 / dev-client 58.0.18 / router 58.0.29` patch önerileri bu crash düzeltmesine dependency yükseltmesi eklemez. Kontrol devre dışı değildir: kurulu paketler geçti; izole sentetik projede yanlış `react-native 0.0.1` aynı offline komutla exit 1 / `upToDate=false` olarak reddedildi. Online security audit adımı korunur. Patch güncellemeleri ayrı bir değerlendirmedir.
+
 ## Doğrulama sonuçları
 
 | Kontrol                           | Sonuç                                                                                                                    |

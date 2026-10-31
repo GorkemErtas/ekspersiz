@@ -49,7 +49,12 @@ jobs:
           distribution: temurin
           java-version: "21"
       - run: npm run test:ci-scripts
-      - run: npx expo install --check
+      - name: Check compatibility against the locked Expo SDK's bundled versions
+        run: npx expo install --check
+        env:
+          # New remote patch recommendations must not force dependency upgrades in a release fix.
+          # The explicit install --check command still validates bundledNativeModules.json.
+          EXPO_OFFLINE: "1"
       - run: npm run check:config
       - run: npm run audit:ci
       - name: Bundle both native JS entry points without store or AI credentials
