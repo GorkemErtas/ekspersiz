@@ -38,6 +38,7 @@ const ota = otaUpdateConfig(process.env, {
   versionName: release?.versionName ?? '1.0.0',
 });
 const config: ExpoConfig = {
+  owner: 'trertas',
   ...(ota ? {runtimeVersion: ota.runtimeVersion, updates: ota.updates} : {}),
   name: production ? 'EksperSiz' : 'EksperSiz Dev',
   slug: 'ekspersiz-mobile',
@@ -178,7 +179,9 @@ const config: ExpoConfig = {
   ],
   experiments: { typedRoutes: true },
   extra: {
-    ...(ota ? {eas: {projectId: ota.projectId}} : {}),
+    eas: {
+      projectId: '883c68ec-f7e4-4c3e-87e2-e989c4b4b859',
+    },
     appVariant: production ? 'production' : 'development',
     androidFirebase: !!process.env.GOOGLE_SERVICES_FILE,
     iosFirebase: !!process.env.GOOGLE_SERVICES_PLIST,
