@@ -1,4 +1,5 @@
 import type { ExpoConfig } from 'expo/config';
+import { otaUpdateConfig } from './config/otaUpdate.cjs';
 import {
   androidReleaseConfig,
   productionPackage,
@@ -32,7 +33,12 @@ for (const [name, value, prefix] of [
       `${name} must be a platform public RevenueCat SDK key. Never bundle a secret API key.`,
     );
 }
+const ota = otaUpdateConfig(process.env, {
+  production,
+  versionName: release?.versionName ?? '1.0.0',
+});
 const config: ExpoConfig = {
+  ...(ota ? {runtimeVersion: ota.runtimeVersion, updates: ota.updates} : {}),
   name: production ? 'EksperSiz' : 'EksperSiz Dev',
   slug: 'ekspersiz-mobile',
   version: release?.versionName ?? '1.0.0',
@@ -172,6 +178,7 @@ const config: ExpoConfig = {
   ],
   experiments: { typedRoutes: true },
   extra: {
+    ...(ota ? {eas: {projectId: ota.projectId}} : {}),
     appVariant: production ? 'production' : 'development',
     androidFirebase: !!process.env.GOOGLE_SERVICES_FILE,
     iosFirebase: !!process.env.GOOGLE_SERVICES_PLIST,
