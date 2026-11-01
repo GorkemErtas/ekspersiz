@@ -6,6 +6,8 @@ Güncel yayın engelleri, hardening düzeltmeleri, CI kontrolleri ve manuel kabu
 
 Android 1.0.2 (54) açılış düzeltmesi, R8/DEX regresyon denetimleri ve optimize APK cold-start komutları: [WorkManager crash raporu](../docs/production/ANDROID_WORKMANAGER_CRASH.md).
 
+OTA kurulum hazırlığı ve güvenli yayın talimatları: [OTA runbook](../docs/production/OTA_UPDATES.md). OTA henüz etkin değildir.
+
 ## Gereksinimler
 
 | Bağımlılık                  | Kullanılan/doğrulanan sürüm                                                                              |
