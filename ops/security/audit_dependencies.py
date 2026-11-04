@@ -3,6 +3,8 @@
 First: ./mvnw dependency:list -DincludeScope=runtime -DoutputFile=target/security-java-dependencies.txt
 Then: python ops/security/audit_dependencies.py
 The report includes exact query coverage; absence of advisories is not a security guarantee.
+Java/Python only. React Native package-lock.json is checked by npm run audit:ci
+in mobile-rn, including its narrowly scoped, expiring tooling exception.
 """
 import concurrent.futures
 import argparse
@@ -29,11 +31,6 @@ def packages():
             match = re.match(r"([\w.-]+)(?:\[[^]]+\])?==([^\s;]+)", line)
             if match:
                 found.add(("PyPI", match[1], match[2]))
-    lock = (ROOT / "mobile/pubspec.lock").read_text(encoding="utf-8")
-    for name, block in re.findall(r"^  ([\w_]+):\n(.*?)(?=^  \w+:|^sdks:)", lock, re.M | re.S):
-        version = re.search(r'^    version: "([^"]+)"', block, re.M)
-        if version and "source: hosted" in block:
-            found.add(("Pub", name, version[1]))
     resolved = ROOT / "target/security-python-resolved.json"
     if resolved.exists():
         raw = resolved.read_bytes()

@@ -69,7 +69,7 @@ if (
       );
     const result = spawnSync(
       process.execPath,
-      [process.env.npm_execpath, 'audit', '--json'],
+      [process.env.npm_execpath, 'audit', '--package-lock-only', '--json'],
       { encoding: 'utf8', timeout: 120_000, maxBuffer: 10 * 1024 * 1024 },
     );
     if (result.error || ![0, 1].includes(result.status))

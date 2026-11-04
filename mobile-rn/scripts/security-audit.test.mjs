@@ -1,4 +1,9 @@
 import test from 'node:test';
+import { spawnSync } from 'node:child_process';
+import { mkdtempSync, writeFileSync, readFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import assert from 'node:assert/strict';
 import { evaluateAudit } from './security-audit.mjs';
 import { checkSources } from './check-runtime-bundle.mjs';
@@ -130,4 +135,52 @@ test('splash API 33 resource keeps the complete design while lower API styles ex
   assert.throws(() =>
     checkSplashResources(xml(items.slice(0, -1)), '<resources/>'),
   );
+});
+
+test('audit CLI checks the lockfile and fails on an invalid registry report', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'ekspersiz-audit-'));
+  try {
+    const mockNpm = join(directory, 'npm.cjs');
+    const argsFile = join(directory, 'audit-args.json');
+    const clean = {
+      auditReportVersion: 2,
+      metadata: { vulnerabilities: { high: 0, critical: 0 } },
+      vulnerabilities: {},
+    };
+    const mock = (value) =>
+      writeFileSync(
+        mockNpm,
+        `
+      if (process.argv[2] === 'ping') process.exit(0);
+      require('node:fs').writeFileSync(process.env.TEST_NPM_ARGS, JSON.stringify(process.argv.slice(2)));
+      console.log(${JSON.stringify(JSON.stringify(value))});
+    `,
+      );
+    const run = () =>
+      spawnSync(
+        process.execPath,
+        [fileURLToPath(new URL('./security-audit.mjs', import.meta.url))],
+        {
+          cwd: directory,
+          env: {
+            ...process.env,
+            npm_execpath: mockNpm,
+            TEST_NPM_ARGS: argsFile,
+          },
+          encoding: 'utf8',
+          timeout: 10000,
+        },
+      );
+    mock(clean);
+    assert.equal(run().status, 0);
+    assert.deepEqual(JSON.parse(readFileSync(argsFile, 'utf8')), [
+      'audit',
+      '--package-lock-only',
+      '--json',
+    ]);
+    mock({ error: { code: 'ENOTFOUND' } });
+    assert.equal(run().status, 1);
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
 });
