@@ -22,7 +22,6 @@
     "release:android": "node scripts/android-release.mjs",
     "audit:ci": "node scripts/security-audit.mjs",
     "check:config": "node scripts/check-config.mjs",
-    "audit:flutter": "node scripts/inventory.mjs",
     "visual:compare": "node scripts/compare-screenshots.mjs",
     "visual:android:smoke": "node visual/ui-modernization-smoke.mjs"
   },
