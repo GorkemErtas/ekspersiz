@@ -158,7 +158,7 @@ class ApiTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_validation_200_is_not_suitability_and_never_calls_gemini(self):
         from pathlib import Path
-        source = Path(__file__).resolve().parents[2] / 'mobile/test/fixtures/inspection/48mp.jpg'
+        source = Path(__file__).resolve().parent / 'fixtures/48mp.jpg'
         raw = source.read_bytes()
         self.assertLess(len(raw), 10 * 1024 * 1024)
         with Image.open(io.BytesIO(raw)) as image:
@@ -197,10 +197,10 @@ class ApiTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(200, status)
                 self.provider.analyze.assert_called_once()
 
-    @unittest.skipUnless(os.getenv('FLUTTER_IMAGE_CONTRACT_DIR'), 'Run Flutter optimizer tests and set FLUTTER_IMAGE_CONTRACT_DIR')
-    async def test_real_flutter_optimized_pair_reaches_gemini(self):
+    @unittest.skipUnless(os.getenv('MOBILE_IMAGE_CONTRACT_DIR'), 'Set MOBILE_IMAGE_CONTRACT_DIR to native optimized detail.jpg and overview.jpg')
+    async def test_real_mobile_optimized_pair_reaches_gemini(self):
         from pathlib import Path
-        directory = Path(os.environ['FLUTTER_IMAGE_CONTRACT_DIR'])
+        directory = Path(os.environ['MOBILE_IMAGE_CONTRACT_DIR'])
         images = [(name, (directory / filename).read_bytes(), 'image/jpeg')
                   for name, filename in [('image', 'detail.jpg'), ('context_image', 'overview.jpg')]]
         for image in images:
