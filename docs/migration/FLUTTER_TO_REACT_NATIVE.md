@@ -1,5 +1,7 @@
 # Flutter → React Native / Expo migration
 
+> **Tarihsel migration raporu:** Bu belgedeki 'Flutter korunur', 'master merge yapılmadı' ve 'production bekleniyor' ifadeleri raporun ilk yazıldığı aşamaya aittir. Daha sonra Flutter kaynakları [PR #49](https://github.com/GorkemErtas/ekspersiz/pull/49) ile kaldırıldı. React Native istemcisi `mobile-rn/` altında devam eder. Kullanıcı 4 Kasım 2026'da Google Play üretim dağıtımını başlattığını bildirdi; bu bildirim eski test/görsel/güvenlik açıklarını doğrulanmış hâle getirmez. Güncel çalışma talimatları için [mobil README](../../mobile-rn/README.md) ve [Android release rehberine](../production/ANDROID_RELEASE.md) bakın.
+
 Tarih: 29 Ekim 2026. Branch: `migration/flutter-to-expo`.
 
 **Durum:** önceki dokümanda bekleyen istemci akışları gerçek API ve native SDK bağlantılarıyla uygulandı. Android development APK derlendi ve ana native akışlar test edildi. Android production girdileri/imzalama ve güncelleme prosedürü artık [Android release hazırlığında](../production/ANDROID_RELEASE.md) tanımlıdır; eksik veya hatalı girdiler build'i durdurur. Gerçek mağaza/FCM/Play doğrulaması, tüm ekran/durumların görsel kabulü ve bağımlılık güvenlik bulguları açık kalır. iOS native release ayrı kapsamdır. Flutter ve backend kaynakları korunur; production deploy veya master merge bu çalışmanın parçası değildir.
