@@ -8,7 +8,7 @@ yorumlar. Bu görsel ön değerlendirmedir; fiziksel ekspertiz veya sürüş gü
 
 ```mermaid
 sequenceDiagram
-    participant M as Flutter
+    participant M as React Native / Expo
     participant J as Spring Boot
     participant P as FastAPI
     participant G as Gemini
@@ -103,7 +103,7 @@ kullanır. Fotoğraf hizmetinin anahtarı Asistan'ın kendi routing/yanıt ayarl
 Kredi rezervasyonu mevcut cüzdan/şirket paylaşım kurallarıyla yapılır; yalnız başarılı
 analiz **ve rapor** sonunda tamamlanır. Ek fotoğraf, timeout, geçersiz yanıt ve rapor
 hatasında rezervasyon bırakılır. İşlem kimliği, rezervasyon ve rapor denemesi korumaları
-korunur. Kayıp HTTP yanıtından sonra Flutter önce işlemi sorgular; başarılı analizi yeniden
+korunur. Kayıp HTTP yanıtından sonra React Native önce işlemi sorgular; başarılı analizi yeniden
 çalıştırmaz. Rapor başarısızsa yalnız fiyat/rapor aşaması tekrar edilir.
 
 Başlamış incelemenin fotoğrafları değiştirilemez. Ek fotoğraf isteyen başarısız kayıt
@@ -135,7 +135,7 @@ kaldırılmalıdır. Bu, mevcut kredi/abonelik/şirket yetkilerinden bağımsız
 `DAMAGE_ANALYSIS_ENABLED` Spring backend ve Python AI servisinde açık olmalıdır.
 Kapalı bakım anahtarı ve başarısız readiness yeni görsel analiz/doğrulamayı kredi
 ayırmadan durdurur. Geçmişi okuma ve mevcut bulgulardan yalnız rapor üretme davranışı korunur.
-Flutter aynı isimli derleme seçeneğinde varsayılan `true` kullanır; sunucu kapısını aşamaz.
+React Native iki fotoğrafı mevcut backend sözleşmesiyle gönderir; sunucudaki bakım ve readiness kapılarını aşamaz.
 
 Hasar Analiz Raporu ve PDF aynı sunum kurallarını kullanır. Bulgu ve onarım notları
 parça bazında birleştirilir; tahmin üstte, tekrar eden anlatım açılabilir ayrıntılardadır.

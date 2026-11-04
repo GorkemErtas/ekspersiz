@@ -1,6 +1,6 @@
 # EksperSiz — React Native geliştirme ve test
 
-Flutter referansı `../mobile/`, Expo uygulaması bu dizindedir. Ana kabuk, araç/bakım/hatırlatıcı yönetimi, iki fotoğrafla analiz, rapor/tutanak PDF’leri, asistan, Business, bildirim ve mağaza akışları gerçek API/native SDK bağlantılarıyla uygulanmıştır. Doğrulananlarla harici ortam gerektiren kontrolleri [migration durumunda](../docs/migration/FLUTTER_TO_REACT_NATIVE.md) ayrı okuyun. Varsayılan kimlik `.dev` olarak kalır; Android production derlemesi doğrulanmış girdiler ve mevcut upload key ile [release akışından](../docs/production/ANDROID_RELEASE.md) yapılır. Eksik girdilerde production açık hatayla durur.
+Etkin mobil istemci bu dizindeki React Native/Expo uygulamasıdır. `../mobile/` yalnızca korunmuş eski Flutter kaynağıdır; geliştirme, build ve CI bu klasöre bağlı değildir. Ana kabuk, araç/bakım/hatırlatıcı yönetimi, iki fotoğrafla analiz, rapor/tutanak PDF’leri, asistan, Business, bildirim ve mağaza akışları gerçek API/native SDK bağlantılarıyla uygulanmıştır. Doğrulananlarla harici ortam gerektiren kontrolleri [migration durumunda](../docs/migration/FLUTTER_TO_REACT_NATIVE.md) ayrı okuyun. Varsayılan kimlik `.dev` olarak kalır; Android production derlemesi doğrulanmış girdiler ve mevcut upload key ile [release akışından](../docs/production/ANDROID_RELEASE.md) yapılır. Eksik girdilerde production açık hatayla durur.
 
 Güncel yayın engelleri, hardening düzeltmeleri, CI kontrolleri ve manuel kabul matrisi: [Production readiness audit](../docs/production/READINESS_AUDIT.md).
 
@@ -20,7 +20,7 @@ OTA kurulum hazırlığı ve güvenli yayın talimatları: [OTA runbook](../docs
 | Android test cihazı         | API 24+; cihaz kontrolleri API **36**, x86_64 Google API emülatöründe yapıldı                            |
 | iOS                         | macOS, SDK 58 ile uyumlu Xcode/iOS SDK, CocoaPods ve imzalama; Windows’ta iOS native derlemesi yapılamaz |
 
-Normal React Native geliştirmesi için Flutter kurmak gerekmez. Flutter SDK yalnızca referans görselleri/katalogları yeniden üretirken gerekir. **Expo Go kullanmayın:** özel native modül, Firebase, RevenueCat, harita ve konuşma tanıma için development build gerekir.
+Geliştirme ve test için Flutter SDK gerekmez. Eski Flutter referans üreticileri kaldırılmıştır; kaydedilmiş karşılaştırma görselleri tarihsel kanıt olarak korunur. Inter/Roboto, Material Icons ve lisansları `assets/fonts/` içindedir. **Expo Go kullanmayın:** özel native modül, Firebase, RevenueCat, harita ve konuşma tanıma için development build gerekir.
 
 ## Android — ilk çalıştırma
 
@@ -106,16 +106,18 @@ Xcode’da development team, `.dev` bundle ID, Firebase/APNs ve gerekli capabili
 ```powershell
 npm run typecheck
 npm run lint
-npm test
+npm test -- --ci
+npm run test:ci-scripts
+npm run check:config
+npm run audit:ci
 npm run format:check
 npx expo install --check
 npx expo-doctor
-npm audit
 npx expo export --platform android --output-dir dist/android
 npx expo export --platform ios --output-dir dist/ios
 ```
 
-Testler oturum/çalışma alanı yarışlarını, özel medya sınırlarını, tek ödeme/uzlaştırmayı, asistan request ID’sini, GPS temizliğini, tracking payload’larını ve gerçek Türkçe fontlarla PDF sayfalamayı kapsar. `npm audit` için kalan bulgular [migration belgesinde](../docs/migration/FLUTTER_TO_REACT_NATIVE.md) açıkça listelenir; tüm güvenlik kontrollerinin geçtiği varsayılmamalıdır.
+Testler oturum/çalışma alanı yarışlarını, özel medya sınırlarını, tek ödeme/uzlaştırmayı, asistan request ID’sini, GPS temizliğini, tracking payload’larını ve gerçek Türkçe fontlarla PDF sayfalamayı kapsar. `npm run audit:ci` politikası ve güncel bulgular [son temizlik kaydında](../docs/migration/FLUTTER_CLEANUP.md) listelenir; tüm güvenlik kontrollerinin geçtiği varsayılmamalıdır.
 
 Emülatöre uygun tek mimarili native derleme:
 
@@ -127,7 +129,7 @@ cd ..
 
 Fiziksel ARM64 cihaz için `-PreactNativeArchitectures=arm64-v8a` veya Expo’nun normal `npm run android` komutunu kullanın. Gradle komutundaki `-x test`, native paketlerin testlerini atlar; üstteki Jest testlerinin yerine geçmez.
 
-## Anahtar gerektirmeyen native arayüz karşılaştırması
+## Anahtar gerektirmeyen React Native smoke testleri
 
 `visual/fixture-server.mjs` yalnızca **127.0.0.1:18080** üzerinde, sentetik verilerle çalışan açık test taşımasıdır; production modu reddedilir. Uygulama bu dosyayı import etmez. Bu mod gerçek AI, ödeme, e-posta veya FCM başarısının kanıtı değildir.
 
@@ -148,7 +150,21 @@ npx expo start --dev-client --offline --port 8081
 
 Geliştirme uygulamasını açın; fixture girişinde `deniz@example.com` / `FixtureOnly123` kullanılabilir. Kamera/galeri için gerçek native seçim ekranı ve özel native fotoğraf hazırlama modülü çalışır; sadece backend yanıtları sentetiktir. Rehber ilk kurulumda açılır; sonradan Profil’den tekrar erişilebilir.
 
-Ekran yakalama ve Flutter karşılaştırması için [VISUAL_PARITY.md](../docs/migration/VISUAL_PARITY.md) dosyasındaki cihaz boyutu/tema/fixture adımlarını izleyin. İlk Metro bundle’ının tamamlanmasını bekleyin. Test bitince iki sunucuyu kapatın, süreçteki `EXPO_PUBLIC_API_BASE_URL` override’ını kaldırın ve normal backend ile Metro’yu yeniden başlatın.
+Cihazı açıkça seçin. Fixture API'ye gömülü adresle derlenmiş `.dev` APK, loopback fixture sunucusu ve geliştirme build'inde Metro hazır olmalıdır:
+
+```powershell
+$env:ANDROID_SERIAL = 'emulator-5554'
+$env:UI_CAPTURE_OUTPUT_DIR = (Join-Path $PWD 'visual-artifacts/rn-smoke')
+# Development client + Metro:
+node visual/native-capture.mjs rn
+node visual/native-matrix.mjs
+# Paketlenmiş fixture-only .dev APK (Metro gerekmez):
+node visual/native-capture.mjs rn --standalone
+# Login ekranından başlayan, dedicated emulator için tam UI matrisi:
+npm run visual:android:smoke
+```
+
+`native-capture.mjs` ve `native-matrix.mjs` yalnız RN paketini açar. Smoke öncesi fixture oturumunu kapatıp login ekranına dönün. `ui-modernization-smoke.mjs` klavye, tema, küçük ekran/tablet, alan ve asistan etkileşimlerini doğrular. Kaydedilmiş aynı boyutlu referanslarla `npm run visual:compare -- reference.png native.png diff.png` çalışır; Flutter uygulaması gerekmez. Önceki sonuçların sınırları [VISUAL_PARITY.md](../docs/migration/VISUAL_PARITY.md) içindedir. İlk Metro bundle’ının tamamlanmasını bekleyin. Test bitince iki sunucuyu kapatın, süreçteki `EXPO_PUBLIC_API_BASE_URL` override’ını kaldırın ve normal backend ile Metro’yu yeniden başlatın.
 
 ## Cihazda elle tamamlanacak testler
 

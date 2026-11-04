@@ -1,5 +1,7 @@
 # İlk açılış rehberi
 
+> Aşağıdaki Flutter uygulama ve test ayrıntıları 22 Ekim tarihli tarihsel kayıttır. Güncel rehber `mobile-rn/src/features/onboarding/` ve `mobile-rn/app/(app)/guide.tsx` içindedir. Kurulum işareti `modules/ekspersiz-native/` tarafından aynı dosya/içerikle korunur; font ve rehber görselleri RN asset dizininde bağımsızdır. Güncel çalıştırma/test: [RN README](../../mobile-rn/README.md).
+
 Rehber `mobile/lib/features/onboarding` altında bağımsız bir Flutter özelliğidir.
 Altı adım; karşılama, iki fotoğrafla AI analizi, rapor/geçmiş, araç ve bakım
 takibi, AI Asistan/yakındaki servisler, kredi/kurumsal kullanım sırasını izler.

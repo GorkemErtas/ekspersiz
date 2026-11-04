@@ -39,5 +39,7 @@ yalnız yetkili, açık ingestion komutuyla güncellenir; bu çalışma çalış
 venv/Scripts/python.exe -m unittest discover -s tests -v
 ```
 
+48 MP reddetme fixture'ı `tests/fixtures/` içindedir; testler `mobile/` klasörüne bağlı değildir. Native hazırlayıcıdan gelen `detail.jpg` ve `overview.jpg` için isteğe bağlı `MOBILE_IMAGE_CONTRACT_DIR` ayarlanabilir.
+
 Görsel analiz testleri Gemini'yi mock eder; dış sağlayıcıya fotoğraf veya ücretli istek göndermez.
 [Tam sözleşme, yapılandırma ve sınırlar](../docs/GEMINI_VISION_ANALYSIS.md).

@@ -8,7 +8,7 @@ Tarih: 29 Ekim 2026. Branch: `migration/flutter-to-expo`.
 
 ## Referans ve mimari
 
-Flutter uygulaması görsel ve davranışsal referanstır. `flutter-inventory.json`, 26 ekran, 28 domain model, 18 feature service, 56 test/support/fixture ve 58 backend DTO kaydını kaynak SHA-256 değerleriyle indeksler. Envanter kaynak okumalarının yerine geçmez. Flutter kaynakları değiştiğinde `npm run audit:flutter` ile yenilenebilir.
+Flutter uygulaması görsel ve davranışsal referanstır. `flutter-inventory.json`, 26 ekran, 28 domain model, 18 feature service, 56 test/support/fixture ve 58 backend DTO kaydını kaynak SHA-256 değerleriyle indeksler. Envanter kaynak okumalarının yerine geçmez. Bu envanter tarihsel bir snapshot'tır; eski `audit:flutter` ve import scriptleri kaldırılmıştır. Güncel geliştirme/build/CI `mobile-rn/` üzerinden yürür. [Son temizlik ve kalan referanslar](FLUTTER_CLEANUP.md).
 
 | Alan          | Uygulama                                                                                                                                                                                                                   |
 | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

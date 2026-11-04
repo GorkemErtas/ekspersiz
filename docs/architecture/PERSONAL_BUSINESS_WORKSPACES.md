@@ -1,5 +1,7 @@
 # Kişisel ve şirket çalışma alanları
 
+> Backend workspace sözleşmesi korunur. Aşağıdaki Flutter uygulama/test ve yayın komutları tarihsel kayıttır; etkin RN istemci `mobile-rn/src/core/session.ts` ve `src/features/` altındadır. Güncel [RN geliştirme/test](../../mobile-rn/README.md) ve [Android release](../production/ANDROID_RELEASE.md) akışını kullanın.
+
 Branch: `feature/personal-business-workspaces`. Mevcut `master` temel alınmıştır.
 İkinci kullanıcı/oturum, yeni tablo, Flyway migration, bağımlılık veya Railway
 servisi eklenmez. Araçlar, geçmiş kayıtlar ve kredi ledger'ı taşınmaz.
