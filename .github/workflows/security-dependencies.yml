@@ -5,7 +5,10 @@ on:
     paths:
       - "pom.xml"
       - "ai-service/requirements*.txt"
-      - "mobile/pubspec.lock"
+      - "mobile-rn/package.json"
+      - "mobile-rn/package-lock.json"
+      - "mobile-rn/.nvmrc"
+      - "mobile-rn/scripts/security-audit*.mjs"
       - "ops/security/**"
       - ".github/workflows/security-dependencies.yml"
   workflow_dispatch:
@@ -31,11 +34,36 @@ jobs:
         run: |
           chmod +x ./mvnw
           ./mvnw -B dependency:list -DincludeScope=runtime -DoutputFile=target/security-java-dependencies.txt
-      - name: Query OSV for Java runtime, Python pins and Flutter lockfile
+      - name: Test dependency inventory and advisory failure handling
+        run: python -m unittest discover -s ops/security -p 'test_*.py' -v
+      - name: Query OSV for Java runtime and Python pins
         run: python ops/security/audit_dependencies.py --fail-on-findings
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: dependency-advisory-report
           path: target/security-dependency-audit.json
+          retention-days: 14
+
+  react-native-advisories:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: mobile-rn
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: mobile-rn/.nvmrc
+          cache: npm
+          cache-dependency-path: mobile-rn/package-lock.json
+      - run: npm ci --ignore-scripts
+      - name: Audit locked runtime and development dependencies
+        run: npm run audit:ci
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: react-native-dependency-advisory-report
+          path: mobile-rn/coverage/npm-audit.json
           retention-days: 14

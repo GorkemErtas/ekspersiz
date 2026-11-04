@@ -1,5 +1,7 @@
 # Gemini genel erişim ve Hasar Analiz Raporu
 
+> Flutter UI/build/test ayrıntıları bu değişikliğin tarihsel kaydıdır. Etkin istemci React Native/Expo'dur; sunucu Gemini görsel değerlendirmesini ve bakım kapılarını yönetir. Güncel [RN testleri](../mobile-rn/README.md), [Gemini sözleşmesi](GEMINI_VISION_ANALYSIS.md) ve [Android release](production/ANDROID_RELEASE.md) esas alınır.
+
 26 Ekim 2026. Feature branch: `feature/gemini-general-access-report-ux`.
 Güncel `origin/master` temel alındı. Production ayarı değiştirilmedi; deploy,
 master merge veya canlı Gemini çağrısı yapılmadı.

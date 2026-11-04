@@ -4,13 +4,13 @@
 
 ## Amaç ve sınırlar
 
-- Türkçe ağırlıklı, otomotiv ve EksperSiz odaklı asistan; Flutter'da yazılı sohbet ve cihaz üzerinde konuşmayı metne çevirme desteği.
+- Türkçe ağırlıklı, otomotiv ve EksperSiz odaklı asistan; React Native/Expo'da yazılı sohbet ve cihaz üzerinde konuşmayı metne çevirme desteği.
 - Kişisel araç, hatırlatma ve hasar verileri **vektör bilgi tabanına gömülmez**. Kullanıcı kimliği JWT üzerinden Spring Boot tarafından doğrulanır.
 - Genel otomotiv bilgisi, uygulama dokümanları ve kişisel kullanıcı verileri **farklı kaynak yollarıyla** ele alınır.
 
 ## Gerçek istek akışı
 
-1. Flutter `AiAssistantScreen` soruyu, en fazla sınırlı sohbet geçmişini ve isteğe bağlı seçili araç kimliğini Spring Boot'a gönderir.
+1. React Native `AssistantScreen` soruyu, en fazla sınırlı sohbet geçmişini ve isteğe bağlı seçili araç kimliğini Spring Boot'a gönderir.
 2. `AiAssistantChatService` erişimi ve kotayı kontrol eder; seçili araç bilgisini kullanıcı yetkisiyle doğrular.
 3. FastAPI `/api/v1/assistant/plan`, `SemanticDomainClassifier` üzerinden **Gemini `gemini-3.5-flash-lite`** ile anlamsal kapsam, niyet ve bilgi kaynağı seçimi yapar. Bu aşama da bir LLM API çağrısıdır; sıfır maliyetli değildir.
 4. Kapsam dışı sorular için sabit ret mesajı verilir; **ana yanıt üretimi çalıştırılmaz**. Tekrarlanan kapsam dışı istekler 24 saatlik geçici kilide yol açabilir.
@@ -21,7 +21,7 @@
    - `USER_DATA`: Yalnızca yetkili Spring Boot araçlarıyla kullanıcının kayıtlı verileri; web/RAG üzerinden özel veri aranmaz.
 7. Backend, planın kaynak/araç kombinasyonunu doğrular. Kullanıcı verisi için izin verilen araçlar: `getMyVehicles`, `getUpcomingReminders`, `getDamageHistory`.
 8. Yanıt öncesi sunucuda günlük kota **rezervasyonu** yapılır; Gemini yanıtı başarılıysa kullanım işlenir, hata olursa rezervasyon serbest bırakılır.
-9. Flutter yanıtı, varsa kaynakları ve güncel kalan kullanım hakkını gösterir.
+9. React Native yanıtı, varsa kaynakları ve güncel kalan kullanım hakkını gösterir.
 
 ## RAG bileşenleri
 
@@ -65,4 +65,4 @@
 - `ai-service/main.py`, `scripts/ingest_assistant_knowledge.py`
 - `src/main/java/com/gorkem/vehicle_inspector/service/AiAssistantChatService.java`
 - `AiAssistantEntitlementService.java`, `AiAssistantGenerationService.java`, `AiAssistantToolContextService.java`
-- `mobile/lib/features/ai_assistant/`
+- `mobile-rn/src/features/assistant/`

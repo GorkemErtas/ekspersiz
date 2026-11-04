@@ -1,5 +1,7 @@
 # Kısa ve biçimlendirilmiş AI Asistan yanıtları
 
+> Bu belge 20 Ekim 2026 Flutter uygulamasının değişiklik/test kaydıdır. Güncel mobil renderer `mobile-rn/src/features/assistant/MessageBubble.tsx` içindeki `@ronradtke/react-native-markdown-display` kullanır; eski Flutter önizleme komutları arşivdir. Güncel [asistan mimarisi](ARCHITECTURE.md) ve [RN test komutları](../../mobile-rn/README.md) esas alınır.
+
 20 Ekim 2026 · Dal: `fix/assistant-concise-markdown`
 
 ## İnceleme ve kapsam

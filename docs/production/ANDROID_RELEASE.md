@@ -1,4 +1,8 @@
-# Android production release hazırlığı — 30 Ekim 2026
+# React Native / Expo Android release rehberi
+
+Etkin istemci `mobile-rn/` içindedir; Flutter SDK, `mobile/dart_defines*.json`, `pubspec.lock` veya `mobile/android/` bu release akışının girdisi değildir. Release script'i açıkça verilen RN ignored `.env.production.local` dosyasını okur; şablonlar `mobile-rn/secrets/` yollarını kullanır. Gerçek yerel override'ların eski Flutter yollarına işaret etmediği klasör kaldırılmadan önce operatör tarafından kontrol edilmelidir. Private key, production gizli dosyaları ve mevcut Play kimliği bu temizlikte değiştirilmez.
+
+## Önceki adayın doğrulama kaydı
 
 31 Ekim 2026 tarihli **1.0.2 (54) WorkManager/R8 açılış düzeltmesi ve regresyon kontrolleri** için [güncel crash raporuna](ANDROID_WORKMANAGER_CRASH.md) bakın. Aşağıdaki 1.0.1 (53) sonuçları önceki adayın tarihsel kaydıdır.
 
@@ -16,7 +20,7 @@ Başlangıç `master` / `4e21fc1`; branch `release/react-native-production`. Hed
 | API                    | Flutter `API_BASE_URL` ile RN public API değeri eşleşti. Production yalnızca `https://ekspersiz-backend-production.up.railway.app/api/v1` kabul eder. Eksik/yanlış production URL runtime'da da development adresine düşmez.                                                                                                                                                         |
 | Google                 | Flutter server/web Client ID ve RN değeri eşleşti; yerel backend `GOOGLE_AUTH_CLIENT_ID` de eşleşti. Bu, canlı Railway ayarının doğrulandığı anlamına gelmez. Firebase production JSON içindeki type 3 web client ve production package + kullanıcıdan alınan Play SHA-1 içeren type 1 Android OAuth kaydı doğrulanır. Backend `/auth/google` ID token audience doğrulaması korunur. |
 | Firebase               | Mevcut Flutter production Android client JSON yeniden kullanılır; yeni proje/app veya admin key eklenmez. İlgili dosya `GOOGLE_SERVICES_FILE` ile native build'e verilir. `.dev` için bu production dosyası kullanılamaz.                                                                                                                                                            |
-| Maps / Places          | Flutter `mobile/android/local.properties` içindeki **Android Maps SDK** key'i Android public değişkenine aktarılır. Backend Places server key'i uygulamaya taşınmaz. Mevcut package/Play sertifikası kısıtları Console'da doğrulanmalı.                                                                                                                                              |
+| Maps / Places          | Mevcut **Android Maps SDK** client key'i RN `EXPO_PUBLIC_GOOGLE_MAPS_ANDROID_API_KEY` girdisidir; Flutter dosyasından otomatik okunmaz. Backend Places server key'i uygulamaya taşınmaz. Mevcut package/Play sertifikası kısıtları Console'da doğrulanmalı.                                                                                                                                              |
 | RevenueCat             | Flutter ve RN Android `goog_` public SDK key'i eşleşti. Server `billingCustomerId`, mevcut offering/katalog/SKU ve server sync/ledger kullanılır. Backend doğrulaması olmadan kredi veya Business erişimi verilmez.                                                                                                                                                                  |
 | JWT / yerel tercihler  | Flutter Secure Storage ile Expo SecureStore formatı aynı değildir; şifreli token kopyalanmaz. Mevcut kullanıcı bir kez yeniden giriş yapar. Aynı backend hesabının kredi, araç, analiz ve şirket kayıtları sunucudan yüklenir. Flutter'ın şifreli workspace/tema tercihleri RN'ye otomatik taşınmaz; sunucudaki üyelik/yetki kuralları uygulanır.                                    |
 | Onboarding             | İki native uygulama da `noBackupFilesDir/installation/onboarding_completed` ve `completed` değerini kullanır. Aynı uygulamaya güncellemede tamamlanmış işaret korunur. Eski sürümde işaret yoksa rehber yeniden görünebilir.                                                                                                                                                         |
@@ -32,22 +36,24 @@ Başlangıç `master` / `4e21fc1`; branch `release/react-native-production`. Hed
 | Değişken                                                   | Kaynak / koşul                                                                                                                                        |
 | ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `APP_VARIANT`                                              | Açıkça `production`                                                                                                                                   |
-| `EXPO_PUBLIC_API_BASE_URL`                                 | Flutter `API_BASE_URL`; mevcut HTTPS `/api/v1`                                                                                                        |
-| `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID`                         | Flutter `GOOGLE_SERVER_CLIENT_ID`; Firebase type 3, backend audience ile aynı                                                                         |
-| `EXPO_PUBLIC_REVENUECAT_ANDROID_PUBLIC_KEY`                | Flutter `REVENUECAT_ANDROID_PUBLIC_KEY`; gerçek Android `goog_` public SDK key. `test_`/secret reddedilir.                                            |
-| `EXPO_PUBLIC_GOOGLE_MAPS_ANDROID_API_KEY`                  | Flutter Android `MAPS_API_KEY`; package/sertifika/API kısıtlı client key                                                                              |
+| `EXPO_PUBLIC_API_BASE_URL`                                 | Mevcut backend HTTPS `/api/v1` adresi; Flutter dosyası okunmaz                                                                                                        |
+| `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID`                         | Mevcut web/server OAuth client; Firebase type 3, backend audience ile aynı                                                                         |
+| `EXPO_PUBLIC_REVENUECAT_ANDROID_PUBLIC_KEY`                | Mevcut Android `goog_` public SDK key. `test_`/secret reddedilir.                                            |
+| `EXPO_PUBLIC_GOOGLE_MAPS_ANDROID_API_KEY`                  | Mevcut package/sertifika/API kısıtlı Android Maps client key                                                                              |
 | `GOOGLE_SERVICES_FILE`                                     | Mevcut production Android client JSON yolu                                                                                                            |
 | `ANDROID_VERSION_NAME`, `ANDROID_VERSION_CODE`             | Bu aday: `1.0.1`, `53`                                                                                                                                |
 | `ANDROID_PLAY_MAX_VERSION_CODE`                            | Tüm track/taslaklarda teyit edilen son kod; bu çalışma için `52`                                                                                      |
 | `ANDROID_PLAY_SIGNING_SHA1`, `ANDROID_PLAY_SIGNING_SHA256` | **Play App Signing** sertifikası. SHA-1 production Android OAuth kaydıyla karşılaştırılır; SHA-256 backend Integrity kontrolünde ayrıca teyit edilir. |
 | `ANDROID_KEYSTORE_PROPERTIES_FILE`                         | `secrets/key.properties`                                                                                                     |
-| `ANDROID_KEYSTORE_BASE_DIR`                                | `storeFile` göreli yolunun tabanı `secrets`                                                                                     |
+| `ANDROID_KEYSTORE_BASE_DIR`                                | `storeFile` göreli yolunun tabanı `secrets`; yollar `mobile-rn/` kökünden çözülür                                                                                     |
 
 Gemini/RAG/AI service key, JWT secret, Brevo, RevenueCat secret, Places server key, Firebase admin/service-account JSON bu dosyada veya `EXPO_PUBLIC_*` içinde bulunmaz. Release dosyasında tanımsız değişken ve public değişken reddedilir. Dosya yolları dışında signing parolası/anahtarı Expo config'e girmez.
 
 Production native release **debug signing'e düşmez**. Private key/alias/store password/key password gerçek keystore ile doğrulanır. Native kaynak production üretildiyse ham Gradle komutu da explicit release ortamı ister ve debug APK'yı engeller. Hermes zorunlu, dev launcher/menu release kapalı, network inspector kapalı, `debuggable=false`, R8/resource shrink açık, cleartext ve uygulama backup kapalıdır. `android/` generated ve ignored kalır; değişiklikler kalıcı config plugin'indedir.
 
 ## Mevcut upload key ile AAB
+
+Sürümün kaynağı `.env.production.example` ve Play Console doğrulamasıdır; aşağıdaki 53 çıktıları tarihsel adaydır. Her yayın için tüm track/taslaklardaki maksimum kod yeniden kontrol edilir. `key.properties` içindeki göreli `storeFile`, `ANDROID_KEYSTORE_BASE_DIR` altında mevcut anahtara çözülmelidir; eski `android/app` tabanını varsaymayın. Yeni anahtar üretmeyin; parolaları komuta/loga yazmayın.
 
 Node 24.21.0, JDK 21 ve mevcut Android SDK'yı PATH/JAVA_HOME/ANDROID_HOME ile seçin. Windows örneği:
 

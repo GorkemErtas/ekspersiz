@@ -8,7 +8,7 @@ const [referencePath, nativePath, outputPath, maxMismatchArg = '0.01'] =
   process.argv.slice(2);
 if (!referencePath || !nativePath || !outputPath) {
   console.error(
-    'Usage: npm run visual:compare -- flutter.png native.png diff.png [maximum-mismatch-fraction=0.01]',
+    'Usage: npm run visual:compare -- reference.png native.png diff.png [maximum-mismatch-fraction=0.01]',
   );
   process.exit(2);
 }
@@ -19,7 +19,7 @@ const reference = PNG.sync.read(readFileSync(referencePath));
 const native = PNG.sync.read(readFileSync(nativePath));
 if (reference.width !== native.width || reference.height !== native.height) {
   throw new Error(
-    `Equivalent viewport required: Flutter ${reference.width}×${reference.height}; RN ${native.width}×${native.height}.`,
+    `Equivalent viewport required: reference ${reference.width}×${reference.height}; native ${native.width}×${native.height}.`,
   );
 }
 const diff = new PNG({ width: reference.width, height: reference.height });

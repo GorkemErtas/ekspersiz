@@ -3,16 +3,16 @@
 ## Mevcut yapı
 
 - **Spring Boot API:** JWT, plan/kota, kullanıcı araçları, Gemini yanıt üretimi.
-- **FastAPI AI servisi:** AI Asistan kapsam yönlendirme/RAG; hasar analizi geçici olarak kullanılamaz.
+- **FastAPI AI servisi:** AI Asistan kapsam yönlendirme, yerel E5 embedding/pgvector RAG ve iki fotoğraflı Gemini hasar analizi.
 - **PostgreSQL + pgvector:** Uygulama verileri ve sürümlü, yalnızca küratörlü EksperSiz bilgi tabanı.
 - **Railway / Docker:** Backend ve AI servisi ayrı konteynerler; gizli anahtarlar ortam değişkenlerinde.
 
 ## Üretime alma kontrol listesi
 
 1. PostgreSQL yedeği al; `vector` eklentisini ve bağlantı yetkilerini doğrula.
-2. Backend'i dağıt; **Flyway V1–V12** şema geçişlerinin uygulandığını kontrol et.
+2. Backend'i dağıt; repodaki güncel **Flyway** şema geçişlerinin uygulandığını kontrol et.
 3. AI servis imajını dağıt. İmaj `intfloat/multilingual-e5-small` embedding modelini önceden içerir; üretimde `ASSISTANT_EMBEDDING_LOCAL_ONLY=true` olmalıdır.
-4. `/health` yanıtında servis `UP`, hasar analizi `UNAVAILABLE` olmalıdır. Görüntü ağırlığı sağlanmaz; PyTorch asistan embedding modeli için korunur.
+4. `/health` yanıtında servis `UP` olmalıdır. Hasar analizi `damageAnalysis` alanı yapılandırmaya göre `READY` veya `UNAVAILABLE` döner; `/api/v1/vision/readiness` ile ayrıca kontrol edilir. `GEMINI_API_KEY` ve açık `DAMAGE_ANALYSIS_ENABLED` gerekir; readiness ücretli çağrı yapmaz. Görüntü ağırlığı sağlanmaz; PyTorch asistan embedding modeli için korunur.
 5. Bilgi tabanını **uygulama başlangıcında değil**, ayrı yönetim/dağıtım adımı olarak işle:
    ```bash
    cd ai-service
@@ -21,7 +21,7 @@
 6. `GET /health` ile AI servisinin temel sağlığını doğrula.
 7. `GET /api/v1/assistant/readiness` ile pgvector, aktif belge/parça ve **384 boyutlu embedding** hazırlığını doğrula.
 8. Kapsam dışı, uygulama bilgisi (RAG), kamuya açık otomotiv bilgisi (Google Search), yetkili araç verisi ve günlük kota akışlarını smoke-test et.
-9. Flutter AI Asistan ekranını yalnızca ilgili servisler hazırken kullanıcıya sun.
+9. React Native AI Asistan ekranını yalnızca ilgili servisler hazırken kullanıcıya sun.
 
 ## Bilgi kaynağı ekleme ve güncelleme
 
@@ -59,8 +59,8 @@ Backend'in PostgreSQL kimlik bilgileri, JWT sırrı ve diğer entegrasyon anahta
 
 ## Test ve geri alma
 
-- AI birim testleri: `cd ai-service && pytest`.
-- Backend: `./mvnw test`; mobil: `cd mobile && flutter test`.
+- AI birim testleri: `cd ai-service && python -m unittest discover -s tests -v`.
+- Backend: `./mvnw test`; mobil: `cd mobile-rn && npm run typecheck && npm run lint && npm test -- --ci && npm run test:ci-scripts`.
 - Örnek değerlendirme senaryoları: [evaluation-v1.jsonl](evaluation-v1.jsonl); bu dosya **test verisidir**, tek başına otomatik test çalıştırmaz.
 - Sorunlu uygulama sürümünü önceki Docker imajına geri al; bilgi tabanı sürümlerini ayrıca ele al. Eski belgeler `SUPERSEDED` olarak saklanır; otomatik tek komutluk geri alma varsayılmamalıdır.
 - Hasar analizi `/health` kontrolünü RAG readiness'e bağlama; bir bileşendeki sorun diğerinin sağlık sonucunu gizlememeli.

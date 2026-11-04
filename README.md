@@ -2,7 +2,7 @@
 
 **Yapay zekâ destekli araç hasar ön değerlendirmesi, raporlama ve araç yönetimi platformu.**
 
-Flutter mobil uygulaması, Java/Spring Boot API'si ve Python/FastAPI AI servisini birleştirir. Mevcut analizlerden açıklayıcı raporlar üretir ve araç sahiplerine kayıt, bakım, hatırlatma ve otomotiv odaklı AI Asistan özellikleri sunar. Yeni hasar analizinde genel görünüm ve yakın detay fotoğrafları Gemini tarafından birlikte değerlendirilir; görsel yorum fiziksel ekspertiz yerine geçmez.
+React Native/Expo mobil uygulaması, Java/Spring Boot API'si ve Python/FastAPI AI servisini birleştirir. Mevcut analizlerden açıklayıcı raporlar üretir ve araç sahiplerine kayıt, bakım, hatırlatma ve otomotiv odaklı AI Asistan özellikleri sunar. Yeni hasar analizinde genel görünüm ve yakın detay fotoğrafları Gemini tarafından birlikte değerlendirilir; görsel yorum fiziksel ekspertiz yerine geçmez.
 
 <p align="center">
   <img src="docs/screenshots/home.jpeg" width="23%" alt="Ana ekran" />
@@ -10,6 +10,8 @@ Flutter mobil uygulaması, Java/Spring Boot API'si ve Python/FastAPI AI servisin
   <img src="docs/screenshots/report.jpeg" width="23%" alt="Rapor" />
   <img src="docs/screenshots/ai-assistant.jpeg" width="23%" alt="AI Asistan" />
 </p>
+
+Ekran görselleri önceki Flutter sürümünün tarihsel örnekleridir; güncel RN arayüz kanıtları [migration görsel kaydındadır](docs/migration/VISUAL_PARITY.md).
 
 ## Özellikler
 
@@ -24,7 +26,7 @@ Flutter mobil uygulaması, Java/Spring Boot API'si ve Python/FastAPI AI servisin
 
 ```mermaid
 flowchart TB
-    Mobile["Flutter Mobil Uygulama"]
+    Mobile["React Native / Expo Mobil Uygulama"]
     API["Spring Boot API<br/>Kimlik · İş kuralları · Kota"]
     DB[("PostgreSQL<br/>Flyway + pgvector")]
     AI["FastAPI<br/>İki fotoğraf · RAG · Yönlendirme"]
@@ -40,7 +42,7 @@ flowchart TB
     API --> External
 ```
 
-**Mimari kararlar:** Flutter, mobil arayüzü özellik bazlı modüllere ayırır; Spring Boot kimlik doğrulama, veri sahipliği, ödeme ve iş kurallarının otoritesidir. Python/FastAPI, asistan yönlendirmesini ve bilgi erişimini API katmanından ayırır. PostgreSQL + pgvector, uygulama verileri ve vektör araması için ayrı bir vektör veritabanı hizmeti gereksinimini azaltır. Backend ve AI servisi Docker ile Railway üzerinde ayrı dağıtılır.
+**Mimari kararlar:** React Native/Expo, mobil arayüzü özellik bazlı modüllere ayırır; Spring Boot kimlik doğrulama, veri sahipliği, ödeme ve iş kurallarının otoritesidir. Python/FastAPI, asistan yönlendirmesini ve bilgi erişimini API katmanından ayırır. PostgreSQL + pgvector, uygulama verileri ve vektör araması için ayrı bir vektör veritabanı hizmeti gereksinimini azaltır. Backend ve AI servisi Docker ile Railway üzerinde ayrı dağıtılır.
 
 ## AI mimarisi
 
@@ -89,7 +91,7 @@ Ayrıntılar: [AI Asistan mimarisi](docs/ai-assistant/ARCHITECTURE.md).
 
 ### Onarım fiyatı tahmini
 
-Fiyat hesaplaması yalnızca ML'in tespit ettiği hasar, önerilen işlem, araç ve şehir bilgilerini kullanır. Backend, varsayılan olarak Google Search grounding ile güncel fiyat örnekleri arar; **yalnızca gerçek web kaynakları dönerse** bu özeti ikinci Gemini çağrısındaki yapılandırılmış fiyat tahminine dahil eder. Doğrulanmış web referansı yoksa veya arama başarısızsa genel piyasa bilgilerine dayalı tahmine döner; güncel fiyat doğrulaması iddia etmez. Parça bazında mükerrer maliyet yazılmaması istenir, farklı fiyat düzeylerini çarpıtabilecek sabit 10.000 TL fiyat aralığı sınırı kullanılmaz. Bunlar yine teklif değil tahmindir.
+Fiyat hesaplaması yalnızca Gemini'nin görsel bulguları, önerilen işlem, araç ve şehir bilgilerini kullanır. Backend, varsayılan olarak Google Search grounding ile güncel fiyat örnekleri arar; **yalnızca gerçek web kaynakları dönerse** bu özeti ikinci Gemini çağrısındaki yapılandırılmış fiyat tahminine dahil eder. Doğrulanmış web referansı yoksa veya arama başarısızsa genel piyasa bilgilerine dayalı tahmine döner; güncel fiyat doğrulaması iddia etmez. Parça bazında mükerrer maliyet yazılmaması istenir, farklı fiyat düzeylerini çarpıtabilecek sabit 10.000 TL fiyat aralığı sınırı kullanılmaz. Bunlar yine teklif değil tahmindir.
 
 `PRICE_WEB_SEARCH_ENABLED=false` ile fiyatlar için ekstra Google Search çağrısı kapatılabilir; kapalıyken sistem eskisi gibi tek Gemini çağrısıyla fiyat üretir. Açıkken **başarılı aramada iki Gemini çağrısı ve potansiyel Google Search sorgu ücreti** vardır (özellikle aramalar çok sayıda sorgu çalıştırırsa). Arama maliyetleri, gecikme, kaynak doğruluğu ve yerel servis teklifleriyle sapma izlenmelidir. Asistanın genel web araması bu ayardan bağımsızdır. Üretim için aynı araç/hasar/şehir senaryolarında karşılaştırmalı doğrulama yapılmalıdır.
 
@@ -116,7 +118,7 @@ Fiyat hesaplaması yalnızca ML'in tespit ettiği hasar, önerilen işlem, araç
 
 | Katman | Teknolojiler |
 | --- | --- |
-| Mobil | Flutter, Dart, Google Sign-In, Firebase Messaging, Google Maps, RevenueCat |
+| Mobil | React Native, Expo, TypeScript, Expo Router, Google Sign-In, Firebase Messaging, Google Maps, RevenueCat |
 | Backend | Java 21, Spring Boot 4.1, Spring Security, JPA, Flyway |
 | AI/ML | Python, FastAPI, Google Gemini Vision, SentenceTransformers / E5, pgvector |
 | Veri | PostgreSQL, pgvector |
@@ -148,14 +150,22 @@ Sandbox abonelikleri üretimde Business hakkı vermez.
 
 ## Geliştirme ve test
 
-**Gereksinimler:** Java 21, Flutter/Dart SDK, Python 3.12, PostgreSQL/pgvector ve ilgili servis kimlik bilgileri. Hasar modeli ağırlığı gerekli değildir.
+**Gereksinimler:** Java 21, Node (`mobile-rn/.nvmrc`), Android SDK / macOS için Xcode, Python 3.12, PostgreSQL/pgvector ve ilgili servis kimlik bilgileri. Hasar modeli ağırlığı gerekli değildir.
 
 ```bash
 # Backend
 ./mvnw test
 
-# Mobil
-cd mobile && flutter pub get && flutter test
+# Mobil (mobile-rn dizininde)
+cd mobile-rn
+npm ci
+npm run typecheck
+npm run lint
+npm test -- --ci
+npm run test:ci-scripts
+npm run check:config
+npm run audit:ci
+cd ..
 
 # AI servisi (ai-service dizininde)
 pip install -r requirements.txt
@@ -166,15 +176,19 @@ Yerel çalıştırma için backend ve AI servisinin ortam değişkenleri (`DATAB
 
 ## Dokümantasyon ve depo yapısı
 
-- [Mobil uygulama](mobile/README.md) — Flutter özellikleri ve geliştirme
-- [AI servis](ai-service/README.md) — Asistan, RAG, geçici analiz durumu ve test
+- [Mobil uygulama](mobile-rn/README.md) — React Native/Expo geliştirme, native smoke testleri ve servis ayarları
+- [Android release](docs/production/ANDROID_RELEASE.md) — mevcut Play kimliği ve upload key ile RN yayın akışı
+- [Flutter son temizlik kaydı](docs/migration/FLUTTER_CLEANUP.md) — kaldırılan araçlar, korunan uyumluluk ve kalan tarihsel referanslar
+- [AI servis](ai-service/README.md) — Gemini hasar analizi, asistan, embedding/RAG ve test
 - [AI Asistan mimarisi](docs/ai-assistant/ARCHITECTURE.md) — yönlendirme, RAG, yetkili araçlar ve kota
 - [AI Asistan dağıtımı](docs/ai-assistant/DEPLOYMENT.md) — Docker, bilgi tabanı ingest ve readiness
 - [AI Asistan değerlendirme senaryoları](docs/ai-assistant/evaluation-v1.jsonl)
 - [Railway günlük hatırlatma cron tasarımı](docs/REMINDER_CRON.md) — uyuyan backend için güvenli tetikleme, dağıtım ve kontrol
 - [Railway maliyet ve bellek optimizasyon kayıtları](docs/cost/OPTIMIZATIONS.md) — kararlar, deneyler, geçerli ayarlar ve izlenecek metrikler
 
-`src/` Spring Boot API'sini, `mobile/` Flutter istemcisini, `ai-service/` AI/ML servisini, `docs/` teknik belgeleri ve ekran görüntülerini içerir.
+`src/` Spring Boot API'sini, `mobile-rn/` etkin React Native/Expo istemcisini, `ai-service/` Gemini ve asistan servisini, `docs/` teknik belgeleri ve ekran görüntülerini içerir. `mobile/` korunmuş eski Flutter kaynağıdır; etkin geliştirme, build ve CI için gerekli değildir.
+
+Mobil Inter/Roboto fontları, Material Icons ve lisansları `mobile-rn/assets/fonts/` içinde bağımsızdır. FCM geçişinde önceki kurulumun token temizliği ve onboarding işareti uyumluluğu korunur. Java/Python bağımlılıkları `ops/security/audit_dependencies.py --fail-on-findings`, RN lockfile'ı `npm run audit:ci` ile denetlenir; registry/OSV erişim hataları başarılı sonuç sayılmaz.
 
 > **Sorumluluk reddi:** AI hasar tespiti ve üretilen raporlar bilgilendirme amaçlı ön değerlendirmelerdir; profesyonel ekspertiz, mekanik inceleme veya resmî hasar tespitinin yerine geçmez.
 

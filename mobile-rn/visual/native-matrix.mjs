@@ -1,12 +1,5 @@
-// Additional real native cases, with equivalent Flutter and RN device geometry.
-import {
-  run,
-  flutterRoute,
-  capture,
-  tap,
-  waitFor,
-  pause,
-} from './native-capture.mjs';
+// Additional React Native captures on the dedicated fixture emulator.
+import { run, capture, tap, waitFor, pause, ui } from './native-capture.mjs';
 async function reactNativeMain() {
   run('shell', 'am', 'force-stop', 'com.gorkem.ekspersiz.dev');
   run(
@@ -35,11 +28,9 @@ for (const entry of [
   run('shell', 'wm', 'density', '160');
   run('shell', 'settings', 'put', 'system', 'font_scale', entry.font);
   run('shell', 'cmd', 'uimode', 'night', entry.night);
-  await flutterRoute('main');
-  await capture(`flutter-${entry.name}`, 'AI Hasar Analizi', entry);
   await reactNativeMain();
   const desired = entry.night === 'yes' ? 'Koyu tema' : 'Açık tema';
-  const xml = await (await import('./native-capture.mjs')).ui();
+  const xml = await ui();
   if (xml.includes(desired)) await tap(desired);
   await pause(500);
   await capture(`react-native-${entry.name}`, 'AI Hasar Analizi', entry);
