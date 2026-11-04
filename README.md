@@ -2,6 +2,8 @@
 
 **Yapay zekâ destekli araç hasar ön değerlendirmesi, raporlama ve araç yönetimi platformu.**
 
+**Google Play:** [EksperSiz](https://play.google.com/store/apps/details?id=com.gorkem.ekspersiz) · **Mobil kaynak:** [`mobile-rn/`](mobile-rn/README.md)
+
 React Native/Expo mobil uygulaması, Java/Spring Boot API'si ve Python/FastAPI AI servisini birleştirir. Mevcut analizlerden açıklayıcı raporlar üretir ve araç sahiplerine kayıt, bakım, hatırlatma ve otomotiv odaklı AI Asistan özellikleri sunar. Yeni hasar analizinde genel görünüm ve yakın detay fotoğrafları Gemini tarafından birlikte değerlendirilir; görsel yorum fiziksel ekspertiz yerine geçmez.
 
 <p align="center">
@@ -66,7 +68,6 @@ Sunucudaki `DAMAGE_ANALYSIS_ENABLED=false` bakım anahtarı korunur.
 [Genel erişim, doğrulama ve Railway yayın sırası](docs/GEMINI_GENERAL_ACCESS_REPORT_UX.md).
 
 [Mimari, yapılandırma, sözleşme, gizlilik ve testler](docs/GEMINI_VISION_ANALYSIS.md).
-Bu değişiklik bir deployment veya production release içermez.
 
 ### Kaynağa göre yönlendirilen AI Asistan
 
@@ -186,7 +187,7 @@ Yerel çalıştırma için backend ve AI servisinin ortam değişkenleri (`DATAB
 - [Railway günlük hatırlatma cron tasarımı](docs/REMINDER_CRON.md) — uyuyan backend için güvenli tetikleme, dağıtım ve kontrol
 - [Railway maliyet ve bellek optimizasyon kayıtları](docs/cost/OPTIMIZATIONS.md) — kararlar, deneyler, geçerli ayarlar ve izlenecek metrikler
 
-`src/` Spring Boot API'sini, `mobile-rn/` etkin React Native/Expo istemcisini, `ai-service/` Gemini ve asistan servisini, `docs/` teknik belgeleri ve ekran görüntülerini içerir. `mobile/` korunmuş eski Flutter kaynağıdır; etkin geliştirme, build ve CI için gerekli değildir.
+`src/` Spring Boot API'sini, `mobile-rn/` etkin React Native/Expo istemcisini, `ai-service/` Gemini ve asistan servisini, `docs/` teknik belgeleri ve ekran görüntülerini içerir. Eski Flutter `mobile/` kaynak ağacı [PR #49](https://github.com/GorkemErtas/ekspersiz/pull/49) ile depodan kaldırılmıştır; tarihsel kaynak ve değişiklikler Git geçmişinde korunur.
 
 Mobil Inter/Roboto fontları, Material Icons ve lisansları `mobile-rn/assets/fonts/` içinde bağımsızdır. FCM geçişinde önceki kurulumun token temizliği ve onboarding işareti uyumluluğu korunur. Java/Python bağımlılıkları `ops/security/audit_dependencies.py --fail-on-findings`, RN lockfile'ı `npm run audit:ci` ile denetlenir; registry/OSV erişim hataları başarılı sonuç sayılmaz.
 
