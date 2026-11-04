@@ -1,5 +1,11 @@
 # React Native / Expo Android release rehberi
 
+## Yayın durum notu — 4 Kasım 2026
+
+Uygulama sahibi React Native sürümünü Google Play dahili testte çalıştırdığını ve ardından **üretim dağıtımını başlattığını** bildirdi; paylaştığı release ortamında `ANDROID_VERSION_CODE=59`, `ANDROID_PLAY_MAX_VERSION_CODE=58` bulunuyordu. Bu bilgi kullanıcı beyanıdır; Play Console dağıtım oranı/onayı, canlı cihaz telemetrisi veya ödeme/Integrity regresyonlarının tamamı bu depodan doğrulanamaz.
+
+**Aşağıdaki 1.0.1 (53) ve 1.0.2 (54) adaylarına ait NO-GO, hash, test ve cihaz kabul kayıtları tarihsel kayıtlardır; 59 numaralı sürümün doğrulama raporu olarak kullanılmamalıdır.** Her yeni AAB için sürüm kodu, imza, cihaz uyumluluğu ve Play Console üretim durumu yeniden doğrulanır. Eski Flutter kaynakları [PR #49](https://github.com/GorkemErtas/ekspersiz/pull/49) ile kaldırılmıştır; imzalama girdileri `mobile-rn/secrets/` ve ignored release ortam dosyasında kalır.
+
 Etkin istemci `mobile-rn/` içindedir; Flutter SDK, `mobile/dart_defines*.json`, `pubspec.lock` veya `mobile/android/` bu release akışının girdisi değildir. Release script'i açıkça verilen RN ignored `.env.production.local` dosyasını okur; şablonlar `mobile-rn/secrets/` yollarını kullanır. Gerçek yerel override'ların eski Flutter yollarına işaret etmediği klasör kaldırılmadan önce operatör tarafından kontrol edilmelidir. Private key, production gizli dosyaları ve mevcut Play kimliği bu temizlikte değiştirilmez.
 
 ## Önceki adayın doğrulama kaydı

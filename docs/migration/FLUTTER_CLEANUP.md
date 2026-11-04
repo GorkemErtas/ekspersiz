@@ -1,6 +1,14 @@
 # Flutter → React Native / Expo son temizlik
 
-4 Kasım 2026 · Branch: `chore/remove-flutter` · İncelenen başlangıç: `8a60bfe` ve ebeveyni `62946ff`.
+4 Kasım 2026 · İlk denetim branch'i: `chore/remove-flutter` · İncelenen başlangıç: `8a60bfe` ve ebeveyni `62946ff`.
+
+## Son durum — kaynak kaldırma tamamlandı
+
+- Ön temizlik [PR #48](https://github.com/GorkemErtas/ekspersiz/pull/48) ile `master`'a alındı.
+- Eski Flutter `mobile/` kaynak ağacı [PR #49](https://github.com/GorkemErtas/ekspersiz/pull/49) ile 4 Kasım 2026'da `master`'dan kaldırıldı (merge commit `90f1934`). Aktif mobil istemci yalnızca `mobile-rn/` dizinindedir.
+- Kullanıcı React Native sürümünü Google Play dahili testte doğruladığını ve daha sonra üretim dağıtımını başlattığını bildirdi (Play sürüm kodu 59). Bu belge Play Console durumu veya üretim telemetrisi için bağımsız doğrulama değildir.
+- Flutter kaynaklarının kaldırılması Android upload key, Google Play App Signing, Firebase, RevenueCat, backend, AI veya mevcut kullanıcı verilerini değiştirmez. Yerel ignored keystore/env yedekleri Git'e eklenmez.
+- **Aşağıdaki denetim ve 'silinmedi' ifadeleri kaynak ağacı kaldırılmadan önceki aşamayı anlatan tarihsel kayıtlardır.** Canlı üretim servislerinin veya bütün güvenlik kapılarının başarılı olduğu anlamına gelmez.
 
 ## Etkin mimari ve korunanlar
 

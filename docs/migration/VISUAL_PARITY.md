@@ -1,5 +1,7 @@
 # React Native visual checks and historical Flutter references
 
+> **Arşivsel görsel doğrulama kaydı:** Bu belgedeki karşılaştırmalar ve 'production deployment yok' ifadesi orijinal migration doğrulamalarını anlatır. Flutter `mobile/` kaynakları daha sonra [PR #49](https://github.com/GorkemErtas/ekspersiz/pull/49) ile kaldırıldı. Kullanıcı 4 Kasım 2026'da React Native production dağıtımını başlattığını bildirdi; önceki başarısız piksel eşiklerini veya eksik ekran karşılaştırmalarını otomatik olarak geçerli kılmaz.
+
 The saved Flutter captures below are historical migration references. The active implementation is `mobile-rn/`; Flutter capture generators and `scripts/save-references.mjs` were removed during the final cleanup. Reuse the stored images for comparison; regenerating them would require the historical tooling from Git and the legacy Flutter tree. A screen is not visually accepted until a reviewer has compared a React Native development build with an equivalent Flutter capture. Existing `docs/screenshots/` images can provide historical context; the older UI previews use Roboto and must not be treated as an Inter typography baseline.
 
 ## Inspected foundation
