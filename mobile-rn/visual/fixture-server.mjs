@@ -402,6 +402,12 @@ const server = http.createServer(async (req, res) => {
     res.end(JSON.stringify({ message: String(error) }));
   }
 });
-server.listen(18080, '127.0.0.1', () =>
-  console.log('TEST-ONLY visual fixture transport: 127.0.0.1:18080'),
+// CI uses port 0 to avoid colliding with an active emulator fixture session.
+const port = Number(process.env.UI_FIXTURE_PORT ?? 18080);
+if (!Number.isInteger(port) || port < 0 || port > 65535)
+  throw new Error('Invalid UI_FIXTURE_PORT.');
+server.listen(port, '127.0.0.1', () =>
+  console.log(
+    `TEST-ONLY visual fixture transport: 127.0.0.1:${server.address().port}`,
+  ),
 );

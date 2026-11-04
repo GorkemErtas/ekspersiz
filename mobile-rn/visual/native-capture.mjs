@@ -116,13 +116,7 @@ export async function capture(
   { width = 390, height = 844 } = {},
 ) {
   await mkdir(output, { recursive: true });
-  await waitFor(
-    marker,
-    120000,
-    name.startsWith('flutter-')
-      ? 'com.gorkem.ekspersiz'
-      : 'com.gorkem.ekspersiz.dev',
-  );
+  await waitFor(marker, 120000, 'com.gorkem.ekspersiz.dev');
   await pause(1200);
   run('shell', 'screencap', '-p', '/sdcard/ekspersiz-capture.png');
   const file = path.join(output, `${name}.png`);
@@ -141,47 +135,23 @@ export async function capture(
     throw new Error(`Capture is not ${width}×${height}`);
   console.log(`Verified capture: ${name} (${marker})`);
 }
-export async function flutterRoute(route) {
-  run('shell', 'am', 'force-stop', 'com.gorkem.ekspersiz');
-  run(
-    'shell',
-    'am',
-    'start',
-    '-n',
-    'com.gorkem.ekspersiz/.MainActivity',
-    '--es',
-    'route',
-    `/${route}`,
-    '--ez',
-    'enable-software-rendering',
-    'true',
-    '--ez',
-    'enable-impeller',
-    'false',
-  );
-  await pause(2500);
-}
-async function nativeCaptures(mode) {
+async function nativeCaptures() {
   run('reverse', 'tcp:18080', 'tcp:18080');
   run('reverse', 'tcp:8081', 'tcp:8081');
   run('shell', 'wm', 'size', '390x844');
   run('shell', 'wm', 'density', '160');
   run('shell', 'cmd', 'uimode', 'night', 'yes');
-  if (mode === 'flutter') {
-    await flutterRoute('main');
-    await capture('flutter-main-dark', 'AI Hasar Analizi');
-    await tap('Araçlar', { bottom: true });
-    await capture('flutter-vehicles-dark', 'Toyota');
-    await tap('Analizler', { bottom: true });
-    await capture('flutter-history-dark', 'Analiz');
-    await tap('Profil', { bottom: true });
-    await capture('flutter-profile-dark', 'deniz@example.com');
-    await flutterRoute('guide');
-    await capture('flutter-guide-dark', 'Aracını tanı.');
-    await flutterRoute('result');
-    await capture('flutter-result-dark', 'Hasar Analiz Raporu');
-  } else {
-    run('shell', 'am', 'force-stop', 'com.gorkem.ekspersiz.dev');
+  run('shell', 'am', 'force-stop', 'com.gorkem.ekspersiz.dev');
+  if (process.argv.includes('--standalone'))
+    run(
+      'shell',
+      'am',
+      'start',
+      '-W',
+      '-n',
+      'com.gorkem.ekspersiz.dev/.MainActivity',
+    );
+  else
     run(
       'shell',
       'am',
@@ -192,53 +162,58 @@ async function nativeCaptures(mode) {
       "'exp+ekspersiz-mobile://expo-development-client/?disableFab=1&url=http%3A%2F%2F127.0.0.1%3A8081'",
       'com.gorkem.ekspersiz.dev',
     );
-    await pause(4000);
-    let xml = await waitFor(
-      /AI Hasar Analizi|Tekrar hoş|Atla/,
-      120000,
-      'com.gorkem.ekspersiz.dev',
-    );
-    if (xml.includes('Atla')) await tap('Atla');
-    xml = await ui();
-    if (xml.includes('Tekrar hoş')) {
-      await tap('E-posta', { input: true });
-      run('shell', 'input', 'text', 'deniz@example.com');
-      await tap('Şifre', { input: true });
-      run('shell', 'input', 'text', 'FixtureOnly123');
-      run('shell', 'input', 'keyevent', '4');
-      await pause(400);
-      await tap('Giriş Yap');
-    }
-    await capture('react-native-main-dark', 'AI Hasar Analizi');
-    await tap('Araçlar', { bottom: true });
-    await capture('react-native-vehicles-dark', 'Toyota');
-    await tap('Analizler', { bottom: true });
-    await capture('react-native-history-dark', 'Analiz Geçmişi');
-    await tap('Profil', { bottom: true });
-    await capture('react-native-profile-dark', 'deniz@example.com');
-    run(
-      'shell',
-      'am',
-      'start',
-      '-a',
-      'android.intent.action.VIEW',
-      '-d',
-      'ekspersiz-dev://guide',
-      'com.gorkem.ekspersiz.dev',
-    );
-    await capture('react-native-guide-dark', 'Aracını tanı.');
-    run(
-      'shell',
-      'am',
-      'start',
-      '-a',
-      'android.intent.action.VIEW',
-      '-d',
-      'ekspersiz-dev://inspection/1',
-      'com.gorkem.ekspersiz.dev',
-    );
-    await capture('react-native-result-dark', 'Hasar Analiz Raporu');
+  await pause(4000);
+  let xml = await waitFor(
+    /AI Hasar Analizi|Tekrar hoş|Atla/,
+    120000,
+    'com.gorkem.ekspersiz.dev',
+  );
+  if (xml.includes('Atla')) await tap('Atla');
+  xml = await ui();
+  if (xml.includes('Tekrar hoş')) {
+    await tap('E-posta', { input: true });
+    run('shell', 'input', 'text', 'deniz@example.com');
+    await tap('Şifre', { input: true });
+    run('shell', 'input', 'text', 'FixtureOnly123');
+    run('shell', 'input', 'keyevent', '4');
+    await pause(400);
+    await tap('Giriş Yap');
   }
+  await capture('react-native-main-dark', 'AI Hasar Analizi');
+  await tap('Araçlar', { bottom: true });
+  await capture('react-native-vehicles-dark', 'Toyota');
+  await tap('Analizler', { bottom: true });
+  await capture('react-native-history-dark', 'Analiz Geçmişi');
+  await tap('Profil', { bottom: true });
+  await capture('react-native-profile-dark', 'deniz@example.com');
+  run(
+    'shell',
+    'am',
+    'start',
+    '-a',
+    'android.intent.action.VIEW',
+    '-d',
+    'ekspersiz-dev://guide',
+    'com.gorkem.ekspersiz.dev',
+  );
+  await capture('react-native-guide-dark', 'Aracını tanı.');
+  run(
+    'shell',
+    'am',
+    'start',
+    '-a',
+    'android.intent.action.VIEW',
+    '-d',
+    'ekspersiz-dev://inspection/1',
+    'com.gorkem.ekspersiz.dev',
+  );
+  await capture('react-native-result-dark', 'Hasar Analiz Raporu');
 }
-if (['rn', 'flutter'].includes(process.argv[2]))
-  await nativeCaptures(process.argv[2]);
+if (
+  process.argv[1] &&
+  path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)
+) {
+  if (process.argv[2] !== 'rn')
+    throw new Error('Usage: node visual/native-capture.mjs rn [--standalone]');
+  await nativeCaptures();
+}

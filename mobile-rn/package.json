@@ -17,7 +17,7 @@
     "lint": "eslint . --max-warnings=0",
     "format:check": "prettier --check .",
     "test": "jest --runInBand",
-    "test:ci-scripts": "node --test --test-isolation=none scripts/security-audit.test.mjs scripts/android-release.test.mjs scripts/android-r8.test.mjs scripts/android-branding.test.mjs scripts/ota-config.test.mjs",
+    "test:ci-scripts": "node --test --test-isolation=none scripts/security-audit.test.mjs scripts/android-release.test.mjs scripts/android-r8.test.mjs scripts/android-branding.test.mjs scripts/ota-config.test.mjs scripts/visual-tools.test.mjs",
     "release:check": "node scripts/android-release.mjs .env.production.local --check",
     "release:android": "node scripts/android-release.mjs",
     "audit:ci": "node scripts/security-audit.mjs",
