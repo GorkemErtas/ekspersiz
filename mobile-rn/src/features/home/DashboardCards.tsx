@@ -5,72 +5,79 @@ import { label, number } from '../../core/labels';
 import { AppText, Card, Icon } from '../../design/components';
 import { Badge } from '../../design/layout';
 import { useTheme } from '../../design/ThemeProvider';
-import { gradients } from '../../design/tokens';
+import {
+  dimensions,
+  gradients,
+  iconSize,
+  radius,
+  spacing,
+} from '../../design/tokens';
 import { TouchSurface } from '../../design/TouchSurface';
 export function AnalysisHero({ onPress }: { onPress: () => void }) {
   return (
     <TouchSurface
       accessibilityRole="button"
       accessibilityLabel="Yeni Analiz Başlat"
+      accessibilityHint="Fotoğraflarla AI hasar analizi oluşturun"
       onPress={onPress}
     >
       <LinearGradient
-        colors={gradients.deep}
+        colors={gradients.brand}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={{
-          padding: 18,
-          borderRadius: 24,
-          overflow: 'hidden',
-          boxShadow: '0 8px 24px #6D28D92E',
+          padding: spacing.ml,
+          borderRadius: radius.large,
+          gap: spacing.sm,
         }}
       >
         <View
           style={{
-            width: 42,
-            height: 42,
-            borderRadius: 14,
-            backgroundColor: '#FFFFFF24',
+            flexDirection: 'row',
             alignItems: 'center',
-            justifyContent: 'center',
+            gap: spacing.sm,
           }}
         >
-          <Icon name="sparkles" size={22} color="#fff" />
+          <View
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: radius.small,
+              backgroundColor: '#FFFFFF1F',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Icon name="sparkles" size={iconSize.default} color="#fff" />
+          </View>
+          <AppText
+            variant="titleLarge"
+            style={{ color: '#fff', flex: 1, minWidth: 0 }}
+          >
+            AI Hasar Analizi
+          </AppText>
         </View>
-        <View style={{ height: 15 }} />
-        <AppText
-          variant="headlineSmall"
-          style={{ color: '#fff', fontWeight: '900' }}
-        >
-          AI Hasar Analizi
-        </AppText>
-        <View style={{ height: 7 }} />
-        <AppText style={{ color: '#FFFFFFD1', lineHeight: 19.6 }}>
+        <AppText style={{ color: '#F3E8FF' }}>
           Hasarlı bölgenin fotoğrafını yükleyin, AI destekli raporunuzu
           oluşturun.
         </AppText>
-        <View style={{ height: 18 }} />
         <View
           style={{
             flexDirection: 'row',
-            flexWrap: 'wrap',
             alignItems: 'center',
-            gap: 6,
+            gap: spacing.s,
+            borderTopWidth: 1,
+            borderTopColor: '#FFFFFF33',
+            paddingTop: spacing.sm,
           }}
         >
           <AppText
             variant="labelLarge"
-            style={{
-              color: '#fff',
-              fontWeight: '900',
-              fontSize: 14,
-              flexShrink: 1,
-              lineHeight: 20,
-            }}
+            style={{ color: '#fff', flex: 1, minWidth: 0 }}
           >
             Yeni Analiz Başlat
           </AppText>
-          <Icon name="forward" size={19} color="#fff" />
+          <Icon name="forward" size={iconSize.medium} color="#fff" />
         </View>
       </LinearGradient>
     </TouchSurface>
@@ -83,36 +90,89 @@ export function TrackingPeek({
   overview: VehicleOverview;
   onPress: () => void;
 }) {
+  const { colors } = useTheme();
+  const status = overview.trackingStatus;
+  const attention = status === 'ATTENTION';
+  const upcoming = status === 'DUE_SOON' || status === 'UPCOMING';
+  const healthy = status === 'GOOD';
+  const title = attention
+    ? 'Dikkat gerekiyor'
+    : upcoming
+      ? 'Yaklaşan işlem var'
+      : healthy
+        ? 'Takibiniz güncel'
+        : 'Takip durumu belirsiz';
+  const color = attention
+    ? colors.error
+    : upcoming
+      ? colors.warning
+      : healthy
+        ? colors.success
+        : colors.secondaryText;
+  const background = attention
+    ? colors.errorSoft
+    : upcoming
+      ? colors.warningSoft
+      : healthy
+        ? colors.successSoft
+        : colors.low;
   return (
     <TouchSurface
       accessibilityRole="button"
-      accessibilityLabel="Araç takibi"
+      accessibilityLabel={`Araç takibi, ${title}`}
       onPress={onPress}
     >
-      <Card>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          <Icon name="health" size={24} />
-          <View style={{ flex: 1 }}>
-            <AppText variant="titleSmall" style={{ fontWeight: '900' }}>
-              Araç takibi
+      <Card
+        style={{
+          borderRadius: radius.small,
+          borderLeftWidth: 3,
+          borderLeftColor: color,
+        }}
+      >
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'flex-start',
+            gap: spacing.sm,
+          }}
+        >
+          <View
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: radius.small,
+              backgroundColor: background,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Icon
+              name={attention ? 'warning' : upcoming ? 'clock' : 'health'}
+              color={color}
+              size={iconSize.medium}
+            />
+          </View>
+          <View style={{ flex: 1, minWidth: 0, gap: spacing.xs }}>
+            <AppText variant="bodySmall">Araç takibi</AppText>
+            <AppText variant="titleSmall" style={{ color }}>
+              {title}
             </AppText>
-            <View style={{ height: 4 }} />
-            {overview.upcomingReminders.length ? (
-              overview.upcomingReminders.slice(0, 2).map((reminder) => (
-                <AppText key={reminder.id} style={{ paddingTop: 2 }}>
-                  {reminder.title || label(reminder.reminderType)}
-                </AppText>
-              ))
-            ) : (
-              <AppText>
-                {overview.trackingStatus === 'ATTENTION'
-                  ? 'Dikkat gerekiyor'
-                  : overview.trackingStatus === 'DUE_SOON'
-                    ? 'Yaklaşan işlem var'
-                    : 'İyi'}
+            {overview.upcomingReminders.slice(0, 2).map((reminder) => (
+              <AppText key={reminder.id} variant="bodySmall">
+                {reminder.title || label(reminder.reminderType)}
+              </AppText>
+            ))}
+            {overview.upcomingReminders.length > 2 && (
+              <AppText variant="bodySmall">
+                +{overview.upcomingReminders.length - 2} hatırlatıcı daha
               </AppText>
             )}
           </View>
+          <Icon
+            name="chevron"
+            color={colors.secondaryText}
+            size={iconSize.medium}
+          />
         </View>
       </Card>
     </TouchSurface>
@@ -133,33 +193,55 @@ export function PrimaryCard({
       onPress={onPress}
     >
       <Card>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: spacing.sm,
+          }}
+        >
           <View
             style={{
-              width: 58,
-              height: 58,
-              borderRadius: 19,
+              width: dimensions.touch,
+              height: dimensions.touch,
+              borderRadius: radius.small,
               alignItems: 'center',
               justifyContent: 'center',
               backgroundColor: colors.primaryContainer,
             }}
           >
-            <Icon name="car" size={29} color={colors.primary} />
+            <Icon name="car" color={colors.onPrimaryContainer} />
           </View>
-          <View style={{ flex: 1 }}>
-            <AppText variant="titleMedium" style={{ fontWeight: '900' }}>
+          <View style={{ flex: 1, minWidth: 0, gap: spacing.xs }}>
+            <AppText variant="titleMedium">
               {vehicle.brand} {vehicle.model}
             </AppText>
-            <View style={{ height: 8 }} />
-            <Badge text="ANA ARAÇ" compact />
-            <View style={{ height: 7 }} />
-            <AppText style={{ fontWeight: '600' }}>
-              {vehicle.plate} • {vehicle.modelYear}
-            </AppText>
-            <View style={{ height: 5 }} />
-            <AppText variant="bodySmall">{number(vehicle.mileage)} km</AppText>
+            <Badge text="Ana araç" compact />
           </View>
-          <Icon name="swap" color={colors.primary} />
+          <Icon
+            name="swap"
+            color={colors.secondaryText}
+            size={iconSize.medium}
+          />
+        </View>
+        <View
+          style={{
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+            gap: spacing.s,
+            marginTop: spacing.m,
+            paddingTop: spacing.sm,
+            borderTopWidth: 1,
+            borderTopColor: colors.border,
+            alignItems: 'center',
+          }}
+        >
+          <AppText variant="titleSmall" style={{ flexGrow: 1, flexShrink: 1 }}>
+            {vehicle.plate}
+          </AppText>
+          <AppText variant="bodySmall">
+            {vehicle.modelYear} · {number(vehicle.mileage)} km
+          </AppText>
         </View>
       </Card>
     </TouchSurface>
@@ -205,8 +287,8 @@ export function LatestCard({
           />
           <Icon name="outward" size={19} color={colors.secondaryText} />
         </View>
-        <View style={{ height: 18 }} />
-        <AppText variant="titleLarge" style={{ fontWeight: '900' }}>
+        <View style={{ height: spacing.m }} />
+        <AppText variant="titleLarge" style={{ fontWeight: '700' }}>
           {severity === 'NONE'
             ? 'Görünür Hasar Tespit Edilmedi'
             : severity === 'MINOR'
@@ -217,13 +299,13 @@ export function LatestCard({
                   ? 'Ağır Seviye Hasar'
                   : 'Hasar Seviyesi Belirsiz'}
         </AppText>
-        <View style={{ height: 7 }} />
+        <View style={{ height: spacing.s }} />
         <AppText>
           {inspection.affectedParts.length
             ? inspection.affectedParts.slice(0, 3).map(label).join(' • ')
             : 'Hasar analizi tamamlandı'}
         </AppText>
-        <View style={{ height: 18 }} />
+        <View style={{ height: spacing.m }} />
         <View
           style={{
             flexDirection: 'row',
