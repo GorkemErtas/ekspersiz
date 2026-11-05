@@ -1,5 +1,6 @@
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import MainShell from './MainShell';
+import { Dimensions } from 'react-native';
 
 const mockPush = jest.fn();
 jest.mock('expo-router', () => ({
@@ -62,6 +63,29 @@ test('floating assistant leaves surrounding content touchable and updates scroll
     paddingBottom: 104,
   });
   expect(screen.getByTestId('bottom-navigation')).toBeTruthy();
+});
+
+test('compact phones keep every tab label and action available at large text sizes', async () => {
+  const original = Dimensions.get('window');
+  Dimensions.set({
+    window: { width: 320, height: 640, scale: 1, fontScale: 1.6 },
+  });
+  try {
+    await render(<MainShell />);
+    expect(screen.getByTestId('bottom-navigation')).toHaveStyle({
+      flexWrap: 'wrap',
+    });
+    for (const name of ['Ana Sayfa', 'Araçlar', 'Analizler', 'Profil']) {
+      expect(screen.getByRole('tab', { name })).toHaveStyle({ width: '50%' });
+    }
+    await fireEvent.press(screen.getByRole('tab', { name: 'Analizler' }));
+    expect(
+      screen.getByRole('tab', { name: 'Analizler' }).props.accessibilityState
+        .selected,
+    ).toBe(true);
+  } finally {
+    await act(() => Dimensions.set({ window: original }));
+  }
 });
 test('tabs hide the home-only assistant and preserve visited screen state', async () => {
   await render(<MainShell />);

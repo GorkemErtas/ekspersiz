@@ -39,6 +39,8 @@ export default function MainShell() {
     dimensions.fab,
   );
   const rail = width >= 900 || (width >= 600 && width > height);
+  // Give all four labels room at large text sizes without capping font scaling.
+  const stackedNavigation = !rail && width / fontScale < 240;
   const select = (index: number) => {
     setTab(index);
     setVisited((current) =>
@@ -80,7 +82,8 @@ export default function MainShell() {
         accessibilityLabel={title}
         onPress={() => select(index)}
         style={{
-          flex: rail ? undefined : 1,
+          flex: rail || stackedNavigation ? undefined : 1,
+          width: stackedNavigation ? '50%' : undefined,
           minWidth: 0,
           minHeight: dimensions.touch,
           flexDirection: rail ? 'row' : 'column',
@@ -210,6 +213,7 @@ export default function MainShell() {
           accessibilityRole="tablist"
           style={{
             flexDirection: 'row',
+            flexWrap: stackedNavigation ? 'wrap' : 'nowrap',
             marginHorizontal: spacing.s,
             marginVertical: spacing.s,
             padding: spacing.xs,
