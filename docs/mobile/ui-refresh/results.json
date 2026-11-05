@@ -1,0 +1,116 @@
+{
+  "passed": true,
+  "apkSha256": "4352695ae0e9b24df1c7338a19d820592e99e478b287796f1425ba8d77f878fb",
+  "fixtureOnly": true,
+  "jsPreviewOnExistingNativeShell": true,
+  "testedAt": "2026-11-05T08:37:45.778Z",
+  "evidence": [
+    {
+      "name": "small-dark",
+      "width": 320,
+      "height": 640,
+      "font": 1,
+      "mode": "dark",
+      "navigation": "gestural",
+      "assistant": "[170,458][304,508]",
+      "scroll": "[0,24][320,520]",
+      "lastCard": "[16,280][304,446]",
+      "tabs": [
+        "[13,533][87,603]",
+        "[87,533][160,603]",
+        "[160,533][234,603]",
+        "[234,533][307,603]"
+      ]
+    },
+    {
+      "name": "small-light-large-text",
+      "width": 320,
+      "height": 640,
+      "font": 1.6,
+      "mode": "light",
+      "navigation": "threebutton",
+      "assistant": "[128,342][304,398]",
+      "scroll": "[0,24][320,410]",
+      "lastCard": "[16,111][304,330]",
+      "tabs": [
+        "[13,423][160,501]",
+        "[160,423][307,501]",
+        "[13,501][160,579]",
+        "[160,501][307,579]"
+      ]
+    },
+    {
+      "name": "phone-dark",
+      "width": 390,
+      "height": 844,
+      "font": 1,
+      "mode": "dark",
+      "navigation": "threebutton",
+      "assistant": "[240,638][374,688]",
+      "scroll": "[0,24][390,700]",
+      "lastCard": "[16,460][374,626]",
+      "tabs": [
+        "[13,713][104,783]",
+        "[104,713][195,783]",
+        "[195,713][286,783]",
+        "[286,713][377,783]"
+      ]
+    },
+    {
+      "name": "phone-dark-text-2",
+      "width": 390,
+      "height": 844,
+      "font": 2,
+      "mode": "dark",
+      "navigation": "gestural",
+      "assistant": "[184,556][374,618]",
+      "scroll": "[0,24][390,630]",
+      "lastCard": "[16,300][374,544]",
+      "tabs": [
+        "[13,643][195,725]",
+        "[195,643][377,725]",
+        "[13,725][195,807]",
+        "[195,725][377,807]"
+      ]
+    },
+    {
+      "name": "large-light",
+      "width": 430,
+      "height": 932,
+      "font": 1,
+      "mode": "light",
+      "navigation": "gestural",
+      "assistant": "[280,750][414,800]",
+      "scroll": "[0,24][430,812]",
+      "lastCard": "[16,572][414,738]",
+      "tabs": [
+        "[13,825][114,895]",
+        "[114,825][215,895]",
+        "[215,825][316,895]",
+        "[316,825][417,895]"
+      ]
+    },
+    {
+      "name": "landscape-dark",
+      "width": 844,
+      "height": 390,
+      "font": 1,
+      "mode": "dark",
+      "navigation": "threebutton",
+      "assistant": "[694,280][828,330]",
+      "scroll": "[160,24][844,342]",
+      "lastCard": "[176,102][828,268]",
+      "tabs": [
+        "[17,41][143,89]",
+        "[17,97][143,145]",
+        "[17,153][143,201]",
+        "[17,209][143,257]"
+      ]
+    },
+    {
+      "name": "keyboard",
+      "input": "[68,481][322,533]",
+      "keyboardTop": 545
+    }
+  ]
+}
