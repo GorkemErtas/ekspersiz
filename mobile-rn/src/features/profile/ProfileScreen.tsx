@@ -1,4 +1,6 @@
-import { Pressable, View } from 'react-native';
+import { TouchSurface } from '../../design/TouchSurface';
+import { radius, spacing } from '../../design/tokens';
+import { View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { api, session, useSession } from '../../core/runtime';
 import { billingApi, refreshProfile } from '../../core/services';
@@ -28,23 +30,23 @@ function Row({
 }) {
   const { colors } = useTheme();
   return (
-    <Pressable
+    <TouchSurface
       disabled={!onPress}
       accessibilityRole={onPress ? 'button' : undefined}
       onPress={onPress}
       style={{
-        paddingHorizontal: 18,
-        paddingVertical: 14,
+        paddingHorizontal: spacing.m,
+        paddingVertical: spacing.m,
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 14,
+        gap: spacing.sm,
       }}
     >
       <View
         style={{
           height: 42,
           width: 42,
-          borderRadius: 14,
+          borderRadius: radius.small,
           backgroundColor: colors.primaryContainer,
           alignItems: 'center',
           justifyContent: 'center',
@@ -52,16 +54,14 @@ function Row({
       >
         <Icon name={icon} size={21} color={colors.primary} />
       </View>
-      <View style={{ flex: 1 }}>
+      <View style={{ flex: 1, minWidth: 0 }}>
         {onPress ? (
           <>
             <AppText variant="bodyLarge" style={{ fontWeight: '800' }}>
               {title}
             </AppText>
             <View style={{ height: 4 }} />
-            <AppText variant="bodySmall" style={{ lineHeight: 16.2 }}>
-              {value}
-            </AppText>
+            <AppText variant="bodySmall">{value}</AppText>
           </>
         ) : (
           <>
@@ -76,7 +76,7 @@ function Row({
         )}
       </View>
       {onPress && <Icon name="chevron" color={colors.secondaryText} />}
-    </Pressable>
+    </TouchSurface>
   );
 }
 function Divider() {
@@ -163,8 +163,9 @@ export default function ProfileScreen({
           <View
             style={{
               flexDirection: 'row',
+              maxWidth: '100%',
               alignItems: 'center',
-              gap: 6,
+              gap: spacing.s,
               paddingHorizontal: 12,
               paddingVertical: 6,
               borderRadius: 99,
@@ -174,7 +175,10 @@ export default function ProfileScreen({
             }}
           >
             <Icon name="premium" size={14} color={colors.secondaryText} />
-            <AppText variant="bodySmall" style={{ fontWeight: '700' }}>
+            <AppText
+              variant="bodySmall"
+              style={{ fontWeight: '700', flexShrink: 1 }}
+            >
               {planLabel}
             </AppText>
           </View>
@@ -263,7 +267,7 @@ export default function ProfileScreen({
         <Card style={{ backgroundColor: colors.low }}>
           <View style={{ flexDirection: 'row', gap: 12 }}>
             <Icon name="shield" color={colors.info} />
-            <View style={{ flex: 1 }}>
+            <View style={{ flex: 1, minWidth: 0 }}>
               <AppText variant="titleSmall" style={{ fontWeight: '900' }}>
                 EksperSiz
               </AppText>
@@ -308,7 +312,7 @@ export default function ProfileScreen({
       <Button
         label="Hesabımı Sil"
         icon="delete"
-        variant="text"
+        variant="danger"
         disabled={action.busy}
         onPress={() =>
           confirm(

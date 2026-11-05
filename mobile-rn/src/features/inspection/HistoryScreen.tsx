@@ -1,11 +1,13 @@
-import { FlatList, Pressable, View } from 'react-native';
+import { spacing } from '../../design/tokens';
+import { TouchSurface } from '../../design/TouchSurface';
+import { FlatList, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { inspections } from '../../core/services';
 import { useSession } from '../../core/runtime';
 import { useResource } from '../../core/queries';
 import { label } from '../../core/labels';
 import { AppText, Card, Icon } from '../../design/components';
-import { Badge, Page, StateView } from '../../design/layout';
+import { Badge, layoutStyles, Page, StateView } from '../../design/layout';
 import { useTheme } from '../../design/ThemeProvider';
 export default function HistoryScreen({
   embedded = false,
@@ -31,7 +33,7 @@ export default function HistoryScreen({
       scroll={false}
     >
       {data.isPending || data.error ? (
-        <View style={{ padding: 18 }}>
+        <View style={{ padding: spacing.page }}>
           <StateView
             loading={data.isPending}
             error={data.error}
@@ -42,15 +44,7 @@ export default function HistoryScreen({
         <FlatList
           data={items}
           keyExtractor={(item) => String(item.id)}
-          contentContainerStyle={{
-            paddingHorizontal: 18,
-            paddingTop: 15,
-            paddingBottom: 24,
-            gap: 14,
-            maxWidth: 1100,
-            width: '100%',
-            alignSelf: 'center',
-          }}
+          contentContainerStyle={layoutStyles.listContent}
           refreshing={data.isRefetching}
           onRefresh={() => void data.refetch()}
           ListHeaderComponent={
@@ -74,6 +68,7 @@ export default function HistoryScreen({
                 <View
                   style={{
                     alignSelf: 'flex-start',
+                    maxWidth: '100%',
                     paddingHorizontal: 12,
                     paddingVertical: 7,
                     borderRadius: 99,
@@ -86,7 +81,11 @@ export default function HistoryScreen({
                   <Icon name="history" size={14} color={colors.primary} />
                   <AppText
                     variant="bodySmall"
-                    style={{ color: colors.primary, fontWeight: '700' }}
+                    style={{
+                      color: colors.primary,
+                      fontWeight: '700',
+                      flexShrink: 1,
+                    }}
                   >
                     {items.length} tamamlanan analiz
                   </AppText>
@@ -106,7 +105,9 @@ export default function HistoryScreen({
                     ? colors.moderate
                     : severity === 'SEVERE'
                       ? colors.error
-                      : colors.success,
+                      : severity === 'NONE'
+                        ? colors.success
+                        : colors.secondaryText,
               soft =
                 severity === 'MINOR'
                   ? colors.warningSoft
@@ -114,10 +115,12 @@ export default function HistoryScreen({
                     ? colors.moderateSoft
                     : severity === 'SEVERE'
                       ? colors.errorSoft
-                      : colors.successSoft,
+                      : severity === 'NONE'
+                        ? colors.successSoft
+                        : colors.low,
               date = item.completedAt ?? item.createdAt;
             return (
-              <Pressable
+              <TouchSurface
                 accessibilityRole="button"
                 accessibilityLabel={`${item.vehiclePlate} analiz raporu`}
                 onPress={() => router.push(`/inspection/${item.id}`)}
@@ -127,7 +130,7 @@ export default function HistoryScreen({
                     style={{
                       flexDirection: 'row',
                       alignItems: 'flex-start',
-                      gap: 14,
+                      gap: spacing.sm,
                     }}
                   >
                     <View
@@ -141,12 +144,18 @@ export default function HistoryScreen({
                       }}
                     >
                       <Icon
-                        name={severity === 'NONE' ? 'shield' : 'crash'}
+                        name={
+                          severity === 'NONE'
+                            ? 'shield'
+                            : severity
+                              ? 'crash'
+                              : 'report'
+                        }
                         color={color}
                         size={27}
                       />
                     </View>
-                    <View style={{ flex: 1 }}>
+                    <View style={{ flex: 1, minWidth: 0 }}>
                       <AppText
                         variant="titleMedium"
                         style={{ fontWeight: '900' }}
@@ -168,7 +177,7 @@ export default function HistoryScreen({
                         />
                         <AppText
                           variant="bodySmall"
-                          style={{ fontWeight: '600' }}
+                          style={{ fontWeight: '600', flexShrink: 1 }}
                         >
                           {item.locationCity}
                         </AppText>
@@ -176,7 +185,7 @@ export default function HistoryScreen({
                     </View>
                     <Icon name="chevron" color={colors.secondaryText} />
                   </View>
-                  <View style={{ height: 15 }} />
+                  <View style={{ height: spacing.m }} />
                   <View
                     style={{
                       flexDirection: 'row',
@@ -213,7 +222,7 @@ export default function HistoryScreen({
                       />
                       <AppText
                         variant="bodySmall"
-                        style={{ fontWeight: '600' }}
+                        style={{ fontWeight: '600', flexShrink: 1 }}
                       >
                         {date
                           ? new Date(date).toLocaleDateString('tr-TR')
@@ -254,7 +263,7 @@ export default function HistoryScreen({
                     </>
                   )}
                 </Card>
-              </Pressable>
+              </TouchSurface>
             );
           }}
         />

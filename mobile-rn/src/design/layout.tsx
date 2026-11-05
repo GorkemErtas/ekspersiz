@@ -9,6 +9,7 @@ import {
   Pressable,
   RefreshControl,
   ScrollView,
+  StyleSheet,
   Switch,
   View,
   useWindowDimensions,
@@ -42,6 +43,18 @@ import {
   spacing,
 } from './tokens';
 import { dateText, isoDate, label } from '../core/labels';
+
+export const layoutStyles = StyleSheet.create({
+  listContent: {
+    paddingHorizontal: spacing.page,
+    paddingTop: spacing.m,
+    paddingBottom: spacing.l,
+    gap: spacing.sm,
+    maxWidth: dimensions.content,
+    width: '100%',
+    alignSelf: 'center',
+  },
+});
 
 export function Page({
   title,
@@ -380,11 +393,13 @@ export function StateView({
   error,
   empty,
   retry,
+  icon = 'car',
 }: {
   loading?: boolean;
   error?: unknown;
   empty?: string;
   retry?: () => void;
+  icon?: IconName;
 }) {
   const { colors } = useTheme();
   return (
@@ -403,7 +418,7 @@ export function StateView({
           />
         ) : (
           <Icon
-            name={error ? 'warning' : 'car'}
+            name={error ? 'warning' : icon}
             size={iconSize.large}
             color={error ? colors.error : colors.secondaryText}
           />

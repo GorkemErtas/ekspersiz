@@ -1,5 +1,6 @@
+import { dimensions, radius, spacing } from '../../design/tokens';
 import { useState } from 'react';
-import { Alert, FlatList, Pressable, View } from 'react-native';
+import { Alert, FlatList, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { billingApi, vehicles } from '../../core/services';
 import { useResource, invalidate } from '../../core/queries';
@@ -15,7 +16,7 @@ import {
   Field,
   type IconName,
 } from '../../design/components';
-import { Page, StateView } from '../../design/layout';
+import { layoutStyles, Page, StateView } from '../../design/layout';
 import { useTheme } from '../../design/ThemeProvider';
 import { Sheet } from '../../design/Sheet';
 import { TouchSurface } from '../../design/TouchSurface';
@@ -39,7 +40,7 @@ function Chip({
         gap: 6,
         paddingHorizontal: 10,
         paddingVertical: 6,
-        borderRadius: 99,
+        borderRadius: radius.pill,
         backgroundColor: emphasized ? colors.primaryContainer : colors.high,
       }}
     >
@@ -114,7 +115,7 @@ export default function VehicleListScreen({
     >
       <View style={{ flex: 1, minHeight: 0 }}>
         {data.isPending || data.error ? (
-          <View style={{ padding: 18 }}>
+          <View style={{ padding: spacing.page }}>
             <StateView
               loading={data.isPending}
               error={data.error}
@@ -128,16 +129,10 @@ export default function VehicleListScreen({
                 .toLocaleLowerCase('tr-TR')
                 .includes(search.trim().toLocaleLowerCase('tr-TR')),
             )}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
             keyExtractor={(item) => String(item.id)}
-            contentContainerStyle={{
-              paddingHorizontal: 18,
-              paddingTop: 15,
-              gap: 14,
-              paddingBottom: 24,
-              maxWidth: 1100,
-              width: '100%',
-              alignSelf: 'center',
-            }}
+            contentContainerStyle={layoutStyles.listContent}
             refreshing={data.isRefetching}
             onRefresh={() => {
               void data.refetch();
@@ -147,7 +142,7 @@ export default function VehicleListScreen({
               data.data?.length ? (
                 <View style={{ paddingBottom: 4 }}>
                   {searching && (
-                    <View style={{ paddingBottom: 14 }}>
+                    <View style={{ paddingBottom: spacing.m }}>
                       <Field
                         label="Araç ara"
                         icon="search"
@@ -165,7 +160,7 @@ export default function VehicleListScreen({
                       ? profile?.businessAccount?.companyName
                       : 'Garajınız'}
                   </AppText>
-                  <View style={{ height: 6 }} />
+                  <View style={{ height: spacing.s }} />
                   <AppText
                     variant="bodyLarge"
                     style={{ lineHeight: 23.2, color: colors.secondaryText }}
@@ -216,9 +211,9 @@ export default function VehicleListScreen({
                   >
                     <View
                       style={{
-                        width: 48,
-                        height: 48,
-                        borderRadius: 16,
+                        width: dimensions.touch,
+                        height: dimensions.touch,
+                        borderRadius: radius.small,
                         alignItems: 'center',
                         justifyContent: 'center',
                         backgroundColor: colors.primaryContainer,
@@ -228,11 +223,11 @@ export default function VehicleListScreen({
                     </View>
                     <AppText
                       variant="titleMedium"
-                      style={{ flex: 1, fontWeight: '800' }}
+                      style={{ flex: 1, minWidth: 0, fontWeight: '800' }}
                     >
                       {item.brand} {item.model}
                     </AppText>
-                    <Pressable
+                    <TouchSurface
                       accessibilityRole="button"
                       accessibilityLabel={`${item.plate} araç işlemleri`}
                       onPress={(event) => {
@@ -240,16 +235,16 @@ export default function VehicleListScreen({
                         setMenu(item);
                       }}
                       style={{
-                        width: 48,
-                        height: 48,
+                        width: dimensions.touch,
+                        height: dimensions.touch,
                         alignItems: 'center',
                         justifyContent: 'center',
                       }}
                     >
                       <Icon name="more" />
-                    </Pressable>
+                    </TouchSurface>
                   </View>
-                  <View style={{ height: 15 }} />
+                  <View style={{ height: spacing.m }} />
                   <View
                     style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}
                   >
@@ -268,7 +263,7 @@ export default function VehicleListScreen({
                     }}
                   >
                     <Icon name="speed" size={17} color={colors.secondaryText} />
-                    <AppText style={{ fontWeight: '600' }}>
+                    <AppText style={{ fontWeight: '600', flexShrink: 1 }}>
                       {number(item.mileage)} km
                     </AppText>
                   </View>
@@ -278,7 +273,9 @@ export default function VehicleListScreen({
           />
         )}
       </View>
-      <View style={{ paddingHorizontal: 16, paddingVertical: 8 }}>
+      <View
+        style={{ paddingHorizontal: spacing.page, paddingVertical: spacing.s }}
+      >
         <Button
           label="Araç Ekle"
           icon="add"

@@ -226,7 +226,7 @@ export function Button({
   loading?: boolean;
   disabled?: boolean;
   icon?: IconName;
-  variant?: 'primary' | 'outlined' | 'text';
+  variant?: 'primary' | 'outlined' | 'text' | 'danger';
 }) {
   const { colors, mode } = useTheme();
   const [focused, setFocused] = useState(false);
@@ -235,11 +235,13 @@ export function Button({
     ? colors.secondaryText
     : variant === 'primary'
       ? colors.onPrimary
-      : variant === 'text'
-        ? mode === 'dark'
-          ? colors.secondary
-          : colors.primary
-        : colors.text;
+      : variant === 'danger'
+        ? colors.error
+        : variant === 'text'
+          ? mode === 'dark'
+            ? colors.secondary
+            : colors.primary
+          : colors.text;
   return (
     <TouchSurface
       onPress={onPress}
@@ -262,9 +264,11 @@ export function Button({
             ? colors.primary
             : blocked
               ? colors.border
-              : variant === 'outlined'
-                ? colors.outline
-                : 'transparent',
+              : variant === 'danger'
+                ? colors.errorSoft
+                : variant === 'outlined'
+                  ? colors.outline
+                  : 'transparent',
           outlineWidth: focused ? borders.focus : 0,
           outlineColor: colors.primary,
           outlineOffset: borders.focus,
@@ -273,9 +277,11 @@ export function Button({
               ? blocked
                 ? colors.highest
                 : colors.primary
-              : variant === 'outlined'
-                ? colors.surface
-                : 'transparent',
+              : variant === 'danger'
+                ? colors.errorSoft
+                : variant === 'outlined'
+                  ? colors.surface
+                  : 'transparent',
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'center',

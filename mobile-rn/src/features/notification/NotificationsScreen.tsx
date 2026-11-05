@@ -1,10 +1,17 @@
+import { spacing } from '../../design/tokens';
 import { FlatList, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { notifications, vehicles } from '../../core/services';
 import { invalidate, useResource } from '../../core/queries';
 import { dateText } from '../../core/labels';
 import { AppText, Button, Gap } from '../../design/components';
-import { Badge, Page, StateView, Tile } from '../../design/layout';
+import {
+  Badge,
+  layoutStyles,
+  Page,
+  StateView,
+  Tile,
+} from '../../design/layout';
 import { useAction } from '../auth/useAction';
 export default function NotificationsScreen() {
   const router = useRouter(),
@@ -29,7 +36,7 @@ export default function NotificationsScreen() {
       }
     >
       {items.isPending || items.error ? (
-        <View style={{ padding: 18 }}>
+        <View style={{ padding: spacing.page }}>
           <StateView
             loading={items.isPending}
             error={items.error}
@@ -40,13 +47,7 @@ export default function NotificationsScreen() {
         <FlatList
           data={items.data}
           keyExtractor={(item) => String(item.id)}
-          contentContainerStyle={{
-            padding: 18,
-            gap: 10,
-            maxWidth: 1100,
-            width: '100%',
-            alignSelf: 'center',
-          }}
+          contentContainerStyle={layoutStyles.listContent}
           refreshing={items.isRefetching}
           onRefresh={() => void items.refetch()}
           ListEmptyComponent={<StateView empty="Henüz bildiriminiz yok." />}

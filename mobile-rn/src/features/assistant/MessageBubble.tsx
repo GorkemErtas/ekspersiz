@@ -4,7 +4,7 @@ import Markdown from '@ronradtke/react-native-markdown-display';
 import type { ChatMessage } from '../../core/models';
 import { AppText, Button } from '../../design/components';
 import { useTheme } from '../../design/ThemeProvider';
-import { fonts } from '../../design/tokens';
+import { fonts, radius, spacing } from '../../design/tokens';
 import { useSnackbar } from '../../design/Snackbar';
 import { webLink } from '../../platform/links';
 export const MessageBubble = memo(function MessageBubble({
@@ -19,14 +19,18 @@ export const MessageBubble = memo(function MessageBubble({
       style={{
         alignSelf: message.role === 'user' ? 'flex-end' : 'flex-start',
         maxWidth: 620,
-        width: '95%',
+        width: message.role === 'user' ? '92%' : '100%',
         backgroundColor:
           message.role === 'user' ? colors.primaryContainer : colors.surface,
-        borderRadius: 20,
+        borderRadius: radius.medium,
+        borderTopRightRadius:
+          message.role === 'user' ? radius.small : radius.medium,
+        borderTopLeftRadius:
+          message.role === 'assistant' ? radius.small : radius.medium,
         borderWidth: 1,
         borderColor: colors.border,
-        paddingHorizontal: 14,
-        paddingVertical: 11,
+        paddingHorizontal: spacing.m,
+        paddingVertical: spacing.sm,
       }}
     >
       {message.role === 'user' ? (

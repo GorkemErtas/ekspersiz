@@ -16,7 +16,7 @@ import {
 import Animated, { FadeInDown, ReduceMotion } from 'react-native-reanimated';
 import { AppText, IconButton } from './components';
 import { useTheme } from './ThemeProvider';
-import { motion, radius, spacing } from './tokens';
+import { borders, motion, radius, spacing } from './tokens';
 
 export function Sheet({
   visible,
@@ -75,6 +75,8 @@ export function Sheet({
             maxWidth: 760,
             alignSelf: 'center',
             backgroundColor: colors.surface,
+            borderWidth: borders.hairline,
+            borderColor: colors.border,
             borderTopLeftRadius: radius.xlarge,
             borderTopRightRadius: radius.xlarge,
           }}
@@ -92,9 +94,9 @@ export function Sheet({
           >
             <View
               style={{
-                width: 36,
-                height: 4,
-                borderRadius: 4,
+                width: spacing.xxl,
+                height: spacing.xs,
+                borderRadius: spacing.xs,
                 alignSelf: 'center',
                 backgroundColor: colors.border,
                 marginBottom: spacing.s,
@@ -111,7 +113,7 @@ export function Sheet({
               <AppText
                 accessibilityRole="header"
                 variant="titleLarge"
-                style={{ flex: 1 }}
+                style={{ flex: 1, minWidth: 0 }}
               >
                 {title}
               </AppText>
