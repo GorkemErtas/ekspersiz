@@ -1,6 +1,6 @@
 import type { TextStyle } from 'react-native';
 
-// Flutter brand identity, with a shared 8-point spacing scale. Logical pixels.
+// EksperSiz brand identity. All dimensions are logical pixels on a 4-point scale.
 export const brand = {
   primary: '#8B5CF6',
   primaryDark: '#6D28D9',
@@ -10,10 +10,12 @@ export const brand = {
 export const spacing = {
   xs: 4,
   s: 8,
+  sm: 12,
   m: 16,
+  ml: 20,
   l: 24,
   xl: 32,
-  xxl: 36,
+  xxl: 40,
   page: 16,
   card: 16,
 } as const;
@@ -26,13 +28,22 @@ export const radius = {
 } as const;
 export const dimensions = {
   touch: 48,
-  button: 50,
+  button: 52,
+  input: 52,
   content: 1100,
   auth: 460,
   authWide: 520,
   toolbar: 60,
-  fab: 56,
+  fab: 48,
+  navigation: 72,
 } as const;
+export const iconSize = {
+  small: 16,
+  medium: 20,
+  default: 24,
+  large: 32,
+} as const;
+export const borders = { hairline: 1, focus: 2 } as const;
 export const motion = {
   fast: 160,
   medium: 220,
@@ -41,7 +52,7 @@ export const motion = {
   pressedScale: 0.985,
 } as const;
 export const gradients = {
-  brand: ['#6D28D9', '#8B5CF6', '#C084FC'],
+  brand: ['#4C1D95', '#6D28D9', '#7C3AED'],
   deep: ['#171021', '#291448', '#6D28D9'],
 } as const;
 export const palettes = {
@@ -54,7 +65,7 @@ export const palettes = {
     highest: '#24202B',
     text: '#F7F4FB',
     secondaryText: '#B9B1C5',
-    muted: '#81798D',
+    muted: '#A198AD',
     outline: '#746880',
     border: '#2A2631',
     primary: brand.primary,
@@ -86,7 +97,7 @@ export const palettes = {
     highest: '#E2D9E9',
     text: '#211A29',
     secondaryText: '#655C6F',
-    muted: '#81778B',
+    muted: '#71657C',
     outline: '#7B7185',
     border: '#D9D0E1',
     primary: brand.primaryDark,
@@ -114,8 +125,7 @@ export type ThemeMode = keyof typeof palettes;
 export type Palette = { [K in keyof typeof palettes.dark]: string };
 
 export const fonts = {
-  // GoogleFonts.interTextTheme chooses regular/medium families first; Flutter's
-  // copyWith(weight) retains that family. Match that behavior and original bytes.
+  // Use the bundled faces; avoid introducing a network font dependency.
   regular: 'InterRegular',
   medium: 'InterMedium',
   semibold: 'InterRegular',
@@ -126,42 +136,42 @@ export const fonts = {
 export const typography = {
   displayLarge: {
     fontSize: 54,
-    lineHeight: 56.16,
+    lineHeight: 60,
     letterSpacing: -1.6,
     fontFamily: fonts.regular,
     fontWeight: '900',
   },
   displayMedium: {
     fontSize: 42,
-    lineHeight: 44.52,
+    lineHeight: 48,
     letterSpacing: -1.2,
     fontFamily: fonts.regular,
     fontWeight: '900',
   },
   headlineLarge: {
     fontSize: 30,
-    lineHeight: 37.5,
+    lineHeight: 40,
     letterSpacing: -0.9,
     fontFamily: fonts.regular,
     fontWeight: '900',
   },
   headlineMedium: {
     fontSize: 26,
-    lineHeight: 33.4286,
+    lineHeight: 36,
     letterSpacing: -0.7,
     fontFamily: fonts.regular,
     fontWeight: '900',
   },
   headlineSmall: {
     fontSize: 22,
-    lineHeight: 29.3333,
+    lineHeight: 32,
     letterSpacing: -0.45,
     fontFamily: fonts.regular,
     fontWeight: '800',
   },
   titleLarge: {
     fontSize: 20,
-    lineHeight: 25.4545,
+    lineHeight: 28,
     letterSpacing: -0.3,
     fontFamily: fonts.regular,
     fontWeight: '800',
@@ -187,19 +197,19 @@ export const typography = {
   },
   bodyMedium: {
     fontSize: 14,
-    lineHeight: 22,
+    lineHeight: 20,
     letterSpacing: 0.15,
     fontFamily: fonts.regular,
   },
   bodySmall: {
     fontSize: 12,
-    lineHeight: 17.4,
-    letterSpacing: 0.4,
+    lineHeight: 18,
+    letterSpacing: 0.2,
     fontFamily: fonts.regular,
   },
   labelLarge: {
     fontSize: 15,
-    lineHeight: 21.4286,
+    lineHeight: 24,
     letterSpacing: -0.1,
     fontFamily: fonts.medium,
     fontWeight: '700',
@@ -207,59 +217,30 @@ export const typography = {
 } satisfies Record<string, TextStyle>;
 
 export function shadow(mode: ThemeMode, kind: 'soft' | 'elevated' | 'primary') {
-  // Flutter blur radius -> sigma: radius * .57735 + .5; RN uses CSS blur diameter.
-  if (mode === 'light')
-    return {
-      soft: [
-        {
-          offsetX: 0,
-          offsetY: 10,
-          blurRadius: 28.71,
-          color: 'rgba(61,40,77,0.08)',
-        },
-      ],
-      elevated: [
-        {
-          offsetX: 0,
-          offsetY: 15,
-          blurRadius: 40.26,
-          color: 'rgba(61,40,77,0.13)',
-        },
-      ],
-      primary: [
-        {
-          offsetX: 0,
-          offsetY: 12,
-          blurRadius: 33.33,
-          color: 'rgba(109,40,217,0.18)',
-        },
-      ],
-    }[kind];
+  const dark = mode === 'dark';
   return {
     soft: [
-      { offsetX: 0, offsetY: 12, blurRadius: 33.33, color: 'rgba(0,0,0,0.34)' },
       {
         offsetX: 0,
-        offsetY: 6,
-        blurRadius: 28.71,
-        color: 'rgba(139,92,246,0.045)',
+        offsetY: 2,
+        blurRadius: 8,
+        color: dark ? '#00000029' : '#3D284D0F',
       },
     ],
     elevated: [
-      { offsetX: 0, offsetY: 18, blurRadius: 49.5, color: 'rgba(0,0,0,0.48)' },
       {
         offsetX: 0,
-        offsetY: 12,
-        blurRadius: 40.26,
-        color: 'rgba(139,92,246,0.08)',
+        offsetY: 6,
+        blurRadius: 20,
+        color: dark ? '#00000047' : '#3D284D1A',
       },
     ],
     primary: [
       {
         offsetX: 0,
-        offsetY: 14,
-        blurRadius: 40.26,
-        color: 'rgba(139,92,246,0.28)',
+        offsetY: 4,
+        blurRadius: 12,
+        color: dark ? '#0000003D' : '#4C1D9524',
       },
     ],
   }[kind];
