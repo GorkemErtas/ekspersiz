@@ -23,6 +23,7 @@ module.exports = {
     'fingerprint.config.cjs',
     'config/productionEnvironment.cjs',
     'config/otaUpdate.cjs',
+    'config/otaPublication.cjs',
     'config/androidRelease.cjs',
   ]
     .map((filePath) => ({

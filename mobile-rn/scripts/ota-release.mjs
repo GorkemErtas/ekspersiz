@@ -5,6 +5,7 @@ import {
   lstatSync,
   mkdirSync,
   readFileSync,
+  unlinkSync,
   writeFileSync,
 } from 'node:fs';
 import { join } from 'node:path';
@@ -14,6 +15,12 @@ import {
   easProject,
 } from '../config/productionEnvironment.cjs';
 import { otaUpdateConfig } from '../config/otaUpdate.cjs';
+import {
+  assertPublicationSnapshot,
+  createPublicationSnapshot,
+  sealPublicationSnapshot,
+  snapshotPath,
+} from '../config/otaPublication.cjs';
 import { nativeFingerprint } from './ota-fingerprint.mjs';
 import { inspectOtaExport } from './ota-bundle.mjs';
 import {
@@ -103,11 +110,12 @@ export async function releaseUpdate(input, io) {
     if (!sha256.test(record.exportHash))
       throw new Error('Export validation did not produce a SHA-256 digest.');
     await io.beforePublish?.(record);
-    // env:exec already loaded one production snapshot. Avoid a second environment
-    // fetch changing config/runtime after this artifact was validated. Pinned EAS
-    // CLI supports preloaded environments in CI without --environment.
+    // Follow the SDK 55+ environment contract. app.config.ts checks the on-disk
+    // snapshot on every CLI/SDK evaluation, including reloaded server values.
     updates = await io.eas([
       'update',
+      '--environment',
+      'production',
       '--channel',
       'staging',
       '--platform',
@@ -170,7 +178,21 @@ export async function releaseUpdate(input, io) {
   };
 }
 
+export function validateUpdateCommand(args) {
+  if (
+    args[0] === 'update' &&
+    (args.filter((arg) => arg === '--environment').length !== 1 ||
+      args[args.indexOf('--environment') + 1] !== 'production' ||
+      !args.includes('--skip-bundler') ||
+      args[args.indexOf('--input-dir') + 1] !== '.ota/export')
+  )
+    throw new Error(
+      'Staging update requires --environment production and the validated export.',
+    );
+}
+
 function executeEas(args, env, root) {
+  validateUpdateCommand(args);
   const windows = process.platform === 'win32';
   if (windows && args.some((arg) => !/^[-A-Za-z0-9_:.,=/]+$/.test(arg)))
     throw new Error('Unsafe Windows EAS argument.');
@@ -272,6 +294,7 @@ async function main() {
     runtimeVersion: null,
     environmentHash: null,
   };
+  let ownsSnapshot = false;
   try {
     const { env, shared } = prepareOtaEnvironment(
       process.env,
@@ -360,7 +383,20 @@ async function main() {
         rollout: env.OTA_ROLLOUT_PERCENTAGE,
       },
       {
-        eas: async (args) => executeEas(args, env, root),
+        eas: async (args) => {
+          if (args[0] === 'update') {
+            const snapshot = assertPublicationSnapshot(env, root);
+            if (
+              !snapshot?.exportHash ||
+              snapshot.runtimeVersion !== runtimeVersion ||
+              (await nativeFingerprint(root)) !== runtimeVersion
+            )
+              throw new Error(
+                'Native runtime or sealed publication snapshot changed before publishing.',
+              );
+          }
+          return executeEas(args, env, root);
+        },
         beforePublish: async (details) => {
           record = {
             ...details,
@@ -373,6 +409,11 @@ async function main() {
           record.groupId = groupId;
         },
         exportBundle: async () => {
+          createPublicationSnapshot(env, root, {
+            runtimeVersion,
+            environmentHash: shared.environmentHash,
+          });
+          ownsSnapshot = true;
           const result = spawnSync(
             process.execPath,
             [
@@ -391,6 +432,7 @@ async function main() {
           const exportHash = inspectOtaExport(join(root, '.ota/export'), env);
           if ((await nativeFingerprint(root)) !== runtimeVersion)
             throw new Error('Native fingerprint changed during export.');
+          sealPublicationSnapshot(env, root, exportHash);
           return exportHash;
         },
       },
@@ -403,6 +445,7 @@ async function main() {
     throw error;
   } finally {
     writeFileSync(audit, JSON.stringify(record, null, 2) + '\n');
+    if (ownsSnapshot) unlinkSync(snapshotPath(root));
     if (process.env.GITHUB_STEP_SUMMARY) {
       const { appendFileSync } = await import('node:fs');
       appendFileSync(

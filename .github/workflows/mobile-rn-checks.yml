@@ -106,6 +106,10 @@ jobs:
           distribution: temurin
           java-version: "21"
       - run: npm run test:ci-scripts
+      - name: Install the pinned EAS CLI for non-publishing integration checks
+        run: npm install --global eas-cli@27.2.0
+      - name: Verify the real CLI environment contract without network or publishing
+        run: npm run test:ota-cli
       - name: Check compatibility against the locked Expo SDK's bundled versions
         run: npx expo install --check
         env:

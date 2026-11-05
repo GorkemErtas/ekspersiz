@@ -217,6 +217,10 @@ test('staging exports once and publishes only the validated Android artifact wit
   assert.equal(h.mutations().length, 1);
   assert.ok(h.mutations()[0].includes('--skip-bundler'));
   assert.equal(
+    h.mutations()[0][h.mutations()[0].indexOf('--environment') + 1],
+    'production',
+  );
+  assert.equal(
     h.mutations()[0][h.mutations()[0].indexOf('--channel') + 1],
     'staging',
   );
@@ -351,6 +355,31 @@ test('ambiguous publishing failures are not retried and never trigger an automat
   await assert.rejects(releaseUpdate(h.input, h.io), /Network interrupted/);
   assert.equal(h.mutations().length, 1);
   assert.equal(h.mutations()[0][0], 'update');
+});
+
+test('invalid or incompatible publication responses never report success or retry', async () => {
+  for (const response of [
+    null,
+    [],
+    [{ ...update('staging'), runtimeVersion: '0'.repeat(40) }],
+  ]) {
+    const h = harness();
+    const original = h.io.eas;
+    let attempted = 0;
+    h.io.beforePublish = async () => {
+      attempted++;
+    };
+    h.io.eas = async (args) => {
+      if (args[0] === 'update') {
+        h.calls.push(args);
+        return response;
+      }
+      return original(args);
+    };
+    await assert.rejects(releaseUpdate(h.input, h.io));
+    assert.equal(attempted, 1);
+    assert.equal(h.mutations().length, 1);
+  }
 });
 
 test('bundle validation rejects private files, leaked credentials, test/fixture code, missing maps and wrong engines', () => {

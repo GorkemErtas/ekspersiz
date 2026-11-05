@@ -1,4 +1,5 @@
 import type { ExpoConfig } from 'expo/config';
+import { assertPublicationSnapshot } from './config/otaPublication.cjs';
 import {
   easProject,
   productionEnvironmentConfig,
@@ -9,6 +10,9 @@ import {
   productionPackage,
 } from './config/androidRelease.cjs';
 
+// EAS --environment reloads server values. Reject drift before even selecting
+// a variant, including an attempted switch back to development configuration.
+assertPublicationSnapshot(process.env, __dirname);
 if (
   process.env.APP_VARIANT &&
   !['development', 'production'].includes(process.env.APP_VARIANT)

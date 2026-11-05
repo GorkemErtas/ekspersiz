@@ -79,7 +79,11 @@ The client JSON is already embedded in Android binaries. It is not Firebase Admi
 
 Do not put channel, GitHub control variables or signing inputs in this shared EAS environment. The guarded command chooses the channel from the workflow operation. Never upload `key.properties`, `.jks`, keystore passwords, Google service-account keys, Gemini keys, backend secrets or RevenueCat secret keys. `.easignore` provides an additional archive exclusion; native production builds do not use Expo Build or upload the signing identity.
 
-`eas env:exec production` loads a single environment snapshot. The guarded staging command exports and validates it, then uses `eas update --skip-bundler` in CI without a second server-environment fetch. This avoids changing config/runtime after an artifact was validated. The pinned CLI supports preloaded CI environments; its behavior was inspected. This deliberate use differs from the usual standalone `eas update --environment production` example. Do not replace it with an unguarded second export/fetch.
+Staging explicitly uses `eas update --environment production --skip-bundler`. Although CLI 27.2.0 skips its SDK 55+ missing-flag check when `CI` or `EAS_BUILD` is nonempty, deployment does not rely on that exception. Outside those contexts, a missing flag in non-interactive mode throws; `GITHUB_ACTIONS` alone does not bypass it. `eas env:exec` only loads variables and does not supply an update flag.
+
+The outer `eas env:exec production` provides the values validated and exported by the guarded publisher. Before exporting, it creates a local `.ota/publication-snapshot.json` containing only digests and the expected native runtime. After export validation it seals the exact export digest. `app.config.ts` checks that file on **every** evaluation, before choosing even the app variant. Any changed effective configuration input, public-environment hash, Firebase client bytes/base64/path, channel or sealed export fails closed. Native fingerprints are compared before export, after export and immediately before starting the publishing CLI. The snapshot guard also applies to the CLI/SDK's later config evaluations during runtime resolution; returned update runtime/source identity must match the receipt.
+
+With `--environment`, the pinned CLI fetches the production environment again and caches it for that command. This second read is intentional: unchanged effective values are accepted; changed values are rejected before uploading rather than silently publishing the earlier bundle with different metadata/runtime. Production republishing and rollback still reuse the existing group without exporting. Normal completion/failure removes the temporary snapshot and preserves the audit receipt. After an abruptly killed process, inspect the audit/Expo state before removing a stale snapshot and retrying; never bypass the guard or auto-retry an ambiguous publication.
 
 ### 3. GitHub protection and credentials
 
@@ -223,6 +227,8 @@ npm run typecheck
 npm run lint
 npm test -- --ci
 npm run test:ci-scripts
+npm install --global eas-cli@27.2.0
+npm run test:ota-cli
 npm run check:config
 npm run audit:ci
 npm run format:check
@@ -249,6 +255,7 @@ Common failures:
 - Runtime mismatch: compare native source, plugins, SDK/dependencies, canonical Firebase path/content, public values and line endings. Use a clean LF checkout. Do not edit a runtime string just to force compatibility.
 - Unregistered runtime: authorize/verify the required native migration and register real evidence; do not fabricate catalog entries or signing files.
 - Different staging/production environment: test a newly exported staging artifact for that environment before promotion.
+- Snapshot/configuration/bundle drift: the explicit EAS environment differed from the validated export, or an input changed. Correct the canonical environment and rerun validation/export; do not edit a snapshot or remove validation to force publication.
 - Missing reviewers, missing/expired artifact, failed source run, wrong group or branch mapping: fail closed and correct/review the source evidence or external protection.
 - Interrupted publish or `unconfirmed` result: inspect the exact commit-bound Expo group before retrying. There is no automatic retry or rollback.
 
@@ -261,6 +268,7 @@ Compatible JS/UI/asset updates use EAS Update and avoid a new AAB and the native
 ## Primary references
 
 - [Expo runtime versions](https://docs.expo.dev/eas-update/runtime-versions/)
+- [Expo SDK 55+ update environment requirement](https://docs.expo.dev/eas/environment-variables/usage/)
 - [Expo staged deployment and artifact promotion](https://docs.expo.dev/eas-update/deployment/)
 - [Expo CLI update/republish/rollout reference](https://docs.expo.dev/eas/cli/)
 - [Expo update error recovery](https://docs.expo.dev/eas-update/error-recovery/)
