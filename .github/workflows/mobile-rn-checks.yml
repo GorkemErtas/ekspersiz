@@ -7,11 +7,15 @@ on:
       - "contracts/**"
       - "src/main/java/com/gorkem/vehicle_inspector/dto/**"
       - ".github/workflows/mobile-rn-checks.yml"
+      - ".github/workflows/mobile-ota-promote.yml"
+      - ".gitattributes"
   push:
     branches: [master]
     paths:
       - "mobile-rn/**"
       - ".github/workflows/mobile-rn-checks.yml"
+      - ".github/workflows/mobile-ota-promote.yml"
+      - ".gitattributes"
   workflow_dispatch:
 
 permissions:
@@ -19,14 +23,67 @@ permissions:
 
 concurrency:
   group: mobile-rn-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   CI: "1"
+  EXPO_NO_DOTENV: "1"
   APP_VARIANT: development
   EXPO_PUBLIC_API_BASE_URL: http://127.0.0.1:8080/api/v1
 
 jobs:
+  classify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      kind: ${{ steps.classify.outputs.kind }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: mobile-rn/.nvmrc
+      - id: classify
+        name: Classify all changed paths, including both sides of renames
+        run: node mobile-rn/scripts/ota-classify.mjs
+        env:
+          OTA_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before || github.sha }}
+          OTA_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ota-classification-${{ github.sha }}
+          path: mobile-rn/.ota/classification.json
+          include-hidden-files: true
+          retention-days: 14
+
+  compatibility:
+    needs: [classify, checks]
+    if: needs.classify.outputs.kind == 'ota'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha || github.event.before }}
+          path: baseline
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: mobile-rn/.nvmrc
+          cache: npm
+          cache-dependency-path: mobile-rn/package-lock.json
+      - run: npm ci
+        working-directory: mobile-rn
+      - run: npm ci
+        working-directory: baseline/mobile-rn
+      - name: Require equal native fingerprints for the base and candidate
+        run: node mobile-rn/scripts/ota-fingerprint.mjs mobile-rn baseline/mobile-rn
+
   checks:
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -69,7 +126,8 @@ jobs:
 
   android:
     name: ${{ matrix.variant == 'debug' && 'android' || 'android-release' }}
-    needs: checks
+    needs: [checks, classify]
+    if: needs.classify.outputs.kind == 'native' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 60
     strategy:
@@ -156,3 +214,47 @@ jobs:
             mobile-rn/android/app/build/reports/lint-results-*
             mobile-rn/release-artifacts/cold-start-ci/
           retention-days: 14
+
+  staging:
+    name: Publish validated Android update to staging
+    needs: [classify, checks, compatibility]
+    if: >-
+      github.event_name == 'push' && github.ref == 'refs/heads/master' &&
+      github.repository == 'GorkemErtas/ekspersiz' &&
+      needs.classify.outputs.kind == 'ota' &&
+      needs.checks.result == 'success' && needs.compatibility.result == 'success' &&
+      vars.OTA_STAGING_ENABLED == 'true'
+    environment: ota-staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: mobile-rn
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: mobile-rn/.nvmrc
+          cache: npm
+          cache-dependency-path: mobile-rn/package-lock.json
+      - run: npm ci
+      - name: Install the reviewed EAS CLI before exposing its token
+        run: npm install --global eas-cli@27.2.0
+      - name: Export, validate, and publish one production-environment snapshot
+        run: eas env:exec production 'node scripts/ota-release.mjs staging' --non-interactive
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      - name: Preserve an audit result if EAS bootstrap failed
+        if: always()
+        run: node scripts/ota-audit.mjs staging
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ota-staging-${{ github.sha }}
+          path: mobile-rn/.ota/reports/publication.json
+          include-hidden-files: true
+          retention-days: 90
+          if-no-files-found: error
