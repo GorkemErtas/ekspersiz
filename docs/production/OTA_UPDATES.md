@@ -109,6 +109,8 @@ adb -s SERIAL pull /actual/path/base.apk .ota/play-installed.apk
 npm run ota:inspect -- .ota/play-installed.apk
 ```
 
+With Expo SDK 58, `file:fingerprint` in the compiled runtime string is an expected SDK sentinel. Android resolves it by reading the exact `assets/fingerprint` entry inside the APK. The inspector follows that same path and reports the effective 40-character runtime; Java 21 must be available through `JAVA_HOME` or `PATH`. Missing, duplicate or malformed fingerprint assets fail inspection. Do not replace the sentinel in generated resources or accept it as the runtime itself.
+
 If it is not OTA-enabled with this project/channel/fingerprint runtime, it cannot receive these updates. A one-time native migration is mandatory.
 
 **Only after explicit native release authorization:** follow [ANDROID_RELEASE.md](ANDROID_RELEASE.md), verify the current maximum across **all** Play tracks/drafts, reuse the original upload key, and fill the ignored local release environment. The template no longer includes stale numeric version defaults. For staging, use:
@@ -131,6 +133,10 @@ npm run release:android -- --apk
 ```
 
 OTA-enabled native releases require the companion APK so its **compiled** metadata can be checked. The script verifies its embedded project, channel, exact fingerprint runtime and startup policy; the existing APK/AAB DEX, signature, R8/Hermes and ABI checks remain. The release verification JSON includes the OTA environment digest and source commit. Do not generate a new key or send the private key to EAS.
+
+The native preflight uses the installed `expo-updates` managed runtime resolver, as EAS Update does, and still requires complete config/autolinking/native-bridge fingerprint sources. It passes that newly calculated runtime to Gradle through Expo's `EXPO_UPDATES_FINGERPRINT_OVERRIDE`, matching EAS Build's Android flow. Inherited fingerprint/workflow overrides are discarded; no fixed hash belongs in the release environment file. The SDK update-resources task is explicitly rerun because this SDK version does not declare the override environment as a Gradle task input. The SDK packages the resolved hash as `assets/fingerprint`, and the release verifier compares the APK asset with the preflight result before completing the AAB/verification receipt copies. The `runtimeVersion: { policy: 'fingerprint' }` configuration and channel normalization remain in place.
+
+To rebuild after this tooling fix, run the two commands above from `mobile-rn` with the existing validated `.env.production.local`. No manual native-resource edit, dependency reinstall or OTA publication is required. A successful release records the effective runtime at `apk.ota.runtimeVersion` in `release-artifacts/ekspersiz-<versionName>-<versionCode>-verification.json`.
 
 Distribute the staging AAB through the authorized Play internal-test process and verify startup, offline launch, authentication, FCM, analysis, forms, credits and billing on real test devices/accounts. An upload-key-signed APK alone is not proof of Google Play App Signing or Play Integrity behavior. Inspect the installed Play APK and confirm its channel/runtime. Use a dedicated staging test device: staging and production have the same package ID and cannot be installed side by side.
 
