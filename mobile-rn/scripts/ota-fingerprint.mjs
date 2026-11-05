@@ -1,8 +1,18 @@
 import { createRequire } from 'node:module';
+import { execFileSync } from 'node:child_process';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 export async function nativeFingerprint(root = process.cwd()) {
+  if (
+    execFileSync('git', ['ls-files', '--', 'android/', 'ios/'], {
+      cwd: root,
+      encoding: 'utf8',
+    }).trim()
+  )
+    throw new Error(
+      'Tracked native projects require manual review; this pipeline uses managed/CNG native inputs.',
+    );
   const require = createRequire(resolve(root, 'package.json'));
   const { createFingerprintAsync } = require('expo/fingerprint');
   // Match expo-updates' managed/CNG runtime resolver, before or after prebuild.

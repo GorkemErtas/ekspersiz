@@ -3,4 +3,5 @@
 /mobile-rn/config/** text eol=lf
 /mobile-rn/plugins/** text eol=lf
 /mobile-rn/modules/** text eol=lf
+/mobile-rn/src/platform/** text eol=lf
 /mobile-rn/fingerprint.config.cjs text eol=lf
