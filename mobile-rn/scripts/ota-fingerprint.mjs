@@ -1,6 +1,6 @@
 import { createRequire } from 'node:module';
 import { execFileSync } from 'node:child_process';
-import { resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 export async function nativeFingerprint(root = process.cwd()) {
@@ -14,36 +14,39 @@ export async function nativeFingerprint(root = process.cwd()) {
       'Tracked native projects require manual review; this pipeline uses managed/CNG native inputs.',
     );
   const require = createRequire(resolve(root, 'package.json'));
-  const { createFingerprintAsync } = require('expo/fingerprint');
-  // Match expo-updates' managed/CNG runtime resolver, before or after prebuild.
-  const fingerprint = await createFingerprintAsync(root, {
-    platforms: ['android'],
-    ignorePaths: ['android/**/*', 'ios/**/*'],
-    silent: true,
-  });
-  if (!/^[0-9a-f]{40}$/.test(fingerprint.hash) || !fingerprint.sources.length)
+  const { resolveRuntimeVersionAsync } = require(
+    join(
+      dirname(require.resolve('expo-updates/package.json')),
+      'utils/build/resolveRuntimeVersionAsync.js',
+    ),
+  );
+  // Use the same policy resolver as EAS Update, including its CNG native ignores.
+  const { runtimeVersion, fingerprintSources: sources } =
+    await resolveRuntimeVersionAsync(
+      root,
+      'android',
+      { silent: true },
+      { workflowOverride: 'managed' },
+    );
+  if (!/^[0-9a-f]{40}$/.test(runtimeVersion) || !sources?.length)
     throw new Error('Native fingerprint could not be determined.');
   for (const id of [
     'expoConfig',
     'expoAutolinkingConfig:android',
     'rncoreAutolinkingConfig:android',
   ]) {
-    if (!fingerprint.sources.some((source) => source.id === id && source.hash))
+    if (!sources.some((source) => source.id === id && source.hash))
       throw new Error(
         `Incomplete native fingerprint: ${id}. Autolinking must succeed.`,
       );
   }
   for (const filePath of ['modules', 'src/platform']) {
-    if (
-      !fingerprint.sources.some(
-        (source) => source.filePath === filePath && source.hash,
-      )
-    )
+    if (!sources.some((source) => source.filePath === filePath && source.hash))
       throw new Error(
         `Native bridge contract is missing from fingerprint: ${filePath}.`,
       );
   }
-  return fingerprint.hash;
+  return runtimeVersion;
 }
 if (
   process.argv[1] &&

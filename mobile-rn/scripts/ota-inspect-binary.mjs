@@ -1,7 +1,7 @@
 import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import {
   easProject,
   productionPackage,
@@ -20,7 +20,12 @@ function attributeValue(line) {
     throw new Error('Android manifest string has an ambiguous Raw annotation.');
   return value?.[1] ?? value?.[2];
 }
-export function inspectManifestDump(manifest, resources, badging) {
+export function inspectManifestDump(
+  manifest,
+  resources,
+  badging,
+  { readFingerprint } = {},
+) {
   const metadata = {};
   let current;
   for (const line of manifest.split(/\r?\n/)) {
@@ -48,6 +53,19 @@ export function inspectManifestDump(manifest, resources, badging) {
             .slice(index + 1, index + 5)
             .map((line) => line.match(/\(\) "([^"]+)"/)?.[1])
             .find(Boolean);
+  }
+  // Expo's Android UpdatesConfiguration resolves this sentinel from the APK's
+  // assets/fingerprint, not from a replacement manifest string resource.
+  if (runtimeVersion === 'file:fingerprint' && readFingerprint) {
+    runtimeVersion = readFingerprint();
+    if (
+      typeof runtimeVersion !== 'string' ||
+      runtimeVersion.length !== 40 ||
+      !sha.test(runtimeVersion)
+    )
+      throw new Error(
+        'APK assets/fingerprint is not a 40-character native fingerprint.',
+      );
   }
   let headers = {};
   try {
@@ -94,6 +112,32 @@ export function verifyNativeOta(report, { channel, runtimeVersion }) {
     );
   return report;
 }
+export function readApkFingerprint(apk, { env = process.env } = {}) {
+  const java = env.JAVA_HOME
+    ? join(
+        env.JAVA_HOME,
+        'bin',
+        process.platform === 'win32' ? 'java.exe' : 'java',
+      )
+    : 'java';
+  const result = spawnSync(
+    java,
+    [
+      fileURLToPath(new URL('./android/ApkFingerprint.java', import.meta.url)),
+      apk,
+    ],
+    { env, encoding: 'utf8', timeout: 60000, maxBuffer: 1024 * 1024 },
+  );
+  if (
+    result.status !== 0 ||
+    result.stdout?.length !== 40 ||
+    !sha.test(result.stdout)
+  )
+    throw new Error(
+      `APK fingerprint asset inspection failed. ${result.error?.message ?? result.stderr?.trim() ?? 'Check Java 21 and assets/fingerprint.'}`,
+    );
+  return result.stdout;
+}
 export function inspectApk(apk, { aapt2, env = process.env } = {}) {
   const sdk =
     env.ANDROID_HOME ??
@@ -129,6 +173,7 @@ export function inspectApk(apk, { aapt2, env = process.env } = {}) {
       dump(['dump', 'xmltree', apk, '--file', 'AndroidManifest.xml']),
       dump(['dump', 'resources', apk]),
       dump(['dump', 'badging', apk]),
+      { readFingerprint: () => readApkFingerprint(apk, { env }) },
     ),
     sha256: hashBytes(readFileSync(apk)),
   };

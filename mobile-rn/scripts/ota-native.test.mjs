@@ -1,6 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { inspectManifestDump, verifyNativeOta } from './ota-inspect-binary.mjs';
+import { Buffer } from 'node:buffer';
+import { spawnSync } from 'node:child_process';
+import { mkdtempSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import {
+  inspectManifestDump,
+  readApkFingerprint,
+  verifyNativeOta,
+} from './ota-inspect-binary.mjs';
 import { easProject } from '../config/productionEnvironment.cjs';
 const runtime = 'a'.repeat(40);
 const badging =
@@ -265,4 +274,175 @@ test('the legacy request headers key uses the same aapt2 string decoding', () =>
   );
   assert.equal(report.channel, 'staging');
   verifyNativeOta(report, { channel: 'staging', runtimeVersion: runtime });
+});
+
+test('Expo fingerprint sentinel resolves the packaged asset for literal and resource-backed metadata', () => {
+  for (const [value, table] of [
+    [stringValue('file:fingerprint'), resources],
+    ['@0x7f120001', resources.replace(runtime, 'file:fingerprint')],
+  ]) {
+    let reads = 0;
+    const report = inspectManifestDump(
+      manifest({ EXPO_RUNTIME_VERSION: value }),
+      table,
+      badging,
+      {
+        readFingerprint: () => {
+          reads++;
+          return runtime;
+        },
+      },
+    );
+    assert.equal(reads, 1);
+    assert.equal(report.runtimeVersion, runtime);
+    verifyNativeOta(report, { channel: 'staging', runtimeVersion: runtime });
+    assert.throws(() =>
+      verifyNativeOta(report, {
+        channel: 'staging',
+        runtimeVersion: 'b'.repeat(40),
+      }),
+    );
+    for (const change of [
+      { channel: 'production' },
+      { updateUrl: 'https://wrong.invalid' },
+      { startupCheck: 'NEVER' },
+      { launchWaitMs: 30000 },
+    ])
+      assert.throws(() =>
+        verifyNativeOta(
+          { ...report, ...change },
+          { channel: 'staging', runtimeVersion: runtime },
+        ),
+      );
+  }
+  const direct = inspectManifestDump(manifest(), resources, badging, {
+    readFingerprint: () =>
+      assert.fail('Direct runtimes must not read an unrelated asset'),
+  });
+  assert.equal(direct.runtimeVersion, runtime);
+});
+
+test('missing or malformed sentinel assets never fall back to a supplied expected runtime', () => {
+  for (const value of [
+    undefined,
+    null,
+    '',
+    'file:fingerprint',
+    'a'.repeat(39),
+    'g'.repeat(40),
+    runtime + '\n',
+    runtime + 'x',
+  ])
+    assert.throws(
+      () =>
+        inspectManifestDump(
+          manifest({ EXPO_RUNTIME_VERSION: stringValue('file:fingerprint') }),
+          resources,
+          badging,
+          { readFingerprint: () => value },
+        ),
+      /assets\/fingerprint/,
+    );
+  assert.throws(
+    () =>
+      inspectManifestDump(
+        manifest({ EXPO_RUNTIME_VERSION: stringValue('file:fingerprint') }),
+        resources,
+        badging,
+        {
+          readFingerprint: () => {
+            throw new Error('Missing fingerprint asset');
+          },
+        },
+      ),
+    /Missing fingerprint asset/,
+  );
+});
+
+test('APK fingerprint extraction reads stored/deflated ZIP assets and rejects missing, duplicate or malformed assets', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'ekspersiz-fingerprint-apk-'));
+  const java = process.env.JAVA_HOME
+    ? join(
+        process.env.JAVA_HOME,
+        'bin',
+        process.platform === 'win32' ? 'java.exe' : 'java',
+      )
+    : 'java';
+  const source = join(directory, 'FingerprintFixtures.java');
+  writeFileSync(
+    source,
+    `
+import java.nio.file.*;
+import java.util.zip.*;
+class FingerprintFixtures {
+  static void write(Path root, String name, String value, boolean stored, String... entries) throws Exception {
+    try (var zip = new ZipOutputStream(Files.newOutputStream(root.resolve(name + ".apk")))) {
+      for (String entryName : entries) {
+        byte[] bytes = value.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        var entry = new ZipEntry(entryName);
+        if (stored) {
+          var crc = new CRC32(); crc.update(bytes);
+          entry.setMethod(ZipEntry.STORED); entry.setSize(bytes.length); entry.setCrc(crc.getValue());
+        }
+        zip.putNextEntry(entry); zip.write(bytes); zip.closeEntry();
+      }
+    }
+  }
+  public static void main(String[] args) throws Exception {
+    var root = Path.of(args[0]);
+    String hash = "${runtime}";
+    write(root, "deflated", hash, false, "assets/fingerprint");
+    write(root, "stored", hash, true, "assets/fingerprint");
+    write(root, "missing", hash, false, "assets/unrelated");
+    write(root, "empty", "", false, "assets/fingerprint");
+    write(root, "short", hash.substring(1), false, "assets/fingerprint");
+    write(root, "invalid", "g".repeat(40), false, "assets/fingerprint");
+    write(root, "newline", hash + "\\n", false, "assets/fingerprint");
+    write(root, "oversized", hash.repeat(100), false, "assets/fingerprint");
+    write(root, "duplicate", hash, false, "assets/fingerprint", "assets/fingerprinX");
+  }
+}
+`,
+  );
+  try {
+    const fixtures = spawnSync(java, [source, directory], {
+      encoding: 'utf8',
+      timeout: 30000,
+    });
+    assert.ifError(fixtures.error);
+    assert.equal(fixtures.status, 0, fixtures.stderr);
+    const duplicatePath = join(directory, 'duplicate.apk');
+    const duplicate = readFileSync(duplicatePath);
+    const marker = Buffer.from('assets/fingerprinX');
+    for (
+      let at = duplicate.indexOf(marker);
+      at >= 0;
+      at = duplicate.indexOf(marker, at + marker.length)
+    )
+      duplicate.write('assets/fingerprint', at);
+    writeFileSync(duplicatePath, duplicate);
+    writeFileSync(join(directory, 'corrupt.apk'), 'not a ZIP');
+    for (const name of ['stored', 'deflated'])
+      assert.equal(readApkFingerprint(join(directory, name + '.apk')), runtime);
+    for (const name of [
+      'missing',
+      'empty',
+      'short',
+      'invalid',
+      'newline',
+      'oversized',
+      'duplicate',
+      'corrupt',
+    ])
+      assert.throws(
+        () => readApkFingerprint(join(directory, name + '.apk')),
+        /fingerprint asset inspection failed/,
+        name,
+      );
+  } finally {
+    assert.ok(
+      directory.startsWith(join(tmpdir(), 'ekspersiz-fingerprint-apk-')),
+    );
+    rmSync(directory, { recursive: true, force: true });
+  }
 });

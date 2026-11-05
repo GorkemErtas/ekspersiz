@@ -22,8 +22,33 @@ test(
     for (const name of Object.keys(clean))
       if (/^(?:EXPO_PUBLIC_|EXPO_UPDATES_|ANDROID_|GOOGLE_)/.test(name))
         delete clean[name];
-    const code = `import {createRequire} from 'node:module'; import {join,dirname,resolve} from 'node:path'; import {nativeFingerprint} from './scripts/ota-fingerprint.mjs'; const root=process.cwd(); const hash=await nativeFingerprint(root); if(process.env.COMPARE_SDK==='1'){const require=createRequire(resolve('package.json'));const {resolveRuntimeVersionAsync}=require(join(dirname(require.resolve('expo-updates/package.json')),'utils/build/resolveRuntimeVersionAsync.js'));const sdk=await resolveRuntimeVersionAsync(root,'android',{silent:true},{});if(sdk.runtimeVersion!==hash)throw new Error('SDK runtime policy differs from publishing guard');} console.log(hash);`;
-    const run = (channel = 'staging', compare = false) => {
+    const code = `
+      import {createRequire} from 'node:module';
+      import {join,dirname,resolve} from 'node:path';
+      import {mkdirSync,readFileSync} from 'node:fs';
+      import {nativeFingerprint} from './scripts/ota-fingerprint.mjs';
+      const root=process.cwd();
+      const hash=await nativeFingerprint(root);
+      if(process.env.COMPARE_SDK==='1') {
+        const require=createRequire(resolve('package.json'));
+        const utils=join(dirname(require.resolve('expo-updates/package.json')),'utils/build');
+        const {resolveRuntimeVersionAsync}=require(join(utils,'resolveRuntimeVersionAsync.js'));
+        const sdk=await resolveRuntimeVersionAsync(root,'android',{silent:true},{});
+        if(sdk.runtimeVersion!==hash)throw new Error('SDK runtime policy differs from publishing guard');
+        const {createFingerprintForBuildAsync}=require(join(utils,'createFingerprintForBuildAsync.js'));
+        const destination=process.env.FINGERPRINT_ASSET_DIR;
+        mkdirSync(destination,{recursive:true});
+        process.env.EXPO_UPDATES_FINGERPRINT_OVERRIDE=hash;
+        const log=console.log;
+        console.log=()=>{};
+        try { await createFingerprintForBuildAsync('android',root,destination); }
+        finally { console.log=log; }
+        if(readFileSync(join(destination,'fingerprint'),'utf8')!==sdk.runtimeVersion)
+          throw new Error('SDK native fingerprint asset differs from EAS Update runtime');
+      }
+      console.log(hash);
+    `;
+    const run = (channel = 'staging', compare = false, native = false) => {
       const result = spawnSync(
         process.execPath,
         ['--input-type=module', '--eval', code],
@@ -34,6 +59,18 @@ test(
             ...publicEnv(file),
             EXPO_UPDATES_CHANNEL: channel,
             COMPARE_SDK: compare ? '1' : '0',
+            FINGERPRINT_ASSET_DIR: join(directory, 'assets-' + channel),
+            EXPO_UPDATES_FINGERPRINT_OVERRIDE: 'untrusted-shell-runtime',
+            ...(native
+              ? {
+                  APP_CONFIG_MODE: 'native',
+                  ANDROID_PLAY_MAX_VERSION_CODE: '54',
+                  ANDROID_PLAY_SIGNING_SHA1: '12'.repeat(20),
+                  ANDROID_PLAY_SIGNING_SHA256: '34'.repeat(32),
+                  ANDROID_KEYSTORE_PROPERTIES_FILE: file,
+                  ANDROID_KEYSTORE_BASE_DIR: directory,
+                }
+              : {}),
           },
           encoding: 'utf8',
           timeout: 60000,
@@ -45,7 +82,8 @@ test(
     };
     try {
       const initial = run('staging', true);
-      assert.equal(run('production'), initial);
+      assert.equal(run('production', true), initial);
+      assert.equal(run('staging', true, true), initial);
       writeFileSync(probe, "export const probe = 'UI-only change';\n", {
         flag: 'wx',
       });

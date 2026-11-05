@@ -25,6 +25,10 @@ const envFile = resolve(
 const checkOnly = process.argv.includes('--check');
 const withApk = process.argv.includes('--apk');
 const env = { ...process.env };
+// Only a runtime resolved below from the validated current inputs may reach
+// Expo's native build helper; never inherit a shell-provided fingerprint.
+delete env.EXPO_UPDATES_FINGERPRINT_OVERRIDE;
+delete env.EXPO_UPDATES_WORKFLOW_OVERRIDE;
 // Expo/Metro must not inherit public values from the current development shell.
 for (const name of Object.keys(env))
   if (name.startsWith('EXPO_PUBLIC_') || releaseEnvironmentNames.has(name))
@@ -125,6 +129,9 @@ if (env.EXPO_UPDATES_ENABLED === '1') {
   if (result.status !== 0 || !/^[a-f0-9]{40}$/.test(result.stdout.trim()))
     throw new Error('Production native OTA fingerprint validation failed.');
   otaRuntime = result.stdout.trim();
+  // Match EAS Build: the SDK writes this resolved runtime to assets/fingerprint.
+  // Keep runtimeVersion.policy=fingerprint and the SDK's manifest sentinel.
+  env.EXPO_UPDATES_FINGERPRINT_OVERRIDE = otaRuntime;
 }
 const signer = identity();
 console.log(
@@ -147,6 +154,9 @@ if (checkOnly) {
   run(
     wrapper,
     [
+      // This SDK task does not declare the override environment as an input.
+      // Refresh only its assets so incremental builds cannot reuse an old hash.
+      ...(otaRuntime ? [':app:createReleaseUpdatesResources', '--rerun'] : []),
       ':app:bundleRelease',
       ...(withApk ? [':app:assembleRelease'] : []),
       ':app:lintRelease',
