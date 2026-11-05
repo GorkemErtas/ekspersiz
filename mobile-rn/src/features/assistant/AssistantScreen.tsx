@@ -15,11 +15,13 @@ import { positiveId } from '../../core/models';
 import { AppText, Button, IconButton } from '../../design/components';
 import { Page, Select, StateView } from '../../design/layout';
 import { useTheme } from '../../design/ThemeProvider';
-import { fonts } from '../../design/tokens';
+import { dimensions, radius, spacing, typography } from '../../design/tokens';
+import { useReducedMotion } from 'react-native-reanimated';
 import { AssistantService } from './AssistantService';
 import { MessageBubble } from './MessageBubble';
 
 export default function AssistantScreen() {
+  const reduceMotion = useReducedMotion();
   const router = useRouter(),
     { vehicle } = useLocalSearchParams<{ vehicle?: string }>(),
     { colors } = useTheme();
@@ -170,66 +172,77 @@ export default function AssistantScreen() {
       <View
         style={{ flex: 1, maxWidth: 900, width: '100%', alignSelf: 'center' }}
       >
-        <View style={{ paddingHorizontal: 16, gap: 8 }}>
-          <Select
-            title="Araç bağlamı"
-            value={chosen}
-            onChange={setSelection}
-            disabled={sending}
-            items={[
-              { value: '', title: 'Araç seçmeden sor' },
-              ...(garage.data ?? []).map((v) => ({
-                value: String(v.id),
-                title: `${v.plate} • ${v.brand} ${v.model}`,
-              })),
-            ]}
-          />
-          {entitlement.data && (
-            <AppText>
-              Kalan asistan kredisi: {entitlement.data.remainingToday}
-            </AppText>
-          )}
-          {entitlement.data?.trialExpiresAt && (
-            <AppText variant="bodySmall">
-              Deneme bitişi:{' '}
-              {new Date(entitlement.data.trialExpiresAt).toLocaleString(
-                'tr-TR',
-              )}
-            </AppText>
-          )}
-          {entitlement.data?.lockedUntil && (
-            <AppText variant="bodySmall">
-              Asistan erişimi{' '}
-              {new Date(entitlement.data.lockedUntil).toLocaleString('tr-TR')}{' '}
-              tarihinde yeniden açılacak.
-            </AppText>
-          )}
-          {entitlement.data && !entitlement.data.canAsk && (
-            <Button
-              label="Krediler ve Paketler"
-              variant="outlined"
-              onPress={() => router.push('/billing')}
-            />
-          )}
-          {entitlement.error && (
-            <StateView
-              error={entitlement.error}
-              retry={() => void entitlement.refetch()}
-            />
-          )}
-        </View>
         <FlatList
           ref={list}
+          style={{ flex: 1, minHeight: 0 }}
+          ListHeaderComponent={
+            <View style={{ gap: spacing.s }}>
+              <Select
+                title="Araç bağlamı"
+                value={chosen}
+                onChange={setSelection}
+                disabled={sending}
+                items={[
+                  { value: '', title: 'Araç seçmeden sor' },
+                  ...(garage.data ?? []).map((v) => ({
+                    value: String(v.id),
+                    title: `${v.plate} • ${v.brand} ${v.model}`,
+                  })),
+                ]}
+              />
+              {entitlement.data && (
+                <AppText>
+                  Kalan asistan kredisi: {entitlement.data.remainingToday}
+                </AppText>
+              )}
+              {entitlement.data?.trialExpiresAt && (
+                <AppText variant="bodySmall">
+                  Deneme bitişi:{' '}
+                  {new Date(entitlement.data.trialExpiresAt).toLocaleString(
+                    'tr-TR',
+                  )}
+                </AppText>
+              )}
+              {entitlement.data?.lockedUntil && (
+                <AppText variant="bodySmall">
+                  Asistan erişimi{' '}
+                  {new Date(entitlement.data.lockedUntil).toLocaleString(
+                    'tr-TR',
+                  )}{' '}
+                  tarihinde yeniden açılacak.
+                </AppText>
+              )}
+              {entitlement.data && !entitlement.data.canAsk && (
+                <Button
+                  label="Krediler ve Paketler"
+                  variant="outlined"
+                  onPress={() => router.push('/billing')}
+                />
+              )}
+              {entitlement.error && (
+                <StateView
+                  error={entitlement.error}
+                  retry={() => void entitlement.refetch()}
+                />
+              )}
+            </View>
+          }
           data={messages}
           keyExtractor={(_, index) => String(index)}
-          contentContainerStyle={{ padding: 15, gap: 10, flexGrow: 1 }}
+          contentContainerStyle={{
+            padding: spacing.page,
+            gap: spacing.m,
+            flexGrow: 1,
+          }}
           keyboardShouldPersistTaps="handled"
           onContentSizeChange={() =>
-            list.current?.scrollToEnd({ animated: true })
+            messages.length > 0 &&
+            list.current?.scrollToEnd({ animated: !reduceMotion })
           }
           ListEmptyComponent={
             <StateView
               loading={entitlement.isPending}
+              icon="sparkles"
               empty="Araç ve bakım sorularınızı AI Asistan’a sorun."
             />
           }
@@ -258,9 +271,11 @@ export default function AssistantScreen() {
           style={{
             flexDirection: 'row',
             alignItems: 'flex-end',
-            gap: 8,
-            padding: 12,
-            paddingBottom: 12,
+            gap: spacing.s,
+            padding: spacing.sm,
+            borderTopWidth: 1,
+            borderTopColor: colors.border,
+            backgroundColor: colors.surface,
           }}
         >
           <IconButton
@@ -277,22 +292,26 @@ export default function AssistantScreen() {
             maxLength={2000}
             placeholder="Aracınızla ilgili sorunuzu yazın..."
             placeholderTextColor={colors.muted}
+            selectionColor={colors.primary}
             style={{
               flex: 1,
-              minHeight: 50,
-              maxHeight: 150,
-              padding: 12,
-              borderRadius: 16,
+              ...typography.bodyLarge,
+              minHeight: dimensions.input,
+              maxHeight: 160,
+              padding: spacing.sm,
+              borderRadius: radius.medium,
               backgroundColor: colors.input,
               borderWidth: 1,
               borderColor: colors.border,
               color: colors.text,
-              fontFamily: fonts.regular,
+              textAlignVertical: 'top',
+              includeFontPadding: false,
             }}
             editable={!sending}
           />
           <IconButton
             filled
+            disabled={!sending && !text.trim()}
             label={sending ? 'İptal' : 'Gönder'}
             icon={sending ? 'stop' : 'send'}
             onPress={() =>

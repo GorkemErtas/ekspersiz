@@ -6,6 +6,8 @@ import {
   type ReactNode,
 } from 'react';
 import * as SecureStore from 'expo-secure-store';
+import { Appearance } from 'react-native';
+import * as SystemUI from 'expo-system-ui';
 import { palettes, type Palette, type ThemeMode } from './tokens';
 
 const ThemeContext = createContext<{
@@ -28,6 +30,14 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       .catch(() => undefined)
       .finally(() => setReady(true));
   }, []);
+  useEffect(() => {
+    if (!ready) return;
+    // Native dialogs and the window behind system bars share the saved theme.
+    Appearance.setColorScheme(mode);
+    void SystemUI.setBackgroundColorAsync(palettes[mode].background).catch(
+      () => undefined,
+    );
+  }, [mode, ready]);
   const toggle = () => {
     const next = mode === 'dark' ? 'light' : 'dark';
     setMode(next);

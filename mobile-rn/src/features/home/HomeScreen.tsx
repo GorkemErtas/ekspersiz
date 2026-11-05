@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Pressable, useWindowDimensions, View } from 'react-native';
+import { useWindowDimensions, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useSession } from '../../core/runtime';
@@ -16,6 +16,7 @@ import {
 } from '../../design/layout';
 import { useTheme } from '../../design/ThemeProvider';
 import { spacing } from '../../design/tokens';
+import { TouchSurface } from '../../design/TouchSurface';
 import PrimaryVehicleSheet from './PrimaryVehicleSheet';
 import {
   AnalysisHero,
@@ -27,10 +28,12 @@ export default function HomeScreen({
   onVehicles,
   onHistory,
   onProfile,
+  contentBottom = spacing.l,
 }: {
   onVehicles: () => void;
   onHistory: () => void;
   onProfile: () => void;
+  contentBottom?: number;
 }) {
   const { profile, workspace } = useSession(),
     router = useRouter(),
@@ -60,7 +63,8 @@ export default function HomeScreen({
       `${parts[0]?.[0] ?? 'E'}${parts.length > 1 ? (parts.at(-1)?.[0] ?? '') : ''}`.toLocaleUpperCase(
         'tr-TR',
       );
-  const { fontScale } = useWindowDimensions();
+  const { width, fontScale } = useWindowDimensions();
+  const stackHeaderActions = width < 380 || fontScale > 1.3;
   return (
     <Page
       title="Ana Sayfa"
@@ -69,7 +73,7 @@ export default function HomeScreen({
       toolbar={false}
       onRefresh={refresh}
       refreshing={garage.isRefetching || history.isRefetching}
-      contentBottom={spacing.l}
+      contentBottom={contentBottom}
     >
       <View
         style={{
@@ -77,10 +81,11 @@ export default function HomeScreen({
           flexWrap: 'wrap',
           alignItems: 'center',
           rowGap: spacing.m,
+          columnGap: spacing.sm,
           paddingBottom: spacing.s,
         }}
       >
-        <Pressable
+        <TouchSurface
           accessibilityRole="button"
           accessibilityLabel="Profili aç"
           onPress={onProfile}
@@ -90,9 +95,9 @@ export default function HomeScreen({
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={{
-              width: 50,
-              height: 50,
-              borderRadius: 25,
+              width: 48,
+              height: 48,
+              borderRadius: 16,
               alignItems: 'center',
               justifyContent: 'center',
             }}
@@ -103,28 +108,29 @@ export default function HomeScreen({
               {initials}
             </AppText>
           </LinearGradient>
-        </Pressable>
+        </TouchSurface>
         <View
           style={{
             flex: 1,
-            minWidth: fontScale > 1.3 ? 170 : 120,
-            marginLeft: 12,
-            marginRight: 8,
+            minWidth: 0,
           }}
         >
-          <AppText
-            variant="titleLarge"
-            style={{ fontWeight: '900', letterSpacing: -0.4 }}
-          >
+          <AppText variant="titleLarge" style={{ letterSpacing: -0.4 }}>
             EksperSiz
           </AppText>
-          <View style={{ height: 2 }} />
-          <AppText variant="bodySmall" style={{ fontWeight: '600' }}>
+          <View style={{ height: spacing.xs }} />
+          <AppText variant="bodySmall">
             {parts[0] ? 'Merhaba, ' + parts[0] : 'AI destekli araç asistanınız'}
           </AppText>
         </View>
         <View
-          style={{ flexDirection: 'row', gap: spacing.s, marginLeft: 'auto' }}
+          style={{
+            flexDirection: 'row',
+            gap: spacing.s,
+            ...(stackHeaderActions
+              ? { width: '100%', justifyContent: 'flex-end' }
+              : { marginLeft: 'auto' }),
+          }}
         >
           <IconButton
             surface

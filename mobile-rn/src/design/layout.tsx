@@ -9,6 +9,7 @@ import {
   Pressable,
   RefreshControl,
   ScrollView,
+  StyleSheet,
   Switch,
   View,
   useWindowDimensions,
@@ -33,8 +34,27 @@ import {
 import { useTheme } from './ThemeProvider';
 import { Sheet } from './Sheet';
 import { TouchSurface } from './TouchSurface';
-import { fonts, spacing } from './tokens';
+import {
+  borders,
+  dimensions,
+  fonts,
+  iconSize,
+  radius,
+  spacing,
+} from './tokens';
 import { dateText, isoDate, label } from '../core/labels';
+
+export const layoutStyles = StyleSheet.create({
+  listContent: {
+    paddingHorizontal: spacing.page,
+    paddingTop: spacing.m,
+    paddingBottom: spacing.l,
+    gap: spacing.sm,
+    maxWidth: dimensions.content,
+    width: '100%',
+    alignSelf: 'center',
+  },
+});
 
 export function Page({
   title,
@@ -52,7 +72,7 @@ export function Page({
   close = false,
   contentGap = spacing.m,
   contentTop = spacing.m,
-  contentMax = 1100,
+  contentMax = dimensions.content,
 }: {
   title: string;
   children: ReactNode;
@@ -105,11 +125,11 @@ export function Page({
         >
           <View
             style={{
-              minHeight: 60,
+              minHeight: dimensions.toolbar,
               paddingHorizontal: back ? spacing.xs : spacing.page,
               flexDirection: 'row',
               alignItems: 'center',
-              gap: 8,
+              gap: spacing.s,
             }}
           >
             {back && (
@@ -203,23 +223,23 @@ export function Heading({
       style={{
         flexDirection: width < 360 || fontScale > 1.3 ? 'column' : 'row',
         alignItems: 'flex-start',
-        gap: 14,
+        gap: spacing.sm,
       }}
     >
       <View
         style={{
-          width: 48,
-          height: 48,
-          borderRadius: 16,
+          width: dimensions.touch,
+          height: dimensions.touch,
+          borderRadius: radius.small,
           backgroundColor: colors.primaryContainer,
           alignItems: 'center',
           justifyContent: 'center',
         }}
       >
-        <Icon name={icon} color={colors.primary} size={24} />
+        <Icon name={icon} color={colors.primary} size={iconSize.default} />
       </View>
-      <View style={{ flexShrink: 1 }}>
-        <AppText variant="headlineSmall" style={{ fontWeight: '900' }}>
+      <View style={{ flexShrink: 1, minWidth: 0, gap: spacing.xs }}>
+        <AppText variant="headlineSmall" accessibilityRole="header">
           {title}
         </AppText>
         {description && <AppText>{description}</AppText>}
@@ -242,12 +262,13 @@ export function Section({
         flexDirection: 'row',
         flexWrap: 'wrap',
         alignItems: 'center',
-        gap: 8,
-        marginTop: 7,
+        gap: spacing.s,
+        marginTop: spacing.s,
       }}
     >
       <AppText
         variant="titleLarge"
+        accessibilityRole="header"
         style={{ flexGrow: 1, flexShrink: 1, flexBasis: 160 }}
       >
         {title}
@@ -281,12 +302,18 @@ export function Tile({
       accessibilityRole={onPress ? 'button' : undefined}
     >
       <Card>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: spacing.sm,
+          }}
+        >
           <View
             style={{
-              width: 48,
-              height: 48,
-              borderRadius: 16,
+              width: dimensions.touch,
+              height: dimensions.touch,
+              borderRadius: radius.small,
               backgroundColor: colors.primaryContainer,
               alignItems: 'center',
               justifyContent: 'center',
@@ -343,9 +370,9 @@ export function Badge({
       style={{
         alignSelf: 'flex-start',
         maxWidth: '100%',
-        paddingHorizontal: compact ? 8 : 10,
-        paddingVertical: compact ? 4 : 6,
-        borderRadius: 999,
+        paddingHorizontal: compact ? spacing.s : spacing.sm,
+        paddingVertical: spacing.xs,
+        borderRadius: radius.small,
         backgroundColor: background,
       }}
     >
@@ -353,7 +380,6 @@ export function Badge({
         variant="bodySmall"
         style={{
           color: foreground,
-          ...(compact ? { fontSize: 10.5, lineHeight: 14.7 } : {}),
           fontFamily: fonts.medium,
         }}
       >
@@ -367,16 +393,24 @@ export function StateView({
   error,
   empty,
   retry,
+  icon = 'car',
 }: {
   loading?: boolean;
   error?: unknown;
   empty?: string;
   retry?: () => void;
+  icon?: IconName;
 }) {
   const { colors } = useTheme();
   return (
-    <Card>
-      <View style={{ paddingVertical: 24, alignItems: 'center', gap: 15 }}>
+    <Card style={{ backgroundColor: colors.low }}>
+      <View
+        style={{
+          paddingVertical: spacing.m,
+          alignItems: 'center',
+          gap: spacing.sm,
+        }}
+      >
         {loading ? (
           <ActivityIndicator
             color={colors.primary}
@@ -384,13 +418,14 @@ export function StateView({
           />
         ) : (
           <Icon
-            name={error ? 'warning' : 'car'}
-            size={48}
-            color={colors.primary}
+            name={error ? 'warning' : icon}
+            size={iconSize.large}
+            color={error ? colors.error : colors.secondaryText}
           />
         )}
         <AppText
           accessibilityRole={error ? 'alert' : undefined}
+          accessibilityLiveRegion="polite"
           style={{ textAlign: 'center' }}
         >
           {loading
@@ -447,11 +482,11 @@ export function Select({
           setOpen(true);
         }}
         style={{
-          minHeight: 52,
-          padding: 12,
-          borderWidth: 1,
-          borderColor: colors.border,
-          borderRadius: 16,
+          minHeight: dimensions.input,
+          padding: spacing.sm,
+          borderWidth: borders.hairline,
+          borderColor: open ? colors.primary : colors.border,
+          borderRadius: radius.medium,
           backgroundColor: colors.input,
           opacity: disabled ? 0.5 : 1,
           flexDirection: 'row',

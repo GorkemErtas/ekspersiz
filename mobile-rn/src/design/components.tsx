@@ -28,7 +28,9 @@ import { useTheme } from './ThemeProvider';
 import { TouchSurface } from './TouchSurface';
 import {
   dimensions,
+  borders,
   fonts,
+  iconSize,
   motion,
   radius,
   shadow,
@@ -126,15 +128,15 @@ export function IconButton({
       disabled={disabled}
       onPress={onPress}
       style={{
-        width: 48,
-        height: 48,
-        borderRadius: 16,
+        width: dimensions.touch,
+        height: dimensions.touch,
+        borderRadius: radius.small,
         backgroundColor: filled
           ? colors.primary
           : surface
             ? colors.surface
             : 'transparent',
-        borderWidth: surface ? 1 : 0,
+        borderWidth: surface ? borders.hairline : 0,
         borderColor: colors.border,
         alignItems: 'center',
         justifyContent: 'center',
@@ -150,7 +152,7 @@ export function IconButton({
 }
 export function Icon({
   name,
-  size = 22,
+  size = iconSize.default,
   color,
 }: {
   name: IconName;
@@ -224,7 +226,7 @@ export function Button({
   loading?: boolean;
   disabled?: boolean;
   icon?: IconName;
-  variant?: 'primary' | 'outlined' | 'text';
+  variant?: 'primary' | 'outlined' | 'text' | 'danger';
 }) {
   const { colors, mode } = useTheme();
   const [focused, setFocused] = useState(false);
@@ -233,11 +235,13 @@ export function Button({
     ? colors.secondaryText
     : variant === 'primary'
       ? colors.onPrimary
-      : variant === 'text'
-        ? mode === 'dark'
-          ? colors.secondary
-          : colors.primary
-        : colors.text;
+      : variant === 'danger'
+        ? colors.error
+        : variant === 'text'
+          ? mode === 'dark'
+            ? colors.secondary
+            : colors.primary
+          : colors.text;
   return (
     <TouchSurface
       onPress={onPress}
@@ -252,28 +256,36 @@ export function Button({
       style={[
         {
           minHeight: variant === 'text' ? dimensions.touch : dimensions.button,
-          paddingVertical:
-            variant === 'text' ? 10 : variant === 'outlined' ? 12.8 : 14,
-          paddingHorizontal: variant === 'text' ? 12 : 18,
+          paddingVertical: spacing.sm,
+          paddingHorizontal: variant === 'text' ? spacing.sm : spacing.ml,
           borderRadius: variant === 'text' ? radius.small : radius.medium,
-          borderWidth: variant === 'outlined' ? (focused ? 2 : 1.2) : 0,
+          borderWidth: borders.hairline,
           borderColor: focused
             ? colors.primary
             : blocked
               ? colors.border
-              : colors.outline,
+              : variant === 'danger'
+                ? colors.errorSoft
+                : variant === 'outlined'
+                  ? colors.outline
+                  : 'transparent',
+          outlineWidth: focused ? borders.focus : 0,
+          outlineColor: colors.primary,
+          outlineOffset: borders.focus,
           backgroundColor:
             variant === 'primary'
               ? blocked
                 ? colors.highest
                 : colors.primary
-              : variant === 'outlined'
-                ? colors.surface
-                : 'transparent',
+              : variant === 'danger'
+                ? colors.errorSoft
+                : variant === 'outlined'
+                  ? colors.surface
+                  : 'transparent',
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: 10,
+          gap: spacing.s,
         },
       ]}
     >
@@ -284,7 +296,7 @@ export function Button({
           accessibilityLabel="İşlem devam ediyor"
         />
       ) : icon ? (
-        <Icon name={icon} size={20} color={text} />
+        <Icon name={icon} size={iconSize.medium} color={text} />
       ) : null}
       <AppText
         variant="labelLarge"
@@ -339,10 +351,10 @@ export function Field({
       </AppText>
       <View
         style={{
-          minHeight: dimensions.button,
+          minHeight: dimensions.input,
           backgroundColor: colors.input,
           borderRadius: radius.medium,
-          borderWidth: 1,
+          borderWidth: borders.hairline,
           borderColor: error
             ? colors.error
             : focused
@@ -350,12 +362,12 @@ export function Field({
               : colors.border,
           flexDirection: 'row',
           alignItems: 'center',
-          paddingLeft: 12,
+          paddingLeft: spacing.sm,
           opacity: props.editable === false ? 0.6 : 1,
         }}
       >
-        <Icon name={icon} size={24} color={colors.inputIcon} />
-        <View style={{ flex: 1, minWidth: 0, marginLeft: 12 }}>
+        <Icon name={icon} size={iconSize.medium} color={colors.inputIcon} />
+        <View style={{ flex: 1, minWidth: 0, marginLeft: spacing.sm }}>
           <TextInput
             {...props}
             accessibilityLabel={label}
@@ -378,8 +390,8 @@ export function Field({
               typography.bodyLarge,
               {
                 color: colors.text,
-                paddingVertical: 12,
-                paddingRight: 16,
+                paddingVertical: spacing.sm,
+                paddingRight: spacing.m,
                 minHeight: props.multiline ? 104 : dimensions.touch,
                 textAlignVertical: props.multiline ? 'top' : 'center',
                 includeFontPadding: false,
@@ -395,8 +407,8 @@ export function Field({
             accessibilityLabel={hidden ? 'Şifreyi göster' : 'Şifreyi gizle'}
             onPress={() => setHidden(!hidden)}
             style={{
-              minWidth: 48,
-              minHeight: 48,
+              minWidth: dimensions.touch,
+              minHeight: dimensions.touch,
               alignItems: 'center',
               justifyContent: 'center',
             }}
@@ -440,8 +452,8 @@ export function Card({
           transitionProperty: ['backgroundColor', 'borderColor'],
           transitionDuration: reduce ? 0 : motion.theme,
           borderColor: colors.border,
-          borderWidth: 1,
-          borderRadius: radius.large,
+          borderWidth: borders.hairline,
+          borderRadius: radius.medium,
           padding: spacing.card,
         },
         style,

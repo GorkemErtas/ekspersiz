@@ -11,13 +11,8 @@ import Animated, { useReducedMotion } from 'react-native-reanimated';
 import { AppText, Icon, type IconName } from '../../design/components';
 import { TouchSurface } from '../../design/TouchSurface';
 import { useTheme } from '../../design/ThemeProvider';
-import {
-  dimensions,
-  motion,
-  radius,
-  shadow,
-  spacing,
-} from '../../design/tokens';
+import { dimensions, motion, radius, spacing } from '../../design/tokens';
+import { assistantClearance, FloatingAssistant } from './FloatingAssistant';
 import HomeScreen from './HomeScreen';
 import WorkspaceSwitcher from './WorkspaceSwitcher';
 import VehicleListScreen from '../vehicle/VehicleListScreen';
@@ -40,7 +35,12 @@ export default function MainShell() {
   const initialTab = Math.min(3, Math.max(0, Number(initial) || 0));
   const [tab, setTab] = useState(initialTab);
   const [visited, setVisited] = useState(new Set([initialTab]));
+  const [assistantHeight, setAssistantHeight] = useState<number>(
+    dimensions.fab,
+  );
   const rail = width >= 900 || (width >= 600 && width > height);
+  // Give all four labels room at large text sizes without capping font scaling.
+  const stackedNavigation = !rail && width / fontScale < 240;
   const select = (index: number) => {
     setTab(index);
     setVisited((current) =>
@@ -82,7 +82,8 @@ export default function MainShell() {
         accessibilityLabel={title}
         onPress={() => select(index)}
         style={{
-          flex: rail ? undefined : 1,
+          flex: rail || stackedNavigation ? undefined : 1,
+          width: stackedNavigation ? '50%' : undefined,
           minWidth: 0,
           minHeight: dimensions.touch,
           flexDirection: rail ? 'row' : 'column',
@@ -99,7 +100,7 @@ export default function MainShell() {
             width: rail ? 40 : 56,
             flexShrink: 0,
             maxWidth: '100%',
-            minHeight: 32,
+            minHeight: spacing.xl,
             paddingVertical: spacing.xs,
             borderRadius: radius.pill,
             alignItems: 'center',
@@ -116,7 +117,7 @@ export default function MainShell() {
           style={{
             fontSize: rail ? 14 : 12,
             lineHeight: rail ? 20 : 18,
-            fontWeight: '600',
+            fontWeight: selected ? '700' : '500',
             color,
             textAlign: rail ? 'left' : 'center',
             ...(rail ? { flex: 1 } : { alignSelf: 'stretch' }),
@@ -182,6 +183,7 @@ export default function MainShell() {
                   >
                     {index === 0 ? (
                       <HomeScreen
+                        contentBottom={assistantClearance(assistantHeight)}
                         onProfile={() => select(3)}
                         onVehicles={() => select(1)}
                         onHistory={() => select(2)}
@@ -198,42 +200,10 @@ export default function MainShell() {
             )}
           </View>
           {tab === 0 && (
-            // The assistant owns its height. Neither content nor navigation can overlap it.
-            <View
-              testID="assistant-dock"
-              style={{
-                paddingHorizontal: spacing.page,
-                paddingVertical: spacing.s,
-                alignItems: 'flex-end',
-              }}
-            >
-              <TouchSurface
-                accessibilityRole="button"
-                accessibilityLabel="AI Asistan’ı aç"
-                onPress={() => router.push('/assistant')}
-                style={{
-                  minHeight: dimensions.fab,
-                  maxWidth: '100%',
-                  paddingVertical: 14,
-                  paddingHorizontal: 20,
-                  borderRadius: radius.pill,
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: spacing.s,
-                  backgroundColor: colors.primary,
-                  boxShadow: shadow(mode, 'primary'),
-                }}
-              >
-                <Icon name="sparkles" color={colors.onPrimary} size={22} />
-                <AppText
-                  variant="labelLarge"
-                  style={{ color: colors.onPrimary, flexShrink: 1 }}
-                >
-                  AI Asistan
-                </AppText>
-              </TouchSurface>
-            </View>
+            <FloatingAssistant
+              onPress={() => router.push('/assistant')}
+              onHeightChange={setAssistantHeight}
+            />
           )}
         </View>
       </View>
@@ -243,6 +213,7 @@ export default function MainShell() {
           accessibilityRole="tablist"
           style={{
             flexDirection: 'row',
+            flexWrap: stackedNavigation ? 'wrap' : 'nowrap',
             marginHorizontal: spacing.s,
             marginVertical: spacing.s,
             padding: spacing.xs,
@@ -250,7 +221,7 @@ export default function MainShell() {
             borderWidth: 1,
             borderColor: colors.border,
             backgroundColor: colors.surface,
-            minHeight: 72,
+            minHeight: dimensions.navigation,
           }}
         >
           {destinations.map(item)}

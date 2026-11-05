@@ -1,9 +1,11 @@
 import { useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { View } from 'react-native';
 import { api, session, useSession } from '../../core/runtime';
 import { AppText, Icon } from '../../design/components';
 import { Sheet } from '../../design/Sheet';
 import { useTheme } from '../../design/ThemeProvider';
+import { TouchSurface } from '../../design/TouchSurface';
+import { dimensions, radius, spacing } from '../../design/tokens';
 import { useAction } from '../auth/useAction';
 export default function WorkspaceSwitcher() {
   const { profile, workspace } = useSession(),
@@ -14,22 +16,32 @@ export default function WorkspaceSwitcher() {
   if (!business) return null;
   return (
     <>
-      <Pressable
+      <TouchSurface
         accessibilityRole="button"
         accessibilityLabel="Hesap değiştir"
-        accessibilityState={{ busy: action.busy }}
+        accessibilityState={{
+          busy: action.busy,
+          disabled: action.busy,
+          expanded: open,
+        }}
+        accessibilityValue={{
+          text:
+            workspace === 'BUSINESS' ? business.companyName : 'Kişisel Hesap',
+        }}
         disabled={action.busy}
         onPress={() => setOpen(true)}
         style={{
-          marginHorizontal: 16,
-          marginTop: 8,
-          paddingHorizontal: 12,
-          minHeight: 40,
-          paddingVertical: 10,
-          borderRadius: 14,
+          marginHorizontal: spacing.page,
+          marginTop: spacing.s,
+          paddingHorizontal: spacing.sm,
+          minHeight: dimensions.touch,
+          paddingVertical: spacing.sm,
+          borderRadius: radius.small,
+          borderWidth: 1,
+          borderColor: colors.border,
           backgroundColor: colors.low,
           flexDirection: 'row',
-          gap: 10,
+          gap: spacing.s,
           alignItems: 'center',
         }}
       >
@@ -37,18 +49,18 @@ export default function WorkspaceSwitcher() {
           name={workspace === 'BUSINESS' ? 'business' : 'person'}
           size={20}
         />
-        <AppText variant="labelLarge" numberOfLines={1} style={{ flex: 1 }}>
+        <AppText variant="titleSmall" style={{ flex: 1, minWidth: 0 }}>
           {workspace === 'BUSINESS' ? business.companyName : 'Kişisel Hesap'}
         </AppText>
         <Icon name="chevron" size={20} />
-      </Pressable>
+      </TouchSurface>
       <Sheet
         title="Hesap Değiştir"
         visible={open}
         onClose={() => setOpen(false)}
       >
         {(['PERSONAL', 'BUSINESS'] as const).map((value) => (
-          <Pressable
+          <TouchSurface
             key={value}
             accessibilityRole="button"
             accessibilityState={{
@@ -67,16 +79,16 @@ export default function WorkspaceSwitcher() {
             }}
             style={{
               minHeight: 72,
-              paddingVertical: 12,
+              paddingVertical: spacing.sm,
               flexDirection: 'row',
-              gap: 12,
+              gap: spacing.sm,
               alignItems: 'center',
               opacity:
                 value === 'BUSINESS' && !business.workspaceAvailable ? 0.5 : 1,
             }}
           >
             <Icon name={value === 'BUSINESS' ? 'business' : 'person'} />
-            <View style={{ flex: 1 }}>
+            <View style={{ flex: 1, minWidth: 0 }}>
               <AppText variant="titleMedium">
                 {value === 'PERSONAL' ? 'Kişisel Hesap' : business.companyName}
               </AppText>
@@ -91,7 +103,7 @@ export default function WorkspaceSwitcher() {
             {workspace === value && (
               <Icon name="verified" color={colors.primary} />
             )}
-          </Pressable>
+          </TouchSurface>
         ))}
       </Sheet>
     </>

@@ -1,5 +1,6 @@
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import MainShell from './MainShell';
+import { Dimensions } from 'react-native';
 
 const mockPush = jest.fn();
 jest.mock('expo-router', () => ({
@@ -12,10 +13,13 @@ jest.mock('./HomeScreen', () => {
   const React = jest.requireActual<typeof import('react')>('react');
   const { TextInput, View } =
     jest.requireActual<typeof import('react-native')>('react-native');
-  return function HomeFixture() {
+  return function HomeFixture({ contentBottom }: { contentBottom: number }) {
     const [note, setNote] = React.useState('');
     return (
-      <View>
+      <View
+        testID="home-scroll-content"
+        style={{ paddingBottom: contentBottom }}
+      >
         <TextInput
           accessibilityLabel="Korunan dashboard alanı"
           value={note}
@@ -36,6 +40,52 @@ test('assistant remains an accessible immediate navigation action', async () => 
     screen.getByRole('button', { name: 'AI Asistan’ı aç' }),
   );
   expect(mockPush).toHaveBeenCalledWith('/assistant');
+});
+
+test('floating assistant leaves surrounding content touchable and updates scroll clearance after text scaling', async () => {
+  await render(<MainShell />);
+  const overlay = screen.getByTestId('assistant-overlay');
+  expect(overlay.props.pointerEvents).toBe('box-none');
+  expect(overlay).toHaveStyle({
+    position: 'absolute',
+    backgroundColor: 'transparent',
+  });
+  expect(screen.queryByTestId('assistant-dock')).toBeNull();
+
+  await fireEvent(
+    screen.getByRole('button', { name: 'AI Asistan’ı aç' }),
+    'layout',
+    {
+      nativeEvent: { layout: { height: 80, width: 190, x: 0, y: 0 } },
+    },
+  );
+  expect(screen.getByTestId('home-scroll-content')).toHaveStyle({
+    paddingBottom: 104,
+  });
+  expect(screen.getByTestId('bottom-navigation')).toBeTruthy();
+});
+
+test('compact phones keep every tab label and action available at large text sizes', async () => {
+  const original = Dimensions.get('window');
+  Dimensions.set({
+    window: { width: 320, height: 640, scale: 1, fontScale: 1.6 },
+  });
+  try {
+    await render(<MainShell />);
+    expect(screen.getByTestId('bottom-navigation')).toHaveStyle({
+      flexWrap: 'wrap',
+    });
+    for (const name of ['Ana Sayfa', 'Araçlar', 'Analizler', 'Profil']) {
+      expect(screen.getByRole('tab', { name })).toHaveStyle({ width: '50%' });
+    }
+    await fireEvent.press(screen.getByRole('tab', { name: 'Analizler' }));
+    expect(
+      screen.getByRole('tab', { name: 'Analizler' }).props.accessibilityState
+        .selected,
+    ).toBe(true);
+  } finally {
+    await act(() => Dimensions.set({ window: original }));
+  }
 });
 test('tabs hide the home-only assistant and preserve visited screen state', async () => {
   await render(<MainShell />);
