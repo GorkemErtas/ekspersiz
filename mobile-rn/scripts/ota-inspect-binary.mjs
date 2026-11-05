@@ -9,12 +9,16 @@ import {
 import { hashBytes, sha } from './ota-guards.mjs';
 
 function attributeValue(line) {
+  // aapt2 prints string contents verbatim, not as JSON. Keep inner quotes and
+  // backslashes intact, and exclude the optional Raw annotation from the value.
   const value = line.match(
-    /=("(?:\\.|[^"\\])*"|true|false|@0x[a-f0-9]+|-?\d+)/i,
-  )?.[1];
-  if (!value) return undefined;
-  if (value.startsWith('"')) return JSON.parse(value);
-  return value;
+    /^\s*A:\s+[^=]+=(?:"(.*?)"|(true|false|@0x[a-f0-9]+|0x[a-f0-9]+|-?\d+))(?: \(Raw: "(.*)"\))?\s*$/i,
+  );
+  // An unescaped annotation delimiter inside a string makes the dump ambiguous.
+  // Never turn a prefix of such a value into valid OTA metadata.
+  if (value?.[1] !== undefined && value?.[3]?.includes('" (Raw: "'))
+    throw new Error('Android manifest string has an ambiguous Raw annotation.');
+  return value?.[1] ?? value?.[2];
 }
 export function inspectManifestDump(manifest, resources, badging) {
   const metadata = {};
