@@ -4,6 +4,8 @@ import { readFileSync, writeFileSync, mkdirSync, copyFileSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseEnv } from 'node:util';
+import { productionEnvironmentConfig } from '../config/productionEnvironment.cjs';
+import { inspectApk, verifyNativeOta } from './ota-inspect-binary.mjs';
 import {
   androidReleaseConfig,
   releaseEnvironmentNames,
@@ -45,7 +47,13 @@ if (values.APP_VARIANT !== 'production')
   throw new Error(
     'The explicit release environment file must set APP_VARIANT=production.',
   );
-Object.assign(env, values, { APP_VARIANT: 'production', EXPO_NO_DOTENV: '1' });
+if (values.APP_CONFIG_MODE && values.APP_CONFIG_MODE !== 'native')
+  throw new Error('Native release environment cannot use APP_CONFIG_MODE=ota.');
+Object.assign(env, values, {
+  APP_VARIANT: 'production',
+  EXPO_NO_DOTENV: '1',
+  APP_CONFIG_MODE: 'native',
+});
 const config = androidReleaseConfig(env, root);
 Object.assign(env, {
   ANDROID_KEYSTORE_PROPERTIES_FILE: config.signingPropertiesFile,
@@ -101,6 +109,22 @@ function run(command, args, cwd = root) {
     throw new Error(
       `Release command failed: ${command}. See the preceding build output.`,
     );
+}
+let otaRuntime;
+if (env.EXPO_UPDATES_ENABLED === '1') {
+  if (!checkOnly && !withApk)
+    throw new Error(
+      'OTA-enabled native releases require --apk for compiled update metadata verification.',
+    );
+  const result = spawnSync(process.execPath, ['scripts/ota-fingerprint.mjs'], {
+    cwd: root,
+    env,
+    encoding: 'utf8',
+    timeout: 120000,
+  });
+  if (result.status !== 0 || !/^[a-f0-9]{40}$/.test(result.stdout.trim()))
+    throw new Error('Production native OTA fingerprint validation failed.');
+  otaRuntime = result.stdout.trim();
 }
 const signer = identity();
 console.log(
@@ -225,7 +249,23 @@ if (checkOnly) {
         'Optimized APK signature does not match the existing Flutter upload key.',
       );
     copyFileSync(path, join(output, `${name}.apk`));
+    let ota;
+    if (otaRuntime) {
+      ota = verifyNativeOta(inspectApk(path, { env }), {
+        channel: env.EXPO_UPDATES_CHANNEL,
+        runtimeVersion: otaRuntime,
+      });
+      ota.environmentHash = productionEnvironmentConfig(
+        env,
+        root,
+      ).environmentHash;
+      ota.sourceCommit = spawnSync('git', ['rev-parse', 'HEAD'], {
+        cwd: root,
+        encoding: 'utf8',
+      }).stdout.trim();
+    }
     apk = {
+      ...(ota ? { ota } : {}),
       sha256: createHash('sha256').update(readFileSync(path)).digest('hex'),
       uploadCertificate: signer.sha256,
       dexMatchesAab: true,

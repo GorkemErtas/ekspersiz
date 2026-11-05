@@ -104,6 +104,10 @@ module.exports = function withAndroidRelease(
     return mod;
   });
   return withAppBuildGradle(config, (mod) => {
+    if (production && process.env.APP_CONFIG_MODE === 'ota')
+      throw new Error(
+        'OTA config evaluation cannot generate a production native project. Use the existing native release preflight.',
+      );
     if (mod.modResults.language !== 'groovy')
       throw new Error('Review production signing for the new Gradle language.');
     mod.modResults.contents = configureSigning(

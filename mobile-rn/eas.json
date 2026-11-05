@@ -1,0 +1,7 @@
+{
+  "cli": {
+    "version": "27.2.0",
+    "appVersionSource": "local",
+    "requireCommit": true
+  }
+}

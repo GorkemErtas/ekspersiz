@@ -1,0 +1,117 @@
+name: Approve Android OTA promotion or rollback
+
+on:
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: Promote a tested group or roll back to a previously verified group
+        type: choice
+        options: [promote, rollback]
+        default: promote
+        required: true
+      staging_run_id:
+        description: Successful master readiness/staging workflow run containing the audit artifact
+        type: string
+        required: true
+      update_group_id:
+        description: Exact staging update group ID recorded in that artifact
+        type: string
+        required: true
+      staging_verified:
+        description: I verified this exact staging artifact (or previously approved rollback version) on compatible devices
+        type: boolean
+        default: false
+        required: true
+      rollout_percentage:
+        description: Initial rollout 1–100; rollback requires 100
+        type: string
+        default: "10"
+        required: true
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: ekspersiz-ota-production
+  cancel-in-progress: false
+
+env:
+  CI: "1"
+  EXPO_NO_DOTENV: "1"
+  APP_VARIANT: development
+  OTA_STAGING_RUN_ID: ${{ inputs.staging_run_id }}
+  OTA_UPDATE_GROUP_ID: ${{ inputs.update_group_id }}
+  OTA_STAGING_VERIFIED: ${{ inputs.staging_verified }}
+  OTA_ROLLOUT_PERCENTAGE: ${{ inputs.rollout_percentage }}
+  OTA_OPERATION: ${{ inputs.operation }}
+
+jobs:
+  provenance:
+    if: github.ref == 'refs/heads/master' && github.repository == 'GorkemErtas/ekspersiz'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      source_sha: ${{ steps.verify.outputs.source_sha }}
+      artifact_name: ${{ steps.verify.outputs.artifact_name }}
+      approval_verified: ${{ steps.verify.outputs.approval_verified }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: mobile-rn/.nvmrc
+      - id: verify
+        name: Verify source workflow, immutable audit artifact, and required reviewers
+        run: node mobile-rn/scripts/ota-github.mjs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  production:
+    needs: provenance
+    environment: ota-production
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: mobile-rn
+    env:
+      OTA_APPROVAL_VERIFIED: ${{ needs.provenance.outputs.approval_verified }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.provenance.outputs.source_sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: mobile-rn/.nvmrc
+          cache: npm
+          cache-dependency-path: mobile-rn/package-lock.json
+      - run: npm ci
+      - name: Install the reviewed EAS CLI before exposing its token
+        run: npm install --global eas-cli@27.2.0
+      - uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.provenance.outputs.artifact_name }}
+          path: mobile-rn/.ota/promotion
+          run-id: ${{ inputs.staging_run_id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Republish the verified artifact without rebuilding
+        run: eas env:exec production 'node scripts/ota-release.mjs "$OTA_OPERATION"' --non-interactive
+        env:
+          OTA_OPERATION: ${{ inputs.operation }}
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Preserve an audit result if EAS bootstrap failed
+        if: always()
+        run: node scripts/ota-audit.mjs "$OTA_OPERATION"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ota-production-${{ github.run_id }}
+          path: mobile-rn/.ota/reports/publication.json
+          include-hidden-files: true
+          retention-days: 90
+          if-no-files-found: error
