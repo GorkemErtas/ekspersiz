@@ -45,7 +45,13 @@ if (values.APP_VARIANT !== 'production')
   throw new Error(
     'The explicit release environment file must set APP_VARIANT=production.',
   );
-Object.assign(env, values, { APP_VARIANT: 'production', EXPO_NO_DOTENV: '1' });
+if (values.APP_CONFIG_MODE && values.APP_CONFIG_MODE !== 'native')
+  throw new Error('Native release environment cannot use APP_CONFIG_MODE=ota.');
+Object.assign(env, values, {
+  APP_VARIANT: 'production',
+  EXPO_NO_DOTENV: '1',
+  APP_CONFIG_MODE: 'native',
+});
 const config = androidReleaseConfig(env, root);
 Object.assign(env, {
   ANDROID_KEYSTORE_PROPERTIES_FILE: config.signingPropertiesFile,

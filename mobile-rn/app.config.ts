@@ -1,4 +1,8 @@
 import type { ExpoConfig } from 'expo/config';
+import {
+  easProject,
+  productionEnvironmentConfig,
+} from './config/productionEnvironment.cjs';
 import { otaUpdateConfig } from './config/otaUpdate.cjs';
 import {
   androidReleaseConfig,
@@ -11,8 +15,18 @@ if (
 )
   throw new Error('APP_VARIANT must be development or production.');
 const production = process.env.APP_VARIANT === 'production';
+const configMode = process.env.APP_CONFIG_MODE ?? 'native';
+if (!['native', 'ota'].includes(configMode))
+  throw new Error('APP_CONFIG_MODE must be native or ota.');
+if (configMode === 'ota' && !production)
+  throw new Error('OTA config requires APP_VARIANT=production.');
 const release = production
-  ? androidReleaseConfig(process.env, __dirname)
+  ? configMode === 'ota'
+    ? productionEnvironmentConfig(process.env, __dirname)
+    : androidReleaseConfig(process.env, __dirname)
+  : undefined;
+const publicConfig = production
+  ? productionEnvironmentConfig(process.env, __dirname)
   : undefined;
 const optimizedRelease =
   production || process.env.ANDROID_RELEASE_OPTIMIZE === '1';
@@ -35,13 +49,13 @@ for (const [name, value, prefix] of [
 }
 const ota = otaUpdateConfig(process.env, {
   production,
-  versionName: release?.versionName ?? '1.0.0',
 });
 const config: ExpoConfig = {
-  owner: 'trertas',
-  ...(ota ? {runtimeVersion: ota.runtimeVersion, updates: ota.updates} : {}),
+  owner: easProject.owner,
+  ...(ota ? { runtimeVersion: ota.runtimeVersion } : {}),
+  updates: ota?.updates ?? { enabled: false },
   name: production ? 'EksperSiz' : 'EksperSiz Dev',
-  slug: 'ekspersiz-mobile',
+  slug: easProject.slug,
   version: release?.versionName ?? '1.0.0',
   scheme: production ? 'ekspersiz' : 'ekspersiz-dev',
   orientation: 'default',
@@ -180,8 +194,11 @@ const config: ExpoConfig = {
   experiments: { typedRoutes: true },
   extra: {
     eas: {
-      projectId: '883c68ec-f7e4-4c3e-87e2-e989c4b4b859',
+      projectId: easProject.id,
     },
+    ...(publicConfig
+      ? { productionEnvironmentHash: publicConfig.environmentHash }
+      : {}),
     appVariant: production ? 'production' : 'development',
     androidFirebase: !!process.env.GOOGLE_SERVICES_FILE,
     iosFirebase: !!process.env.GOOGLE_SERVICES_PLIST,
