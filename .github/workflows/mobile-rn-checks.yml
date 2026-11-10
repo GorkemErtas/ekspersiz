@@ -182,13 +182,16 @@ jobs:
         shell: bash
         run: |
           # Expo prebuild generates android/gradle.properties on each clean CI runner.
-          # Replace the conservative template defaults (2 GiB heap / 512 MiB metaspace).
+          # Replace Expo's conservative template defaults and leave headroom for Kotlin/Android workers.
           sed -i '/^org.gradle.jvmargs=/d; /^org.gradle.workers.max=/d; /^org.gradle.parallel=/d' android/gradle.properties
           cat >> android/gradle.properties <<'EOF'
-          org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=2g -Dfile.encoding=UTF-8
-          org.gradle.workers.max=2
+          org.gradle.jvmargs=-Xmx6g -XX:MaxMetaspaceSize=2g -Dfile.encoding=UTF-8
+          org.gradle.workers.max=1
           org.gradle.parallel=false
           EOF
+          echo 'Runner memory:'
+          free -h
+          echo 'Effective Gradle memory settings:'
           grep -E '^(org.gradle.jvmargs|org.gradle.workers.max|org.gradle.parallel)=' android/gradle.properties
       - name: Compile native modules and assemble a development APK
         if: matrix.variant == 'debug'
