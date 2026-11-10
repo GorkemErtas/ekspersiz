@@ -133,7 +133,8 @@ jobs:
     needs: [checks, classify]
     if: needs.classify.outputs.kind == 'native' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    # Release smoke includes R8, lint and three emulator cold starts; 60 minutes was insufficient.
+    timeout-minutes: 120
     strategy:
       fail-fast: false
       matrix:
@@ -177,6 +178,18 @@ jobs:
         run: sdkmanager 'platforms;android-37.0' 'build-tools;37.0.0' 'ndk;27.1.12297006' 'cmake;3.31.6'
       - name: Generate development Android project
         run: npx expo prebuild --platform android --no-install
+      - name: Configure Gradle memory for Android builds
+        shell: bash
+        run: |
+          # Expo prebuild generates android/gradle.properties on each clean CI runner.
+          # Replace the conservative template defaults (2 GiB heap / 512 MiB metaspace).
+          sed -i '/^org.gradle.jvmargs=/d; /^org.gradle.workers.max=/d; /^org.gradle.parallel=/d' android/gradle.properties
+          cat >> android/gradle.properties <<'EOF'
+          org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=2g -Dfile.encoding=UTF-8
+          org.gradle.workers.max=2
+          org.gradle.parallel=false
+          EOF
+          grep -E '^(org.gradle.jvmargs|org.gradle.workers.max|org.gradle.parallel)=' android/gradle.properties
       - name: Compile native modules and assemble a development APK
         if: matrix.variant == 'debug'
         working-directory: mobile-rn/android
