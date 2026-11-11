@@ -181,11 +181,14 @@ jobs:
       - name: Configure Gradle memory for Android builds
         shell: bash
         run: |
-          # Expo prebuild generates android/gradle.properties on each clean CI runner.
-          # Replace Expo's conservative template defaults and leave headroom for Kotlin/Android workers.
+          # Expo prebuild regenerates this file on clean runners.
+          # Keep Gradle's heap bounded and use the remaining memory for Kotlin, native
+          # toolchains and Android workers. Previous 6g heap exhausted during Kotlin
+          # DSL configuration despite ample host RAM; give Gradle a larger heap on
+          # this public repository's 16 GiB runner instead of masking the OOM.
           sed -i '/^org.gradle.jvmargs=/d; /^org.gradle.workers.max=/d; /^org.gradle.parallel=/d' android/gradle.properties
           cat >> android/gradle.properties <<'EOF'
-          org.gradle.jvmargs=-Xmx6g -XX:MaxMetaspaceSize=2g -Dfile.encoding=UTF-8
+          org.gradle.jvmargs=-Xmx10g -XX:MaxMetaspaceSize=2g -Dfile.encoding=UTF-8
           org.gradle.workers.max=1
           org.gradle.parallel=false
           EOF
